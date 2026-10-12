@@ -34,4 +34,5 @@ Thumbs.db
 # file locali e di prova: non vanno nel repository
 /database/*.sqlite
 /database/*.sqlite-journal
-*Password*
+/LaTuaNuovaPassword123*
+/ScegliUnaPassword2026*

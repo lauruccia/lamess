@@ -1,0 +1,36 @@
+---
+# Deploy del portale Lamèss su cPanel (account lamess, PHP 8.3)
+# - l'applicazione sta FUORI dalla cartella pubblica: $HOME/lamess_app
+# - in public_html va solo il contenuto di public/, con index.php che punta all'applicazione
+# - NON tocca: public_html/data (iscrizioni.csv), google37a8d98fa368ab74.html, php.ini, subscribe.php
+# - il .env NON sta nel repository: va caricato a mano in $HOME/lamess_app/.env
+deployment:
+  tasks:
+    - export APPPATH=$HOME/lamess_app
+    - export WEBPATH=$HOME/public_html
+    - export PHP=/opt/cpanel/ea-php83/root/usr/bin/php
+
+    # 1. Codice dell'applicazione (senza .git, .env, storage, vendor e materiale di sviluppo)
+    - /bin/mkdir -p $APPPATH
+    - /usr/bin/rsync -a --exclude=.git --exclude=.github --exclude=.claude --exclude=.env --exclude=/storage --exclude=/vendor --exclude=/tests --exclude=/docs ./ $APPPATH/
+
+    # 2. Cartelle scrivibili (create la prima volta, poi conservate)
+    - /bin/mkdir -p $APPPATH/storage/app/public $APPPATH/storage/app/private $APPPATH/storage/framework/cache/data $APPPATH/storage/framework/sessions $APPPATH/storage/framework/views $APPPATH/storage/logs $APPPATH/bootstrap/cache
+
+    # 3. Librerie PHP: usa composer del server o, se manca, scarica composer.phar una volta
+    - '[ -x /opt/cpanel/composer/bin/composer ] && echo "composer di sistema presente" || ( [ -f $HOME/composer.phar ] || /usr/bin/curl -sS -o $HOME/composer.phar https://getcomposer.org/download/latest-stable/composer.phar )'
+    - cd $APPPATH && ( [ -x /opt/cpanel/composer/bin/composer ] && $PHP -d memory_limit=-1 /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader --no-interaction --no-scripts || $PHP -d memory_limit=-1 $HOME/composer.phar install --no-dev --optimize-autoloader --no-interaction --no-scripts )
+    - '[ -f $APPPATH/vendor/autoload.php ] && echo "OK vendor installato" || echo "ATTENZIONE vendor mancante: caricalo a mano"'
+
+    # 4. La prima volta mette da parte la pagina «in arrivo»
+    - '[ -f $WEBPATH/index.html ] && /bin/mv $WEBPATH/index.html $WEBPATH/index.html.in-arrivo || true'
+
+    # 5. File pubblici in public_html (senza --delete: data/ e gli altri file restano) e percorsi di index.php
+    - /usr/bin/rsync -a ./public/ $WEBPATH/
+    - /bin/sed -i "s#__DIR__.'/../#'$APPPATH/#g" $WEBPATH/index.php
+
+    # 6. Collegamento per i file caricati pubblici (storage:link)
+    - '[ -e $WEBPATH/storage ] || /bin/ln -s $APPPATH/storage/app/public $WEBPATH/storage'
+
+    # 7. Solo se vendor e .env ci sono: scoperta pacchetti e pulizia cache
+    - cd $APPPATH && ( [ -f vendor/autoload.php ] && [ -f .env ] && $PHP artisan package:discover && $PHP artisan optimize:clear || echo "salto artisan: manca vendor o .env" )

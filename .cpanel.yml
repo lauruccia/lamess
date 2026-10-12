@@ -33,4 +33,4 @@ deployment:
     - '[ -e $WEBPATH/storage ] || /bin/ln -s $APPPATH/storage/app/public $WEBPATH/storage'
 
     # 7. Solo se vendor e .env ci sono: scoperta pacchetti e pulizia cache
-    - cd $APPPATH && ( [ -f vendor/autoload.php ] && [ -f .env ] && $PHP artisan package:discover && $PHP artisan optimize:clear || echo "salto artisan: manca vendor o .env" )
+    - cd $APPPATH && ( [ -f vendor/autoload.php ] && [ -f .env ] && $PHP artisan package:discover && $PHP artisan optimize:clear || echo "salto artisan, manca vendor o .env" )

@@ -84,7 +84,7 @@ final class ConsultantList
     {
         $row = DB::table('consultants')->selectRaw(
             "count(*) as total, sum(status = 'active') as active, sum(status = 'pending') as pending, sum(status = 'suspended') as suspended, "
-            ."sum(status = 'terminated') as terminated, sum(status <> 'terminated' and onboarding_complete = 0) as onboarding, "
+            ."sum(status = 'terminated') as `terminated`, sum(status <> 'terminated' and onboarding_complete = 0) as onboarding, "
             ."sum(status <> 'terminated' and (kyc_status is null or kyc_status <> 'verified')) as kyc"
         )->first();
 

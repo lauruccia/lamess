@@ -1,0 +1,10 @@
+<h2>Privacy Policy - Artt. 13 e 14 del Regolamento 2016/679/UE (nel seguito anche "GDPR")</h2>
+<h3>Perché questo avviso</h3>
+<p>Inhoreca.it (nel seguito anche "Azienda" o "Titolare") è impegnata nel rispetto e nella protezione della tua privacy e desidera che ti senta sicuro sia durante la semplice navigazione del sito sia nel caso in cui decida di registrarti fornendoci i tuoi dati personali per usufruire dei servizi resi disponibili ai propri Utenti e/o Clienti.</p>
+<p>In questa pagina Azienda intende fornire alcune informazioni sul trattamento dei dati personali relativi agli utenti che visitano o consultano il sito web accessibile per via telematica a partire dall'indirizzo <a href="https://www.lamess.it">www.lamess.it</a> (il "Sito").</p>
+<p>L'informativa è resa solo per il sito web di Azienda e non anche per altri siti web eventualmente consultati dall'utente tramite link (per i quali si rinvia alle rispettive informative/policies in tema privacy).</p>
+<p>La riproduzione od utilizzo di pagine, materiali ed informazioni contenuti all'interno del Sito, con qualsiasi mezzo e su qualsiasi supporto, non è consentita senza il preventivo consenso scritto di Azienda.</p>
+<p>È consentita la copia e/o la stampa per uso esclusivamente personale e non commerciale (per richieste e chiarimenti contattare Azienda ai recapiti sotto indicati). Altri usi dei contenuti, servizi e delle informazioni presenti su questo sito non sono consentiti.</p>
+<p>Il Titolare del trattamento è INHORECA.IT, Via Galileo Ferraris n. 63, 52100 - AREZZO (AR) Italy. L'uso del Sito Web, incluso di quelli destinati a tablet e/o smartphone, da parte del Cliente e/o dell'Utente implica la piena conoscenza e accettazione del contenuto e delle eventuali indicazioni incluse in questa versione di informativa pubblicata da Azienda nel momento in cui il sito viene acceduto.</p>
+<p>Azienda informa che la presente informativa può essere modificata senza alcun preavviso e quindi ne consiglia una lettura periodica.</p>
+<p class="legal-upd">La presente informativa privacy è stata aggiornata il 23/04/2025.</p>

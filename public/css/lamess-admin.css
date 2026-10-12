@@ -1,0 +1,200 @@
+/*
+ * Back-office Lamèss — rifinitura "premium" sopra Filament. Usa solo i token di lamess-tokens.css.
+ * Nessuna compilazione: è un file statico (funziona anche su cPanel senza terminale).
+ */
+:root {
+  --lm-shadow-sm: 0 1px 2px rgb(19 17 14 / .05), 0 1px 3px rgb(19 17 14 / .04);
+  --lm-shadow-md: 0 2px 4px rgb(19 17 14 / .04), 0 8px 24px rgb(19 17 14 / .07);
+  --lm-radius: 14px;
+}
+
+body.fi-body, .fi-body { font-family: var(--lm-font-text); background: var(--lm-bg); color: var(--lm-text); -webkit-font-smoothing: antialiased; }
+:root:not(.dark) .fi-body { background: linear-gradient(180deg, #FCF6F3 0%, #F8EFEA 100%); background-attachment: fixed; }
+
+/* ---------- Logo ---------- */
+.lm-brand { display: inline-flex; align-items: center; gap: .65rem; }
+.lm-brand-text { display: inline-flex; flex-direction: column; line-height: 1; }
+.lm-brand-name { font-family: var(--lm-font-display); font-size: 1.55rem; letter-spacing: .04em; color: var(--lm-text); }
+.lm-brand-sub { margin-top: .22rem; font-size: .6rem; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--lm-terracotta); }
+.fi-simple-layout .lm-brand { flex-direction: column; gap: .5rem; }
+.fi-simple-layout .lm-brand-text { align-items: center; }
+.fi-simple-layout .lm-brand-mark { width: 52px; height: 52px; }
+.fi-simple-layout .lm-brand-name { font-size: 2.1rem; }
+
+/* ---------- Barra superiore con i menu a gruppi ---------- */
+.fi-topbar { background: rgb(255 255 255 / .86); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid rgb(187 180 175 / .35); box-shadow: 0 1px 0 rgb(255 255 255 / .6) inset, var(--lm-shadow-sm); }
+.dark .fi-topbar { background: rgb(29 26 22 / .88); border-bottom-color: rgb(74 68 62 / .6); }
+.fi-topbar nav { max-width: 100%; }
+.fi-topbar .fi-topbar-item-btn, .fi-topbar .fi-topbar-item > a, .fi-topbar-item-btn {
+  border-radius: 999px; font-weight: 500; font-size: .86rem; letter-spacing: .01em; transition: background .15s, color .15s;
+}
+.fi-topbar-item.fi-active .fi-topbar-item-btn, .fi-topbar-item.fi-active > a { background: rgb(194 102 58 / .12); color: var(--lm-brown); }
+.dark .fi-topbar-item.fi-active .fi-topbar-item-btn { color: var(--lm-sand); }
+.fi-topbar-item-btn:hover { background: rgb(194 102 58 / .08); }
+
+/* Menu a tendina dei gruppi */
+.fi-dropdown-panel { border-radius: 12px; border: 1px solid rgb(187 180 175 / .4); box-shadow: var(--lm-shadow-md); overflow: hidden; }
+.fi-dropdown-list-item { border-radius: 8px; margin: 1px 4px; font-size: .86rem; }
+.fi-dropdown-list-item:hover { background: rgb(194 102 58 / .09); }
+
+/* ---------- Titoli di pagina ---------- */
+.fi-header { padding-bottom: .25rem; }
+.fi-header-heading { font-size: 1.9rem; line-height: 2.3rem; color: var(--lm-text); }
+.fi-breadcrumbs-item-label { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; }
+
+/* ---------- Contenitori: sezioni, tabelle, riquadri ---------- */
+.fi-section:not(.fi-section-not-contained):not(.fi-aside), .fi-ta-ctn, .fi-wi-stats-overview-stat, .fi-wi-chart, .fi-fo-field-wrp-has-inline-label .fi-input-wrp {
+  border-radius: var(--lm-radius);
+}
+.fi-section, .fi-ta-ctn, .fi-wi-stats-overview-stat, .fi-wi-chart, .fi-wi-table {
+  box-shadow: var(--lm-shadow-sm); border: 1px solid rgb(187 180 175 / .35); --tw-ring-shadow: 0 0 #0000; --tw-ring-color: transparent; background: var(--lm-surface);
+}
+.fi-section:hover, .fi-wi-stats-overview-stat:hover { box-shadow: var(--lm-shadow-md); }
+.fi-section, .fi-wi-stats-overview-stat { transition: box-shadow .2s; }
+.fi-section-header-heading { font-size: 1.15rem; }
+
+/* Riquadri statistiche: filo terracotta e numeri in Marcellus */
+.fi-wi-stats-overview-stat { position: relative; overflow: hidden; padding: .7rem 1rem .7rem 1.1rem; }
+.fi-wi-stats-overview-stat::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: linear-gradient(180deg, var(--lm-terracotta), var(--lm-sand)); }
+.fi-wi-stats-overview-stat-value { font-family: var(--lm-font-text); font-size: 1.45rem; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.fi-wi-stats-overview-stat-label { font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f665f; }
+.dark .fi-wi-stats-overview-stat-label { color: #b8aea6; }
+
+/* Tabelle */
+.fi-ta-header-cell { font-size: .68rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #6f665f; background: rgb(252 246 243 / .8); }
+.dark .fi-ta-header-cell { background: rgb(42 36 30 / .6); color: #b8aea6; }
+.fi-ta-row { transition: background .12s; }
+.fi-ta-row:hover { background: rgb(194 102 58 / .045); }
+.fi-ta-cell { font-size: .875rem; }
+
+/* ---------- Pulsanti e campi ---------- */
+.fi-btn { border-radius: 10px; font-weight: 500; letter-spacing: .01em; transition: transform .1s, box-shadow .15s, background .15s; }
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-btn-color-gray) { background: var(--lm-ink); color: var(--lm-cream); box-shadow: var(--lm-shadow-sm); }
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-btn-color-gray):hover { background: #2A241E; box-shadow: var(--lm-shadow-md); }
+.dark .fi-btn.fi-color-primary:not(.fi-outlined) { background: var(--lm-terracotta); color: var(--lm-ink); }
+.fi-btn:active { transform: translateY(1px); }
+.fi-input-wrp { border-radius: 10px; }
+.fi-badge { border-radius: 999px; font-weight: 500; }
+.fi-modal-window { border-radius: 18px; box-shadow: var(--lm-shadow-md); }
+
+/* ---------- Accesso ---------- */
+.fi-simple-layout { background: radial-gradient(1100px 520px at 50% -8%, rgb(227 170 141 / .35), transparent 70%), var(--lm-bg); }
+.fi-simple-main { border-radius: 20px; box-shadow: var(--lm-shadow-md); border: 1px solid rgb(187 180 175 / .35); }
+
+/* ---------- Dettagli ---------- */
+::selection { background: rgb(194 102 58 / .25); }
+.fi-pagination-item-btn { border-radius: 8px; }
+.fi-sc-tabs .fi-tabs-item.fi-active { color: var(--lm-brown); }
+
+/* Gruppi di riquadri (sezioni «not-contained»): niente cornice, solo i riquadri */
+.fi-section.fi-section-not-contained { border: 0; box-shadow: none; background: transparent; padding: 0; }
+.fi-section.fi-section-not-contained:hover { box-shadow: none; }
+.fi-section.fi-section-not-contained > .fi-section-header { padding: 0 0 .75rem; }
+.fi-section.fi-section-not-contained .fi-section-header-heading { font-size: 1.05rem; letter-spacing: .02em; color: var(--lm-brown); }
+.fi-page-dashboard .fi-page-main, .fi-main { padding-top: .5rem; }
+.fi-simple-header .fi-logo { height: auto !important; margin-bottom: 1.1rem; }
+
+/* Elenco consulenti: celle più strette, così la tabella entra senza barra di scorrimento */
+.fi-resource-consultants .fi-ta-header-cell { padding: .7rem .5rem; }
+.fi-resource-consultants .fi-ta-header-cell:first-child, .fi-resource-consultants .fi-ta-cell:first-child { padding-inline-start: 1rem; }
+.fi-resource-consultants .fi-ta-cell .fi-ta-text, .fi-resource-consultants .fi-ta-cell .fi-ta-icon { padding: .5rem .4rem; }
+.fi-resource-consultants .fi-ta-cell .fi-ta-text-item-description { font-size: .72rem; }
+.fi-resource-consultants .fi-ta-header-cell-label { white-space: nowrap; }
+
+/* Scheda consulente: i tab si distribuiscono su tutta la larghezza */
+.fi-resource-consultants .fi-sc-tabs > .fi-tabs { width: 100%; }
+.fi-resource-consultants .fi-sc-tabs > .fi-tabs .fi-tabs-item { flex: 1 1 0; justify-content: center; }
+
+/* Riquadri statistiche compatti: meno aria dentro e tra i riquadri, più indicatori a schermo */
+.fi-wi-stats-overview-stat-content { row-gap: .15rem; }
+.fi-wi-stats-overview-stat-label { font-size: .68rem; line-height: 1.2; }
+.fi-wi-stats-overview-stat-description { font-size: .75rem; line-height: 1.2; }
+.fi-wi-stats-overview-stat-label-ctn { margin: 0; }
+.fi-wi-stats-overview .fi-grid { gap: .75rem; }
+.fi-page-dashboard .fi-wi, .fi-page-dashboard .fi-section.fi-section-not-contained { gap: .5rem; }
+.fi-section.fi-section-not-contained > .fi-section-header { padding-bottom: .4rem; }
+.fi-section.fi-section-not-contained .fi-section-header-heading { font-size: .95rem; }
+.fi-page-dashboard .fi-page-main { row-gap: 1rem; }
+.fi-page-dashboard .fi-page-header-main-ctn { row-gap: .75rem; padding-block: 1rem .5rem; }
+
+/* Elenco consulenti: ricerca, filtri e colonne restano nella loro barra (sotto il titolo), senza sovrapporsi ai pulsanti; niente scorrimento orizzontale */
+.fi-resource-consultants .fi-ta-content { overflow-x: visible; }
+.fi-resource-consultants .fi-ta-table { table-layout: auto; width: 100%; }
+
+/* Logo reale Lamèss (da lamess.it) */
+.lm-brand-mark { width: 36px; height: 36px; border-radius: 6px; display: block; }
+.fi-simple-layout .lm-brand-mark { width: 60px; height: 60px; border-radius: 8px; }
+
+/* Cruscotto: titolo e filtro «Periodo» sulla stessa riga, nessuna riga vuota */
+.lm-dash-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-block: .75rem .25rem; }
+.lm-dash-filter { width: 15rem; max-width: 100%; }
+.lm-dash-filter .fi-sc, .lm-dash-filter form { margin: 0; }
+.fi-page-dashboard .fi-page-header-main-ctn { padding-block: .5rem 0; row-gap: .5rem; }
+.fi-page-dashboard .fi-page-content { row-gap: 1rem; }
+.fi-page-dashboard .fi-wi-chart { height: 100%; }
+.fi-page-dashboard .fi-wi-chart .fi-wi-chart-canvas-ctn { margin-inline: auto; }
+
+/* Filtro Periodo: etichetta + select su una riga, larghezza fissa (niente testo spezzato) */
+.lm-dash-filter { display: flex; align-items: center; gap: .6rem; width: auto; flex: 0 0 auto; }
+.lm-dash-filter-label { font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6f665f; }
+.lm-dash-filter-field { width: 11rem; min-width: 11rem; }
+.lm-dash-filter-field .fi-sc, .lm-dash-filter-field .fi-fo-field, .lm-dash-filter-field .fi-input-wrp { width: 100%; min-width: 0; }
+.lm-dash-filter-field .fi-sc { display: block; }
+
+/* Elenco clienti: celle strette, nessuna barra di scorrimento orizzontale */
+.fi-resource-customers .fi-ta-content { overflow-x: visible; }
+.fi-resource-customers .fi-ta-header-cell { padding: .65rem .45rem; }
+.fi-resource-customers .fi-ta-header-cell-label { white-space: nowrap; }
+.fi-resource-customers .fi-ta-header-cell:first-child, .fi-resource-customers .fi-ta-cell:first-child { padding-inline-start: .9rem; }
+.fi-resource-customers .fi-ta-cell .fi-ta-text, .fi-resource-customers .fi-ta-cell .fi-ta-icon { padding: .5rem .35rem; }
+.fi-resource-customers .fi-ta-text-item { font-size: .84rem; }
+.fi-resource-customers .fi-ta-cell:last-child { padding-inline-end: .6rem; }
+
+/* Periodi: la riga del periodo ancora in corso risalta con un filo terracotta */
+.lm-row-current { background: rgb(194 102 58 / .06); box-shadow: inset 3px 0 0 var(--lm-terracotta); }
+.fi-resource-periods .fi-ta-header-cell { padding: .65rem .6rem; }
+.fi-resource-periods .fi-ta-cell .fi-ta-text { padding: .55rem .5rem; }
+
+/* Guida in pagina: a cosa serve, colonne e azioni (testi in app/Support/PageHelp.php) */
+.lm-help { background: rgb(255 255 255 / .75); border: 1px solid rgb(187 180 175 / .4); border-left: 3px solid var(--lm-terracotta); border-radius: 12px; padding: .8rem 1.1rem; margin-bottom: 1rem; font-size: .88rem; line-height: 1.55; }
+.dark .lm-help { background: rgb(29 26 22 / .7); }
+.lm-help-main { display: flex; gap: .9rem; align-items: baseline; }
+.lm-help-title { flex: none; font-family: var(--lm-font-display); font-size: 1rem; color: var(--lm-brown); }
+.dark .lm-help-title { color: var(--lm-sand); }
+.lm-help p { margin: 0; }
+.lm-help-more { margin-top: .55rem; }
+.lm-help-more > summary { cursor: pointer; font-weight: 600; color: var(--lm-brown); width: fit-content; }
+.dark .lm-help-more > summary { color: var(--lm-sand); }
+.lm-help-more h4 { font-family: var(--lm-font-display); font-weight: 400; font-size: .95rem; margin: .8rem 0 .3rem; }
+.lm-help-more dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .45rem 1.5rem; margin: 0; }
+.lm-help-more dt { font-weight: 600; }
+.lm-help-more dd { margin: 0; color: #6a615a; }
+.dark .lm-help-more dd { color: #b8aea6; }
+.lm-help-note { margin-top: .8rem !important; padding: .5rem .75rem; background: rgb(194 102 58 / .08); border-radius: 8px; }
+.lm-help-foot { margin-top: .6rem !important; font-size: .78rem; opacity: .65; }
+@media (max-width: 700px) { .lm-help-main { flex-direction: column; gap: .2rem; } }
+
+/* ---------- Scheda prodotto: tutta larghezza, colonna laterale fissa, tab a piena larghezza ---------- */
+.lm-product-form { gap: 1.25rem; align-items: start; }
+.lm-product-form .fi-section-header-heading { font-family: var(--lm-font-display); font-size: 1.15rem; }
+.lm-product-form .fi-section-header-icon, .lm-product-form .fi-section-header .fi-icon { color: var(--lm-terracotta); }
+.lm-product-form .fi-fo-field-label-content { font-weight: 500; }
+.lm-product-form .fi-input-wrp { min-height: 2.75rem; }
+.lm-product-form .fi-sc-tabs { border-radius: var(--lm-radius); background: var(--lm-surface); border: 1px solid rgb(187 180 175 / .35); box-shadow: var(--lm-shadow-sm); overflow: hidden; }
+.lm-product-form .fi-sc-tabs > .fi-tabs { width: 100%; }
+.lm-product-form .fi-sc-tabs > .fi-tabs .fi-tabs-item { flex: 1 1 0; justify-content: center; }
+.lm-product-form .fi-sc-tabs > .fi-sc-tabs-tab { padding: 1.25rem; }
+.lm-product-form .lm-stock-row { align-items: start; padding-top: .5rem; border-top: 1px solid rgb(187 180 175 / .3); }
+.lm-product-side { display: grid; gap: 1.25rem; }
+@media (min-width: 1280px) { .lm-product-side { position: sticky; top: 5.5rem; } }
+
+/* Tutte le tabelle del pannello: celle compatte, così le colonne entrano nello schermo senza tagli.
+   Se resta comunque troppo larga, la tabella scorre in orizzontale dentro il suo riquadro. */
+.fi-ta-header-cell { padding: .65rem .5rem; }
+.fi-ta-header-cell-label { white-space: nowrap; }
+.fi-ta-header-cell:first-child, .fi-ta-cell:first-child { padding-inline-start: .9rem; }
+.fi-ta-cell:last-child { padding-inline-end: .6rem; }
+.fi-ta-cell .fi-ta-text, .fi-ta-cell .fi-ta-icon, .fi-ta-cell .fi-ta-col-wrp { padding: .5rem .4rem; }
+.fi-ta-cell .fi-ta-text-item { font-size: .84rem; }
+.fi-ta-cell .fi-ta-text-item-description { font-size: .74rem; }
+.fi-ta-content-ctn { max-width: 100%; scrollbar-width: thin; }

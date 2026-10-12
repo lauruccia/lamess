@@ -1,0 +1,247 @@
+{
+  "label": "Piano Incaricati 08/10/2026 (presentazioni «Lamèss Incaricati» e «Seconda parte») — BOZZA da validare",
+  "settings": {
+    "activity_threshold": "100",
+    "commission_base_per_pv": "1.5",
+    "fifty_rule_share": "0.5",
+    "indirect_min_rank": "CONSULTANT",
+    "matching_min_rank": "SAPPHIRE",
+    "rank_bonus_installment_threshold": "50000",
+    "rank_bonus_installments": "12",
+    "rank_bonus_hold_months": "3",
+    "fsb_enabled": "false",
+    "payout_mode": "monthly_auto",
+    "payout_day": "15",
+    "min_payout": "15",
+    "scn_threshold": "5000",
+    "move_node_window_days": "7",
+    "engine": "kosmos_v1"
+  },
+  "policies": {},
+  "ranks": [
+    {
+      "code": "CONSULTANT",
+      "name": "Incaricato",
+      "sequence": 0,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 0,
+      "min_pearl_first_level": 0,
+      "structure": [],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 0,
+      "min_column_clients": 0,
+      "disabled_requirements": []
+    },
+    {
+      "code": "PEARL",
+      "name": "Pearl",
+      "sequence": 1,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 3,
+      "min_pearl_first_level": 0,
+      "structure": [],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 0,
+      "min_column_clients": 0,
+      "disabled_requirements": []
+    },
+    {
+      "code": "CRYSTAL",
+      "name": "Crystal",
+      "sequence": 2,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 6,
+      "min_pearl_first_level": 2,
+      "structure": [],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 0,
+      "min_column_clients": 0,
+      "disabled_requirements": []
+    },
+    {
+      "code": "SAPPHIRE",
+      "name": "Sapphire",
+      "sequence": 3,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 6,
+      "min_pearl_first_level": 3,
+      "structure": [
+        {
+          "rank": "CRYSTAL",
+          "count": 2
+        }
+      ],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 0,
+      "min_column_clients": 0,
+      "disabled_requirements": []
+    },
+    {
+      "code": "RUBY",
+      "name": "Ruby",
+      "sequence": 4,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 6,
+      "min_pearl_first_level": 4,
+      "structure": [],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 3,
+      "min_column_clients": 90,
+      "disabled_requirements": []
+    },
+    {
+      "code": "EMERALD",
+      "name": "Emerald",
+      "sequence": 5,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 6,
+      "min_pearl_first_level": 5,
+      "structure": [
+        {
+          "rank": "SAPPHIRE",
+          "count": 2
+        },
+        {
+          "rank": "RUBY",
+          "count": 2
+        }
+      ],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 0,
+      "min_column_clients": 0,
+      "disabled_requirements": []
+    },
+    {
+      "code": "DIAMOND",
+      "name": "Diamond",
+      "sequence": 6,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": 0,
+      "rank_bonus": 0,
+      "min_clients": 6,
+      "min_pearl_first_level": 6,
+      "structure": [
+        {
+          "rank": "EMERALD",
+          "count": 3
+        }
+      ],
+      "source": "Presentazione «Lamèss Incaricati» s.7 e 9; «Seconda parte» s.7 (conferme di Laura 08/10/2026)",
+      "min_columns": 0,
+      "min_column_clients": 0,
+      "disabled_requirements": []
+    }
+  ],
+  "matching_pct": {},
+  "fsb_steps": [],
+  "kosmos": {
+    "vap_share_pct": "66.66666",
+    "direct_tiers": [
+      {
+        "min_clients": 0,
+        "pct": 10
+      },
+      {
+        "min_clients": 3,
+        "pct": 15
+      },
+      {
+        "min_clients": 6,
+        "pct": 20
+      },
+      {
+        "min_clients": 9,
+        "pct": 25
+      },
+      {
+        "min_clients": 12,
+        "pct": 30
+      },
+      {
+        "min_clients": 24,
+        "pct": 35
+      },
+      {
+        "min_clients": 48,
+        "pct": 40
+      },
+      {
+        "min_clients": 96,
+        "pct": 50
+      }
+    ],
+    "indirect_levels": [
+      {
+        "level": 1,
+        "pct": 8,
+        "min_clients": 1,
+        "min_pearl": 0
+      },
+      {
+        "level": 2,
+        "pct": 4,
+        "min_clients": 2,
+        "min_pearl": 1
+      },
+      {
+        "level": 3,
+        "pct": 2,
+        "min_clients": 3,
+        "min_pearl": 2
+      },
+      {
+        "level": 4,
+        "pct": 1,
+        "min_clients": 3,
+        "min_pearl": 2
+      },
+      {
+        "level": 5,
+        "pct": 8,
+        "min_clients": 6,
+        "min_pearl": 3
+      }
+    ],
+    "pearl_rank": "PEARL",
+    "structure_clients": 3,
+    "structure_window_days": 30,
+    "structure_bonus": {
+      "CRYSTAL": 60,
+      "SAPPHIRE": 90,
+      "RUBY": 120,
+      "EMERALD": 150,
+      "DIAMOND": 180
+    },
+    "extended_pct": {
+      "RUBY": 1,
+      "EMERALD": 1,
+      "DIAMOND": 1
+    },
+    "extended_stop_levels": 5,
+    "extended_requires_level": null,
+    "source": "Presentazioni Lamèss Incaricati (s.3–9) e Seconda parte (s.4–9); valori confermati da Laura 08/10/2026. Diamond è l'ultima qualifica.",
+    "client_rule": "min_amount",
+    "client_min_amount": "150",
+    "rank_grace_until": null,
+    "rank_grace_days": 90
+  }
+}

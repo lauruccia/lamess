@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Subscription extends Model
+{
+    protected $guarded = [];
+
+    protected $hidden = ['stripe_customer_id', 'stripe_payment_method_id'];
+
+    /** In attesa del primo pagamento sulla pagina di Stripe: la carta non è ancora salvata. */
+    public const PENDING = 'pending';
+
+    public const ACTIVE = 'active';
+
+    public const METHOD_CARD = 'card';
+
+    public const METHOD_KMONEY = 'kmoney';
+
+    public const PAUSED = 'paused';
+
+    public const CANCELLED = 'cancelled';
+
+    protected function casts(): array
+    {
+        return [
+            'lines' => 'array', 'for_others' => 'array', 'billing' => 'array', 'free_shipping' => 'boolean', 'early_cancel' => 'boolean',
+            'started_at' => 'immutable_datetime', 'next_run_at' => 'immutable_datetime', 'paused_at' => 'immutable_datetime', 'cancelled_at' => 'immutable_datetime',
+        ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+}

@@ -1,0 +1,110 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Domain\Orders\KMoneyApiProvider;
+use App\Domain\Orders\KMoneyProvider;
+use App\Domain\Orders\OrderException;
+use App\Domain\Orders\OrderService;
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+
+/** «Accedi con KMoney»: collegamento del conto del cliente e ritorno dalle conferme; più il webhook firmato degli incassi. */
+final class KMoneyController extends Controller
+{
+    /** Avvia il collegamento: il cliente si autentica e concede il mandato su KMoney, non qui. */
+    public function connect(Request $r, KMoneyProvider $kmoney)
+    {
+        if (! $kmoney instanceof KMoneyApiProvider || ! $kmoney->enabled()) {
+            return redirect('/area/checkout')->withErrors(['order' => 'Il collegamento a KMoney non è disponibile al momento.']);
+        }
+        $auth = $kmoney->authorization();
+        $r->session()->put('kmoney_oauth', ['state' => $auth['state'], 'verifier' => $auth['verifier']]);
+
+        return redirect()->away($auth['url']);
+    }
+
+    /** Ritorno da KMoney: o il codice del collegamento, o l'esito di una conferma di pagamento. */
+    public function back(Request $r, KMoneyProvider $kmoney, OrderService $orders)
+    {
+        $orderId = $r->session()->pull('kmoney_order');
+
+        if ($r->filled('code')) {
+            $saved = (array) $r->session()->pull('kmoney_oauth');
+            if (! $kmoney instanceof KMoneyApiProvider || ! hash_equals((string) ($saved['state'] ?? ''), (string) $r->query('state'))) {
+                return redirect('/area/ordini')->withErrors(['order' => 'Collegamento a KMoney non valido: riprova.']);
+            }
+            try {
+                $link = $kmoney->connect($r->user(), (string) $r->query('code'), (string) ($saved['verifier'] ?? ''));
+            } catch (OrderException $e) {
+                return $this->toOrder($orderId, $r)->withErrors(['order' => $e->getMessage()]);
+            }
+            if (! $link->mandate_uuid) {
+                return $this->toOrder($orderId, $r)->withErrors(['order' => 'Per pagare in KMoney devi autorizzare i pagamenti in un clic: riprova e conferma l\'autorizzazione.']);
+            }
+            if ($orderId && ($order = Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->where('status', 'pending_payment')->first())) {
+                return redirect("/area/ordini/{$order->id}")->with('status', 'KMoney collegato. Premi «Paga con KMoney» per completare l\'ordine.');
+            }
+
+            return redirect('/area/checkout')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
+        }
+
+        // Ritorno da una conferma manuale: l'esito vero arriva dal webhook firmato, qui si rimanda all'ordine.
+        return $this->toOrder($orderId, $r)->with('status', 'Stiamo confermando il pagamento con KMoney: l\'ordine si aggiorna entro pochi istanti.');
+    }
+
+    public function disconnect(Request $r, KMoneyProvider $kmoney)
+    {
+        if ($kmoney instanceof KMoneyApiProvider) {
+            $kmoney->disconnect($r->user());
+        }
+
+        return back()->with('status', 'Collegamento a KMoney rimosso.');
+    }
+
+    /** Notifica firmata di KMoney: payment_request.paid → incassa la quota KMoney dell'ordine. */
+    public function webhook(Request $r, OrderService $orders): Response
+    {
+        $secret = (string) config('lamess.kmoney.webhook_secret');
+        $payload = $r->getContent();
+        $sig = (string) $r->header('X-KMoney-Signature');
+        if ($secret === '' || ! hash_equals('sha256='.hash_hmac('sha256', $payload, $secret), $sig)) {
+            return response('firma non valida', 400);
+        }
+        $event = json_decode($payload, true);
+        $name = (string) ($r->header('X-KMoney-Event') ?: (is_array($event) ? ($event['event'] ?? '') : ''));
+        $data = is_array($event) ? (array) ($event['payload'] ?? $event['data'] ?? $event) : [];
+        if ($name !== 'payment_request.paid') {
+            return response('ignorato', 200);
+        }
+        $ref = (string) ($data['external_order_uuid'] ?? $data['external_reference'] ?? '');
+        $order = $ref !== '' ? Order::where('number', $ref)->where('payment_method', 'kmoney')->first() : null;
+        if (! $order || $order->status !== 'pending_payment') {
+            return response('ok', 200);
+        }
+        $cents = (int) round((float) $order->kmoney_amount * 100);
+        if ((int) ($data['amount'] ?? -1) !== $cents) {
+            Log::warning('KMoney: importo non coincidente, ordine NON confermato', ['order' => $order->number, 'amount' => $data['amount'] ?? null]);
+
+            return response('importo non coincidente', 422);
+        }
+        try {
+            $orders->settleKMoney($order, (string) ($data['transfer_uuid'] ?? $data['uuid'] ?? 'kmoney'));
+        } catch (OrderException $e) {
+            Log::warning('KMoney: conferma ordine non riuscita', ['order' => $order->number, 'error' => $e->getMessage()]);
+        }
+
+        return response('ok', 200);
+    }
+
+    private function toOrder(mixed $orderId, Request $r)
+    {
+        $order = $orderId ? Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->first() : null;
+
+        return redirect($order ? "/area/ordini/{$order->id}" : '/area/ordini');
+    }
+}

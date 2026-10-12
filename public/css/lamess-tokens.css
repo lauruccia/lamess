@@ -1,0 +1,123 @@
+/*
+ * Token grafici Lamèss — UNICA fonte per sito pubblico, aree utente e back-office.
+ * Colori e font derivano da lamess.it. Per cambiare l'aspetto si modifica solo questo file.
+ *
+ * Contrasti verificati (WCAG 2.1):
+ *   inchiostro su terracotta 4,7:1 (testo normale OK)   — il BIANCO su terracotta è solo 4,0:1: usarlo solo per testo grande/grassetto
+ *   marrone (link) su crema 6,3:1 · inchiostro su crema 17,6:1
+ *   colori dei grafici: ≥ 3:1 sia su sfondi chiari sia su sfondi scuri (oggetti grafici)
+ *
+ * I font sono ospitati qui (public/fonts/lamess): nessuna richiesta a Google, nessuna dipendenza esterna.
+ */
+
+/* ---------- Font (OFL 1.1, licenze nella cartella dei font) ---------- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/lamess/inter-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/lamess/inter-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Marcellus';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/lamess/marcellus-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Marcellus';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/lamess/marcellus-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------- Palette di marca (non cambia con il tema) ---------- */
+:root {
+  --lm-ink: #13110E;        /* testi, bottoni primari */
+  --lm-terracotta: #C2663A; /* accento / CTA */
+  --lm-cream: #FCF6F3;      /* sfondi */
+  --lm-white: #FFFFFF;
+  --lm-taupe: #BBB4AF;      /* bordi */
+  --lm-brown: #894C2D;      /* link su sfondo chiaro */
+  --lm-sand: #E3AA8D;       /* tinta chiara */
+
+  --lm-font-display: 'Marcellus', Georgia, 'Times New Roman', serif;   /* titoli */
+  --lm-font-text: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* testo */
+}
+
+/* ---------- Ruoli semantici — tema chiaro (predefinito) ---------- */
+:root {
+  --lm-bg: var(--lm-cream);
+  --lm-surface: var(--lm-white);
+  --lm-text: var(--lm-ink);
+  --lm-border: var(--lm-taupe);
+  --lm-link: var(--lm-brown);
+  --lm-accent: var(--lm-terracotta);
+  --lm-on-accent: var(--lm-ink);        /* 4,7:1 */
+  --lm-chrome: var(--lm-ink);           /* intestazione e bottoni primari */
+  --lm-on-chrome: var(--lm-cream);
+  --lm-accent-soft: var(--lm-sand);
+  --lm-ok: #2F6F4F;  --lm-ok-bg: #E8F3EC;
+  --lm-err: #B3261E; --lm-err-bg: #FBE9E7;
+  --lm-warn-bg: #FFF3E6;
+
+  /* 6 colori per i grafici, in ordine d'uso. Gli stessi valori vanno bene su sfondo chiaro e scuro
+     (tutti ≥ 3:1 su bianco, crema e sugli sfondi scuri): non esistono varianti per il tema scuro. */
+  --lm-chart-1: #C2663A;
+  --lm-chart-2: #4A7A9B;
+  --lm-chart-3: #6A8F58;
+  --lm-chart-4: #A98625;
+  --lm-chart-5: #8A5C8E;
+  --lm-chart-6: #80776D;
+}
+
+/* ---------- Tema scuro: automatico, oppure forzato con data-theme="dark" / classe .dark (Filament) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not(.light) {
+    --lm-bg: #13110E;
+    --lm-surface: #1D1A16;
+    --lm-text: #F3EBE6;
+    --lm-border: #4A443E;
+    --lm-link: var(--lm-sand);
+    --lm-chrome: #2A241E;
+    --lm-on-chrome: #FCF6F3;
+    --lm-ok: #7CC29B;  --lm-ok-bg: #1F2E26;
+    --lm-err: #F2A097; --lm-err-bg: #3A1F1C;
+    --lm-warn-bg: #33261A;
+  }
+}
+:root[data-theme='dark'], :root.dark {
+  --lm-bg: #13110E;
+  --lm-surface: #1D1A16;
+  --lm-text: #F3EBE6;
+  --lm-border: #4A443E;
+  --lm-link: var(--lm-sand);
+  --lm-chrome: #2A241E;
+  --lm-on-chrome: #FCF6F3;
+  --lm-ok: #7CC29B;  --lm-ok-bg: #1F2E26;
+  --lm-err: #F2A097; --lm-err-bg: #3A1F1C;
+  --lm-warn-bg: #33261A;
+}
+
+/* ---------- Titoli in Marcellus anche nel back-office (Filament) ---------- */
+.fi-header-heading,
+.fi-simple-header-heading,
+.fi-section-header-heading,
+.fi-modal-heading {
+  font-family: var(--lm-font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}

@@ -1,0 +1,1896 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 05/10/2026 09:11</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale del consulente</h1>
+<blockquote>
+<p>Stato: area consulente attiva (ordini, statini mensili, abbonamenti, avanzamento di carriera). Qui è riportato come funzionano i compensi
+secondo il piano e come si usano le pagine dell'area.</p>
+</blockquote>
+<h2>Come maturano i compensi</h2>
+<ul>
+<li><strong>Direct Bonus</strong>: percentuale (15%–38% in base alla tua qualifica) sulle vendite ai tuoi clienti.</li>
+<li><strong>Team Bonus</strong>: differenza tra la tua percentuale e quella dei consulenti sotto di te (dalla qualifica Pearl in su, con stato attivo).</li>
+<li><strong>Matching Bonus</strong>: quota sui Direct dei consulenti del tuo team, fino a 6 livelli (dalla qualifica Sapphire).</li>
+<li><strong>Rank Bonus</strong>: premio una tantum alla prima volta che raggiungi una qualifica; oltre 50.000 € è pagato in 12 rate.</li>
+</ul>
+<h2>Stato ATTIVO</h2>
+<p>Servono 100 punti nel mese. Per essere pagato devi essere attivo; alcuni importi restano trattenuti per un periodo se non lo sei.</p>
+<h2>Qualifiche</h2>
+<p>Si ottengono con i punti carriera (PR) e la struttura di consulenti qualificati. Nessuna singola linea conta per più del 50% dei PR richiesti. La nuova qualifica vale dal 1° giorno del mese successivo.</p>
+<h2>Resi</h2>
+<p>Se un ordine già conteggiato in un periodo chiuso viene reso, la provvigione viene stornata nel primo periodo aperto.</p>
+<p>I valori esatti sono quelli del piano in vigore; possono cambiare con le decisioni ancora aperte.</p>
+<h2>Diventare consulente (aggiunta 01/10/2026)</h2>
+<ol>
+<li><strong>Registrati come FAN</strong> da <code>/registrazione</code> (privato o azienda). Se sei arrivato da un link di un consulente (<code>/r/CODICE</code>), questo viene ricordato per <strong>15 giorni</strong> (cookie) e il consulente diventa il tuo referente. Il codice si può anche scrivere a mano nel modulo.</li>
+<li>Dalla tua area scegli <strong>«Diventa consulente»</strong>: compili i dati anagrafici e fiscali (codice fiscale, nascita, residenza), maggiorenne obbligatorio.</li>
+<li><strong>Firma</strong> la Lettera di incarico IVD con un codice a 6 cifre (OTP). Da quel momento sei consulente in attesa di accettazione.</li>
+<li>Il Consorzio <strong>accetta o rifiuta</strong>. Se accetta ricevi la mail di benvenuto e il <strong>tesserino PDF</strong> (numero e validità). Se rifiuta torni FAN e i punti generati nel frattempo passano al tuo sponsor.</li>
+<li><strong>Onboarding</strong>: carica foto e documento d'identità (verificati dal back-office) e inserisci IBAN e intestatario (l'IBAN è controllato). Finché l'onboarding non è completo le commissioni indirette non maturano.</li>
+</ol>
+<h2>Canone annuale</h2>
+<p>Il primo anno è gratuito. Dal secondo anno ricevi la richiesta di canone almeno 30 giorni prima della scadenza, con promemoria a 30, 7 e 1 giorno. Se non viene pagato il contratto scade e torni FAN.</p>
+<h2>Negozio e ordini (aggiunta 03/10/2026)</h2>
+<ul>
+<li><strong>Catalogo</strong> su <code>/negozio</code>; aggiungi al carrello. Se un acquisto fa scattare un omaggio (es. 5+1) lo vedi già nel carrello.</li>
+<li><strong>Checkout</strong> (serve l'accesso): inserisci dati di fatturazione e indirizzo (si ricordano per la volta successiva). Le aziende indicano ragione sociale, partita IVA e codice SDI o PEC.</li>
+<li><strong>Pagamento</strong>: carta (in sviluppo è simulata) oppure bonifico: con il bonifico l'ordine resta «in attesa» finché il Consorzio non conferma l'accredito.</li>
+<li><strong>I miei ordini</strong> (<code>/area/ordini</code>): stato, tracking della spedizione, fattura o ricevuta in PDF e, se ci sono resi, la nota di credito.</li>
+<li>I punti (PV) arrivano <strong>solo a pagamento confermato</strong>, nel mese del pagamento. Gli acquisti di un cliente generano PVF per il suo consulente; gli acquisti di un consulente generano PVC per lui. Le spese di spedizione non generano punti.</li>
+</ul>
+<h2>Il mio statino e i pagamenti (aggiunta 05/10/2026)</h2>
+<ul>
+<li><strong>I miei statini</strong> (<code>/area/statini</code>): per ogni mese chiuso vedi i compensi divisi per tipo (Direct, Team, Matching, Rank Bonus, Fast Start), con da dove arrivano e come sono calcolati, quanto è maturato, quanto è trattenuto e quanto è da pagare. Si scarica anche in PDF.</li>
+<li><strong>Quando si paga</strong>: i compensi del mese si pagano con bonifico dal 15 del mese successivo.</li>
+<li><strong>Cosa serve per essere pagato</strong>: documento d'identità verificato, IBAN con intestatario inseriti nell'onboarding, nessun blocco sui bonus.</li>
+<li><strong>Importo minimo</strong>: sotto i 15 € non si paga e l'importo si somma al mese dopo.</li>
+<li><strong>Importi trattenuti</strong>: restano in attesa (ad esempio se non sei attivo); lo statino ne indica il motivo.</li>
+</ul>
+<h2>Abbonamento mensile (aggiunta 05/10/2026)</h2>
+<ul>
+<li>Dal checkout scegli, pagando con carta, di ripetere l'ordine ogni mese. Il primo ordine parte subito.</li>
+<li><strong>Spedizione gratuita</strong> se scegli l'impegno di 12 mesi (un ordine al mese).</li>
+<li>In <strong>I miei abbonamenti</strong> (<code>/area/abbonamenti</code>) puoi mettere in pausa, riprendere o annullare. Se un addebito non va a buon fine il sistema riprova dopo qualche giorno; dopo i tentativi previsti l'abbonamento va in pausa e lo riprendi tu.</li>
+<li>Annullare prima dei 12 mesi è possibile; la disdetta viene registrata.</li>
+</ul>
+<h2>Ordine per i miei clienti e per i miei consulenti (aggiunta 05/10/2026)</h2>
+<p>Nel carrello trovi «Ordine per altri»: scegli il destinatario (un tuo cliente o un consulente che hai sponsorizzato direttamente), il prodotto e la quantità. L'ordine è unico, con una sola spedizione; i punti vanno a chi riceve l'ordine.</p>
+<h2>Avvisi email sui compensi</h2>
+<p>Quando l'invio email è attivo ricevi un avviso alla chiusura del mese («il tuo statino è pronto») e quando il bonifico dei compensi è stato effettuato. Lo statino resta sempre disponibile in Area → Statini.</p>
+<h2>Nuove pagine dell'area personale (05/10/2026)</h2>
+<ul>
+<li><strong>Il mio ramo</strong> (solo consulenti): la tua rete ad albero, in sola lettura. Clicca + per aprire i rami; per ogni persona vedi qualifica, se è attiva, PVF e PR del mese.</li>
+<li><strong>I miei clienti</strong> (solo consulenti): chi si è iscritto con il tuo link, con ordini pagati e ultimo ordine.</li>
+<li><strong>I miei dati</strong> (tutti): modifica telefono e indirizzo, cambia la password. Email e dati fiscali si cambiano scrivendo al Consorzio.</li>
+</ul>
+<h2>Pagare con carta (aggiunta 05/10/2026)</h2>
+<p>Scegliendo la carta nel checkout vieni portato alla <strong>pagina sicura di Stripe</strong>: i dati della carta li inserisci lì, il portale non li vede mai. Finito il pagamento torni al portale: l'ordine passa a «pagato» in pochi istanti. Se chiudi la pagina o il pagamento non va a buon fine, apri l'ordine da <em>I miei ordini</em> e premi <strong>Paga con carta</strong>. Se paghi con bonifico, l'ordine resta «in attesa» finché il Consorzio non conferma l'accredito.</p>
+<h2>Verifica d'identità online (aggiunta 05/10/2026)</h2>
+<p>Se è attiva, nell'onboarding trovi <strong>Verifica ora</strong>: fotografi il documento e fai un selfie dal telefono, senza caricare file. Quando la verifica riesce il documento d'identità risulta approvato. La <strong>foto del tesserino</strong> va caricata comunque. Se non riesce puoi riprovare o caricare i documenti come prima.</p>
+<h2>Assistenza (aggiunta 05/10/2026)</h2>
+<p><strong>Area → Assistenza</strong>: apri una richiesta (domanda generale, problema tecnico, segnalazione, altro), segui le risposte del Consorzio e puoi rispondere o chiudere. Ricevi una risposta in pagina; le email partono solo quando l'invio email è attivo.</p>
+<h2>Reclami su estratto conto e ricevute (aggiunta 05/10/2026)</h2>
+<ul>
+<li>Ogni mese chiuso pubblica il tuo <strong>estratto conto</strong> (<em>I miei statini</em>). Hai <strong>10 giorni</strong> dalla pubblicazione per un <strong>reclamo circostanziato</strong>: apri la pagina dell'estratto e compila il modulo <strong>Invia il reclamo</strong>, spiegando cosa non torna (voce, importo, motivo). Passati i 10 giorni senza reclamo l'estratto si considera <strong>accettato</strong>.</li>
+<li>Il Consorzio decide il reclamo (accolto o respinto). Per le ricevute il modulo si chiama «Segnala un'anomalia». Se è accolto la correzione arriva come rettifica nel mese aperto; i mesi chiusi non si modificano.</li>
+<li>Lo stesso vale per le <strong>ricevute</strong> dei pagamenti (<em>Area → Ricevute</em>), quando sono attive.</li>
+</ul>
+<h2>Wallet e prelievi su richiesta (aggiunta 05/10/2026)</h2>
+<p>Compare <strong>solo se il piano prevede il pagamento su richiesta</strong> (oggi il piano paga automaticamente ogni mese, quindi non lo vedi).</p>
+<ul>
+<li><strong>Wallet</strong> (<em>Area → Wallet</em>): saldo e movimenti. Ogni mese chiuso accredita i compensi; eventuali storni restano a debito e si compensano con gli accrediti successivi.</li>
+<li><strong>Prelievo</strong>: indica l'importo (minimo 15 €, non oltre la quota disponibile). Vedi subito commissione bancaria e trattenute, se previste. Puoi ritirare la richiesta finché non è approvata. Una volta approvata, il bonifico arriva entro 5 giorni lavorativi.</li>
+<li><strong>Ricevuta</strong>: a ogni pagamento il Consorzio emette per tuo conto la ricevuta provvigionale (con ritenuta d'acconto e contributi, se applicati): la trovi in <em>Area → Ricevute</em> in PDF. Se hai partita IVA fatturi da te e non subisci trattenute.</li>
+</ul>
+<h2>Novità, materiali, eventi e referral (aggiunta 05/10/2026)</h2>
+<ul>
+<li><strong>Novità</strong> (<em>Area → Novità</em>): comunicazioni del Consorzio per la rete.</li>
+<li><strong>Materiali</strong> (<em>Area → Materiali</em>): documenti e immagini scaricabili. Ogni file viene <strong>personalizzato con il tuo codice</strong> (filigrana) e il download è registrato: non diffonderli fuori dalla rete. Alcuni sono visibili solo da una certa qualifica.</li>
+<li><strong>Eventi e corsi</strong> (<em>Area → Eventi</em>): iscriviti o annulla; se i posti sono finiti entri in <strong>lista d'attesa</strong> e sali se qualcuno annulla.</li>
+<li><strong>Referral</strong> (<em>Area → Referral</em>): il tuo link personale e il <strong>QR code</strong> da stampare o condividere. Chi si iscrive dal tuo link ti viene assegnato per 15 giorni.</li>
+</ul>
+<h2>Conformità e materiali promozionali (aggiunta 05/10/2026)</h2>
+<p>Prima di usare materiali promozionali tuoi (volantini, post, video) <strong>proponili al Consorzio</strong> da <em>Area → Conformità</em>: descrizione e file. Solo i materiali <strong>approvati</strong> (con codice <code>MA-AAAA-nnnn</code>) si possono usare; puoi ritirarli quando vuoi. Per segnalare comportamenti scorretti di altri usa Assistenza → «Segnalazione».</p>
+<h2>Cedere il tuo codice e successione (aggiunta 05/10/2026)</h2>
+<ul>
+<li><strong>Cessione</strong> (<em>Area → Cessione</em>, dal profilo): puoi cedere il tuo codice a un'altra persona già registrata. Serve il <strong>contributo di cessione</strong> (50 €), poi il Consorzio approva. Prima della cessione i compensi non ancora pagati vanno saldati, a meno che il Consorzio decida che seguano il codice. Il cessionario firma una <strong>nuova lettera di incarico</strong> e carica i propri documenti e il proprio IBAN: finché non è accettato il codice resta sospeso. Puoi annullare la richiesta prima della decisione. Un codice sanzionato o con casi di conformità aperti non si può cedere.</li>
+<li><strong>In caso di decesso</strong> gli eredi contattano il Consorzio: documenti, quote e liquidazione dei compensi maturati agli eredi. Un erede può <strong>subentrare</strong> nel codice con una nuova lettera; se non si decide entro 180 giorni il codice cessa.</li>
+</ul>
+</section>
+<section id="manuale-admin"><h1>Manuale amministratore</h1>
+<blockquote>
+<p>Stato: motore, ordini, chiusura mensile, liquidazioni, pagamenti, statini ed export sono disponibili nel pannello (menu Liquidazioni, Pagamenti, Abbonamenti; scheda del periodo per chiusura, export e riapertura).
+Questo manuale viene esteso a ogni passo.</p>
+</blockquote>
+<h2>Il mese in breve</h2>
+<ol>
+<li><strong>Durante il mese</strong>: ordini e punti arrivano da soli; puoi vedere una stima (<em>Periodi → Stima live</em>).</li>
+<li><strong>Il giorno 1 del mese dopo (01:00)</strong>: se la chiusura automatica è accesa, parte il calcolo ufficiale del mese appena finito (e, se scelto, la chiusura).</li>
+<li><strong>Revisione</strong>: apri il mese in <em>Periodi</em>, controlla i numeri e premi <strong>Chiudi periodo</strong>. Alla chiusura nascono le <strong>liquidazioni</strong> (maturato e trattenuto di ciascun consulente).</li>
+<li><strong>Dal 15 (05:00)</strong>: i pagamenti «da pagare» vengono preparati da soli.</li>
+<li><strong>Tu</strong>: <em>Pagamenti → Esporta bonifici da fare (CSV)</em>, esegui i bonifici in banca, poi <strong>Segna pagato</strong> (riferimento e data).</li>
+<li>I consulenti vedono lo statino del mese in <em>I miei statini</em> (pagina e PDF).</li>
+</ol>
+<h2>Attenzione</h2>
+<ul>
+<li>Le politiche con stato <code>provisional</code> sono default provvisori: non approvare pagamenti reali basati su di esse finché il cliente non conferma.</li>
+<li>Un cambio di piano non deve alterare periodi già chiusi: ogni risultato conserva l'hash dell'input.</li>
+<li>Un consulente è pagabile solo con <strong>KYC verificato</strong> e <strong>IBAN</strong> inseriti, e senza blocco bonus. Gli altri restano in saldo e compaiono tra i «bloccati» alla preparazione.</li>
+<li>Sotto i 15 € (parametro <code>min_payout</code>) l'importo non si paga e si somma al mese dopo. I saldi negativi si riportano.</li>
+<li>Prima dell'uso vero imposta in <em>Impostazioni → Venditore</em> la ragione sociale e i dati: compaiono su fatture e statini.</li>
+</ul>
+<h2>Ciclo mensile da riga di comando (aggiunta 01/10/2026)</h2>
+<p>Con il pannello non serve, ma in locale o in emergenza il periodo si gestisce anche con <code>php artisan lamess:periodo</code>:</p>
+<ol>
+<li><code>apri AAAA-MM</code> — apre il mese con il piano attivo.</li>
+<li><code>live AAAA-MM</code> — stima dei compensi, ripetibile.</li>
+<li><code>runtime AAAA-MM</code> — calcolo ufficiale (il periodo passa in «review»).</li>
+<li><code>chiudi AAAA-MM</code> — richiede: runtime eseguito, nessun movimento in attesa di pagamento, dati non cambiati dopo il runtime. Le righe vengono bloccate e il periodo non è più modificabile.
+Dopo la chiusura le correzioni (resi) si registrano nel periodo aperto successivo; il sistema calcola gli storni.</li>
+</ol>
+<h2>Back-office web (aggiunta 01/10/2026)</h2>
+<p>Accesso: <code>/admin</code>. Il super_admin si crea con <code>php artisan lamess:superadmin email</code> (o dall'installazione guidata); gli altri utenti del back-office li crea il super_admin dalla pagina <strong>Utenti</strong> (password temporanea mostrata una volta sola). <code>lamess:admin-user</code> resta per uso da terminale e non crea mai super_admin.</p>
+<p><strong>Piano compensi</strong> — elenco versioni (bozza / attivo / archiviato). «Nuova bozza» parte dal piano ufficiale e valida il JSON con il motore. Sulla versione: <strong>Simula impatto</strong> (ricalcola un periodo con questa versione e mostra le differenze per bonus, senza scrivere nulla), <strong>Attiva</strong> (archivia la versione precedente; i periodi già aperti mantengono il loro piano), <strong>Duplica come bozza</strong>. Le versioni attive non si modificano.</p>
+<p><strong>Periodi</strong> — «Apri periodo» (AAAA-MM). Nel dettaglio: <strong>Stima (live)</strong> (non definitiva), <strong>Runtime ufficiale</strong> (periodo in «review»), <strong>Chiudi periodo</strong> (blocca le righe; bloccato se ci sono movimenti in attesa di pagamento o se i dati sono cambiati dopo il runtime).</p>
+<p><strong>Movimenti PV</strong> — registrazione di vendite, rettifiche e resi (reso = PV negativo con riferimento al movimento stornato). Un movimento non si modifica: si conferma o annulla se «in attesa di pagamento»; in un periodo chiuso non si tocca più. Una data fuori dal periodo viene rifiutata.</p>
+<p><strong>Consulenti</strong> — iscrizione (sponsor non modificabile dopo), <strong>Sospendi</strong>, <strong>Riattiva</strong>, <strong>Cessa</strong> (motivazione obbligatoria; i diretti passano al primo ascendente attivo). La scheda mostra sponsor attuale e originale e la cronologia degli stati.</p>
+<p>Nota: un consulente senza onboarding completo non matura le commissioni indirette (politica D06, default provvisorio). L'onboarding/KYC si gestisce dalle sezioni descritte sotto.</p>
+<h2>Onboarding, KYC e canoni (aggiunta 01/10/2026)</h2>
+<ul>
+<li><strong>Contratti IVD</strong>: elenco predefinito «firmati». <strong>Accetta</strong> (genera tesserino PDF e invia la mail di benvenuto) o <strong>Rifiuta</strong> (il consulente torna FAN; i movimenti dei periodi non chiusi passano allo sponsor). <strong>Lettera firmata</strong> apre il PDF (accessibile solo a chi ha il permesso).</li>
+<li><strong>Documenti KYC</strong>: predefinito «da verificare». <strong>Apri</strong>, <strong>Approva</strong>, <strong>Rifiuta</strong> (motivazione visibile al consulente). Quando tutti i documenti obbligatori sono approvati, con IBAN e dati completi, l'onboarding risulta completo.</li>
+<li><strong>Canoni annuali</strong>: predefinito «da pagare». <strong>Segna pagato</strong> (bonifico/carta/wallet) rinnova il contratto. Il comando <code>php artisan lamess:canoni</code> (schedulato ogni notte alle 03:30) crea i canoni, invia i promemoria e fa scadere i contratti non pagati.</li>
+<li><strong>Clienti (FAN)</strong>: elenco in sola lettura.</li>
+</ul>
+<h2>Ruoli, 2FA e cruscotto (aggiunta 02/10/2026)</h2>
+<p><strong>Ruoli</strong> (creare utenti: <code>php artisan lamess:admin-user email --role=NOME</code>; ricalcolare la matrice: <code>php artisan lamess:ruoli</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Ruolo</th>
+<th>Può</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>super_admin</td>
+<td>tutto</td>
+</tr>
+<tr>
+<td>admin_network</td>
+<td>consulenti (anche crearli/cessarli), contratti IVD, KYC, vede KPI e periodi</td>
+</tr>
+<tr>
+<td>admin_finance</td>
+<td>canoni, periodi e movimenti PV (anche scrivere), vede KPI e rete</td>
+</tr>
+<tr>
+<td>admin_compplan</td>
+<td>piano compensi (creare/attivare), vede periodi e rete</td>
+</tr>
+<tr>
+<td>support</td>
+<td>vede rete e clienti, verifica KYC</td>
+</tr>
+<tr>
+<td>board</td>
+<td>sola lettura: KPI, rete, periodi, piano</td>
+</tr>
+</tbody>
+</table>
+<p>Le azioni non consentite al tuo ruolo non compaiono. I ruoli <code>consultant</code> e <code>customer</code> non entrano nel back-office.</p>
+<p><strong>2FA</strong>: con <code>ADMIN_2FA_REQUIRED=true</code> (predefinito) al primo accesso il pannello chiede di collegare un'app di autenticazione (Google Authenticator, Authy…) dalla pagina <strong>Profilo</strong>; vengono mostrati i codici di recupero (da conservare). Ai login successivi serve il codice a 6 cifre.</p>
+<p><strong>Cruscotto</strong>: scegli il periodo in alto. Mostra fatturato (CV), PV, compensi maturati e trattenuti, payout ratio (compensi/CV), consulenti attivi, nuovi FAN e consulenti, code di lavoro (contratti da accettare, KYC, canoni) e due grafici (qualifiche, compensi per tipo). I dati di periodo vengono dall'ultimo calcolo: ufficiale se c'è, altrimenti stima live.</p>
+<h2>Negozio, ordini e fatture (aggiunta 03/10/2026)</h2>
+<ul>
+<li><strong>Prodotti</strong>: SKU, prezzo netto, IVA, PV e CV. <strong>PV vuoto = imponibile / 1,23</strong>; <strong>CV vuoto = PV</strong> (doppio se «Promo Rank»). I valori si congelano sull'ordine: cambiare un prodotto non tocca gli ordini già fatti. Un <strong>kit</strong> ha componenti a prezzo e PV zero. «Paesi» vuoto = tutti i paesi abilitati (<code>lamess.shop_countries</code>).</li>
+<li><strong>Omaggi (bundle)</strong>: «compra N di X → M omaggi di Y», ripetibile a ogni multiplo, con periodo di validità. Gli omaggi hanno PV zero.</li>
+<li><strong>Spedizioni</strong>: tariffa per paese (non genera PV).</li>
+<li><strong>Ordini</strong>: <strong>Conferma pagamento</strong> (bonifico ricevuto → genera i punti nel mese di oggi e la fattura), <strong>Spedisci</strong> (tracking), <strong>Annulla</strong> (solo se non pagato), <strong>Reso</strong> (scegli righe e quantità, motivazione obbligatoria: emette la nota di credito e registra il movimento PV negativo).</li>
+<li><strong>Reso e periodi</strong>: se il periodo del movimento originale è ancora aperto lo storno va lì; se è chiuso va nel mese corrente e il calcolo recupera i compensi (clawback).</li>
+<li><strong>Fatture / Note di credito</strong>: elenco con PDF di cortesia e stato di consegna al gestionale (Da inviare / Inviata / Errore). <strong>Reinvia</strong> riprova; un invio automatico orario (<code>lamess:fatture</code>) riprova da solo. Un errore del gestionale non blocca mai l'ordine.</li>
+<li>Numerazione progressiva per anno: <code>FT/2026/00001</code>, <code>NC/2026/00001</code>, ordini <code>ORD-2026-00001</code>.</li>
+<li>Il periodo del mese si <strong>apre da solo</strong> al primo pagamento se non esiste (parametro <code>auto_open_period</code>).</li>
+<li>Permessi: <code>orders.view</code>, <code>orders.manage</code>, <code>catalog.manage</code> (vedi tabella ruoli: admin_finance gestisce, support/board/admin_network leggono).</li>
+</ul>
+<h2>Importare il catalogo (aggiunta 04/10/2026)</h2>
+<p>Il listino reale (35 prodotti «preferiti» del listino Odoo, prezzi IVA inclusa, PV dalla colonna «PR numerico») è in <code>database/data/catalogo-odoo.csv</code>.</p>
+<pre><code>php artisan lamess:importa-prodotti --prova     # solo riepilogo, non scrive
+php artisan lamess:importa-prodotti             # importa o aggiorna (per SKU, nessun duplicato)
+php artisan lamess:importa-prodotti mio-file.csv --netti   # un altro file, con prezzi già al netto IVA
+</code></pre>
+<p>Formato CSV (separatore <code>;</code>, UTF-8): <code>sku;nome;prezzo_ivato;pv;attivo;note</code>. Dopo l'importazione ritocca tutto da <strong>Prodotti</strong>.
+Da verificare con il cliente: i prodotti con stesso nome e prezzi diversi (es. «1 BOX COSMETIC COFFEE» a 129,90 / 114,90 / 104,92) sono stati importati ma <strong>disattivati</strong> (resta attivo il prezzo più alto), come i listini «RESELLER» (PV zero, da attivare solo con una regola riservata). Gli omaggi a prezzo zero non si vendono direttamente: si usano nelle regole <strong>Omaggi</strong>.</p>
+<h2>Tre livelli di accesso e log di audit (aggiunta 02/10/2026)</h2>
+<ul>
+<li><strong>super_admin</strong> (solo il titolare del sistema): pagine <em>Utenti</em>, <em>Impostazioni di sistema</em>, <em>Log di audit</em> e <em>Verifica del log</em>. Non è visibile agli altri ruoli: non compare in elenchi, ricerche, esportazioni; un indirizzo diretto risponde 404. Nei campi «approvato da» dei dati di business compare «Amministrazione».</li>
+<li><strong>admin</strong> (il cliente): vede e fa solo ciò che il super_admin gli concede, partendo da un modello (es. Finanza, Rete). Non può mai ricevere gestione utenti, impostazioni di sistema o log.</li>
+<li><strong>Log di audit</strong>: registra accessi, cambi di ruoli/permessi, modifiche a utenti e impostazioni, importazioni. È a sola aggiunta con catena di hash: <em>Verifica del log</em> controlla ogni riga e mostra l'ancora da annotare.</li>
+<li><strong>Password dimenticata</strong>: dal sito (<code>/password-dimenticata</code>) e dal pannello. Le email partono solo se l'invio è acceso nelle Impostazioni di sistema.</li>
+</ul>
+<h2>Pagamenti automatici e controllo del cron</h2>
+<ul>
+<li>Dal 15 del mese successivo (parametro <code>payout_day</code> del piano) i pagamenti dei mesi chiusi vengono preparati da soli. Resta da fare il bonifico in banca: scarica «Esporta bonifici da fare (CSV)» e, a bonifico fatto, usa «Segna pagato».</li>
+<li>Il riquadro «Operazioni automatiche» della dashboard deve dire <strong>Attivo</strong>. Se dice «Fermo» o «Mai partito», il cron di cPanel non sta girando: nulla di automatico (canoni, fatture, abbonamenti, pagamenti) parte.</li>
+</ul>
+<h2>Chiusura mensile automatica</h2>
+<p>In <em>Impostazioni → Chiusura mensile</em> scegli: <strong>Spenta</strong>, <strong>Solo calcolo ufficiale</strong> (il mese va in revisione e lo chiudi tu da <em>Periodi</em>) oppure <strong>Calcola e chiude da sola</strong>. Parte la notte del giorno 1 alle 01:00. Se ci sono movimenti PV in attesa di pagamento si ferma e riprova ogni notte (lo vedi in dashboard). I mesi più vecchi di 45 giorni, e quelli che hanno davanti un mese ancora aperto, vanno chiusi a mano.
+In locale il cron non c'è: per provare le operazioni automatiche lancia <code>php artisan schedule:work</code> in un terminale e lascialo aperto.</p>
+<h2>Mesi chiusi prima dei pagamenti nel portale</h2>
+<p>I mesi già pagati con altri strumenti (gen–set 2026) non hanno liquidazioni. Per ciascuno apri <em>Periodi</em> → il mese → <strong>Segna come storico già pagato</strong>: da quel momento non entrano più in nessun pagamento. Fallo prima del primo «Prepara pagamenti» e, se i dati sono veri, solo per mesi che hai davvero già pagato.</p>
+<h2>Liquidazioni, pagamenti, statini ed export</h2>
+<ul>
+<li><strong>Liquidazioni</strong> (menu): una riga per consulente e mese, con maturato, trattenuto e stato (aperta / pagata).</li>
+<li><strong>Pagamenti</strong> (menu): <em>Prepara pagamenti</em> (a mano, se non vuoi aspettare il 15), <em>Esporta bonifici da fare (CSV)</em> (separatore <code>;</code>, IBAN, importo e causale), <em>Segna pagato</em>, <em>Annulla</em> (con motivo: le liquidazioni tornano disponibili).</li>
+<li><strong>Scheda del periodo</strong>: <em>Esporta provvigioni (CSV)</em>, <em>Genera liquidazioni</em> (solo per mesi chiusi senza liquidazioni), <em>Segna come storico già pagato</em>, <em>Riapri il mese</em> (solo super_admin, con motivo; solo l'ultimo mese chiuso e solo se nessun importo è già pagato).</li>
+<li>Ogni esportazione è registrata nel log di audit.</li>
+<li>Lo statino di un consulente si apre anche dall'admin: <code>/admin-files/statement/AAAA-MM/ID</code>.</li>
+</ul>
+<h2>File SEPA, avvisi email e dati del venditore</h2>
+<ul>
+<li><strong>File SEPA</strong>: in Impostazioni → Bonifici SEPA inserisci intestatario e IBAN del conto aziendale. Poi Pagamenti → «Esporta file SEPA (XML)» e carica il file nell'home banking. I pagamenti senza IBAN valido sono saltati e ti vengono elencati. Dopo il bonifico segna comunque ogni pagamento «pagato». La prima volta fai controllare il file alla banca.</li>
+<li><strong>Avvisi email</strong>: Impostazioni → Email. «Statino pronto» e «bonifico effettuato» vanno solo ai consulenti, mai ai clienti. Finché «Invio email attivo» è spento non parte nessuna email.</li>
+<li><strong>Venditore</strong>: Impostazioni → Venditore. Nel campo «Denominazione» scrivi la ragione sociale se sei una società, altrimenti nome e cognome. La dashboard avvisa finché c'è il testo provvisorio.</li>
+</ul>
+<h2>Abbonamenti</h2>
+<p>Menu <em>Abbonamenti</em>: elenco con stato, impegno, spedizione gratuita, cicli fatti, prossimo addebito e ultimo errore. Azioni: <em>Pausa</em>, <em>Riprendi</em>, <em>Annulla</em> (con motivo). Impostazioni in <em>Abbonamenti e spedizione</em>: spedizione gratuita sì/no, mesi di impegno minimo (12), giorni tra i tentativi, tentativi prima della pausa. Gli abbonamenti partono ogni notte alle 04:00 (<code>lamess:abbonamenti</code>).</p>
+<h2>Ordini per conto di altri</h2>
+<p>Un consulente attivo può aggiungere al carrello prodotti per i suoi clienti e per i consulenti che ha sponsorizzato direttamente. Un solo ordine, una sola spedizione; i punti vanno a chi riceve (PVF per il consulente del cliente, PVC per il consulente destinatario). Interruttore <code>lamess.order_for_others</code>.</p>
+<h2>Impostazioni di sistema (menu Impostazioni)</h2>
+<p>Gruppi: <strong>Email</strong> (interruttore invio), <strong>Rete</strong> (giorni per ri-iscriversi, cookie referral), <strong>Ordini e fatture</strong> (documento per i privati), <strong>Abbonamenti e spedizione</strong> (spedizione gratuita, impegno minimo, tentativi), <strong>Chiusura mensile</strong> (spenta / solo calcolo / calcola e chiude), <strong>Venditore</strong> (ragione sociale, partita IVA, indirizzo, email: compaiono su fatture e statini). Ogni modifica è nel log di audit.</p>
+<h2>Il nuovo menu (05/10/2026)</h2>
+<p>Le voci sono raccolte in 4 menu a tendina nella barra in alto: <strong>Rete</strong> (consulenti, clienti, albero, contratti, documenti, canoni), <strong>Compensi</strong> (piano, periodi, movimenti PV, liquidazioni, pagamenti), <strong>Vendite</strong> (ordini, abbonamenti, prodotti, regole, spedizioni, fatture, note di credito), <strong>Sistema</strong> (utenti, impostazioni, log, verifica log, riconciliazioni).</p>
+<h2>Pagamento con carta (Stripe) (aggiunta 05/10/2026)</h2>
+<ul>
+<li>Con <code>LAMESS_PAYMENT_DRIVER=stripe</code> il cliente, dopo il checkout, viene mandato alla <strong>pagina sicura di Stripe</strong>. L'ordine resta «in attesa di pagamento» finché Stripe non avvisa il portale (webhook): a quel punto passa a «pagato», nascono i punti e si emette la fattura. Se il cliente chiude la pagina può riprovare dalla pagina dell'ordine con <strong>Paga con carta</strong>.</li>
+<li>Il portale <strong>non conferma</strong> un ordine se l'importo o la valuta comunicati da Stripe non coincidono con l'ordine (resta in attesa e il caso va controllato a mano, con una riga nel registro del server). Un avviso ripetuto da Stripe non crea pagamenti doppi.</li>
+<li>Un ordine «in attesa» con carta da molto tempo: verifica in Stripe (Pagamenti) se è stato incassato; se sì, <strong>Ordini → Conferma pagamento</strong> come per il bonifico. Se non risulta incassato, annulla.</li>
+<li>Abbonamenti: con Stripe i rinnovi automatici non sono ancora attivi (servirebbero le carte salvate). Un abbonamento il cui addebito non riesce va in pausa e il cliente lo riprende con un ordine pagato dalla pagina.</li>
+</ul>
+<h2>Fatture elettroniche (FatturaPA) (aggiunta 05/10/2026)</h2>
+<ul>
+<li>Ogni fattura (<strong>TD01</strong>) e nota di credito (<strong>TD04</strong>) viene trasformata in XML FatturaPA 1.2.2, validato contro lo schema ufficiale. Le <strong>ricevute</strong> (privati, se <code>private_document = receipt</code>) non sono fatture elettroniche e non vengono trasmesse.</li>
+<li><strong>Vendite → Fatture / Note di credito</strong>: azione <strong>XML</strong> per scaricare il file, <strong>PDF</strong> per la copia di cortesia, <strong>Reinvia</strong> per ritentare la consegna. Colonna di invio: <em>pendente / inviata / errore</em> (con il motivo).</li>
+<li>Driver (<code>LAMESS_INVOICE_SINK</code>): <code>file</code> scrive l'XML in <code>storage/app/private/sdi-out</code>; <code>mail</code> fa lo stesso e lo spedisce in allegato a <code>LAMESS_SDI_MAIL_TO</code> (serve anche «Invio email attivo»). La trasmissione allo SdI vera e propria la fa chi riceve il file (gestionale, commercialista, PEC): il portale non parla direttamente con lo SdI.</li>
+<li>Errori tipici in colonna «errore»: dati del venditore incompleti (CAP, comune, provincia, partita IVA), cliente senza codice fiscale né partita IVA, indirizzo del cliente incompleto. Si correggono i dati e si preme <strong>Reinvia</strong>; ogni ora il portale riprova da solo (<code>lamess:fatture</code>).</li>
+<li>Il codice destinatario SdI del cliente è <code>0000000</code> se è un privato o se manca; per le aziende vale il codice SDI indicato nel checkout (o la PEC).</li>
+</ul>
+<h2>Verifica d'identità online (aggiunta 05/10/2026)</h2>
+<p>Con <code>LAMESS_KYC_DRIVER=stripe_identity</code> il consulente vede nell'onboarding il pulsante <strong>Verifica ora</strong> (documento + selfie dal telefono). Il documento d'identità risulta approvato quando Stripe conferma; la <strong>foto del tesserino</strong> va comunque caricata e verificata a mano. Se la verifica fallisce (<code>requires_input</code>) il consulente può riprovarla o caricare i documenti. In caso di cessione o successione le verifiche precedenti diventano «sostituite». L'esito positivo è nel log di audit.</p>
+<h2>Approvazione a quattro occhi del piano (aggiunta 05/10/2026)</h2>
+<p>Per default (<code>Impostazioni → Piano compensi</code>, <code>LAMESS_PLAN_FOUR_EYES</code>) una nuova versione del piano non si pubblica da sola:</p>
+<ol>
+<li>Chi ha il permesso <code>plan.manage</code> prepara la bozza e preme <strong>Chiedi approvazione</strong> (data di efficacia e motivo; con i quattro occhi spenti il pulsante si chiama <strong>Attiva</strong>): la bozza passa «in approvazione» e non si può più modificare.</li>
+<li>Un <strong>secondo</strong> amministratore con <code>plan.approve</code> (profilo «Piano compensi») la esamina con <strong>Simula impatto</strong> e sceglie <strong>Approva e pubblica</strong> oppure <strong>Rifiuta</strong> (motivo obbligatorio: la versione torna bozza).</li>
+<li>Chi ha chiesto la pubblicazione <strong>non può approvarla</strong>, nemmeno il super_admin. Può <strong>Ritirare la richiesta</strong> finché non c'è una decisione.
+Tutto è nel log di audit. Spegnere l'impostazione permette la pubblicazione diretta.</li>
+</ol>
+<h2>Assistenza: ticket e reclami (aggiunta 05/10/2026)</h2>
+<p>Menu <strong>Assistenza → Ticket e reclami</strong> (permessi <code>support.view</code> / <code>support.manage</code>).</p>
+<ul>
+<li>Categorie: domanda generale, problema tecnico, <strong>reclamo su estratto conto</strong>, <strong>segnalazione su ricevuta</strong>, segnalazione di comportamento, altro. I consulenti scelgono liberamente solo le prime e le ultime; i reclami nascono dalla pagina dell'estratto o della ricevuta.</li>
+<li>Azioni: <strong>Prendi in carico</strong>, <strong>Rispondi</strong> (anche come <em>nota interna</em>, invisibile al richiedente), <strong>Chiudi</strong>, <strong>Riapri</strong>.</li>
+<li><strong>Reclami sugli estratti conto</strong> (Reg. 5.2): ogni estratto si pubblica alla chiusura del mese; il consulente ha <strong>10 giorni</strong> (<code>dispute_days</code>) per un reclamo circostanziato. Senza reclamo l'estratto si considera <strong>accettato</strong> (<code>lamess:estratti</code>, ogni notte). Per un reclamo usa <strong>Decidi il reclamo</strong> (accolto / respinto, con nota): l'eventuale correzione economica si fa con una <strong>rettifica</strong> nel mese aperto, non toccando il mese chiuso.</li>
+<li>Dalla scheda di un ticket di tipo «segnalazione di comportamento» <strong>Apri un caso di conformità</strong> (permesso <code>compliance.manage</code>).</li>
+</ul>
+<h2>Wallet, prelievi e ricevute (aggiunta 05/10/2026)</h2>
+<p>Attivi <strong>solo se il piano in vigore ha il pagamento «su richiesta»</strong> (<code>payout_mode = on_request</code>); con il pagamento mensile automatico (default del piano di prelancio) restano inattivi e i consulenti non vedono il wallet.</p>
+<ul>
+<li><strong>Wallet</strong> (Compensi → Movimenti wallet): registro dei movimenti; il saldo è sempre la loro somma. Alla chiusura del mese le liquidazioni diventano accrediti; gli storni successivi restano a debito e si compensano con gli accrediti dopo. <strong>Rettifica manuale</strong> (motivo obbligatorio, nel log).</li>
+<li><strong>Prelievi su richiesta</strong> (Compensi → Prelievi su richiesta): il consulente richiede un importo (soglia minima del piano, 15 €, e non oltre la quota disponibile). Ciclo: <em>richiesto → approvato → pagato</em> (oppure <em>respinto</em> con motivo, <em>annullato</em> dal consulente finché non è approvato). <strong>Approva</strong> (permesso <code>payouts.manage</code>) ricalcola trattenute e saldo e crea il pagamento «da pagare», che segue lo stesso percorso degli altri (CSV, file SEPA, <em>Segna pagato</em>). Il bonifico va eseguito entro <strong>5 giorni lavorativi</strong> dalla richiesta. Un mese non si riapre se dal wallet sono già stati pagati prelievi.</li>
+<li><strong>Trattenute</strong> (Impostazioni → Ricevute e trattenute, <strong>valori provvisori da validare col commercialista</strong>): ritenuta d'acconto 23% sulla quota imponibile (78%), contributo INPS Gestione Separata solo sulla parte oltre la soglia annua (5.000 €), commissione bancaria sui prelievi (2,50 €). Tutto <strong>spento di default</strong>: con le trattenute spente il bonifico è pari al lordo. I consulenti con <strong>partita IVA</strong> (azione <em>Regime fiscale</em> sulla scheda del consulente) non subiscono trattenute e fatturano da sé.</li>
+<li><strong>Ricevute provvigionali</strong> (Compensi → Ricevute provvigionali): emesse per conto del consulente a ogni pagamento eseguito, solo se «Ricevute attive». Il consulente ha 10 giorni per segnalare anomalie; il reclamo si decide da Assistenza.</li>
+</ul>
+<h2>Novità, materiali ed eventi (aggiunta 05/10/2026)</h2>
+<p>Menu <strong>Assistenza</strong> (permesso <code>content.manage</code>, che hanno finanza e assistenza).</p>
+<ul>
+<li><strong>Novità</strong>: articoli con data di pubblicazione e pubblico (tutti, solo consulenti attivi, solo clienti/FAN).</li>
+<li><strong>Materiali scaricabili</strong>: carichi un file e scegli a chi è visibile (tutti, solo consulenti attivi, solo clienti) ed eventualmente la <strong>qualifica minima</strong> per scaricarlo. Nei PDF, JPG e PNG viene impressa una <strong>filigrana col codice del consulente</strong> a ogni scaricamento. Se la filigrana non riesce (es. PDF compresso) il file esce comunque e il <strong>Registro download</strong> lo segnala (<code>LAMESS_WATERMARK_FAIL_OPEN=false</code> per bloccare invece il download).</li>
+<li><strong>Eventi e corsi</strong>: data, posti, iscrizioni aperte/chiuse. Se i posti finiscono i consulenti vanno in lista d'attesa; quando qualcuno annulla, il primo in lista sale (o con l'azione <strong>Riempi i posti liberi</strong> sull'evento).</li>
+<li><strong>QR del referral</strong>: ogni consulente trova il proprio link e il QR in <em>Area → Referral</em>.</li>
+</ul>
+<h2>Conformità, sanzioni e materiali approvati (aggiunta 05/10/2026)</h2>
+<p>Menu <strong>Assistenza</strong> (permessi <code>compliance.view</code> / <code>compliance.manage</code>: lo ha l'amministratore di rete; assistenza e direzione in sola lettura).</p>
+<ul>
+<li><strong>Casi di conformità</strong>: aperti a mano o da un ticket di segnalazione. Azioni: <strong>Apri un caso</strong>, istruttoria, <strong>Applica una sanzione</strong> o <strong>Archivia</strong>. Le sanzioni si revocano con <strong>Revoca</strong> (Assistenza → Sanzioni).</li>
+<li><strong>Sanzioni</strong>: <em>richiamo</em> (solo registrato), <em>blocco compensi</em> (blocca i bonus; si ripristina allo scadere o alla revoca), <em>sospensione</em> (il consulente passa a «sospeso»), <em>cessazione</em> (chiude il codice come per la cessazione normale). Le sanzioni a tempo scadono da sole (<code>lamess:sanzioni</code>, ogni notte) e ripristinano lo stato precedente, salvo altre sanzioni ancora attive. Ogni sanzione e revoca è nel log. Un codice sanzionato o con casi aperti <strong>non può essere ceduto</strong>.</li>
+<li><strong>Materiali da approvare</strong>: i consulenti propongono i propri materiali promozionali (<em>Area → Conformità</em>); l'amministratore <strong>Approva</strong> (assegna il codice <code>MA-AAAA-nnnn</code>, da quel momento usabile) o <strong>Non approvare</strong> con motivo; il consulente può ritirarli. I materiali ufficiali del Consorzio si pubblicano già approvati con <strong>Pubblica materiale ufficiale</strong>.</li>
+</ul>
+<h2>Cessione del codice e successione (aggiunta 05/10/2026)</h2>
+<p><strong>Cessione</strong> (Reg. 9.1) — menu <em>Rete → Cessioni del codice</em>, permessi <code>fees.manage</code> (contributo) e <code>network.manage</code> (decisione):</p>
+<ol>
+<li>Il consulente la richiede da <em>Area → Cessione</em> indicando il cessionario (un utente già registrato che possa diventare consulente).</li>
+<li>Il <strong>contributo di cessione</strong> (default 50 €, <code>LAMESS_TRANSFER_FEE</code>) si segna pagato con <strong>Fee pagata</strong> (chi ha <code>fees.manage</code>).</li>
+<li><strong>Approva / Respingi</strong> (<code>network.manage</code>). L'approvazione è bloccata se il cedente ha un saldo compensi non pagato, a meno che l'amministratore decida espressamente che segua il codice. Un codice sanzionato o con casi aperti non si cede.</li>
+<li>All'approvazione cambia <strong>solo l'intestatario</strong>: codice, sponsor, qualifica e referral restano. Si azzerano IBAN e verifica KYC (i vecchi documenti diventano «sostituiti»), la lettera precedente risulta «ceduta» e il consulente passa a <strong>sospeso</strong> finché il cessionario non firma la nuova lettera e il Consorzio non la accetta (riattivazione automatica).</li>
+</ol>
+<p><strong>Successione</strong> (Reg. 9.2) — menu <em>Rete → Successioni (decessi)</em> (stessi permessi della rete e dei pagamenti):</p>
+<ol>
+<li><strong>Segnala un decesso</strong>: la lettera risulta «cessata», il consulente sospeso e i bonus bloccati.</li>
+<li>Con <strong>Carica documento</strong> ed <strong>Esamina documento</strong> si raccolgono e verificano i documenti (atti di successione, identità degli eredi).</li>
+<li><strong>Eredi e quote</strong> (la somma deve fare 100%), poi <strong>Verifica la pratica</strong>.</li>
+<li><strong>Liquida i compensi agli eredi</strong>: i compensi maturati e non pagati si dividono tra gli eredi per quota (l'eventuale resto di centesimi va alla quota maggiore). Le liquidazioni risultano «ereditate» e il wallet registra il debito «liquidazione eredi».</li>
+<li><strong>Segna un pagamento</strong>: bonifico manuale per ciascun erede (permesso <code>payouts.manage</code>), registrato fuori dal flusso mensile.</li>
+<li>Infine <strong>Subentro di un erede</strong> (stessa procedura della cessione, con nuova lettera) oppure <strong>Fai cessare il codice</strong>. Se non si decide entro <strong>180 giorni</strong> (<code>LAMESS_INHERITANCE_LIMBO_DAYS</code>) il codice cessa da solo (<code>lamess:successioni</code>).</li>
+</ol>
+<h2>Ruoli e permessi aggiornati (05/10/2026)</h2>
+<p>Nuovi permessi: <code>plan.approve</code>, <code>support.view/manage</code>, <code>content.manage</code>, <code>compliance.view/manage</code>. Assegnazione dei profili: <em>Rete e anagrafiche</em> → conformità (vedere e gestire); <em>Finanza e ordini</em> → assistenza e contenuti; <em>Piano compensi</em> → può anche approvare; <em>Assistenza</em> → assistenza, contenuti, conformità in lettura; <em>Direzione</em> → sola lettura. Dopo ogni aggiornamento che aggiunge permessi: <code>php artisan lamess:ruoli</code> (la prima installazione li crea da sola).</p>
+<h2>Operazioni pianificate (cron <code>schedule:run</code>) (05/10/2026)</h2>
+<p>Orari in Europe/Rome: 00:10 piano programmato che diventa attivo · 00:20 sanzioni a tempo · 00:30 successioni scadute · 01:00 chiusura mensile · 02:15 backup · 03:30 canoni · 04:00 abbonamenti · 05:00 pagamenti · 06:00 estratti accettati per decorrenza dei termini · ogni ora reinvio fatture · ogni minuto segnale di vita del cron.</p>
+</section>
+<section id="manuale-sviluppatori"><h1>Manuale per sviluppatori</h1>
+<h2>Requisiti e installazione</h2>
+<p>PHP ≥ 8.3, Composer, estensioni standard Laravel. <code>composer install</code>, poi <code>.env</code> e <code>php artisan key:generate</code>.</p>
+<h2>Test e stile</h2>
+<pre><code class="language-bash">php vendor/bin/phpunit tests/Unit/Engine   # 52 test: carriera, bonus, scenari G, proprietà
+vendor/bin/pint                            # stile
+</code></pre>
+<p>Pest e Larastan non erano installabili nell'ambiente cloud (download da GitHub bloccato).
+Sul tuo PC: <code>composer require --dev pestphp/pest larastan/larastan</code>; i test PHPUnit restano validi.</p>
+<h2>Usare il motore</h2>
+<pre><code class="language-php">$plan  = PlanLoader::prelaunch();                       // piano da config/lamess/*.json
+$input = new PeriodInput(PeriodKey::parse('2026-10'), $plan, $nodes, $movements, $prior);
+$res   = PeriodCalculator::calculate($input);            // PeriodResult
+$res-&gt;lines;        // righe con bonus, beneficiario, importo, base, aliquota, spiegazione
+$res-&gt;inputHash;    // hash canonico dello snapshot
+ImpactReport::compare($base, $alt);                      // simulazione &quot;cosa cambia se…&quot;
+</code></pre>
+<p>Il motore non tocca il database: costruire <code>Node</code>, <code>Movement</code>, <code>PriorState</code> da DB è compito del livello applicativo (fasi successive).</p>
+<h2>Scrivere scenari di test</h2>
+<p><code>tests/Support/Scenario.php</code>:</p>
+<pre><code class="language-php">$s = (new Scenario)-&gt;consultant('A', null, 'DIAMOND')-&gt;consultant('P', 'A', 'PEARL');
+$s-&gt;sale('P', 1000);
+$r = $s-&gt;run();
+</code></pre>
+<p>Gli scenari golden G01–G26 sono in <code>GoldenTest.php</code>; invarianti su reti casuali in <code>PropertyTest.php</code>.</p>
+<h2>Aggiungere o modificare un parametro</h2>
+<ul>
+<li><strong>Valore numerico del piano</strong> (aliquote, PR, premi, struttura): modifica il JSON in <code>config/lamess/</code>.</li>
+<li><strong>Impostazione numerica</strong> (soglie, rate…): chiave in <code>PlanConfig::SETTINGS</code> + sezione <code>settings</code> del JSON.</li>
+<li><strong>Nuova politica</strong>: voce in <code>PolicySpecs::all()</code> (decisione, default, opzioni, stato, fonte), poi usare <code>$plan-&gt;policies-&gt;is('nome','valore')</code> nel calcolo e un test.</li>
+<li>Rigenera la tabella: <code>php artisan lamess:parametri --write=docs/parametri.md</code>.</li>
+</ul>
+<h2>Regole di codice</h2>
+<ul>
+<li>Mai <code>float</code> per denaro/punti: <code>Num::of()</code>, <code>Num::money()</code>.</li>
+<li>Nessun numero magico nel motore.</li>
+<li>Ogni riga di risultato deve avere spiegazione e decisioni usate.</li>
+<li>Aggiornare <code>docs/registro-aggiornamenti.md</code> a ogni passo.</li>
+</ul>
+<h2>Documentazione</h2>
+<p><code>php artisan lamess:parametri --write=docs/parametri.md</code> e <code>php artisan lamess:manuale</code> (dossier HTML in <code>docs/dossier.html</code>) vanno rilanciati a ogni modifica ai parametri o ai manuali.</p>
+<h2>Persistenza e periodi (aggiunta 01/10/2026)</h2>
+<pre><code class="language-bash">php artisan migrate --seed --seeder=PrelaunchPlanSeeder   # tabelle + piano ufficiale attivo
+php artisan lamess:periodo apri 2026-10                   # apre il periodo con il piano attivo
+php artisan lamess:periodo live 2026-10                   # stima (calculation_run &quot;live&quot;)
+php artisan lamess:periodo runtime 2026-10                # runtime ufficiale → stato &quot;review&quot;
+php artisan lamess:periodo chiudi 2026-10                 # checklist + lock righe
+</code></pre>
+<p>Nel codice: <code>PvLedger::record(...)</code> per i movimenti; <code>app(PeriodService::class)-&gt;calculate($period, 'official')</code>.
+Test con database in <code>tests/Feature/Periods</code> (SQLite in memoria, trait <code>Tests\Support\NetworkDb</code>).
+Nota SQLite: i DECIMAL tornano come float; i modelli usano cast <code>decimal:2</code> per avere stringhe.</p>
+<h2>Rete e back-office (aggiunta 01/10/2026)</h2>
+<pre><code class="language-bash">php artisan lamess:superadmin laura@esempio.it     # super_admin (uno solo)
+php artisan lamess:admin-user cliente@esempio.it --preset=admin_finance   # admin con permessi di partenza
+php artisan lamess:audit-verifica                  # controlla la catena del log
+php artisan serve                                  # http://localhost:8000/admin
+</code></pre>
+<p><code>APP_LOCALE=it</code> in <code>.env</code> per i testi Filament in italiano. Test: <code>tests/Feature/Network</code> (G20, closure, stati, re-iscrizione), <code>tests/Feature/Admin</code> (pannello via Livewire).</p>
+<h2>F1 completo: FAN, IVD, KYC, tesserino, canone (01/10/2026)</h2>
+<pre><code>App\Domain\Customers     ReferralResolver (link → cookie → codice a mano → consulente predefinito OPEN-20), CustomerService
+App\Domain\Onboarding    IvdService (apply → requestSignature → sign → accept|reject), SignatureProvider (+ FakeSignatureProvider),
+                          KycService, OnboardingService (missing()), BadgeService, FeeService (process / markPaid), Iban
+</code></pre>
+<ul>
+<li>Cookie <code>lm_ref</code> 15 giorni (<code>lamess.referral_cookie_days</code>), escluso dalla cifratura in <code>bootstrap/app.php</code>.</li>
+<li>Firma: interfaccia <code>SignatureProvider</code>; driver <code>fake</code> (OTP in cache e mostrato in pagina, max 5 tentativi). Per un provider reale implementare l'interfaccia e registrarla in <code>AppServiceProvider</code> (<code>lamess.signature_driver</code>).</li>
+<li>Il testo della Lettera IVD è un <strong>segnaposto</strong> in <code>resources/views/pdf/ivd-letter.blade.php</code> (versione <code>ivd_template_version</code>): sostituirlo con il testo approvato dal Consorzio.</li>
+<li>Parametri in <code>config/lamess.php</code>: documenti KYC richiesti, importo e giorni del canone, grazia, promemoria, anni gratuiti.</li>
+<li>Test: <code>tests/Feature/Onboarding</code>, <code>tests/Feature/Admin/OnboardingAdminTest</code>; helper <code>Tests\Support\OnboardingDb</code>.</li>
+</ul>
+<h2>Ruoli, 2FA, KPI (02/10/2026)</h2>
+<ul>
+<li><code>App\Domain\Access\Roles</code>: matrice ruoli → permessi (<code>area.azione</code>), <code>Roles::sync()</code> idempotente. Il super_admin passa da <code>Gate::before</code>.</li>
+<li>Le risorse Filament usano il trait <code>GatedByPermission</code> (<code>viewPermission()</code> / <code>managePermission()</code>); le azioni usano <code>-&gt;authorize('permesso')</code>. Nuova risorsa = dichiarare i due permessi.</li>
+<li><code>User::canAccessPanel()</code> richiede un ruolo di <code>Roles::backoffice()</code>. Il flag <code>is_admin</code> è stato rimosso (la migrazione converte gli esistenti in super_admin).</li>
+<li>2FA: <code>AppAuthentication</code> di Filament con codici di recupero; segreto e codici cifrati a riposo. Obbligatorio con <code>ADMIN_2FA_REQUIRED</code> (nei test è <code>false</code> in <code>phpunit.xml</code>).</li>
+<li>KPI: <code>App\Domain\Kpi\KpiService::snapshot($periodo)</code> (sola lettura) alimenta i widget <code>KpiOverview</code>, <code>RankDistributionChart</code>, <code>CommissionsByTypeChart</code> e la pagina <code>Dashboard</code> con filtro periodo.</li>
+<li>Non ancora: approvazione a quattro occhi della pubblicazione del piano, gestione utenti da interfaccia.</li>
+</ul>
+<h2>Database e produzione (cPanel)</h2>
+<p>Sviluppo su SQLite, produzione su MySQL/MariaDB. Per rieseguire i test su MariaDB: copia <code>docs/phpunit.maria.xml.esempio</code> in <code>phpunit.maria.xml</code>, adatta host/utente/password e lancia <code>php vendor/bin/phpunit -c phpunit.maria.xml</code> (verificato: 115/115). Installazione passo passo: <code>docs/installazione-cpanel.md</code>.</p>
+<h2>F2: negozio, ordini, fatture (03/10/2026)</h2>
+<pre><code>App\Domain\Orders    OrderService (place → payByCard|markPaid → ship|cancel), ReturnService (refund), PeriodResolver,
+                      PaymentProvider (+ FakePaymentProvider)
+App\Domain\Billing   InvoiceService (issueForOrder, issueCreditNote, deliver, retryPending, pdf), DocumentNumbers,
+                      InvoiceSink (+ FakeInvoiceSink), SinkResult
+</code></pre>
+<ul>
+<li><strong>PV solo da eventi di pagamento</strong>: <code>markPaid</code> crea (o conferma) un movimento per riga con PV &gt; 0, nel periodo del mese di pagamento (OPEN-25), <code>external_ref</code> = <code>order:{numero}:{riga}</code> (idempotenza). Bonifico: movimento <code>pending_payment</code> creato all'ordine se il periodo del mese è già aperto; la chiusura periodo è bloccata finché esiste (G22).</li>
+<li><strong>Resi</strong>: <code>ReturnService::refund</code> → nota di credito + movimento negativo con <code>reverses_movement_id</code>. Periodo originale chiuso → storno nel mese corrente (il motore produce il <code>clawback</code>, D11).</li>
+<li><strong>Beneficiario/tipo punti</strong>: acquirente consulente attivo → PVC a sé; cliente → PVF al consulente assegnato (se non cessato); senza consulente = vendita «casa», nessun PV.</li>
+<li><strong>Totali</strong>: IVA calcolata per aliquota sul totale imponibile dell'aliquota (<code>InvoiceService::totals</code>); fattura = ordine al centesimo (verificato nei test).</li>
+<li><strong>InvoiceSink</strong>: interfaccia verso il gestionale/SDI. Driver <code>fake</code> oggi; per GestionaleK implementare <code>send()</code> e registrare il driver in <code>AppServiceProvider</code> (<code>lamess.invoice_sink_driver</code>). Il PDF è solo copia di cortesia; <strong>non c'è ancora il file FatturaPA XML</strong> (modello di riferimento nel progetto: <code>IT02507740518_1002t_modellofattura.xml</code>).</li>
+<li><strong>Pagamento carta</strong>: interfaccia <code>PaymentProvider</code>; driver reale (Stripe/Nexi) da fare. <code>lamess.payment_driver</code>.</li>
+<li>Il tempo va letto con <code>CarbonImmutable::now()</code> (non <code>new DateTimeImmutable</code>) per poter usare <code>travelTo()</code> nei test.</li>
+<li>Blade: con Livewire installato <strong>non usare <code>@continue</code>/<code>@break</code> dentro <code>@foreach</code></strong> (rompe la compilazione); usa <code>@if</code>.</li>
+<li>Test: <code>tests/Feature/Shop</code> (ordini, fatture e resi, pagine), <code>tests/Feature/Admin/ShopAdminTest</code>; helper <code>Tests\Support\ShopDb</code>. Suite verificata anche su MariaDB.</li>
+<li><code>DemoSeeder</code> crea prodotti di fantasia, un omaggio 5+1, una tariffa e due ordini demo.</li>
+</ul>
+<h2>Prezzi e importazione catalogo (04/10/2026)</h2>
+<ul>
+<li><code>products.net_price</code> e i prezzi unitari di righe ordine/fattura/nota di credito hanno <strong>8 decimali</strong>: un listino IVA inclusa (159,90) non è tondo al netto (131,06557377). Come nel modello di fattura di riferimento (<code>PrezzoUnitario</code> a 8 decimali), il netto resta esatto e si arrotonda <strong>una sola volta sul totale per aliquota</strong> (<code>InvoiceService::totals</code>): 159,90 IVA inclusa torna a 159,90 al centesimo.</li>
+<li>Le righe documento mostrano l'importo di riga arrotondato; la somma delle righe può differire di 1 centesimo dal totale (arrotondamento di riepilogo, come nel formato FatturaPA).</li>
+<li><code>App\Domain\Catalog\CatalogImporter</code> + <code>lamess:importa-prodotti</code> + <code>CatalogSeeder</code>.</li>
+<li>Un prodotto a prezzo zero non è acquistabile direttamente né compare nel negozio (serve come omaggio).</li>
+</ul>
+<h2>Fase 6: pagamenti, abbonamenti, automatismi (05/10/2026)</h2>
+<ul>
+<li><code>PayoutService</code>: <code>generateSettlements</code>, <code>preparePayouts($upTo)</code>, <code>prepareDue($now)</code> (automatico), <code>markPaid</code>, <code>cancel</code>, <code>markHistorical</code>, <code>openBalance</code>, <code>situation</code>. Importi sempre <code>BigDecimal</code> da stringa (SQLite restituisce float: casting <code>(string)</code>).</li>
+<li><code>PeriodAutomation::run($now)</code>: modalità <code>lamess.period_auto_close</code> = <code>off|calculate|close</code>; solo il primo mese non chiuso, entro 45 giorni; blocchi scritti una volta nel registro (cache <code>lamess.period_auto.blocked.*</code>); ultimo esito in cache <code>lamess.period_auto.last</code>.</li>
+<li>Abbonamenti: <code>SubscriptionService::runDue()</code> dal comando <code>lamess:abbonamenti</code>; ogni ciclo è un ordine normale pagato con carta (<code>PaymentProvider</code>); nei test si lega un provider finto prima di risolvere i servizi.</li>
+<li>Ordine per altri: <code>OrderService::place(..., $forOthers, $subscription)</code>, destinatari in <code>recipientsFor</code>.</li>
+<li>Heartbeat del cron: <code>Cache::forever('lamess.scheduler.heartbeat')</code> ogni minuto; widget <code>SchedulerStatus</code>.</li>
+<li>Test: <code>tests/Feature/Payouts/PayoutsTest</code>, <code>tests/Feature/Shop/SubscriptionsAndMultiOrdersTest</code>. Totale 305. Esegui <code>vendor/bin/pint</code> prima di consegnare.</li>
+<li>Nuovi permessi <code>payouts.view</code> / <code>payouts.manage</code>: dopo ogni aggiornamento <code>php artisan lamess:ruoli</code>.</li>
+</ul>
+<h2>SEPA e avvisi (05/10/2026)</h2>
+<p><code>App\Domain\Payouts\SepaExport::build()</code> genera pain.001.001.03 con DOM (importi con BigDecimal, niente bcmath). Avvisi: <code>PayoutService::notifyStatementsReady()</code> (da <code>PeriodService::close</code>) e <code>notifyConsultant()</code> per <code>PayoutPaid</code>; controllano <code>lamess.mail_enabled</code> e il flag, sono best-effort (errori solo nel log). Nuovi parametri: <code>lamess.sepa.*</code>, <code>notify_statement_ready</code>, <code>notify_payout_paid</code>.</p>
+<h2>Grafica e traduzioni (05/10/2026)</h2>
+<ul>
+<li>CSS statici: <code>public/css/lamess-tokens.css</code> (token), <code>lamess-admin.css</code> (Filament), <code>lamess-site.css</code> (sito e aree). Nessun build.</li>
+<li>Menu admin: <code>topNavigation()</code> + <code>navigationGroup</code> su ogni risorsa/pagina; gruppi dichiarati in <code>AdminPanelProvider</code>.</li>
+<li><code>App\Support\StatusLabels</code>: traduce i codici di stato (colonne <code>status</code>, <code>severity</code>, <code>source</code>…) in tutte le tabelle e schede Filament; un <code>formatStateUsing</code> proprio sulla colonna ha la precedenza.</li>
+<li>Pagine di errore: <code>resources/views/errors/*</code>.</li>
+</ul>
+<h2>Moduli 1-7 (05/10/2026)</h2>
+<pre><code>App\Domain\Plan         PlanVersionService: requestApproval / approve / reject / withdraw (quattro occhi, impostazione plan_four_eyes)
+App\Domain\Support      TicketService (open, reply anche interna, close, reopen, assign)
+App\Domain\Payouts      StatementLifecycle (estratti, reclami 10 giorni, accettazione tacita), ReceiptService, FiscalCalculator
+App\Domain\Wallet       WalletService (registro, saldo = somma), WithdrawalService (richiesta → approvato → pagato)
+App\Domain\Content      DownloadService + Watermarker (GD / FPDI), EventService, ReferralQr, RankLookup, Audience
+App\Domain\Compliance   ComplianceService (casi, sanzioni con effetti automatici), MaterialService (MA-AAAA-nnnn)
+App\Domain\Succession   AccountHolderService::swap (usato da cessione e successione), TransferService, InheritanceService
+App\Domain\Billing      FatturaPaBuilder, FileInvoiceSink, MailInvoiceSink (+ InvoiceSink / FakeInvoiceSink)
+App\Domain\Orders       StripeCheckoutProvider (RedirectPaymentProvider), StripeWebhook, CheckoutSession
+App\Domain\Onboarding   IdentityVerifier (+ NoIdentityVerifier, StripeIdentityVerifier), KycService::startOnline / applyOnlineResult
+App\Http\Controllers    WebhookController (un solo endpoint /webhooks/stripe per pagamenti e identità, esente da CSRF)
+</code></pre>
+<ul>
+<li><strong>Porte e driver</strong> (legati in <code>AppServiceProvider</code> da <code>config('lamess.*_driver')</code>): <code>payment_driver</code> (fake|stripe), <code>invoice_sink_driver</code> (fake|file|mail), <code>kyc_driver</code> (manual|stripe_identity), <code>signature_driver</code> (fake). Un driver nuovo = una classe che implementa l'interfaccia + una riga nel <code>match</code>.</li>
+<li><strong>Pagamento che reindirizza</strong>: <code>OrderService::usesRedirectCheckout()</code> e <code>startCardCheckout()</code>; il controller manda il cliente alla pagina esterna e la conferma arriva solo da <code>StripeWebhook::handle</code> → <code>markPaid</code> (idempotente: l'ordine non più <code>pending_payment</code> viene ignorato; importo o valuta diversi non confermano).</li>
+<li><strong>Firma del webhook</strong>: <code>StripeWebhook::verify</code> (HMAC-SHA256 su <code>t.payload</code>, tolleranza 5 minuti, confronto a tempo costante). Nessuna libreria Stripe: solo <code>Http</code> di Laravel, quindi nei test si usa <code>Http::fake</code>.</li>
+<li><strong>Fattura elettronica</strong>: <code>FatturaPaBuilder::build($doc)</code> restituisce <code>['filename','xml']</code> (FPR12, TD01/TD04), con <code>XMLWriter</code>; errori di dati → <code>BillingException</code>, che il sink trasforma in <code>SinkResult(false, …)</code> e <code>InvoiceService::deliver</code> salva in <code>sink_error</code>. Le ricevute (<code>type = receipt</code>) non si trasmettono. Lo schema ufficiale è in <code>tests/Fixtures/fatturapa/</code> (con l'import xmldsig reso locale) e i test validano ogni XML con <code>DOMDocument::schemaValidate</code>.</li>
+<li><strong>Cessione e successione</strong>: una sola funzione cambia l'intestatario senza toccare codice, sponsor, qualifica e referral (<code>AccountHolderService::swap</code>); crea una nuova <code>IvdContract</code> (<code>kind</code> transfer|succession) e sospende il consulente finché <code>IvdService::accept</code> non la riattiva (se non ci sono sanzioni di sospensione attive).</li>
+<li><strong>Sanzioni</strong>: <code>ComplianceService::sanction</code> applica l'effetto (blocco compensi = <code>bonus_hold</code>, sospensione, cessazione via <code>NetworkService::terminate</code>); <code>lift</code>/<code>expireDue</code> ripristinano senza cancellare il blocco imposto da altre sanzioni (<code>had_hold_before</code>).</li>
+<li><strong>Comandi nuovi</strong>: <code>lamess:estratti</code>, <code>lamess:sanzioni</code>, <code>lamess:successioni</code> (vedi l'elenco con orari nel Manuale amministratore).</li>
+<li><strong>Permessi</strong>: ogni risorsa Filament dichiara <code>viewPermission()</code> / <code>managePermission()</code> (trait <code>GatedByPermission</code>); aggiungere un permesso = voce in <code>Roles::PERMISSIONS</code>, eventuale riga in <code>Roles::MATRIX</code>, poi <code>php artisan lamess:ruoli</code>.</li>
+<li><strong>Test</strong>: 451 (1 saltato), tutti su SQLite in memoria. Nuove cartelle: <code>tests/Feature/{Support,Content,Compliance,Succession,Drivers}</code>; i driver si provano con <code>Http::fake</code>, <code>Mail::fake</code>, <code>Storage::fake</code>.</li>
+<li><strong>Insidie incontrate</strong>: i parametri delle closure Filament si risolvono per nome (<code>$state</code>, <code>$search</code>, <code>$value</code>: altri nomi rompono la validazione dei <code>Select</code>); <code>bcmath</code> può mancare sull'hosting, quindi niente <code>bcadd</code> (si usa <code>Num</code>); l'ordine conserva i dati cliente in <code>billing</code> (campo <code>name</code>, più <code>first_name</code>/<code>last_name</code> dagli ordini nuovi); <code>pint --dirty</code> richiede git: senza git lancia <code>vendor/bin/pint app tests config routes</code>.</li>
+<li><strong>Consegna</strong>: lo ZIP di produzione si costruisce con <code>tools/crea-pacchetto-cpanel.php</code> (esclude tests, <code>.env</code>, <code>CLAUDE.md</code>, <code>AGENTS.md</code>, la cache di bootstrap e il <code>vendor</code> di sviluppo). Il <code>vendor</code> locale con <code>composer install</code> completo non va caricato sul server.</li>
+</ul>
+</section>
+<section id="installazione-cpanel"><h1>Installazione su cPanel (hosting condiviso, MySQL/MariaDB)</h1>
+<h2>A. Senza terminale (percorso consigliato)</h2>
+<p>Tutto si fa con il file manager di cPanel e un browser. Il pacchetto si prepara sul PC/ambiente di sviluppo.</p>
+<ol start="0">
+<li><strong>Sul PC</strong> serve PHP 8.3 e Composer. Lo ZIP si prepara sempre dal PC: su cPanel senza terminale <strong>non si lancia mai <code>composer install</code></strong> (le librerie sono già nello ZIP). Se hai eseguito <code>composer install</code> sul PC, nessun problema: la tua cartella <code>vendor</code> locale (con gli strumenti di sviluppo, es. <code>laravel/boost</code>) serve solo per i test e <strong>non va caricata</strong>; lo script del punto 1 costruisce da solo un <code>vendor</code> di produzione (<code>--no-dev</code>) in una cartella a parte.</li>
+<li><strong>Prepara lo ZIP</strong> (una volta per ogni rilascio): <code>php tools/crea-pacchetto-cpanel.php --prima-installazione</code>
+→ crea <code>dist/lamess-AAAAMMGG-…-prima-installazione.zip</code> (≈ 60 MB, già con le librerie di produzione) e genera in <code>tools/.segreti-cpanel.env</code>
+la <code>APP_KEY</code> e il token di installazione (restano gli stessi nei pacchetti successivi: <strong>non perderli</strong>, una APP_KEY diversa rende illeggibili i dati cifrati e il log di audit).
+Per gli aggiornamenti: stesso comando senza <code>--prima-installazione</code> (lo ZIP non contiene <code>.env</code>).</li>
+<li><strong>Database</strong>: cPanel → <em>Database MySQL</em>: crea database e utente, associali con tutti i privilegi.</li>
+<li><strong>Carica e decomprimi</strong> lo ZIP fuori dalla cartella pubblica, es. <code>/home/UTENTE/lamess</code> (file manager → <em>Carica</em> → <em>Estrai</em>).</li>
+<li><strong>Cartella pubblica</strong>: cPanel → <em>Domini</em> → <em>Document Root</em> del dominio = <code>/home/UTENTE/lamess/public</code>. Se non è possibile, copia il contenuto di <code>public/</code> in <code>public_html/</code> e correggi in <code>public_html/index.php</code> i due percorsi (<code>../lamess/vendor/autoload.php</code>, <code>../lamess/bootstrap/app.php</code>).</li>
+<li><strong><code>.env</code></strong>: rinomina <code>.env.da-compilare</code> in <code>.env</code> e compila dominio, database e posta (il modello è <code>.env.cpanel.example</code>: sessioni e cache su file, code <code>sync</code>). Le chiavi dei servizi esterni (carta, verifica identità, fatture) si possono aggiungere subito o in un secondo momento: vedi «Chiavi dei servizi esterni» più sotto. Finché non le metti, il portale usa i sistemi di prova e il «Controllo messa online» lo segnala.</li>
+<li><strong>PHP</strong>: cPanel → <em>Seleziona versione PHP</em> → 8.3 o superiore, estensioni <code>mbstring, xml, zip, gd, intl, pdo_mysql, fileinfo, openssl</code>.</li>
+<li><strong>Installazione guidata</strong>: apri <code>https://tuodominio.it/installazione</code>. La pagina controlla il server, chiede il token (quello in <code>.env</code>) e i dati del super_admin, poi in un solo passaggio: esegue <strong>tutte le migrazioni</strong> (comprese quelle dei moduli più recenti: assistenza, wallet e prelievi, ricevute, novità e materiali, conformità e sanzioni, cessioni ed eredi, verifica identità), sincronizza <strong>ruoli e permessi</strong>, carica il <strong>piano compensi ufficiale</strong> e crea il super_admin. Funziona una volta sola: si blocca da sola (file <code>storage/app/installed.lock</code>). Per questo, <strong>se la prima installazione la fai con la versione definitiva, non serve nessun altro comando</strong>.</li>
+<li><strong>Subito dopo</strong>: cancella la riga <code>LAMESS_INSTALL_TOKEN</code> dal <code>.env</code>; aggiungi in <em>Operazioni pianificate (Cron)</em> la riga mostrata a fine installazione (ogni minuto, <code>schedule:run</code>); entra in <code>/admin</code>, collega l'app 2FA e apri <strong>Sistema → Controllo messa online</strong> per vedere cosa manca (vedi il documento «Messa online e piano di ritorno»).</li>
+<li><strong>Dati da compilare nel pannello</strong> (Impostazioni): <em>Venditore</em> (ragione sociale, partita IVA, indirizzo, CAP, comune, provincia, regime fiscale: servono per la fattura elettronica), <em>Bonifici SEPA</em>, <em>Email</em>. I parametri fiscali di <em>Ricevute e trattenute</em> restano spenti finché il commercialista non li ha validati.</li>
+</ol>
+<h3>Chiavi dei servizi esterni (file <code>.env</code>)</h3>
+<p>Tutte facoltative all'installazione; senza, il portale resta con i driver di prova.</p>
+<table>
+<thead>
+<tr>
+<th>Chiave</th>
+<th>Valori</th>
+<th>A cosa serve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LAMESS_PAYMENT_DRIVER</code></td>
+<td><code>fake</code> (prova) · <code>stripe</code></td>
+<td>pagamento con carta</td>
+</tr>
+<tr>
+<td><code>STRIPE_SECRET</code></td>
+<td><code>sk_live_…</code> (in prova <code>sk_test_…</code>)</td>
+<td>chiave segreta dell'account Stripe</td>
+</tr>
+<tr>
+<td><code>STRIPE_WEBHOOK_SECRET</code></td>
+<td><code>whsec_…</code></td>
+<td>firma delle notifiche di Stripe (senza, i pagamenti non si confermano mai)</td>
+</tr>
+<tr>
+<td><code>LAMESS_KYC_DRIVER</code></td>
+<td><code>manual</code> (default) · <code>stripe_identity</code></td>
+<td>verifica d'identità online; usa la stessa <code>STRIPE_SECRET</code></td>
+</tr>
+<tr>
+<td><code>LAMESS_INVOICE_SINK</code></td>
+<td><code>fake</code> · <code>file</code> · <code>mail</code></td>
+<td>destinazione delle fatture elettroniche (XML FatturaPA)</td>
+</tr>
+<tr>
+<td><code>LAMESS_SDI_MAIL_TO</code></td>
+<td>indirizzo email</td>
+<td>destinatario del driver <code>mail</code> (casella di importazione del gestionale, commercialista o PEC verso lo SdI)</td>
+</tr>
+<tr>
+<td><code>LAMESS_SELLER_NAME</code>, <code>_VAT</code>, <code>_ADDRESS</code>, <code>_ZIP</code>, <code>_CITY</code>, <code>_PROVINCE</code>, <code>_TAX_CODE</code>, <code>_REGIME</code></td>
+<td>testo</td>
+<td>dati del venditore (modificabili anche da Impostazioni → Venditore)</td>
+</tr>
+<tr>
+<td><code>LAMESS_MAIL_ENABLED</code></td>
+<td><code>false</code> (default) · <code>true</code></td>
+<td>interruttore generale delle email, comprese le fatture spedite dal driver <code>mail</code></td>
+</tr>
+<tr>
+<td><code>LAMESS_TRANSFER_FEE</code></td>
+<td><code>50.00</code></td>
+<td>contributo per la cessione del codice</td>
+</tr>
+<tr>
+<td><code>LAMESS_INHERITANCE_LIMBO_DAYS</code></td>
+<td><code>180</code></td>
+<td>giorni dopo cui un codice di un consulente deceduto, senza subentro, cessa</td>
+</tr>
+<tr>
+<td><code>LAMESS_DISPUTE_DAYS</code></td>
+<td><code>10</code></td>
+<td>giorni per reclamare su estratti conto e ricevute</td>
+</tr>
+<tr>
+<td><code>LAMESS_PLAN_FOUR_EYES</code></td>
+<td><code>true</code></td>
+<td>la pubblicazione del piano richiede un secondo amministratore</td>
+</tr>
+</tbody>
+</table>
+<p>Molti di questi valori si cambiano anche da <strong>Impostazioni</strong> nel pannello (hanno la precedenza sul <code>.env</code>). Le chiavi segrete (Stripe) stanno <strong>solo</strong> nel <code>.env</code>.</p>
+<p><strong>Stripe, una volta sola</strong> (dashboard Stripe → Sviluppatori → Webhook): aggiungi l'endpoint <code>https://tuodominio.it/webhooks/stripe</code> e abilita gli eventi <code>checkout.session.completed</code>, <code>checkout.session.async_payment_succeeded</code> e, se usi la verifica d'identità, <code>identity.verification_session.verified</code>, <code>identity.verification_session.requires_input</code>, <code>identity.verification_session.canceled</code>. Copia il «segreto di firma» (<code>whsec_…</code>) in <code>STRIPE_WEBHOOK_SECRET</code>. La pagina <code>/webhooks/stripe</code> accetta solo chiamate firmate.
+Prova prima con le chiavi <code>sk_test_</code> e le carte di prova di Stripe; il «Controllo messa online» segnala come ATTENZIONE una chiave di prova.</p>
+<p>Il super_admin si crea <strong>solo</strong> dall'installazione guidata o da <code>php artisan lamess:superadmin</code>; mai dal pannello.</p>
+<h2>B. Con terminale (alternativa)</h2>
+<p>Verificato (fino alla fase 8, 5 ottobre): migrazioni, seeder e suite di test passano su <strong>MariaDB 10.11</strong> (<code>phpunit.maria.xml</code>). La suite attuale (451 test, moduli 1-7 inclusi) è verificata su SQLite: <strong>prima della messa online rilancia le migrazioni e la suite su MariaDB</strong> (<code>docs/phpunit.maria.xml.esempio</code>).
+Non verificato: la tua versione esatta di MySQL/PHP sull'hosting, la posta reale, le prestazioni con molti consulenti.</p>
+<h2>Requisiti da controllare nel cPanel</h2>
+<ul>
+<li><strong>PHP 8.3 o superiore</strong> (cPanel → <em>Select PHP Version</em> / <em>MultiPHP Manager</em>), con estensioni: <code>mbstring, xml, curl, zip, gd, intl, pdo_mysql, fileinfo, openssl</code>.</li>
+<li><strong>MySQL 8 / MariaDB 10.6+</strong>.</li>
+<li>Accesso <strong>Terminale</strong> (SSH) consigliato per <code>composer</code> e <code>artisan</code>. Senza terminale: si prepara tutto sul PC (<code>composer install --no-dev</code>) e si carica la cartella <code>vendor</code> insieme al resto.</li>
+<li><strong>Cron job</strong> (cPanel → <em>Cron Jobs</em>): serve per canoni, fatture, abbonamenti, chiusura mensile automatica e pagamenti.</li>
+</ul>
+<h2>Passi</h2>
+<ol>
+<li><strong>Database</strong>: cPanel → <em>MySQL Databases</em>: crea database e utente, associali con <em>tutti i privilegi</em>. Annota nome, utente, password (di solito con prefisso <code>cpuser_</code>).</li>
+<li><strong>Carica il progetto</strong> fuori dalla cartella pubblica, es. <code>/home/UTENTE/lamess</code> (non dentro <code>public_html</code>).</li>
+<li><strong>Cartella pubblica</strong>: il contenuto di <code>lamess/public</code> deve diventare la radice del dominio. Due modi:
+<ul>
+<li>meglio: cPanel → <em>Domains</em> → imposta la <em>Document Root</em> del dominio/sottodominio su <code>/home/UTENTE/lamess/public</code>;</li>
+<li>altrimenti: copia il contenuto di <code>public/</code> in <code>public_html/</code> e correggi in <code>public_html/index.php</code> i due percorsi verso <code>../lamess/vendor/autoload.php</code> e <code>../lamess/bootstrap/app.php</code>.</li>
+</ul>
+</li>
+<li><strong><code>.env</code></strong> (copia da <code>.env.example</code>) con:
+<pre><code>APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://tuodominio.it
+APP_LOCALE=it
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=cpuser_lamess
+DB_USERNAME=cpuser_lamess
+DB_PASSWORD=...
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+MAIL_MAILER=smtp   # host/porta/utente/password della casella creata in cPanel
+ADMIN_2FA_REQUIRED=true
+</code></pre>
+</li>
+<li><strong>Comandi</strong> (da Terminale, nella cartella del progetto):
+<pre><code>composer install --no-dev --optimize-autoloader
+php artisan key:generate --force
+php artisan migrate --force
+php artisan lamess:ruoli
+php artisan db:seed --class=PrelaunchPlanSeeder --force
+php artisan lamess:superadmin tua@email.it --name=&quot;Laura&quot;
+php artisan storage:link
+php artisan config:cache &amp;&amp; php artisan route:cache &amp;&amp; php artisan view:cache
+</code></pre>
+<strong>Non</strong> lanciare <code>DemoSeeder</code> in produzione.</li>
+<li><strong>Permessi</strong>: <code>storage/</code> e <code>bootstrap/cache/</code> scrivibili (755, o 775 se serve).</li>
+<li><strong>Cron</strong> ogni minuto (percorso PHP come indicato dal cPanel):
+<pre><code>* * * * * /usr/local/bin/php /home/UTENTE/lamess/artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1
+</code></pre>
+Fa partire ogni notte la chiusura mensile (01:00, solo il giorno 1 del mese lavora davvero), i canoni (03:30), gli abbonamenti (04:00) e i pagamenti del mese (05:00), e ogni ora le fatture.
+<strong>Come controllare che giri:</strong> in <code>/admin</code>, nella dashboard, il riquadro «Operazioni automatiche» mostra «Attivo» con l'ora dell'ultimo giro. Se dice «Mai partito» o «Fermo» (oltre 20 minuti) il cron non è impostato bene: ricontrolla il percorso di PHP e della cartella in cPanel → <em>Cron Jobs</em>.</li>
+<li><strong>Primo accesso</strong>: <code>https://tuodominio.it/admin</code>, accesso con l'utente creato; il pannello chiede di collegare l'app di autenticazione (2FA) e mostra i codici di recupero.</li>
+</ol>
+<h2>Attenzione</h2>
+<ul>
+<li><code>.env</code>, <code>storage/</code> e <code>vendor/</code> non devono mai essere raggiungibili dal web (per questo la radice è <code>public/</code>).</li>
+<li>Documenti KYC e lettere IVD stanno in <code>storage/app</code> (privato), non in <code>public</code>.</li>
+<li>Il driver di firma è <code>fake</code>: <strong>non usare in produzione reale</strong> finché non c'è un provider vero.</li>
+<li>Il pagamento con carta reale richiede <code>LAMESS_PAYMENT_DRIVER=stripe</code> e le chiavi; con <code>fake</code> il «Controllo messa online» dà BLOCCO.</li>
+<li>I file XML delle fatture e le copie inviate stanno in <code>storage/app/private/sdi-out</code> (non pubblico): includili nei backup dei file.</li>
+<li>Prima di ogni aggiornamento fai il backup del database (cPanel → <em>Backup</em>).</li>
+</ul>
+<h2>Log di audit su hosting condiviso</h2>
+<ul>
+<li>Il log è protetto da trigger del database (vietano UPDATE e DELETE). Se l'utente MySQL non ha il privilegio <code>TRIGGER</code> la migrazione continua ma la pagina <em>Verifica del log</em> avvisa che la protezione a livello database manca: la catena di hash resta valida e rileva comunque le manomissioni.</li>
+<li>Annota ogni tanto l'«ancora» mostrata nella pagina di verifica: è l'unico modo di accorgersi di righe cancellate in coda.</li>
+<li>Non cambiare <code>APP_KEY</code> (o <code>LAMESS_AUDIT_KEY</code>) dopo l'installazione.</li>
+</ul>
+<h2>Dopo ogni aggiornamento</h2>
+<p><code>php artisan migrate</code> e <code>php artisan lamess:ruoli</code> (nuovi permessi: dopo ogni rilascio che ne aggiunge). Poi in <code>/admin</code> controlla che il riquadro «Operazioni automatiche» sia «Attivo».</p>
+<p><strong>Sul sito senza terminale</strong> oggi esistono solo due strade:</p>
+<ol>
+<li><strong>Prima messa online con la versione definitiva</strong> (il caso attuale, sito non ancora online): l'installazione guidata fa tutto (migrazioni, ruoli, piano, super_admin). Non servono altri passi.</li>
+<li><strong>Aggiornamenti dopo la messa online</strong>: l'installazione guidata è chiusa e non esiste ancora una pagina di manutenzione che lanci <code>migrate</code> e <code>lamess:ruoli</code> (era prevista ma non è stata realizzata: vedi OPEN-50 in «Decisioni aperte»). Finché non c'è, un rilascio con modifiche al database richiede un terminale temporaneo (anche quello di un altro hosting con accesso allo stesso database) oppure la realizzazione della pagina. Prima di ogni aggiornamento: backup del database (Sistema → Backup e cPanel → Backup) e conserva l'ultimo ZIP buono.</li>
+</ol>
+<p>Dopo l'aggiornamento: apri <strong>Sistema → Controllo messa online</strong> e <strong>Sistema → Verifica del log</strong>.</p>
+<h2>Prima di pagare davvero (SEPA ed email)</h2>
+<ol>
+<li>Impostazioni → Venditore: denominazione, P.IVA/CF, indirizzo, email.</li>
+<li>Impostazioni → Bonifici SEPA: intestatario e IBAN del conto aziendale.</li>
+<li>Far controllare alla banca il primo file SEPA.</li>
+<li>Solo quando la posta è configurata: Impostazioni → Email → «Invio email attivo».</li>
+</ol>
+<h2>Backup, controllo e piano di ritorno (Fase 8)</h2>
+<ul>
+<li>Backup automatico ogni notte alle 02:15 (ultimi 14 in <code>storage/app/private/backups</code>); creazione e scarico manuale in <strong>Sistema → Backup</strong>.</li>
+<li><strong>Sistema → Controllo messa online</strong> (o <code>php artisan lamess:controlla</code>) elenca ciò che manca prima di aprire.</li>
+<li>Procedura di migrazione e piano di ritorno: vedi «Messa online e piano di ritorno».</li>
+<li>Il backup MySQL è un dump SQL generato dal portale (tabelle, dati, trigger del log). Va <strong>provato una volta</strong> con un ripristino su un database di prova prima di fidarsene.</li>
+</ul>
+</section>
+<section id="messa-online"><h1>Messa online: controlli, migrazione e piano di ritorno</h1>
+<h2>1. Prima di tutto: il «Controllo messa online»</h2>
+<p>In <code>/admin</code> → <strong>Sistema → Controllo messa online</strong> (solo super_admin), oppure da terminale <code>php artisan lamess:controlla</code>.
+Elenca ogni controllo con <strong>OK</strong>, <strong>ATTENZIONE</strong> (da valutare) o <strong>BLOCCO</strong> (da sistemare prima di aprire ai clienti). Si ripete dopo ogni correzione fino a non avere più blocchi.</p>
+<p>I blocchi tipici: debug acceso, indirizzo senza https, 2FA non obbligatoria, token di installazione ancora nel <code>.env</code>, cron non attivo, pagamento con carta e firma elettronica ancora «di prova», dati del venditore incompleti, catena del log compromessa.
+Con i driver reali compaiono controlli in più: chiavi e webhook di Stripe (BLOCCO se manca <code>STRIPE_SECRET</code> o <code>STRIPE_WEBHOOK_SECRET</code>, ATTENZIONE se la chiave è di prova), verifica d'identità online (ATTENZIONE se è manuale, BLOCCO se attiva senza chiave), invio delle fatture (ATTENZIONE con <code>fake</code> o <code>file</code>, BLOCCO con <code>mail</code> senza destinatario) e completezza dei dati del venditore per la fattura elettronica (partita IVA a 11 cifre, CAP, comune, provincia).</p>
+<h2>2. Sequenza consigliata</h2>
+<ol>
+<li><strong>Prova generale sul sito di prova</strong> (un sottodominio, es. <code>prova.tuodominio.it</code>, stesso procedimento dell'installazione): importazione, calcolo di un mese, confronto con Odoo (<code>lamess:verifica-odoo</code>).</li>
+<li><strong>Controllo sicurezza</strong>: Controllo messa online senza blocchi; verifica del log; backup creato e scaricato; prova del ripristino sul sito di prova.</li>
+<li><strong>Finestra di migrazione</strong> (consigliata di sera o nel fine settimana). Avvisare i consulenti.</li>
+<li><strong>Congelamento di Odoo</strong>: da quel momento non si registrano più ordini né movimenti in Odoo.</li>
+<li><strong>Esportazione finale da Odoo</strong> → importazione nel portale (<code>lamess:importa-odoo</code>, <code>lamess:importa-storico</code>), poi riconciliazione: i totali devono coincidere con quelli di Odoo (pagina Riconciliazioni).</li>
+<li><strong>Mesi già pagati</strong>: segnarli «storico già pagato» (scheda del periodo) prima di preparare qualsiasi pagamento.</li>
+<li><strong>Backup subito dopo l'importazione</strong> (Sistema → Backup → Crea) e scaricarlo.</li>
+<li><strong>Cambio del dominio</strong>: il dominio punta al nuovo sito.</li>
+<li><strong>Controlli dopo l'apertura</strong>: accesso admin con 2FA, un ordine di prova, riquadro «Operazioni automatiche» = Attivo, Controllo messa online.</li>
+<li>Solo a cose verificate: accendere l'invio email (Impostazioni → Email → «Invio email attivo»).</li>
+</ol>
+<h2>3. Piano di ritorno (se qualcosa non va)</h2>
+<p><strong>Prima dell'apertura</strong> nulla è irreversibile: Odoo resta in funzione e il vecchio dominio non è cambiato. Basta non cambiare il dominio.</p>
+<p><strong>Dopo l'apertura, entro poche ore (nessun ordine vero nel portale)</strong></p>
+<ol>
+<li>Rimettere il dominio sul vecchio sito (cPanel → Domini).</li>
+<li>Odoo riprende a lavorare; nulla è stato perso perché i dati nel portale erano una copia.</li>
+</ol>
+<p><strong>Dopo l'apertura, con ordini già entrati nel portale</strong></p>
+<ol>
+<li>Non tornare indietro alla cieca: gli ordini nuovi esistono solo nel portale. Si mette il sito in manutenzione (pagina «Manutenzione in corso», <code>php artisan down</code> oppure un file <code>.htaccess</code> di cortesia).</li>
+<li>Si scarica un backup (Sistema → Backup) e lo si conserva.</li>
+<li>Si corregge il problema, oppure si ripristina l'ultimo backup buono:
+cPanel → <strong>phpMyAdmin</strong> → scegli il database → <strong>Importa</strong> → file <code>lamess-….sql.gz</code> (si importa anche compresso). L'importazione sostituisce tutte le tabelle e ricrea i trigger di protezione del log.</li>
+<li>Dopo il ripristino: Controllo messa online e verifica del log.</li>
+<li>Gli ordini entrati dopo il backup vanno riportati a mano o ricostruiti dai pagamenti.</li>
+</ol>
+<p><strong>Aggiornamenti del codice</strong>: si carica il nuovo ZIP sopra il vecchio. Se il nuovo rilascio dà problemi, si ricarica lo ZIP precedente (conservare sempre l'ultimo pacchetto buono) e, se il rilascio aveva migrazioni del database, si ripristina anche il backup fatto prima dell'aggiornamento.</p>
+<h2>4. Cosa serve dal cliente prima di aprire (stato al 5 ottobre 2026)</h2>
+<p><strong>Il codice è pronto; mancano credenziali e decisioni.</strong></p>
+<ul>
+<li><strong>Carta (Stripe)</strong>: account del cliente, chiavi <code>sk_live_…</code> e segreto del webhook; provare prima con le chiavi di prova e una carta di prova. Poi <code>LAMESS_PAYMENT_DRIVER=stripe</code>. Limite noto: gli <strong>abbonamenti</strong> non si rinnovano da soli con Stripe (servono le carte salvate, non ancora realizzate): il primo addebito si fa dall'ordine con il cliente presente.</li>
+<li><strong>Verifica d'identità online (facoltativa)</strong>: <code>LAMESS_KYC_DRIVER=stripe_identity</code>; ha un costo per verifica. Senza, i documenti si controllano a mano.</li>
+<li><strong>Fatture elettroniche</strong>: scegliere come trasmetterle. Il portale produce l'XML FatturaPA (validato contro lo schema 1.2.2). Opzioni: <code>file</code> (XML in una cartella, da ritirare), <code>mail</code> (spedito a una casella: gestionale, commercialista o PEC verso lo SdI). <strong>GestionaleK</strong>: nei documenti non risulta nessuna interfaccia; servono le loro specifiche per un collegamento diretto. Da decidere con il commercialista: privati in fattura o in ricevuta (le ricevute non vanno allo SdI).</li>
+<li><strong>Dati del venditore</strong>: ragione sociale, partita IVA (11 cifre), indirizzo, CAP, comune, provincia, regime fiscale.</li>
+<li><strong>Parametri fiscali</strong> (ritenuta, quota imponibile, INPS, commissione sui prelievi) e <strong>testi</strong> (Lettera IVD, Regolamento): da far validare al commercialista e al Consorzio; ricevute e trattenute restano spente finché non sono validati.</li>
+<li><strong>Firma elettronica reale</strong> della lettera d'incarico: oggi è un sistema di prova (OTP finto).</li>
+<li><strong>IBAN dei consulenti</strong>: li inseriscono loro dall'area personale.</li>
+<li><strong>Prova su MariaDB</strong> delle migrazioni nuove e della suite, sul sito di prova.</li>
+</ul>
+<h2>5. Primo giorno dopo l'apertura</h2>
+<ol>
+<li>Un ordine vero con carta (importo minimo) e verifica che l'ordine passi a «pagato» da solo: significa che il webhook funziona. Se resta «in attesa», controlla l'endpoint e il segreto in Stripe (Sviluppatori → Webhook → consegne).</li>
+<li>Controlla che la fattura sia «inviata» (Vendite → Fatture, colonna dell'invio) e che l'XML si scarichi (azione XML).</li>
+<li>Controlla in Assistenza → Ticket che l'area consulente permetta di aprire una richiesta, e che il cron mostri «Attivo».</li>
+<li>Dopo la prima chiusura di mese: estratti conto pubblicati (Compensi), ricevute e prelievi se il piano è «su richiesta».</li>
+</ol>
+</section>
+<section id="guida-breve-admin"><h1>Guida breve per l'amministratore</h1>
+<p>Questa è la guida di una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale amministratore.</p>
+<h2>Entrare</h2>
+<p><code>https://tuodominio.it/admin</code> con email, password e codice dell'app di autenticazione. Se smarrisci la password: «Hai smarrito la password?».</p>
+<h2>Il menu in alto</h2>
+<ul>
+<li><strong>Rete</strong>: consulenti, clienti, albero, contratti da accettare, documenti da verificare, canoni.</li>
+<li><strong>Compensi</strong>: piano, periodi, movimenti PV, liquidazioni, pagamenti.</li>
+<li><strong>Vendite</strong>: ordini, abbonamenti, prodotti, regole, spedizioni, fatture, note di credito.</li>
+<li><strong>Assistenza</strong>: ticket e reclami, novità, materiali, eventi, casi di conformità, sanzioni, materiali da approvare.</li>
+<li><strong>Sistema</strong> (solo titolare): utenti, impostazioni, log, backup, controllo messa online.</li>
+</ul>
+<h2>Ogni giorno</h2>
+<ol>
+<li><strong>Cruscotto</strong>: controlla che «Cron del server» sia <strong>Attivo</strong>. Guarda contratti da accettare, documenti da verificare, canoni da incassare.</li>
+<li><strong>Rete → Contratti</strong> e <strong>Documenti</strong>: accetta le lettere firmate, verifica i documenti.</li>
+<li><strong>Vendite → Ordini</strong>: conferma i bonifici ricevuti, segna le spedizioni. I pagamenti con carta si confermano da soli.</li>
+<li><strong>Assistenza → Ticket e reclami</strong>: rispondi alle richieste e decidi i reclami (entro i 10 giorni). <strong>Rete → Cessioni / Successioni</strong> se ce ne sono in corso.</li>
+<li><strong>Vendite → Fatture</strong>: controlla che non ci siano fatture in «errore» (dati mancanti) e scarica l'XML se serve.</li>
+</ol>
+<h2>Ogni mese</h2>
+<ol>
+<li>Il portale calcola il mese da solo il giorno 1 (se l'impostazione è «Solo calcolo»).</li>
+<li><strong>Compensi → Periodi → il mese</strong>: controlla i numeri, poi <strong>Chiudi periodo</strong>.</li>
+<li>Dal 15 il portale prepara i pagamenti. <strong>Compensi → Pagamenti</strong>: <strong>Esporta file SEPA (XML)</strong> e caricalo in banca. Fatto il bonifico, <strong>Segna pagato</strong>.</li>
+<li>Se il piano è «su richiesta»: <strong>Compensi → Prelievi su richiesta</strong> da approvare e pagare entro 5 giorni lavorativi.</li>
+<li>I consulenti senza IBAN o senza documenti verificati non sono pagabili: restano «bloccati» e i loro importi si cumulano.</li>
+</ol>
+<h2>Quando qualcosa non torna</h2>
+<ul>
+<li>Mese sbagliato dopo la chiusura: solo la titolare può <strong>Riaprire il mese</strong> (non se ci sono importi già pagati).</li>
+<li>Un pagamento sbagliato non ancora pagato: <strong>Annulla</strong> con motivo.</li>
+<li>Ogni azione importante è nel <strong>Log di audit</strong> e non si può modificare.</li>
+</ul>
+<h2>Backup</h2>
+<p>Ogni notte il portale salva una copia del database. Ogni tanto, <strong>Sistema → Backup → Scarica</strong> e conserva il file sul tuo computer.</p>
+</section>
+<section id="specifica-motore"><h1>Specifica del motore</h1>
+<p>Fonte: <code>PROMPT_Sviluppo_Portale_Lamess_Laravel.md</code> §9 (S1–S13) e PMK Prelancio 070726 (testo ufficiale in corso, indicato da Laura il 02/10/2026).</p>
+<table>
+<thead>
+<tr>
+<th>Passo</th>
+<th>Regola implementata</th>
+<th>Classe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td>Punti: PV/CV per movimento, base provvigionale <code>commission_base_per_pv</code></td>
+<td><code>PeriodCalculator</code>, <code>Movement</code></td>
+</tr>
+<tr>
+<td>S2</td>
+<td>PR di carriera, regola del 50% per linea, struttura su linee diverse a qualsiasi profondità</td>
+<td><code>CareerState</code></td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Promozione anche di più livelli; efficace dal 1° del mese successivo (Consulente subito)</td>
+<td><code>CareerState</code></td>
+</tr>
+<tr>
+<td>S4</td>
+<td>Attività: 100 <strong>PVF</strong> da almeno 1 cliente (gli acquisti personali non contano), primo mese d'ufficio, prima soglia valida anche il mese dopo</td>
+<td><code>Activity</code></td>
+</tr>
+<tr>
+<td>S5</td>
+<td>Qualifica pagata = efficace, con eventuale tetto (<code>rankCap</code>)</td>
+<td><code>CareerState::effectiveSeq</code></td>
+</tr>
+<tr>
+<td>S6</td>
+<td>Direct Bonus: % della propria qualifica sulle vendite ai propri clienti. Chi compra non guadagna sul proprio acquisto: lo sponsor e la linea sopra maturano la differenza (Team)</td>
+<td><code>DirectTeamCalculator</code></td>
+</tr>
+<tr>
+<td>S7</td>
+<td>Team Bonus: differenziale tra aliquote, con compressione upline non idoneo</td>
+<td><code>DirectTeamCalculator</code></td>
+</tr>
+<tr>
+<td>S8</td>
+<td>Indiretti solo da Pearl in su, attivi e con onboarding completo</td>
+<td><code>DirectTeamCalculator</code></td>
+</tr>
+<tr>
+<td>S9</td>
+<td>Matching: 6 livelli, minimo Sapphire, matrice 5/10</td>
+<td><code>MatchingCalculator</code></td>
+</tr>
+<tr>
+<td>S10</td>
+<td>Rank Bonus: premio per qualifica, 12 rate sopra 50.000 €</td>
+<td><code>RankBonusCalculator</code></td>
+</tr>
+<tr>
+<td>S11</td>
+<td>Fast Start Bonus: 9 step entro 7…210 giorni dalla firma (diretti con ≥100 PV, PV cumulati con regola del 50%, qualifica raggiunta) + step 10 (3 linee con step 9). Premi già pagati nei periodi chiusi non si ripetono</td>
+<td><code>FsbCalculator</code></td>
+</tr>
+<tr>
+<td>S12</td>
+<td>Resi su periodi chiusi: storno nel primo periodo aperto</td>
+<td><code>ClawbackCalculator</code></td>
+</tr>
+<tr>
+<td>S13</td>
+<td>Spiegazione per riga, hash canonico dell'input</td>
+<td><code>Line</code>, <code>Canonical</code></td>
+</tr>
+</tbody>
+</table>
+<p>Esempio verificato (G26, simulazione): Pearl Direct 18%→19% su 1.000 PV: Direct +10, Team −10,
+Matching +1 (variazione netta per l'upline Diamond: −9).</p>
+<p>I valori del piano ufficiale sono in <code>config/lamess/plan-prelaunch-2026-07-07.json</code>
+(somma Rank Bonus 522.500 €; FSB step 1–9: 38.440 €).</p>
+<h2>Allineamento al PMK 070726 (02/10/2026)</h2>
+<ul>
+<li>ATTIVO: solo PVF (<code>activity_points_source = own_customers_pvf</code>).</li>
+<li>Acquisti personali: nessun Direct a chi compra, differenza allo sponsor (<code>personal_purchase_direct_beneficiary = upline_differential</code>, OPEN-35).</li>
+<li>Fast Start Bonus attivo (<code>fsb_enabled = true</code>); <code>direct_min_pv = 100</code> per ogni diretto, PV personali cumulati dalla registrazione (OPEN-04: da confermare col cliente).</li>
+<li>PV: fisso per prodotto (<code>discount_pv_policy = catalog</code>); il valore calcolato imponibile / 1,23 vale solo per i prodotti senza PV.</li>
+<li>Pagamento: con <code>payout_mode = monthly_auto</code> il comando <code>lamess:pagamenti</code> (ogni giorno alle 05:00) prepara i pagamenti «da pagare» di ogni mese chiuso dal giorno <code>payout_day</code> (15) del mese successivo, una sola volta per mese (<code>periods.payouts_prepared_at</code>). Con <code>on_request</code> si prepara a mano. Il bonifico in banca resta manuale.</li>
+<li>Nel portale: abbonamento mensile con carta, ordine multiplo (più destinatari, una sola spedizione) e spedizione gratuita con impegno di almeno 12 mesi (RF-A01…A05; regole aperte OPEN-40/41).</li>
+</ul>
+</section>
+<section id="architettura"><h1>Architettura</h1>
+<h2>Livelli</h2>
+<pre><code>App\Domain\Engine         puro PHP, nessuna dipendenza da Laravel/DB
+  Support/   Num (BigDecimal), PeriodKey (mese solare Europe/Rome), Canonical (hash input)
+  Policy/    PolicySpecs (registro D01–D12), Policies (valori validati)
+  Plan/      PlanConfig, RankDef, StructureReq, FsbStepDef, PlanLoader
+  Model/     Node, Movement, PriorState, PeriodInput → Line, PartnerStat, PeriodResult
+  Calc/      Tree, CareerState, Activity, DirectTeam, Matching, RankBonus, Clawback,
+             PeriodCalculator (orchestratore), ImpactReport (simulazioni)
+config/lamess/plan-prelaunch-2026-07-07.json   piano ufficiale (modificabile)
+</code></pre>
+<p>Sopra al motore ci sono persistenza (Eloquent + migrazioni), servizi applicativi (periodi, ordini, fatture, pagamenti, abbonamenti) e le interfacce (back-office Filament e area del consulente): vedi le sezioni seguenti.</p>
+<h2>Flusso di un calcolo</h2>
+<p><code>PeriodInput</code> (snapshot) → <code>PeriodCalculator::calculate()</code> → <code>PeriodResult</code>.</p>
+<ol>
+<li>Validazione movimenti (duplicati, fuori periodo, titolare sconosciuto).</li>
+<li>Punti e carriera: PR, regola del 50% per linea, struttura, promozioni multiple.</li>
+<li>Stato attivo e qualifica «pagata come».</li>
+<li>Direct/Team (differenziale con compressione) oppure Clawback per resi di periodi chiusi.</li>
+<li>Matching (6 livelli compressi sugli attivi).</li>
+<li>Rank Bonus (rateizzato oltre soglia; trattenuta/perdita per inattivi).</li>
+<li>Risultati con spiegazione per riga, decisioni usate e hash canonico dell'input.</li>
+</ol>
+<p>Stesso input ⇒ stesso risultato e stesso hash (riproducibilità e audit).</p>
+<h2>Scelte</h2>
+<ul>
+<li>Id normalizzati a stringa; periodo = mese solare in <code>Europe/Rome</code>.</li>
+<li>Percentuali nel JSON come punti percentuali (<code>&quot;18&quot;</code> = 18%).</li>
+<li>Decimali: <code>brick/math</code>, arrotondamento <code>HalfUp</code>; rate: l'ultima assorbe la differenza.</li>
+<li>Pest/Larastan non installabili nell'ambiente di sviluppo cloud (download bloccato): test con PHPUnit.</li>
+</ul>
+<h2>Persistenza (aggiunta 01/10/2026)</h2>
+<pre><code>App\Models                 Consultant, CompPlanVersion, Period, PvMovement, CalculationRun,
+                           CommissionLine, ConsultantPeriodStat, RankAchievement, RankAward, RankBonusInstallment
+App\Domain\Ledger          PvLedger  → unico punto di scrittura dei movimenti PV
+App\Domain\Periods         SnapshotBuilder (DB → PeriodInput), PeriodService (apri / calcola / chiudi),
+                           CommissionLineLocker, PeriodStateException
+</code></pre>
+<ul>
+<li>Il piano è salvato in <code>comp_plan_versions.data</code> (JSON identico a <code>config/lamess/*.json</code>); il seeder <code>PrelaunchPlanSeeder</code> carica il piano ufficiale.</li>
+<li><strong>Calcolo live</strong> (stima) e <strong>runtime ufficiale</strong> creano un <code>calculation_run</code> con righe (<code>commission_lines</code>, stato <code>draft</code>) e statistiche per consulente; rilanciarli sostituisce il run precedente dello stesso tipo (idempotenza).</li>
+<li><strong>Chiusura</strong>: richiede runtime ufficiale, nessun movimento <code>pending_payment</code>, dati invariati (hash dell'input uguale). Poi: righe <code>locked</code>, qualifiche e premi Rank Bonus scritti (<code>rank_achievements</code>, <code>rank_awards</code>, <code>rank_bonus_installments</code>), periodo <code>closed</code>.</li>
+<li>Periodo chiuso immutabile: calcolo e nuovi movimenti sollevano <code>PeriodStateException</code>. I resi su periodi chiusi si registrano nel periodo aperto come movimento negativo con <code>reverses_movement_id</code> → il motore produce lo storno (clawback).</li>
+<li>Stato precedente (PR di apertura, attività del mese precedente, prima soglia, qualifiche, rate) si legge dall'ultimo periodo chiuso: così ogni periodo è ricalcolabile in modo riproducibile.</li>
+<li>Lock per periodo con <code>Cache::lock(&quot;period:{id}&quot;)</code> (in produzione: Redis).</li>
+<li>Rate del Rank Bonus: la prima rata è <code>paid</code> se matura nel periodo di conseguimento, le altre <code>due</code> con scadenza mensile; una rata trattenuta (<code>held</code>) non viene riproposta automaticamente.</li>
+</ul>
+<h2>Rete e anagrafica (F1, 01/10/2026)</h2>
+<p><code>App\Domain\Network\NetworkService</code>:</p>
+<ul>
+<li><code>enroll()</code> — iscrizione con sponsor; blocca sponsor non attivi e re-iscrizioni prima di <code>lamess.reenrollment_days</code> (180, in <code>config/lamess.php</code> / <code>.env</code>) dalla cessazione della stessa persona (<code>person_key</code> = codice fiscale).</li>
+<li><code>changeStatus()</code> — transizioni ammesse: <code>pending→active|terminated</code>, <code>active→suspended|terminated</code>, <code>suspended→active|terminated</code>; <code>terminated</code> è definitivo. Ogni cambio è in <code>consultant_status_changes</code>.</li>
+<li><code>terminate()</code> — i diretti passano al primo ascendente con contratto in essere (Reg. 2.8): <code>sponsor_id</code> aggiornato, <code>original_sponsor_id</code> invariato, riga in <code>sponsor_history</code> (motivo <code>compression</code>), closure table ricostruita.</li>
+<li>Lo sponsor non è modificabile (Reg. 2.10.a): il modello solleva <code>NetworkException</code> se <code>sponsor_id</code> cambia fuori da <code>NetworkService</code>.</li>
+<li><code>network_paths</code> (closure table: ancestor, descendant, depth, leg_root) aggiornata all'iscrizione e ricostruita alla cessazione (ricostruzione completa: da ottimizzare su reti molto grandi).</li>
+<li>Il motore applica comunque la trasparenza dei cessati (G20): anche con dati importati non ricollegati il risultato non cambia.</li>
+</ul>
+<h2>Back-office (Filament 4, <code>/admin</code>)</h2>
+<p>Risorse: Piano compensi, Periodi, Movimenti PV, Consulenti. Tutte le scritture passano dai servizi di dominio (<code>PeriodService</code>, <code>PvLedger</code>, <code>NetworkService</code>), mai da CRUD diretto.
+Accesso: ruoli spatie/permission + 2FA (vedi manuale sviluppatori, «Ruoli, 2FA, KPI»). Risorse anche: Contratti IVD, Documenti KYC, Canoni, Clienti; cruscotto KPI.
+Nota per chi scrive azioni Filament: i parametri delle closure si risolvono <strong>per nome</strong> (<code>$state</code>, <code>$record</code>, <code>$data</code>, <code>$search</code>, <code>$value</code>).</p>
+<h2>Fase 6: chiusura, liquidazioni, pagamenti, abbonamenti (05/10/2026)</h2>
+<pre><code>App\Domain\Periods     PeriodService (apri / calcola / chiudi / riapri), PeriodAutomation (chiusura mensile automatica)
+App\Domain\Payouts     PayoutService (liquidazioni, pagamenti, storico), StatementService (statino + PDF), ExportService (CSV)
+App\Domain\Subscriptions SubscriptionService (abbonamenti: cicli, tentativi, pausa, disdetta)
+App\Domain\Orders      OrderService (ordine per altri, spedizione gratuita con abbonamento)
+</code></pre>
+<ul>
+<li><strong>Tabelle</strong>: <code>settlements</code> (per consulente e mese: maturato, trattenuto, stato), <code>payouts</code> (IBAN fotografato al momento della preparazione), <code>subscriptions</code>; <code>periods.payouts_prepared_at</code>; <code>orders.subscription_id</code> e <code>shipping_waived</code>; <code>order_items.recipient_user_id</code>, <code>beneficiary_consultant_id</code>, <code>pv_kind</code>.</li>
+<li><strong>Flusso</strong>: chiusura del periodo → liquidazioni (dalle righe bloccate del run ufficiale) → pagamenti «da pagare» (somma delle liquidazioni aperte fino a quel mese, soglia minima, KYC e IBAN) → bonifico fuori dal portale → «pagato».</li>
+<li><strong>Operazioni pianificate</strong> (richiedono <code>schedule:run</code> ogni minuto): <code>lamess:canoni</code> 03:30 · <code>lamess:abbonamenti</code> 04:00 · <code>lamess:pagamenti</code> 05:00 · <code>lamess:chiusura-mese</code> 01:00 · <code>lamess:fatture</code> ogni ora · piano in vigore 00:10 · battito del cron ogni minuto (mostrato in dashboard).</li>
+<li>Le liquidazioni pagate o già legate a un pagamento non vengono mai riscritte.</li>
+<li>La riapertura di un mese annulla liquidazioni e pagamenti non pagati e azzera <code>payouts_prepared_at</code>.</li>
+</ul>
+<h2>Moduli 1-7 (05/10/2026)</h2>
+<p>Oltre ai servizi della fase 6 esistono: <code>Plan</code> (versioni e quattro occhi), <code>Support</code> (ticket), <code>Wallet</code>, <code>Content</code> (novità, materiali, eventi), <code>Compliance</code> (casi, sanzioni, materiali), <code>Succession</code> (cessione ed eredi). Le integrazioni esterne passano da <strong>porte</strong> (interfacce) con driver scelti da configurazione:</p>
+<table>
+<thead>
+<tr>
+<th>Porta</th>
+<th>Driver</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PaymentProvider</code> / <code>RedirectPaymentProvider</code></td>
+<td><code>fake</code>, <code>stripe</code></td>
+<td>carta; con Stripe il pagamento si conferma dal webhook</td>
+</tr>
+<tr>
+<td><code>InvoiceSink</code></td>
+<td><code>fake</code>, <code>file</code>, <code>mail</code></td>
+<td>consegna dell'XML FatturaPA</td>
+</tr>
+<tr>
+<td><code>IdentityVerifier</code></td>
+<td><code>manual</code>, <code>stripe_identity</code></td>
+<td>verifica d'identità online</td>
+</tr>
+<tr>
+<td><code>SignatureProvider</code></td>
+<td><code>fake</code></td>
+<td>firma della lettera (provider reale ancora da scegliere)</td>
+</tr>
+</tbody>
+</table>
+<p>L'unico punto d'ingresso dei provider è <code>POST /webhooks/stripe</code> (firma verificata, esente da CSRF). Nessuna chiamata di rete parte dai test: i driver usano <code>Http::fake</code>.
+La cessione e la successione condividono <code>AccountHolderService::swap</code>; le sanzioni agiscono su stato e blocco compensi tramite <code>NetworkService</code> e i flag del consulente, senza toccare i periodi chiusi.</p>
+</section>
+<section id="decisioni-aperte"><h1>Decisioni aperte e default adottati</h1>
+<p>Ogni punto ambiguo della documentazione è una <strong>politica configurabile</strong> (registro <code>PolicySpecs</code>).
+Il motore parte con il default sotto indicato; cambiarlo non richiede modifiche al codice
+(campo <code>policies</code> del file di piano).</p>
+<p>Stato:</p>
+<ul>
+<li><code>certain</code> — documentato senza ambiguità.</li>
+<li><code>client_decided</code> — deciso dal cliente (call del 15/09/2026).</li>
+<li><code>provisional</code> — default provvisorio: simulabile, <strong>ma i periodi che lo usano non vanno approvati per pagamenti reali</strong> finché il cliente non conferma.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Decisione</th>
+<th>Politica</th>
+<th>Default</th>
+<th>Stato</th>
+<th>Opzioni</th>
+<th>Fonte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D01</td>
+<td><code>activity_points_source</code> — Punti validi per lo stato ATTIVO</td>
+<td><code>own_customers_pvf</code></td>
+<td>client_decided</td>
+<td><code>own_customers_pvf_plus_own_pvc</code> = PVF dei propri clienti + PVC dei propri acquisti; <code>own_customers_pvf</code> = Solo PVF dei propri clienti</td>
+<td>PMK 070726 p.24; Laura 02/10/2026 (sostituisce call 15/09, K1=C)</td>
+</tr>
+<tr>
+<td>D01</td>
+<td><code>activity_first_time</code> — Prima soglia raggiunta</td>
+<td><code>current_and_next</code></td>
+<td>client_decided</td>
+<td><code>current_and_next</code> = Vale per il mese corrente e il successivo; <code>current_only</code> = Solo mese corrente</td>
+<td>Call 15/09/2026 (C1); PMK p.24</td>
+</tr>
+<tr>
+<td>D01</td>
+<td><code>activity_month_rule</code> — Mesi successivi: quale mese conta</td>
+<td><code>current</code></td>
+<td>provisional</td>
+<td><code>current</code> = Mese corrente; <code>previous</code> = Mese precedente (PMK p.14); <code>current_or_previous</code> = Corrente oppure precedente</td>
+<td>PMK p.14 vs p.24; call 15/09/2026: da chiarire</td>
+</tr>
+<tr>
+<td>D01</td>
+<td><code>activity_first_month_free</code> — Primo mese da consulente attivo d'ufficio (mese solare)</td>
+<td>sì</td>
+<td>certain</td>
+<td>sì/no</td>
+<td>PMK p.14 (N.B.)</td>
+</tr>
+<tr>
+<td>D03</td>
+<td><code>commission_base</code> — Base delle provvigioni</td>
+<td><code>pv</code></td>
+<td>provisional</td>
+<td><code>pv</code> = PV; <code>cv</code> = CV (promo Double CV di M1)</td>
+<td>PMK p.25–28 (esempi su PV); M1 §3 (CV)</td>
+</tr>
+<tr>
+<td>D02</td>
+<td><code>discount_pv_policy</code> — PV su righe scontate</td>
+<td><code>catalog</code></td>
+<td>provisional</td>
+<td><code>proportional</code> = PV ridotti in proporzione allo sconto; <code>catalog</code> = PV di catalogo invariati</td>
+<td>PMK 070726 p.14, Webinar s.23–25 (OPEN-34)</td>
+</tr>
+<tr>
+<td>D03</td>
+<td><code>pr_source</code> — Punti che alimentano i PR</td>
+<td><code>pv</code></td>
+<td>provisional</td>
+<td><code>pv</code> = PV; <code>cv</code> = CV</td>
+<td>PMK p.13 (1 PR per ogni PV); M1 §3 (CV carriera) (OPEN-19)</td>
+</tr>
+<tr>
+<td>D04</td>
+<td><code>personal_purchase_direct_beneficiary</code> — Direct Bonus sugli acquisti personali del consulente</td>
+<td><code>upline_differential</code></td>
+<td>client_decided</td>
+<td><code>upline_differential</code> = Nessun Direct a chi compra, differenza (Team) allo sponsor e sopra; <code>sponsor</code>; <code>self</code>; <code>none</code></td>
+<td>Laura 02/10/2026 (OPEN-35); sostituisce call 15/09 (K2=B)</td>
+</tr>
+<tr>
+<td>D05</td>
+<td><code>team_ineligible_upline</code> — Team Bonus con upline non idoneo</td>
+<td><code>compress</code></td>
+<td>provisional</td>
+<td><code>compress</code> = Compressione: il differenziale risale all'upline idoneo; <code>absorb</code> = La quota dell'upline non idoneo si perde</td>
+<td>PMK p.24 (compressione dinamica) (OPEN-14)</td>
+</tr>
+<tr>
+<td>D05</td>
+<td><code>matching_level_counting</code> — Conteggio livelli Matching</td>
+<td><code>compressed_active</code></td>
+<td>provisional</td>
+<td><code>compressed_active</code> = Solo consulenti attivi contano come livello; <code>genealogical</code> = Livelli genealogici fissi</td>
+<td>PMK p.24, p.29–31 (OPEN-15)</td>
+</tr>
+<tr>
+<td>D05</td>
+<td><code>structure_depth</code> — Qualificati richiesti nelle linee</td>
+<td><code>any_depth</code></td>
+<td>provisional</td>
+<td><code>any_depth</code> = A qualsiasi profondità nella linea; <code>direct_only</code> = Solo diretti</td>
+<td>PMK p.20 («in livelli sottostanti») (OPEN-09)</td>
+</tr>
+<tr>
+<td>D03</td>
+<td><code>personal_pr_in_fifty_rule</code> — PR personali nella regola del 50%</td>
+<td><code>uncapped</code></td>
+<td>provisional</td>
+<td><code>uncapped</code> = Contati per intero; <code>as_line</code> = Limitati come una linea</td>
+<td>PMK p.19–20 (OPEN-10)</td>
+</tr>
+<tr>
+<td>D06</td>
+<td><code>onboarding_incomplete_indirect</code> — Commissioni indirette con onboarding incompleto</td>
+<td><code>not_accrued</code></td>
+<td>provisional</td>
+<td><code>not_accrued</code> = Non maturano (PMK p.24); <code>accrued_held</code> = Maturano e restano trattenute (M1)</td>
+<td>PMK p.24 vs M1 §5 (OPEN-21)</td>
+</tr>
+<tr>
+<td>D06</td>
+<td><code>kyc_held_recovery</code> — Importi trattenuti per KYC alla verifica</td>
+<td><code>release_held</code></td>
+<td>provisional</td>
+<td><code>release_held</code> = Si sbloccano; <code>forfeit</code> = Si perdono</td>
+<td>M1 §5; nessuna regola</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_skipped_ranks</code> — Qualifiche saltate nello stesso mese</td>
+<td><code>pay_all</code></td>
+<td>provisional</td>
+<td><code>pay_all</code> = Premio per ogni qualifica; <code>highest_only</code> = Solo la più alta</td>
+<td>PMK p.32 (OPEN-05)</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_inactive</code> — Rank Bonus maturato da inattivo</td>
+<td><code>hold_n_months</code></td>
+<td>provisional</td>
+<td><code>hold_n_months</code> = Trattenuto fino a N mesi, poi perso; <code>hold_until_active</code> = Trattenuto finché torna attivo; <code>forfeit</code> = Perso</td>
+<td>PMK p.32 («per poter riscuotere devi essere attivo») (OPEN-06)</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_installment_start</code> — Decorrenza prima rata</td>
+<td><code>achievement_period</code></td>
+<td>provisional</td>
+<td><code>achievement_period</code> = Mese del raggiungimento; <code>next_period</code> = Mese successivo</td>
+<td>PMK p.32</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_installment_inactive</code> — Rata in un mese di inattività</td>
+<td><code>hold</code></td>
+<td>provisional</td>
+<td><code>hold</code> = Trattenuta; <code>pay_anyway</code> = Pagata comunque</td>
+<td>PMK p.32</td>
+</tr>
+<tr>
+<td>D08</td>
+<td><code>fsb_rank_basis</code> — Qualifica richiesta dal FSB</td>
+<td><code>achieved</code></td>
+<td>provisional</td>
+<td><code>achieved</code> = Raggiunta; <code>effective</code> = Efficace</td>
+<td>Guida FSB p.3–7; PMK 070726 p.35</td>
+</tr>
+<tr>
+<td>D08</td>
+<td><code>fsb_missed_step</code> — Step mancato</td>
+<td><code>independent</code></td>
+<td>provisional</td>
+<td><code>independent</code> = Gli step successivi restano validi; <code>blocks_following</code> = Blocca i successivi</td>
+<td>Guida FSB p.4–7 (OPEN-07)</td>
+</tr>
+<tr>
+<td>D09</td>
+<td><code>fsb_step10_deadline</code> — Step 10: termine per i tre consulenti</td>
+<td><code>own_window</code></td>
+<td>provisional</td>
+<td><code>own_window</code> = Step 9 nella loro finestra (210 giorni), nessuna scadenza per lo sponsor</td>
+<td>PMK 070726 p.35 (OPEN-08)</td>
+</tr>
+<tr>
+<td>D11</td>
+<td><code>refund_after_close</code> — Reso dopo la chiusura del periodo</td>
+<td><code>clawback_next_open</code></td>
+<td>provisional</td>
+<td><code>clawback_next_open</code> = Storno nel primo periodo aperto; <code>no_clawback</code> = Nessun recupero</td>
+<td>M1 §1 (refund) (OPEN-26)</td>
+</tr>
+</tbody>
+</table>
+<h2>Da chiarire con il cliente (prima del go-live)</h2>
+<p>Tutte le righe <code>provisional</code>, in particolare: regola del mese per l'attività (PMK p.14 vs p.24),
+base provvigionale PV/CV, PV su righe scontate, compressione Team, conteggio livelli Matching,
+profondità della struttura, onboarding incompleto, regole Rank Bonus per inattivi e qualifiche saltate,
+resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (OPEN-04: i 100 PV del diretto sono personali e cumulati dalla sua registrazione).</p>
+<h2>Decisioni dell'onboarding (F1) adottate come default</h2>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Tema</th>
+<th>Default adottato</th>
+<th>Dove si cambia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPEN-20</td>
+<td>Cliente senza referral</td>
+<td>assegnato al consulente predefinito (se configurato), altrimenti nessuno</td>
+<td><code>lamess.default_consultant_code</code></td>
+</tr>
+<tr>
+<td>OPEN-21</td>
+<td>Onboarding incompleto e indirette</td>
+<td>non maturano (D06)</td>
+<td>policy <code>onboarding_incomplete_indirect</code></td>
+</tr>
+<tr>
+<td>OPEN-22</td>
+<td>Rifiuto della domanda</td>
+<td>torna FAN; movimenti dei periodi non chiusi allo sponsor come PVF</td>
+<td>codice <code>IvdService::reject</code></td>
+</tr>
+<tr>
+<td>OPEN-23</td>
+<td>Canone: primo anno</td>
+<td>gratuito, canone dal secondo anno (19 €)</td>
+<td><code>annual_fee_first_paid_year</code>, <code>annual_fee_amount</code></td>
+</tr>
+<tr>
+<td>OPEN-24</td>
+<td>Canone non pagato</td>
+<td>scadenza senza giorni di grazia; contratto scaduto, consulente cessato, torna FAN</td>
+<td><code>annual_fee_grace_days</code></td>
+</tr>
+</tbody>
+</table>
+<p>Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzio.</p>
+<h2>Decisioni del negozio (F2) adottate come default</h2>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Tema</th>
+<th>Default adottato</th>
+<th>Dove si cambia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPEN-18</td>
+<td>Spedizione e PV</td>
+<td>non genera PV</td>
+<td>codice <code>OrderService::place</code></td>
+</tr>
+<tr>
+<td>OPEN-25</td>
+<td>Periodo di competenza del PV</td>
+<td>mese di conferma del pagamento</td>
+<td><code>OrderService::markPaid</code></td>
+</tr>
+<tr>
+<td>OPEN-31 (nuova)</td>
+<td>Privati: fattura o ricevuta</td>
+<td>fattura per tutti</td>
+<td><code>lamess.private_document</code></td>
+</tr>
+<tr>
+<td>OPEN-32 (nuova)</td>
+<td>Periodo non esistente al primo pagamento del mese</td>
+<td>si apre da solo con il piano attivo</td>
+<td><code>lamess.auto_open_period</code></td>
+</tr>
+<tr>
+<td>OPEN-33 (nuova)</td>
+<td>Reso della spedizione</td>
+<td>non rimborsata (solo righe prodotto)</td>
+<td>codice <code>ReturnService</code></td>
+</tr>
+<tr>
+<td>OPEN-34 (nuova)</td>
+<td>Prezzi del listino Odoo</td>
+<td><strong>IVA inclusa</strong> (verificato: KIT GOLD 2.440 € = 2.000 € + IVA 22%; PV 1.600 dalla colonna «PR numerico»). PV esplicito per prodotto</td>
+<td><code>lamess:importa-prodotti --netti</code> se un file fosse al netto</td>
+</tr>
+<tr>
+<td>OPEN-40</td>
+<td>Disdetta abbonamento prima dei 12 mesi</td>
+<td>consentita, registrata come «disdetta anticipata» (nessuna penale)</td>
+<td><code>SubscriptionService::cancel</code></td>
+</tr>
+<tr>
+<td>OPEN-41 (nuova)</td>
+<td>Chi può ricevere un ordine per conto di altri</td>
+<td>clienti assegnati al consulente e consulenti attivi da lui sponsorizzati direttamente</td>
+<td><code>OrderService::recipientsFor</code></td>
+</tr>
+<tr>
+<td>OPEN-42 (nuova)</td>
+<td>Mesi storici già pagati fuori dal portale</td>
+<td>si segnano «storico già pagato» a mano, mese per mese</td>
+<td>scheda del periodo → «Segna come storico già pagato»</td>
+</tr>
+<tr>
+<td>OPEN-43 (nuova)</td>
+<td>Chiusura mensile automatica</td>
+<td>«solo calcolo ufficiale»: la chiusura la conferma l'admin</td>
+<td>Impostazioni → Chiusura mensile</td>
+</tr>
+<tr>
+<td>OPEN-44 (nuova)</td>
+<td>Pagamento delle provvigioni</td>
+<td>preparato in automatico dal 15 del mese successivo; il bonifico in banca resta manuale</td>
+<td>piano: <code>payout_mode</code>, <code>payout_day</code></td>
+</tr>
+<tr>
+<td>OPEN-45 (nuova)</td>
+<td>Avvisi email</td>
+<td>solo ai consulenti (statino pronto, bonifico effettuato), mai ai clienti; spenti dall'interruttore generale</td>
+<td>Impostazioni → Email</td>
+</tr>
+<tr>
+<td>OPEN-46 (nuova)</td>
+<td>Bonifici ai consulenti</td>
+<td>file SEPA pain.001.001.03 da caricare in banca; da far validare dalla banca al primo uso</td>
+<td>Pagamenti → Esporta file SEPA</td>
+</tr>
+<tr>
+<td>OPEN-47 (nuova)</td>
+<td>Mesi chiusi con la regola precedente</td>
+<td>gennaio–settembre sono stati calcolati con la vecchia regola K2: ricalcolarli oggi darebbe totali diversi; da decidere se tenerli come storico o ricalcolare</td>
+<td>Periodi</td>
+</tr>
+<tr>
+<td>OPEN-48 (nuova)</td>
+<td>Primo mese pagato dal portale</td>
+<td>per evitare pagamenti arretrati (febbraio–settembre) quando arriveranno gli IBAN: scegliere il primo mese e marcare i precedenti «storico già pagato»</td>
+<td>Pagamenti</td>
+</tr>
+<tr>
+<td>OPEN-49 (nuova)</td>
+<td>Firma elettronica reale</td>
+<td>il sistema di prova non basta per aprire ai clienti: scegliere il fornitore</td>
+<td>Impostazioni</td>
+</tr>
+</tbody>
+</table>
+<h2>Decisioni dei moduli 1-7 (05/10/2026): default adottati e punti per il cliente</h2>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Tema</th>
+<th>Default adottato</th>
+<th>Dove si cambia / chi decide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPEN-50 (nuova)</td>
+<td>Aggiornamenti dopo la messa online senza terminale</td>
+<td><strong>non risolto</strong>: l'installazione guidata si chiude dopo l'uso e non c'è una pagina che lanci <code>migrate</code> e <code>lamess:ruoli</code>. Proposta: pagina riservata al super_admin</td>
+<td>da decidere; serve una piccola pagina di manutenzione</td>
+</tr>
+<tr>
+<td>OPEN-51 (nuova)</td>
+<td>Fatture: come arrivano allo SdI</td>
+<td>il portale genera l'XML FatturaPA e lo scrive in cartella (<code>file</code>) o lo spedisce a un indirizzo (<code>mail</code>); nessun collegamento diretto allo SdI né a GestionaleK</td>
+<td><code>LAMESS_INVOICE_SINK</code>; cliente/commercialista; per GestionaleK servono le loro specifiche</td>
+</tr>
+<tr>
+<td>OPEN-52 (nuova)</td>
+<td>Privati: fattura o ricevuta</td>
+<td>fattura per tutti (ricevuta = documento di cortesia, non trasmesso)</td>
+<td><code>lamess.private_document</code>; commercialista</td>
+</tr>
+<tr>
+<td>OPEN-53 (nuova)</td>
+<td>Regime fiscale del venditore</td>
+<td>RF01 (ordinario)</td>
+<td>Impostazioni → Venditore; commercialista</td>
+</tr>
+<tr>
+<td>OPEN-54 (nuova)</td>
+<td>Parametri fiscali sui compensi</td>
+<td>ritenuta 23% sulla quota imponibile 78%; INPS Gestione Separata 33,72% oltre 5.000 €, 33,33% a carico del consulente; commissione prelievo 2,50 €; <strong>tutto spento</strong></td>
+<td>Impostazioni → Ricevute e trattenute; <strong>da validare col commercialista</strong> prima di accendere</td>
+</tr>
+<tr>
+<td>OPEN-55 (nuova)</td>
+<td>Wallet e prelievi</td>
+<td>attivi solo con pagamento «su richiesta» nel piano; soglia 15 €, pagamento entro 5 giorni lavorativi</td>
+<td>piano compensi (<code>payout_mode</code>)</td>
+</tr>
+<tr>
+<td>OPEN-56 (nuova)</td>
+<td>Reclami su estratti e ricevute</td>
+<td>10 giorni, poi accettazione tacita; la correzione è una rettifica nel mese aperto</td>
+<td><code>LAMESS_DISPUTE_DAYS</code></td>
+</tr>
+<tr>
+<td>OPEN-57 (nuova)</td>
+<td>Approvazione del piano</td>
+<td>quattro occhi attivi: chi chiede non può approvare, nemmeno il super_admin</td>
+<td><code>LAMESS_PLAN_FOUR_EYES</code></td>
+</tr>
+<tr>
+<td>OPEN-58 (nuova)</td>
+<td>Cessione del codice</td>
+<td>contributo 50 €; resta codice, sponsor e qualifica; si azzerano IBAN e KYC; il codice è sospeso finché la nuova lettera non è accettata; bloccata con saldo non pagato (salvo decisione esplicita), sanzioni o casi aperti</td>
+<td><code>LAMESS_TRANSFER_FEE</code>; Consorzio</td>
+</tr>
+<tr>
+<td>OPEN-59 (nuova)</td>
+<td>Successione agli eredi</td>
+<td>quote da verbale (somma 100%), resto dei centesimi alla quota maggiore, bonifici manuali fuori dal flusso mensile, 180 giorni senza decisione e il codice cessa</td>
+<td><code>LAMESS_INHERITANCE_LIMBO_DAYS</code>; Consorzio</td>
+</tr>
+<tr>
+<td>OPEN-60 (nuova)</td>
+<td>Sanzioni</td>
+<td>richiamo, blocco compensi, sospensione, cessazione; a tempo o senza scadenza; scadono da sole</td>
+<td>Assistenza → Sanzioni</td>
+</tr>
+<tr>
+<td>OPEN-61 (nuova)</td>
+<td>Materiali scaricabili</td>
+<td>filigrana col codice del consulente su PDF/JPG/PNG; se non riesce il file esce lo stesso e il registro lo segnala</td>
+<td><code>LAMESS_WATERMARK_FAIL_OPEN</code></td>
+</tr>
+<tr>
+<td>OPEN-62 (nuova)</td>
+<td>Carta con Stripe Checkout</td>
+<td>il cliente paga sulla pagina di Stripe, conferma via webhook firmato con controllo di importo e valuta; i rinnovi automatici degli abbonamenti <strong>non</strong> sono attivi (servono carte salvate)</td>
+<td><code>LAMESS_PAYMENT_DRIVER</code>; cliente: account Stripe e chiavi</td>
+</tr>
+<tr>
+<td>OPEN-63 (nuova)</td>
+<td>Verifica d'identità online</td>
+<td>facoltativa (Stripe Identity): vale come documento d'identità approvato, la foto del tesserino resta separata</td>
+<td><code>LAMESS_KYC_DRIVER</code></td>
+</tr>
+<tr>
+<td>OPEN-64 (nuova)</td>
+<td>Nome e cognome nelle fatture dei privati</td>
+<td>gli ordini nuovi conservano nome e cognome separati; per quelli vecchi il nome intero si divide al primo spazio</td>
+<td><code>OrderService</code>, <code>FatturaPaBuilder</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="parametri"><h1>Parametri del motore</h1>
+<blockquote>
+<p>Generato da <code>php artisan lamess:parametri --write=...</code>. Non modificare a mano.</p>
+</blockquote>
+<h2>Impostazioni numeriche</h2>
+<table>
+<thead>
+<tr>
+<th>Chiave</th>
+<th>Descrizione</th>
+<th>Default</th>
+<th>Fonte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activity_threshold</code></td>
+<td>Soglia punti per lo stato ATTIVO</td>
+<td><code>100</code></td>
+<td>PMK p.14</td>
+</tr>
+<tr>
+<td><code>commission_base_per_pv</code></td>
+<td>Euro di base provvigionale per 1 PV/CV</td>
+<td><code>1</code></td>
+<td>PMK p.25–28 (8.000 PV × 9% = 720 €)</td>
+</tr>
+<tr>
+<td><code>fifty_rule_share</code></td>
+<td>Quota massima di una linea (regola del 50%)</td>
+<td><code>0.5</code></td>
+<td>PMK p.19–20</td>
+</tr>
+<tr>
+<td><code>indirect_min_rank</code></td>
+<td>Qualifica minima per le commissioni indirette</td>
+<td><code>PEARL</code></td>
+<td>PMK p.24</td>
+</tr>
+<tr>
+<td><code>matching_min_rank</code></td>
+<td>Qualifica minima per il Matching</td>
+<td><code>SAPPHIRE</code></td>
+<td>PMK p.29</td>
+</tr>
+<tr>
+<td><code>rank_bonus_installment_threshold</code></td>
+<td>Soglia oltre cui il Rank Bonus è rateizzato (€)</td>
+<td><code>50000</code></td>
+<td>PMK p.32</td>
+</tr>
+<tr>
+<td><code>rank_bonus_installments</code></td>
+<td>Numero di rate del Rank Bonus</td>
+<td><code>12</code></td>
+<td>PMK p.32</td>
+</tr>
+<tr>
+<td><code>rank_bonus_hold_months</code></td>
+<td>Mesi di trattenuta del Rank Bonus da inattivo</td>
+<td><code>3</code></td>
+<td>OPEN-06</td>
+</tr>
+<tr>
+<td><code>fsb_enabled</code></td>
+<td>Fast Start Bonus attivo</td>
+<td><code>true</code></td>
+<td>PMK 070726 p.33–35</td>
+</tr>
+<tr>
+<td><code>payout_mode</code></td>
+<td>Pagamento delle provvigioni (monthly_auto</td>
+<td>on_request)</td>
+<td><code>monthly_auto</code></td>
+</tr>
+<tr>
+<td><code>payout_day</code></td>
+<td>Giorno del mese successivo entro cui si paga</td>
+<td><code>15</code></td>
+<td>PMK 070726 p.14</td>
+</tr>
+<tr>
+<td><code>min_payout</code></td>
+<td>Pagamento minimo (€)</td>
+<td><code>15</code></td>
+<td>lamess.config (Odoo): Minimum Payout</td>
+</tr>
+<tr>
+<td><code>scn_threshold</code></td>
+<td>Soglia SCN (€)</td>
+<td><code>5000</code></td>
+<td>lamess.config (Odoo): SCN Threshold — significato da chiarire</td>
+</tr>
+<tr>
+<td><code>move_node_window_days</code></td>
+<td>Finestra per spostare un consulente nell'albero (giorni)</td>
+<td><code>7</code></td>
+<td>lamess.config (Odoo): Move Node Window — significato da chiarire</td>
+</tr>
+</tbody>
+</table>
+<h2>Politiche</h2>
+<table>
+<thead>
+<tr>
+<th>Decisione</th>
+<th>Politica</th>
+<th>Default</th>
+<th>Stato</th>
+<th>Opzioni</th>
+<th>Fonte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D01</td>
+<td><code>activity_points_source</code> — Punti validi per lo stato ATTIVO</td>
+<td><code>own_customers_pvf</code></td>
+<td>client_decided</td>
+<td><code>own_customers_pvf_plus_own_pvc</code> = PVF dei propri clienti + PVC dei propri acquisti; <code>own_customers_pvf</code> = Solo PVF dei propri clienti</td>
+<td>PMK 070726 p.24 («100 PVF generati da almeno 1 Cliente»); Laura 02/10/2026. Sostituisce la call del 15/09 (K1=C)</td>
+</tr>
+<tr>
+<td>D01</td>
+<td><code>activity_first_time</code> — Prima soglia raggiunta</td>
+<td><code>current_and_next</code></td>
+<td>client_decided</td>
+<td><code>current_and_next</code> = Vale per il mese corrente e il successivo; <code>current_only</code> = Solo mese corrente</td>
+<td>Call 15/09/2026 (C1); PMK p.24</td>
+</tr>
+<tr>
+<td>D01</td>
+<td><code>activity_month_rule</code> — Mesi successivi: quale mese conta</td>
+<td><code>current</code></td>
+<td>provisional</td>
+<td><code>current</code> = Mese corrente; <code>previous</code> = Mese precedente (PMK p.14); <code>current_or_previous</code> = Corrente oppure precedente</td>
+<td>PMK p.14 vs p.24; call 15/09/2026: da chiarire</td>
+</tr>
+<tr>
+<td>D01</td>
+<td><code>activity_first_month_free</code> — Primo mese da consulente attivo d'ufficio (mese solare)</td>
+<td>sì</td>
+<td>certain</td>
+<td>sì/no</td>
+<td>PMK p.14 (N.B.)</td>
+</tr>
+<tr>
+<td>D03</td>
+<td><code>commission_base</code> — Base delle provvigioni</td>
+<td><code>pv</code></td>
+<td>provisional</td>
+<td><code>pv</code> = PV; <code>cv</code> = CV (promo Double CV di M1)</td>
+<td>PMK p.25–28 (esempi su PV); M1 §3 (CV)</td>
+</tr>
+<tr>
+<td>D02</td>
+<td><code>discount_pv_policy</code> — PV su righe scontate</td>
+<td><code>catalog</code></td>
+<td>provisional</td>
+<td><code>proportional</code> = PV ridotti in proporzione allo sconto; <code>catalog</code> = PV di catalogo invariati</td>
+<td>PMK 070726 p.14 e Webinar s.23–25: il Box vale 100 PV anche a prezzo promo (OPEN-34); catalogo Odoo</td>
+</tr>
+<tr>
+<td>D03</td>
+<td><code>pr_source</code> — Punti che alimentano i PR</td>
+<td><code>pv</code></td>
+<td>provisional</td>
+<td><code>pv</code> = PV; <code>cv</code> = CV</td>
+<td>PMK p.13 (1 PR per ogni PV); M1 §3 (CV carriera) (OPEN-19)</td>
+</tr>
+<tr>
+<td>D04</td>
+<td><code>personal_purchase_direct_beneficiary</code> — Direct Bonus sugli acquisti personali del consulente</td>
+<td><code>upline_differential</code></td>
+<td>client_decided</td>
+<td><code>upline_differential</code> = Nessun Direct a chi compra; lo sponsor e la linea sopra maturano la differenza (Team); <code>sponsor</code> = Allo sponsor, come vendita diretta; <code>self</code> = Al consulente stesso; <code>none</code> = Nessuno</td>
+<td>Laura 02/10/2026 («guadagno sulle vendite, non sugli acquisti propri») (OPEN-35); sostituisce la call del 15/09 (K2=B)</td>
+</tr>
+<tr>
+<td>D05</td>
+<td><code>team_ineligible_upline</code> — Team Bonus con upline non idoneo</td>
+<td><code>compress</code></td>
+<td>provisional</td>
+<td><code>compress</code> = Compressione: il differenziale risale all'upline idoneo; <code>absorb</code> = La quota dell'upline non idoneo si perde</td>
+<td>PMK p.24 (compressione dinamica) (OPEN-14)</td>
+</tr>
+<tr>
+<td>D05</td>
+<td><code>matching_level_counting</code> — Conteggio livelli Matching</td>
+<td><code>compressed_active</code></td>
+<td>provisional</td>
+<td><code>compressed_active</code> = Solo consulenti attivi contano come livello; <code>genealogical</code> = Livelli genealogici fissi</td>
+<td>PMK p.24, p.29–31 (OPEN-15)</td>
+</tr>
+<tr>
+<td>D05</td>
+<td><code>structure_depth</code> — Qualificati richiesti nelle linee</td>
+<td><code>any_depth</code></td>
+<td>provisional</td>
+<td><code>any_depth</code> = A qualsiasi profondità nella linea; <code>direct_only</code> = Solo diretti</td>
+<td>PMK p.20 («in livelli sottostanti») (OPEN-09)</td>
+</tr>
+<tr>
+<td>D03</td>
+<td><code>personal_pr_in_fifty_rule</code> — PR personali nella regola del 50%</td>
+<td><code>uncapped</code></td>
+<td>provisional</td>
+<td><code>uncapped</code> = Contati per intero; <code>as_line</code> = Limitati come una linea</td>
+<td>PMK p.19–20 (OPEN-10)</td>
+</tr>
+<tr>
+<td>D06</td>
+<td><code>onboarding_incomplete_indirect</code> — Commissioni indirette con onboarding incompleto</td>
+<td><code>not_accrued</code></td>
+<td>provisional</td>
+<td><code>not_accrued</code> = Non maturano (PMK p.24); <code>accrued_held</code> = Maturano e restano trattenute (M1)</td>
+<td>PMK p.24 vs M1 §5 (OPEN-21)</td>
+</tr>
+<tr>
+<td>D06</td>
+<td><code>kyc_held_recovery</code> — Importi trattenuti per KYC alla verifica</td>
+<td><code>release_held</code></td>
+<td>provisional</td>
+<td><code>release_held</code> = Si sbloccano; <code>forfeit</code> = Si perdono</td>
+<td>M1 §5; nessuna regola</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_skipped_ranks</code> — Qualifiche saltate nello stesso mese</td>
+<td><code>pay_all</code></td>
+<td>provisional</td>
+<td><code>pay_all</code> = Premio per ogni qualifica; <code>highest_only</code> = Solo la più alta</td>
+<td>PMK p.32 (OPEN-05)</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_inactive</code> — Rank Bonus maturato da inattivo</td>
+<td><code>hold_n_months</code></td>
+<td>provisional</td>
+<td><code>hold_n_months</code> = Trattenuto fino a N mesi, poi perso; <code>hold_until_active</code> = Trattenuto finché torna attivo; <code>forfeit</code> = Perso</td>
+<td>PMK p.32 («per poter riscuotere devi essere attivo») (OPEN-06)</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_installment_start</code> — Decorrenza prima rata</td>
+<td><code>achievement_period</code></td>
+<td>provisional</td>
+<td><code>achievement_period</code> = Mese del raggiungimento; <code>next_period</code> = Mese successivo</td>
+<td>PMK p.32</td>
+</tr>
+<tr>
+<td>D07</td>
+<td><code>rank_bonus_installment_inactive</code> — Rata in un mese di inattività</td>
+<td><code>hold</code></td>
+<td>provisional</td>
+<td><code>hold</code> = Trattenuta; <code>pay_anyway</code> = Pagata comunque</td>
+<td>PMK p.32</td>
+</tr>
+<tr>
+<td>D08</td>
+<td><code>fsb_rank_basis</code> — Qualifica richiesta dal FSB</td>
+<td><code>achieved</code></td>
+<td>provisional</td>
+<td><code>achieved</code> = Raggiunta; <code>effective</code> = Efficace</td>
+<td>Guida FSB p.3–7; PMK 070726 p.35</td>
+</tr>
+<tr>
+<td>D08</td>
+<td><code>fsb_missed_step</code> — Step mancato</td>
+<td><code>independent</code></td>
+<td>provisional</td>
+<td><code>independent</code> = Gli step successivi restano validi; <code>blocks_following</code> = Blocca i successivi</td>
+<td>Guida FSB p.4–7 (OPEN-07)</td>
+</tr>
+<tr>
+<td>D09</td>
+<td><code>fsb_step10_deadline</code> — Step 10: termine per i tre consulenti</td>
+<td><code>own_window</code></td>
+<td>provisional</td>
+<td><code>own_window</code> = Step 9 nella loro finestra (210 giorni), nessuna scadenza per lo sponsor (PMK 070726 p.35)</td>
+<td>Guida FSB p.7 vs PMK p.35 (OPEN-08)</td>
+</tr>
+<tr>
+<td>D11</td>
+<td><code>refund_after_close</code> — Reso dopo la chiusura del periodo</td>
+<td><code>clawback_next_open</code></td>
+<td>provisional</td>
+<td><code>clawback_next_open</code> = Storno nel primo periodo aperto; <code>no_clawback</code> = Nessun recupero</td>
+<td>M1 §1 (refund) (OPEN-26)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="registro-aggiornamenti"><h1>Registro aggiornamenti</h1>
+<h2>2026-10-01 — E1/E2/E3: motore di calcolo</h2>
+<ul>
+<li>Motore puro PHP in <code>App\Domain\Engine</code>, piano ufficiale prelancio in JSON, registro politiche D01–D12.</li>
+<li>Test: 52 (carriera, bonus, scenari golden G01–G26 coperti salvo G21/G22/G24, proprietà), 1362 asserzioni, tutti verdi; Pint pulito.</li>
+<li>Comando <code>php artisan lamess:parametri</code>.</li>
+<li>Manuali iniziali, specifica, architettura, decisioni aperte.</li>
+<li>Non ancora: persistenza, Fortify/2FA, ruoli, Filament, interfacce, <code>InvoiceSink</code>/GestionaleK, FSB (sospeso).</li>
+<li>Nota: Pest/Larastan non installati (rete cloud); da aggiungere sul PC.</li>
+</ul>
+<h2>2026-10-01 — Persistenza e ciclo del periodo</h2>
+<ul>
+<li>Migrazioni: consulenti, versioni piano, periodi, movimenti PV, run di calcolo, righe commissione, statistiche, qualifiche, premi e rate Rank Bonus.</li>
+<li><code>SnapshotBuilder</code> (DB → motore) e <code>PeriodService</code> (apri / live / runtime / chiudi) con lock, checklist di chiusura, immutabilità (G22, G23, G24, G19 su DB).</li>
+<li><code>PvLedger</code>, seeder del piano ufficiale, comando <code>lamess:periodo</code>.</li>
+<li>Test: 61 (54 + 7 feature su SQLite), tutti verdi.</li>
+<li>Non ancora: utenti/login, interfaccia admin, import ordini, settlement/wallet (F5), rete con closure table e cessazioni (F1), FSB.</li>
+</ul>
+<h2>2026-10-01 — Rete (F1 parziale) e back-office Filament</h2>
+<ul>
+<li>Rete: stati e transizioni, cessazione con ricollegamento dei diretti (G20), storico sponsor, closure table, sponsor immutabile, re-iscrizione dopo 180 giorni (configurabile).</li>
+<li>Back-office Filament 4: Piano compensi (con simulazione e attivazione), Periodi (apri/live/runtime/chiudi), Movimenti PV, Consulenti. Tema terracotta/Inter dalla palette Lamèss.</li>
+<li>Movimenti di periodi chiusi immutabili anche a livello di modello.</li>
+<li>Test: 80, tutti verdi.</li>
+<li>Non ancora: onboarding/KYC e Lettera IVD, referral/FAN, canone, cessione account, 2FA e ruoli, dashboard KPI.</li>
+</ul>
+<h2>2026-10-01 — F1 completo</h2>
+<ul>
+<li>FAN con link referral e cookie a 15 giorni; richiesta di diventare consulente con firma (driver fake); accettazione/rifiuto; KYC e onboarding; tesserino PDF; canone annuale con promemoria e scadenza; pagine pubbliche e area consulente; risorse admin per contratti, KYC, canoni, clienti.</li>
+<li>Test: 106.</li>
+</ul>
+<h2>2026-10-02 — Ruoli, 2FA e cruscotto KPI</h2>
+<ul>
+<li>Ruoli (spatie/permission) con matrice permessi; sostituito il flag <code>is_admin</code>; 2FA con app di autenticazione (obbligatorio da configurazione); cruscotto KPI del back-office.</li>
+<li>Test: 115, tutti verdi.</li>
+<li>Non ancora: ordini e fatture (F2), InvoiceSink/GestionaleK, approvazione a quattro occhi del piano, gestione utenti da interfaccia.</li>
+</ul>
+<h2>2026-10-03 — F2: negozio, ordini, fatture</h2>
+<ul>
+<li>Catalogo con PV/CV (default imponibile/1,23, promo CV doppio), omaggi bundle, kit, tariffe di spedizione.</li>
+<li>Ordine → pagamento (carta finta o bonifico) → movimenti PV confermati nel mese del pagamento → fattura/ricevuta numerata → consegna al gestionale tramite <code>InvoiceSink</code> (driver finto, retry orario).</li>
+<li>Resi con nota di credito e storno PV (G19 lato ledger, G22); negozio pubblico e area ordini; sezioni admin Prodotti, Omaggi, Spedizioni, Ordini, Fatture, Note di credito.</li>
+<li>Test: 148 su SQLite e su MariaDB.</li>
+<li>Non ancora: FatturaPA XML, pagamento carta reale (Stripe/Nexi), import del catalogo reale, driver GestionaleK, ricerca ordini per consulente nell'area consulente (F6).</li>
+</ul>
+<h2>2026-10-04 — Catalogo reale e prezzi al centesimo</h2>
+<ul>
+<li>Importazione del listino Odoo (35 prodotti, prezzi IVA inclusa, PV esplicito): <code>lamess:importa-prodotti</code>.</li>
+<li>Prezzi unitari a 8 decimali; arrotondamento una volta per aliquota: i prezzi IVA inclusa tornano al centesimo.</li>
+<li>Prodotti a prezzo zero non acquistabili direttamente.</li>
+<li>Test: 154 su SQLite e MariaDB.</li>
+</ul>
+<h2>2026-10-05 — Fasi 0 e 1 del piano di lavoro del portale</h2>
+<ul>
+<li>Fase 0: token grafici Lamèss (colori, Marcellus e Inter ospitati in locale) per sito, aree utente e back-office; installazione guidata <code>/installazione</code> e pacchetto ZIP per cPanel senza terminale (<code>tools/crea-pacchetto-cpanel.php</code>, <code>.env.cpanel.example</code>).</li>
+<li>Fase 1: super_admin invisibile agli altri ruoli (scope globale + 404 + etichetta «Amministrazione»), ruolo admin a permessi singoli, pagine Utenti e Impostazioni di sistema, log di audit con catena di hash e trigger anti-modifica, recupero password, creazione del super_admin solo da riga di comando/installatore.</li>
+<li>Test: 209 (SQLite), tra cui invisibilità del super_admin, catena e manomissioni del log, installatore.</li>
+</ul>
+<h2>2026-10-06 — Fase 2: parametri del piano</h2>
+<ul>
+<li>Piano: nuovi parametri <code>min_payout</code> (15 €), <code>scn_threshold</code> (5.000 €), <code>move_node_window_days</code> (7) caricati da <code>lamess.config</code>; i «PR mensili minimi» (100) coincidono con <code>activity_threshold</code>. Significato di SCN e Move Node ancora da chiarire con il cliente: oggi sono solo valori salvati e modificabili.</li>
+<li>Versioni del piano: data di efficacia (<code>effective_from</code>), stato «programmata», <code>CompPlanVersion::inForce()</code>; i periodi si aprono con la versione in vigore il primo giorno del mese. Scheduler giornaliero che porta in vigore le versioni programmate.</li>
+<li>Pagina «Piano compensi»: modulo strutturato (parametri, rank con requisiti, Matching, politiche) al posto del JSON; solo le bozze si modificano; attivazione con data di efficacia e motivo; confronto con la versione precedente.</li>
+<li>Prodotti: base di calcolo PV (netto/lordo), quota commissionabile, modalità PV sugli sconti e flag spedizione (questi ultimi due salvati ma non ancora usati dagli ordini).</li>
+<li>Log di audit: <code>plan.created/updated/activated/duplicated</code> e <code>product.updated</code> con valori prima/dopo.</li>
+<li>Test: 225.</li>
+</ul>
+<h2>2026-10-07 — Fase 3: albero</h2>
+<ul>
+<li>Operazioni (<code>TreeOperations</code>, permesso <code>network.restructure</code> concesso solo dal super_admin): sposta ramo / cambia sponsor con anteprima d'impatto (persone spostate, catena prima/dopo, mesi aperti e chiusi toccati), anti-ciclo, data di efficacia (non nel futuro), scelta «il ramo segue» o «solo lui» (i diretti passano al suo sponsor), scelta «ricalcola i mesi chiusi» (solo super_admin; registra i mesi da riaprire, la riapertura è della fase 6).</li>
+<li>Clienti: riassegnazione singola, in blocco (dall'elenco) e di tutti i clienti di un consulente, con storico (<code>customer_assignment_history</code>).</li>
+<li>Qualifica forzata (fonte <code>forced</code>), sospensione/riattivazione e cessazione ora scrivono anche il log di audit con stato prima/dopo.</li>
+<li>Ogni operazione richiede un motivo e scrive il log.</li>
+<li>Vista interattiva «Albero della rete»: ricerca, apri/chiudi tutto, zoom, colore per qualifica (con nome scritto), scheda dettaglio, cessati nascosti di default.</li>
+<li>Test: 240.</li>
+</ul>
+<h2>2026-10-08 — Fase 4: storico Odoo e riconciliazione</h2>
+<ul>
+<li><code>database/import/odoo_storico_etl.py</code> legge gli export «Ordini di vendita» e «Fatture» e scrive <code>ordini.csv</code> e <code>fatture.csv</code>; <code>php artisan lamess:importa-storico [--prova]</code> (da lanciare dopo <code>lamess:importa-odoo</code>) crea ordini, pagamenti, fatture e note di credito storiche. Nessuna email, nessun nuovo movimento PV: agganciati quelli già importati.</li>
+<li>Gli export non hanno le righe prodotto: ogni ordine/fattura ha una riga riepilogativa (prodotto segnaposto <code>STORICO-ODOO</code>, descrizione ricavata dai movimenti). Le fatture storiche nascono «inviate» (<code>sink_ref = odoo</code>): il gestionale non le riceve due volte. Ordini e documenti importati hanno <code>source = odoo</code>.</li>
+<li>Fattura ↔ ordine: riferimento «(Kxxxxx)» nei movimenti, altrimenti acquirente + importo se l'abbinamento è unico.</li>
+<li>Tabella di riconciliazione <code>import_reconciliations</code> e pagina «Riconciliazione Odoo» (filtri, approvazione singola o in blocco con nota e log di audit, CSV): fatture senza ordine, PR ordine ≠ PV movimenti, totali diversi, SdI rifiutato/inoltro fallito, ordini da fatturare, movimenti che citano ordini/fatture assenti, note di credito da verificare.</li>
+<li>Preventivi non importati. Idempotente; le differenze approvate restano approvate.</li>
+<li>Test: 244.</li>
+</ul>
+<h2>2026-10-09 — Fase 5 (parte 1): albero vero e «cosa manca»</h2>
+<ul>
+<li><code>CareerProgress</code> (app/Domain/Career): per ogni consulente calcola qualifica attuale e prossima, PR richiesti/maturati/mancanti (personali e di gruppo), regola del 50% per linea, requisiti di struttura mancanti, punti attività del mese, sblocco Indiretti/Matching, prossimi bonus (rate Rank Bonus e premi) e un elenco «Cosa fare».</li>
+<li>«Albero della rete» riscritta come vero albero ad alberi (SVG): schede con colore di qualifica e barra di avanzamento, zoom, ricerca, apri/chiudi; il pannello laterale mostra «cosa manca per il livello successivo» (anche per admin). Lo stesso blocco compare nella scheda consulente (sezione «Avanzamento di carriera») e nell'area del consulente («Il mio avanzamento»). Per sospesi/cessati si mostra il motivo, non i PR mancanti.</li>
+<li><code>consultants.network_since</code>: data di ingresso effettiva in rete per il motore (distinta dalla data della lettera <code>since</code>); l'import Odoo la anticipa al primo evento reale (chiave <code>ingressi_anticipati</code>). I movimenti fuori mese sono riportati nel mese corretto.</li>
+<li><code>lamess:verifica-odoo YYYY-MM</code>: confronta qualifiche e PR del motore con Odoo e scrive le differenze nella riconciliazione (<code>verifica_*</code>). Sul replay gen–set: qualifiche 86/86 uguali, PR di gruppo 68/86 uguali; 18 differenze piccole da rivedere.</li>
+<li>Test: 254.</li>
+</ul>
+<h2>2026-10-02 — Allineamento al PMK 070726</h2>
+<ul>
+<li>Stato ATTIVO: contano solo i PVF di almeno 1 cliente; gli acquisti personali restano PVC e valgono per i PR ma non per l'attività.</li>
+<li>Acquisti personali dei consulenti: nessun Direct a chi compra; lo sponsor e la linea sopra maturano la differenza come Team Bonus. La vecchia regola resta come opzione (<code>sponsor</code>).</li>
+<li>Fast Start Bonus <strong>attivo</strong>: nuovo <code>FsbCalculator</code> (step 1–9 con diretti ≥100 PV, PV cumulati dalla firma con regola del 50%, qualifica raggiunta; step 10 con 3 linee). <code>SnapshotBuilder</code> fornisce i movimenti dei mesi precedenti e gli step già pagati nei periodi chiusi, così nessun premio si ripaga.</li>
+<li>PV: fisso per prodotto anche in promo (<code>discount_pv_policy = catalog</code>).</li>
+<li>Piano: parametri <code>payout_mode = monthly_auto</code> e <code>payout_day = 15</code> (il settlement F5 non è ancora costruito).</li>
+<li>Test: 268 (14 nuovi: G15–G17, G27, G34/35, G41, G43, step 10, FSB su due mesi). <strong>Le versioni del piano già salvate nel database hanno ancora i valori vecchi:</strong> va creata e attivata una nuova versione (o rieseguito il seeder) per applicarli.</li>
+</ul>
+<h2>2026-10-02 — Fase 6: chiusura mensile, pagamenti, statini, export; abbonamento e ordine multiplo</h2>
+<ul>
+<li>Alla chiusura del mese si generano le liquidazioni (<code>settlements</code>: maturato e trattenuto per consulente, dalle righe bloccate della run ufficiale). Pagamenti (<code>payouts</code>): soglia minima del piano (15 €), importi sotto soglia che si accumulano ai mesi successivi, saldi negativi riportati, blocco se manca KYC verificato o IBAN o c'è un blocco bonus. Segna pagato (riferimento e data) e annulla.</li>
+<li>Statini mensili per consulente (pagina e PDF) con il perché di ogni importo; export CSV dei compensi del mese e dei bonifici da fare (tracciati nell'audit).</li>
+<li>Riapertura di un mese chiuso: solo super amministratore, con motivo obbligatorio, solo l'ultimo mese chiuso e solo se nessun pagamento è stato eseguito; annulla bonifici da fare e liquidazioni, riporta le righe a bozza.</li>
+<li>Nuovi permessi <code>payouts.view</code> / <code>payouts.manage</code>: dopo l'aggiornamento eseguire <code>php artisan lamess:ruoli</code>.</li>
+<li>Abbonamento mensile (solo carta): primo ordine subito, poi uno al mese con <code>lamess:abbonamenti</code> (ogni giorno alle 04:00); addebito fallito → nuovi tentativi, poi pausa; pausa/ripresa/annullo dal cliente e dall'admin. Spedizione gratuita con impegno di almeno 12 mesi (parametri modificabili nel pannello).</li>
+<li>Ordine per conto di altri: il consulente aggiunge al carrello prodotti per i suoi clienti e per i consulenti diretti; un solo ordine e una sola spedizione, punti al destinatario.</li>
+<li>Fase 5 lasciata aperta di proposito (18 differenze PR, nuova versione del piano, decisioni OPEN).</li>
+<li>Test: 297. Dopo l'aggiornamento eseguire <code>php artisan migrate</code>.</li>
+</ul>
+<h2>2026-10-05 — Fase 6: pagamento automatico il giorno 15 e controllo del cron</h2>
+<ul>
+<li><code>lamess:pagamenti</code> (ogni giorno alle 05:00): per i mesi chiusi non ancora preparati, dal giorno di pagamento del piano (15 del mese dopo) crea i pagamenti «da pagare». Una sola volta per mese: un pagamento annullato a mano non viene ricreato. La riapertura del mese azzera il segno. Con <code>payout_mode = on_request</code> non fa nulla.</li>
+<li>Dashboard admin: riquadro «Operazioni automatiche» (Attivo / Fermo / Mai partito) alimentato da un battito registrato ogni minuto da <code>schedule:run</code>.</li>
+<li>Dopo l'aggiornamento: <code>php artisan migrate</code>.</li>
+<li>Chi diventa pagabile (KYC, IBAN) dopo la preparazione del mese viene preso dal mese successivo, oppure subito con «Prepara pagamenti».</li>
+</ul>
+<h2>2026-10-05 — Chiusura mensile automatica</h2>
+<ul>
+<li>Impostazione «Chiusura automatica del mese» (Impostazioni → Chiusura mensile): <strong>spenta</strong>, <strong>solo calcolo ufficiale</strong> (default: il mese resta in revisione e lo chiude l'admin) oppure <strong>calcola e chiude da sola</strong>.</li>
+<li><code>lamess:chiusura-mese</code> gira ogni notte alle 01:00 sul primo mese non chiuso, solo se è finito da meno di 45 giorni e solo se tutti i mesi prima sono chiusi: i mesi arretrati (es. quelli importati da Odoo) si chiudono a mano.</li>
+<li>Movimenti in attesa di pagamento o dati cambiati: la chiusura si ferma e riprova ogni notte; il blocco entra nel registro una sola volta per motivo e compare nel riquadro «Operazioni automatiche» della dashboard.</li>
+<li>Catena completa: fine mese → calcolo/chiusura (01:00 del giorno 1) → pagamenti preparati dal 15 (05:00) → bonifico e «Segna pagato» a mano.</li>
+<li>Test: 304.</li>
+</ul>
+<h2>2026-10-05 — Mesi storici già pagati</h2>
+<ul>
+<li>Azione «Segna come storico già pagato» nella scheda del periodo chiuso: crea le liquidazioni e le segna pagate, così un mese già pagato fuori dal portale (Odoo) non entra mai in un pagamento nuovo. Va usata per i mesi chiusi prima della Fase 6 (gen–set 2026) prima del primo «Prepara pagamenti».</li>
+<li>Test: 305.</li>
+</ul>
+<h2>2026-10-05 — Correzioni e prova del percorso completo</h2>
+<ul>
+<li>Correzione: «Genera liquidazioni» riportava ad «aperte» le liquidazioni di un mese segnato come storico già pagato. Ora le liquidazioni pagate o legate a un pagamento non si riscrivono mai; «Genera liquidazioni» compare solo per mesi senza liquidazioni; «Segna come storico già pagato» compare finché nessuna liquidazione del mese è legata a un pagamento.</li>
+<li>Prova su copia del database reale (gen–ago storico, settembre da pagare): 27 liquidazioni, 5 pagamenti preparati il 15/10 (1.197,73 €), CSV bonifici e statino PDF corretti. Nessun consulente ha ancora l'IBAN: senza IBAN nessuno è pagabile.</li>
+<li>Documentazione rivista: manuali utente, admin, sviluppatori, architettura, installazione, decisioni aperte (OPEN-42/43/44), dossier rigenerato.</li>
+<li>Test: 305.</li>
+</ul>
+<h2>2026-10-05 — File SEPA, avvisi ai consulenti, dati del venditore</h2>
+<ul>
+<li><strong>File SEPA</strong> (Pagamenti → «Esporta file SEPA (XML)», pain.001.001.03): bonifici multipli dei pagamenti «da pagare» da caricare nell'home banking. IBAN controllati (cifra di controllo), nomi ripuliti dai caratteri non SEPA, pagamenti senza IBAN valido saltati ed elencati. Richiede in Impostazioni → Bonifici SEPA intestatario e IBAN del conto da cui si paga. Registro di audit <code>export.sepa</code>, i pagamenti esportati ricevono la data di esportazione. <strong>Prima del primo uso reale far controllare il file alla banca.</strong></li>
+<li><strong>Avvisi email, solo ai consulenti</strong>: «statino pronto» alla chiusura del mese e «bonifico effettuato» quando si segna un pagamento come pagato. Due interruttori in Impostazioni → Email. Nessun avviso ai clienti. Con «Invio email attivo» spento non parte nulla (blocco globale + controllo nel servizio). Un errore di posta non blocca mai chiusure o pagamenti.</li>
+<li><strong>Dati del venditore</strong>: l'etichetta ora è «Denominazione (ragione sociale oppure nome e cognome)» (vale anche per chi non è un'azienda); la dashboard mostra «Da completare» finché resta il testo provvisorio.</li>
+<li>«Segna come storico già pagato» sparisce una volta usato (resta solo se qualche liquidazione del mese torna aperta).</li>
+<li>Test: 318.</li>
+</ul>
+<h2>2026-10-05 — Fase 7: aree utente e grafica premium</h2>
+<ul>
+<li><strong>Back-office</strong>: menu in alto con 4 gruppi a tendina (Rete, Compensi, Vendite, Sistema) al posto della lunga barra laterale; logo e nome Lamèss; stile premium (<code>public/css/lamess-admin.css</code>, file statico, nessuna compilazione); pagina di accesso con logo; stati in italiano (Attivo, Chiuso, In revisione…) tramite <code>App\Support\StatusLabels</code>; tolto il riquadro «Benvenuto» dal cruscotto.</li>
+<li><strong>Area consulente</strong>: «Il mio ramo» (albero in sola lettura con qualifica, stato, PVF e PR del mese), «I miei clienti» (solo quelli assegnati), numeri del mese in panoramica (PVF, PR, qualifica).</li>
+<li><strong>Area di tutti</strong>: «I miei dati» (recapiti e cambio password; email e dati fiscali solo tramite il Consorzio).</li>
+<li><strong>Pagine di errore</strong> 403, 404, 419, 429, 500, 503 in italiano con la grafica Lamèss; pagine vuote con messaggio.</li>
+<li><strong>Sito e area</strong>: nuovo layout con intestazione, sotto-menu e piè di pagina; adattato al telefono (<code>public/css/lamess-site.css</code>).</li>
+<li>Test: 324.</li>
+</ul>
+<h2>2026-10-05 — Fase 8 (parte 1): sicurezza e messa online</h2>
+<ul>
+<li><strong>Backup del database</strong> dal portale (Sistema → Backup; automatico ogni notte alle 02:15, ultimi 14; scarico solo per il super_admin, registrato nel log). <code>lamess:backup</code> da riga di comando.</li>
+<li><strong>Controllo messa online</strong> (Sistema → Controllo messa online, <code>lamess:controlla</code>): 20 controlli con OK / Attenzione / Blocco.</li>
+<li><strong>Intestazioni di sicurezza</strong> su tutte le risposte (nosniff, frame, referrer, permessi, HSTS su https).</li>
+<li><strong>Matrice dei permessi</strong> testata: portale pubblico mai nel back-office, ogni profilo admin vede solo ciò che il suo permesso consente, pagine di sistema solo super_admin, tutte le pagine admin si aprono senza errori; limite ai tentativi di accesso verificato.</li>
+<li>Nuovi documenti: «Messa online e piano di ritorno», «Guida breve per l'amministratore».</li>
+<li>Aperto: firma elettronica reale (oggi di prova), carta reale (Stripe), prova del ripristino MySQL su hosting.</li>
+<li>Test: 340.</li>
+</ul>
+<h2>Pacchetto cPanel verificato (5 ottobre 2026)</h2>
+<ul>
+<li>Il pacchetto non include più la cache di sviluppo (<code>bootstrap/cache</code>), né file di servizio (.github, .mcp.json, boost.json, .styleci.yml, .npmrc), né i database di prova.</li>
+<li>Prova da zero su MariaDB: installazione guidata, blocco della pagina dopo l'uso, accesso, intestazioni di sicurezza, scheduler, backup e ripristino (tabelle e trigger) riusciti.</li>
+<li>Aperte: OPEN-47/48/49.</li>
+</ul>
+<h2>2026-10-05 — Moduli 1-7: dal perimetro «fuori piano» al sistema completo</h2>
+<ul>
+<li><strong>Modulo 1</strong>: approvazione a quattro occhi della pubblicazione del piano (nuovo permesso <code>plan.approve</code>).</li>
+<li><strong>Modulo 2</strong>: assistenza (ticket, note interne), estratti conto con reclamo entro 10 giorni e accettazione tacita (<code>lamess:estratti</code>).</li>
+<li><strong>Modulo 3</strong>: wallet e prelievi su richiesta, ricevute provvigionali, trattenute (ritenuta d'acconto, INPS, commissione) spente di default e da validare col commercialista, regime fiscale del consulente.</li>
+<li><strong>Modulo 4</strong>: novità, materiali scaricabili con filigrana, eventi con lista d'attesa, link e QR del referral (permesso <code>content.manage</code>).</li>
+<li><strong>Modulo 5</strong>: conformità: casi, sanzioni con effetti automatici (<code>lamess:sanzioni</code>), materiali promozionali approvati con codice <code>MA-AAAA-nnnn</code> (permessi <code>compliance.*</code>).</li>
+<li><strong>Modulo 6</strong>: cessione del codice e successione agli eredi (<code>lamess:successioni</code>, 180 giorni), contributo di cessione 50 €.</li>
+<li><strong>Modulo 7</strong>: driver reali: Stripe Checkout con webhook firmato; fatture elettroniche FatturaPA (TD01/TD04) validate contro lo schema ufficiale, con consegna <code>file</code> o <code>mail</code>; verifica d'identità online con Stripe Identity; nuovi controlli nel «Controllo messa online».</li>
+<li>Aperto: OPEN-50…64 (vedi «Decisioni aperte»), in particolare l'aggiornamento senza terminale dopo la messa online, GestionaleK e i rinnovi automatici con Stripe.</li>
+<li>Test: 451 (1 saltato, preesistente).</li>
+</ul>
+</section>
+</body></html>

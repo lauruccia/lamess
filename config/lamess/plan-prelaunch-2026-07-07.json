@@ -1,0 +1,400 @@
+{
+  "label": "Pre-lancio PMK 07/07/26 (testo ufficiale 070726)",
+  "settings": {
+    "activity_threshold": "100",
+    "commission_base_per_pv": "1",
+    "fifty_rule_share": "0.5",
+    "indirect_min_rank": "PEARL",
+    "matching_min_rank": "SAPPHIRE",
+    "rank_bonus_installment_threshold": "50000",
+    "rank_bonus_installments": "12",
+    "rank_bonus_hold_months": "3",
+    "fsb_enabled": "true",
+    "payout_mode": "monthly_auto",
+    "payout_day": "15",
+    "min_payout": "15",
+    "scn_threshold": "5000",
+    "move_node_window_days": "7"
+  },
+  "policies": {},
+  "ranks": [
+    {
+      "code": "CONSULTANT",
+      "name": "Incaricato",
+      "sequence": 0,
+      "pr_required": 0,
+      "fifty_percent_rule": false,
+      "direct_pct": "15",
+      "rank_bonus": 0,
+      "structure": [],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "PEARL",
+      "name": "Pearl",
+      "sequence": 1,
+      "pr_required": 600,
+      "fifty_percent_rule": false,
+      "direct_pct": "18",
+      "rank_bonus": 0,
+      "structure": [],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "CRYSTAL",
+      "name": "Crystal",
+      "sequence": 2,
+      "pr_required": 2400,
+      "fifty_percent_rule": true,
+      "direct_pct": "21",
+      "rank_bonus": 200,
+      "structure": [
+        {
+          "rank": "PEARL",
+          "count": 1
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "SAPPHIRE",
+      "name": "Sapphire",
+      "sequence": 3,
+      "pr_required": 9000,
+      "fifty_percent_rule": true,
+      "direct_pct": "24",
+      "rank_bonus": 300,
+      "structure": [
+        {
+          "rank": "CRYSTAL",
+          "count": 1
+        },
+        {
+          "rank": "PEARL",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "RUBY",
+      "name": "Ruby",
+      "sequence": 4,
+      "pr_required": 20000,
+      "fifty_percent_rule": true,
+      "direct_pct": "26",
+      "rank_bonus": 500,
+      "structure": [
+        {
+          "rank": "SAPPHIRE",
+          "count": 1
+        },
+        {
+          "rank": "CRYSTAL",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "EMERALD",
+      "name": "Emerald",
+      "sequence": 5,
+      "pr_required": 45000,
+      "fifty_percent_rule": true,
+      "direct_pct": "28",
+      "rank_bonus": 1500,
+      "structure": [
+        {
+          "rank": "RUBY",
+          "count": 1
+        },
+        {
+          "rank": "SAPPHIRE",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "DIAMOND",
+      "name": "Diamond",
+      "sequence": 6,
+      "pr_required": 100000,
+      "fifty_percent_rule": true,
+      "direct_pct": "30",
+      "rank_bonus": 5000,
+      "structure": [
+        {
+          "rank": "EMERALD",
+          "count": 1
+        },
+        {
+          "rank": "RUBY",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "BLUE_DIAMOND",
+      "name": "Blue Diamond",
+      "sequence": 7,
+      "pr_required": 300000,
+      "fifty_percent_rule": true,
+      "direct_pct": "32",
+      "rank_bonus": 10000,
+      "structure": [
+        {
+          "rank": "DIAMOND",
+          "count": 1
+        },
+        {
+          "rank": "EMERALD",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "ROSE_DIAMOND",
+      "name": "Rose Diamond",
+      "sequence": 8,
+      "pr_required": 600000,
+      "fifty_percent_rule": true,
+      "direct_pct": "34",
+      "rank_bonus": 20000,
+      "structure": [
+        {
+          "rank": "BLUE_DIAMOND",
+          "count": 1
+        },
+        {
+          "rank": "DIAMOND",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "PURPLE_DIAMOND",
+      "name": "Purple Diamond",
+      "sequence": 9,
+      "pr_required": 1200000,
+      "fifty_percent_rule": true,
+      "direct_pct": "36",
+      "rank_bonus": 65000,
+      "structure": [
+        {
+          "rank": "ROSE_DIAMOND",
+          "count": 1
+        },
+        {
+          "rank": "BLUE_DIAMOND",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "RED_DIAMOND",
+      "name": "Red Diamond",
+      "sequence": 10,
+      "pr_required": 3000000,
+      "fifty_percent_rule": true,
+      "direct_pct": "37",
+      "rank_bonus": 120000,
+      "structure": [
+        {
+          "rank": "PURPLE_DIAMOND",
+          "count": 1
+        },
+        {
+          "rank": "ROSE_DIAMOND",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    },
+    {
+      "code": "BLACK_DIAMOND",
+      "name": "Black Diamond",
+      "sequence": 11,
+      "pr_required": 10000000,
+      "fifty_percent_rule": true,
+      "direct_pct": "38",
+      "rank_bonus": 300000,
+      "structure": [
+        {
+          "rank": "RED_DIAMOND",
+          "count": 1
+        },
+        {
+          "rank": "PURPLE_DIAMOND",
+          "count": 2
+        }
+      ],
+      "source": "PMK p.17–21, p.26, p.32, p.37"
+    }
+  ],
+  "matching_pct": {
+    "SAPPHIRE": [
+      5
+    ],
+    "RUBY": [
+      5,
+      5
+    ],
+    "EMERALD": [
+      5,
+      5,
+      5
+    ],
+    "DIAMOND": [
+      10,
+      5,
+      5
+    ],
+    "BLUE_DIAMOND": [
+      10,
+      10,
+      5
+    ],
+    "ROSE_DIAMOND": [
+      10,
+      10,
+      10
+    ],
+    "PURPLE_DIAMOND": [
+      10,
+      10,
+      10,
+      5
+    ],
+    "RED_DIAMOND": [
+      10,
+      10,
+      10,
+      5,
+      5
+    ],
+    "BLACK_DIAMOND": [
+      10,
+      10,
+      10,
+      5,
+      5,
+      5
+    ]
+  },
+  "fsb_steps": [
+    {
+      "step": 1,
+      "days": 7,
+      "directs_required": 2,
+      "direct_min_pv": 100,
+      "pv_target": 200,
+      "required_rank": "CONSULTANT",
+      "fifty_percent_rule": false,
+      "amount": 40,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 2,
+      "days": 14,
+      "directs_required": 3,
+      "direct_min_pv": 100,
+      "pv_target": 500,
+      "required_rank": "CONSULTANT",
+      "fifty_percent_rule": true,
+      "amount": 100,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 3,
+      "days": 30,
+      "directs_required": 4,
+      "direct_min_pv": 100,
+      "pv_target": 1500,
+      "required_rank": "PEARL",
+      "fifty_percent_rule": true,
+      "amount": 300,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 4,
+      "days": 60,
+      "directs_required": 5,
+      "direct_min_pv": 100,
+      "pv_target": 5000,
+      "required_rank": "CRYSTAL",
+      "fifty_percent_rule": true,
+      "amount": 800,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 5,
+      "days": 90,
+      "directs_required": 6,
+      "direct_min_pv": 100,
+      "pv_target": 7500,
+      "required_rank": "CRYSTAL",
+      "fifty_percent_rule": true,
+      "amount": 1200,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 6,
+      "days": 120,
+      "directs_required": 7,
+      "direct_min_pv": 100,
+      "pv_target": 15000,
+      "required_rank": "SAPPHIRE",
+      "fifty_percent_rule": true,
+      "amount": 2500,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 7,
+      "days": 150,
+      "directs_required": 8,
+      "direct_min_pv": 100,
+      "pv_target": 30000,
+      "required_rank": "RUBY",
+      "fifty_percent_rule": true,
+      "amount": 4500,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 8,
+      "days": 180,
+      "directs_required": 9,
+      "direct_min_pv": 100,
+      "pv_target": 80000,
+      "required_rank": "EMERALD",
+      "fifty_percent_rule": true,
+      "amount": 9000,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 9,
+      "days": 210,
+      "directs_required": 10,
+      "direct_min_pv": 100,
+      "pv_target": 200000,
+      "required_rank": "DIAMOND",
+      "fifty_percent_rule": true,
+      "amount": 20000,
+      "source": "PMK 070726 p.35; Guida FSB rev.1.1 p.3–7"
+    },
+    {
+      "step": 10,
+      "days": null,
+      "kind": "legs",
+      "legs_required": 3,
+      "legs_step_number": 9,
+      "amount": 12000,
+      "source": "PMK p.35; Guida FSB p.7 (D09)"
+    }
+  ]
+}

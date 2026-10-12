@@ -1,0 +1,108 @@
+@extends('site.layout')
+@section('title','Checkout — Lamèss')
+@section('width', 'full')
+@section('header', 'minimal')
+@section('content')
+<header class="page-head"><h1>Checkout</h1>@include('site.shop._steps', ['current' => 2])</header>
+@error('order')<div class="warn">{{ $message }}</div>@enderror
+<div class="cart-grid checkout">
+ <form method="post" action="/area/checkout" class="co-form" id="checkout-form">@csrf
+  <section class="card">
+   <h2><span class="step">1</span> Fatturazione</h2>
+   <label>Fattura intestata a</label>
+   <select name="type" id="type"><option value="private" @selected(old('type', $profile?->type ?? 'private')==='private')>Privato</option><option value="company" @selected(old('type', $profile?->type)==='company')>Azienda</option></select>
+   <div class="row"><div><label>Nome</label><input name="first_name" value="{{ old('first_name', $profile?->first_name) }}" autocomplete="given-name"></div><div><label>Cognome</label><input name="last_name" value="{{ old('last_name', $profile?->last_name) }}" autocomplete="family-name"></div></div>
+   <div data-company><label>Ragione sociale (aziende)</label><input name="company_name" value="{{ old('company_name', $profile?->company_name) }}" autocomplete="organization"></div>
+   <div class="row"><div><label>Codice fiscale</label><input name="tax_code" value="{{ old('tax_code', $profile?->tax_code) }}"></div><div data-company><label>Partita IVA (aziende)</label><input name="vat_number" value="{{ old('vat_number', $profile?->vat_number) }}"></div></div>
+   <div class="row" data-company><div><label>Codice SDI (aziende)</label><input name="sdi_code" value="{{ old('sdi_code', $profile?->sdi_code) }}"></div><div><label>PEC (aziende)</label><input name="pec" value="{{ old('pec', $profile?->pec) }}"></div></div>
+   <label>Indirizzo di fatturazione</label><input name="address" value="{{ old('address', $profile?->address) }}" autocomplete="street-address">
+   <div class="row"><div><label>Città</label><input name="city" value="{{ old('city', $profile?->city) }}" autocomplete="address-level2"></div><div><label>CAP</label><input name="zip" value="{{ old('zip', $profile?->zip) }}" autocomplete="postal-code" inputmode="numeric"></div></div>
+   <label>Provincia</label><input name="province" maxlength="3" value="{{ old('province', $profile?->province) }}">
+   <input type="hidden" name="remember" value="0">
+   <label class="chk"><input type="checkbox" name="remember" value="1" @checked(old('remember', '1') == '1')> Salva questi dati per i prossimi ordini (potrai cambiare l'indirizzo in ogni ordine)</label>
+   @foreach(['address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
+  </section>
+  <section class="card">
+   <h2><span class="step">2</span> Spedizione</h2>
+   @include('site.shop._ship_picker', ['addresses' => $addresses, 'max' => $maxAddresses])
+  </section>
+  <section class="card">
+   <h2><span class="step">3</span> Pagamento</h2>
+   @php($methods = $methods ?? ['card' => true, 'transfer' => true, 'kmoney' => true])
+   @php($pay = old('payment_method', $methods['card'] ? 'card' : ($methods['transfer'] ? 'transfer' : 'kmoney')))
+   @php($sub = old('subscribe', empty($codes) ? 'monthly' : 'none')) {{-- abbonamento preselezionato (non con codici sconto nel carrello: valgono solo sugli ordini singoli) --}}
+   <fieldset class="choice">
+    <legend>Come vuoi pagare</legend>
+    @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
+     @php($kmShare = $priced->kmoneyGross())
+     @php($kmTotal = \App\Domain\Engine\Support\Num::of($priced->totals()['total']))
+     @php($kmShare = $kmShare->isGreaterThan($kmTotal) ? $kmTotal : $kmShare)
+     @php($kmRest = $kmTotal->minus($kmShare))
+     @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
+     @php($kmMonthly = $sub === 'monthly')
+     @php($kmBonus = max(0, (int) config('lamess.kmoney_bonus_percent', 0)))
+     @php($kmCost = $kmBonus > 0 ? round((float) (string) $kmShare / (1 + $kmBonus / 100), 2) : (float) (string) $kmShare)
+     @php($kmSaving = round((float) (string) $kmShare - $kmCost, 2))
+     <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
+      <span data-km-single @if($kmMonthly) hidden @endif>
+       @if($kmRest->isPositive())
+        {{ \App\Support\Money::eur($kmShare) }} KY dal tuo saldo KMoney (quota consentita dai prodotti); il resto di € {{ \App\Support\Money::eur($kmRest) }} con carta o bonifico.
+       @else
+        Paghi subito {{ \App\Support\Money::eur($kmShare) }} KY con il tuo saldo KMoney.
+       @endif
+      </span>
+      <span data-km-sub @if(! $kmMonthly) hidden @endif>
+       @if($kmRest->isPositive())
+        Ogni mese {{ \App\Support\Money::eur($kmShare) }} KY dal tuo saldo KMoney; il resto di € {{ \App\Support\Money::eur($kmRest) }} sulla carta, in automatico.
+       @else
+        Addebito automatico di {{ \App\Support\Money::eur($kmShare) }} KY ogni mese dal tuo saldo KMoney.
+       @endif
+      </span>
+      @if($kmBonus > 0 && $kmSaving > 0)<span class="km-promo">Ricarichi solo € {{ \App\Support\Money::eur($kmCost) }} e paghi {{ \App\Support\Money::eur($kmShare) }} KY: risparmi € {{ \App\Support\Money::eur($kmSaving) }}, fino al {{ $kmBonus }}% in più.</span>@endif
+      <span class="km-link">
+       @if($kmLinked)
+        Conto KMoney collegato.
+       @else
+        @if($kmoneyConnectable ?? false)Se sei registrato, <a href="/area/kmoney/collega">accedi e paga</a>.@else Se sei già registrato, paga con il tuo conto KMoney.@endif Altrimenti <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
+       @endif
+      </span></small></span><em class="oc-tag oc-tag-accent">{{ $kmBonus > 0 ? 'Risparmia fino al '.$kmBonus.'%' : 'Consigliato' }}</em></label>
+     @if($kmRest->isPositive())
+      <div class="km-rest" data-km-rest style="display:none">
+       <label for="kmoney_rest">Come vuoi pagare il resto (€ {{ \App\Support\Money::eur($kmRest) }})</label>
+       <select id="kmoney_rest" name="kmoney_rest">
+        <option value="card" @selected(old('kmoney_rest', 'card') === 'card')>Carta di credito o debito</option>
+        <option value="transfer" @selected(old('kmoney_rest') === 'transfer')>Bonifico bancario</option>
+       </select>
+      </div>
+     @endif
+    @endif
+    @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
+    @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
+   </fieldset>
+   <fieldset class="choice" data-subscribe-box>
+    <legend>Come vuoi riceverla</legend>
+    <label class="opt-card"><input type="radio" name="subscribe" value="none" @checked($sub !== 'monthly')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
+    <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    <p class="muted small" data-subscribe-note @if($sub !== 'monthly') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul saldo KMoney, secondo il metodo scelto.</p>
+   </fieldset>
+   <label class="chk"><input type="checkbox" name="privacy" value="1"> Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</label>
+   @error('privacy')<div class="err">{{ $message }}</div>@enderror
+   <button class="btn accent wide cta-lock"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · € {{ \App\Support\Money::eur($priced->totals()['total']) }}</button>
+   <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
+  </section>
+ </form>
+
+ <aside class="summary card">
+  <h2>Il tuo ordine</h2>
+  <div class="co-items">
+   @foreach($priced->lines as $key => $line)
+    @php($p = $line->product)
+    <div class="co-item"><span class="co-thumb">@include('site.shop._thumb', ['product' => $p])<i>{{ $line->qty }}</i></span><span class="co-name">{{ $p->displayName() }}</span><span class="co-price">€ {{ \App\Support\Money::eur($line->grossLine()) }}</span></div>
+   @endforeach
+  </div>
+  @include('site.shop._code', ['uid' => 'co'])
+  @include('site.shop._totals')
+  <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
+ </aside>
+</div>
+@endsection

@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Domain\Network\NetworkException;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Consultant extends Model
+{
+    protected $guarded = [];
+
+    /** Lo sponsor è immutabile (Reg. 2.10.a): si modifica solo tramite NetworkService (ricollegamento per cessazione). */
+    public static bool $sponsorChangeAllowed = false;
+
+    protected static function booted(): void
+    {
+        static::updating(static function (self $c): void {
+            if ($c->isDirty('sponsor_id') && ! self::$sponsorChangeAllowed) {
+                throw new NetworkException('Lo sponsor non può essere modificato (Reg. 2.10.a).');
+            }
+        });
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function kycDocuments(): HasMany
+    {
+        return $this->hasMany(KycDocument::class);
+    }
+
+    /** Data di ingresso usata dal motore: l'ingresso effettivo in rete se noto, altrimenti la firma della lettera. */
+    public function membershipSince(): \DateTimeImmutable
+    {
+        return $this->network_since ?? $this->since;
+    }
+
+    protected function casts(): array
+    {
+        return ['since' => 'immutable_datetime', 'network_since' => 'immutable_datetime', 'terminated_at' => 'immutable_datetime', 'onboarding_complete' => 'boolean', 'bonus_hold' => 'boolean', 'onboarding_completed_at' => 'immutable_datetime', 'badge_valid_until' => 'immutable_date'];
+    }
+}

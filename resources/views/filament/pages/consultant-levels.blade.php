@@ -61,8 +61,21 @@
                     <option value="terminated">Solo cessati</option>
                 </select>
             </label>
+            <label>Hanno acquistato nel periodo
+                <select wire:model.live="buyPeriod">
+                    <option value="month">Mese in corso</option>
+                    <option value="last_month">Mese scorso</option>
+                    <option value="last_3_months">Ultimi 3 mesi</option>
+                    <option value="year">Anno in corso</option>
+                    <option value="custom">Periodo a scelta…</option>
+                </select>
+            </label>
+            @if($buyPeriod === 'custom')
+                <label>Dal <input type="date" wire:model.live="buyFrom"></label>
+                <label>Al <input type="date" wire:model.live="buyTo"></label>
+            @endif
         </div>
-        <p class="lv-note">Il livello conta da chi scegli: lui è 0, i suoi diretti 1, i diretti dei diretti 2… Senza scelta si parte da chi non ha sponsor. <strong>{{ $list['total'] }}</strong> {{ $list['total'] === 1 ? 'incaricato' : 'incaricati' }}@if($list['truncated']) — mostrati i primi {{ $limit }}: restringi con «Parti da» o i livelli @endif.</p>
+        <p class="lv-note">Il livello conta da chi scegli: lui è 0, i suoi diretti 1, i diretti dei diretti 2… Senza scelta si parte da chi non ha sponsor. «Hanno acquistato» conta i clienti assegnati all'incaricato con almeno un ordine pagato nel periodo scelto (un cliente vale uno anche con più ordini). <strong>{{ $list['total'] }}</strong> {{ $list['total'] === 1 ? 'incaricato' : 'incaricati' }}@if($list['truncated']) — mostrati i primi {{ $limit }}: restringi con «Parti da» o i livelli @endif.</p>
     </div>
 
     @php
@@ -80,7 +93,7 @@
         @else
             <div class="lv-tools"><button type="button" x-on:click="all()">Apri tutto</button><button type="button" x-on:click="none()">Chiudi tutto</button></div>
             <table class="lv-table">
-                <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th>Stato</th><th class="num">Diretti</th><th class="num">Clienti</th><th>Dal</th></tr></thead>
+                <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th>Stato</th><th class="num">Diretti</th><th class="num">Clienti</th><th class="num" title="Clienti assegnati con almeno un ordine pagato nel periodo scelto ({{ $buyLabel }})">Hanno acquistato <span class="lv-muted" style="text-transform:none">({{ $buyLabel }})</span></th><th>Dal</th></tr></thead>
                 <tbody>
                 @foreach($list['rows'] as $r)
                     <tr class="lv-row-{{ $r['level'] === 0 ? 0 : 'n' }}" x-show="shown({{ $r['id'] }})" @if($r['parent'] !== null) x-cloak style="display:none" @endif>
@@ -101,6 +114,7 @@
                         <td>{{ \App\Support\StatusLabels::label($r['status']) }}</td>
                         <td class="num">{{ $r['directs'] }}</td>
                         <td class="num">{{ $r['clients'] }}</td>
+                        <td class="num">{{ $r['buyers'] }}</td>
                         <td>{{ $r['since'] ? \Carbon\Carbon::parse($r['since'])->format('d/m/Y') : '—' }}</td>
                     </tr>
                 @endforeach

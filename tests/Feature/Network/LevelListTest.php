@@ -81,6 +81,46 @@ final class LevelListTest extends TestCase
         $this->assertNull($b['rank'], 'senza calcolo ufficiale non c\'è una qualifica da mostrare');
     }
 
+    public function test_buyers_count_each_assigned_customer_once_when_they_have_a_paid_order_in_the_period(): void
+    {
+        $order = function (User $u, string $status, string $paidAt, string $n): void {
+            \Illuminate\Support\Facades\DB::table('orders')->insert([
+                'number' => $n, 'buyer_user_id' => $u->id, 'buyer_type' => 'customer', 'status' => $status, 'country_code' => 'IT', 'payment_method' => 'card',
+                'subtotal_net' => 10, 'vat_total' => 2.2, 'total' => 12.2, 'paid_at' => $paidAt, 'billing' => '{}', 'created_at' => $paidAt, 'updated_at' => $paidAt,
+            ]);
+        };
+        $mk = function () {
+            $u = User::factory()->create();
+            Customer::create(['user_id' => $u->id, 'assigned_consultant_id' => $this->c['B']->id, 'registered_at' => now()]);
+
+            return $u;
+        };
+        [$twice, $other, $late, $unpaid] = [$mk(), $mk(), $mk(), $mk()];
+        $order($twice, 'paid', '2026-10-03 10:00:00', 'T1');
+        $order($twice, 'shipped', '2026-10-20 10:00:00', 'T2');
+        $order($other, 'paid', '2026-10-31 23:30:00', 'T3');
+        $order($late, 'paid', '2026-09-30 10:00:00', 'T4');
+        $order($unpaid, 'cancelled', '2026-10-05 10:00:00', 'T5');
+
+        $row = fn (array $r, string $code) => collect($r['rows'])->firstWhere('code', $code);
+        $october = app(LevelList::class)->rows(null, null, 'all', ['2026-10-01', '2026-10-31']);
+        $this->assertSame(2, $row($october, 'B')['buyers'], 'chi ha due ordini conta uno; annullati e fuori periodo no');
+        $this->assertSame(4, $row($october, 'B')['clients'], 'la colonna Clienti resta il totale assegnato');
+        $this->assertSame(0, $row($october, 'A')['buyers']);
+        $this->assertSame(3, $row(app(LevelList::class)->rows(null, null, 'all', ['2026-09-01', '2026-10-31']), 'B')['buyers']);
+        $this->assertSame(0, $row(app(LevelList::class)->rows(), 'B')['buyers'], 'senza periodo la colonna è a zero');
+    }
+
+    public function test_the_page_offers_the_period_of_the_buyers_column(): void
+    {
+        $this->actingAs(User::factory()->role()->create());
+
+        Livewire::test(ConsultantLevelsPage::class)->assertSee('Hanno acquistato')->assertSee('mese in corso')
+            ->set('buyPeriod', 'year')->assertSee('anno '.now()->year)
+            ->set('buyPeriod', 'custom')->set('buyFrom', '2026-10-01')->set('buyTo', '2026-10-15')->assertSee('2026-10-01 → 2026-10-15')
+            ->set('buyFrom', 'non-una-data')->assertSee('mese in corso');
+    }
+
     public function test_the_page_shows_the_indented_list_and_filters_from_the_chosen_person(): void
     {
         $this->actingAs(User::factory()->role()->create());

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Network;
 
 use App\Filament\Support\ConsultantList;
+use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -21,9 +22,10 @@ final class LevelList
      * @param  int|null  $rootId  incaricato da cui partire; null = tutta la rete
      * @param  int|null  $maxLevel  ultimo livello da mostrare (null = tutti)
      * @param  string  $status  all | active | terminated | not_terminated: filtra solo cosa si vede, non il livello
-     * @return array{rows: list<array{id:int,parent:?int,level:int,code:string,name:string,status:string,rank:?string,directs:int,clients:int,since:?string}>, total: int, truncated: bool}
+     * @param  array{0: string, 1: string}|null  $buyPeriod  da/a (date Y-m-d, estremi inclusi) per contare i clienti che hanno acquistato; null = colonna a zero
+     * @return array{rows: list<array{id:int,parent:?int,level:int,code:string,name:string,status:string,rank:?string,directs:int,clients:int,buyers:int,since:?string}>, total: int, truncated: bool}
      */
-    public function rows(?int $rootId = null, ?int $maxLevel = null, string $status = 'all'): array
+    public function rows(?int $rootId = null, ?int $maxLevel = null, string $status = 'all', ?array $buyPeriod = null): array
     {
         $people = DB::table('consultants')->get(['id', 'code', 'name', 'status', 'sponsor_id', 'since'])->keyBy('id');
         $children = [];
@@ -47,6 +49,8 @@ final class LevelList
         $clients = DB::table('customers')->whereNotNull('assigned_consultant_id')->groupBy('assigned_consultant_id')
             ->selectRaw('assigned_consultant_id as id, count(*) as n')->pluck('n', 'id');
 
+        $buyers = $buyPeriod === null ? collect() : $this->buyers($buyPeriod[0], $buyPeriod[1]);
+
         $rows = [];
         $seen = [];
         $total = 0;
@@ -68,7 +72,7 @@ final class LevelList
                 if (count($rows) < self::LIMIT) {
                     $rows[] = [
                         'id' => $id, 'parent' => $shownParent, 'level' => $level, 'code' => (string) $p->code, 'name' => (string) $p->name, 'status' => (string) $p->status,
-                        'rank' => $ranks[$id] ?? null, 'directs' => count($children[$id] ?? []), 'clients' => (int) ($clients[$id] ?? 0),
+                        'rank' => $ranks[$id] ?? null, 'directs' => count($children[$id] ?? []), 'clients' => (int) ($clients[$id] ?? 0), 'buyers' => (int) ($buyers[$id] ?? 0),
                         'since' => $p->since ? substr((string) $p->since, 0, 10) : null,
                     ];
                 }
@@ -82,6 +86,25 @@ final class LevelList
         }
 
         return ['rows' => $rows, 'total' => $total, 'truncated' => $total > count($rows)];
+    }
+
+    /**
+     * Per ogni incaricato, quanti dei suoi clienti assegnati hanno almeno un ordine pagato nel periodo (ogni cliente conta una volta sola,
+     * anche con più ordini). «Pagato» è come nel resto del portale (`Order::PAID_STATES`); la data è quella del pagamento, o della creazione se manca.
+     *
+     * @return \Illuminate\Support\Collection<int, int> incaricato => clienti che hanno acquistato
+     */
+    private function buyers(string $from, string $to): \Illuminate\Support\Collection
+    {
+        return DB::table('customers as c')
+            ->join('orders as o', 'o.buyer_user_id', '=', 'c.user_id')
+            ->whereNotNull('c.assigned_consultant_id')
+            ->whereIn('o.status', Order::PAID_STATES)
+            ->whereRaw('coalesce(o.paid_at, o.created_at) >= ?', [$from.' 00:00:00'])
+            ->whereRaw('coalesce(o.paid_at, o.created_at) <= ?', [$to.' 23:59:59'])
+            ->groupBy('c.assigned_consultant_id')
+            ->selectRaw('c.assigned_consultant_id as id, count(distinct c.id) as n')
+            ->pluck('n', 'id');
     }
 
     private function passes(string $consultantStatus, string $filter): bool

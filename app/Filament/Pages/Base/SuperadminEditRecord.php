@@ -30,8 +30,21 @@ abstract class SuperadminEditRecord extends EditRecord
     public function form(Schema $schema): Schema
     {
         $model = static::getResource()::getModel();
+        $record = $this->record instanceof Model ? $this->record : new $model;
 
-        return $schema->components(GenericForm::fields(new $model, static::$excludeColumns))->columns(2);
+        return $schema->components(GenericForm::fields($record, static::$excludeColumns))->columns(2);
+    }
+
+    /** Le colonne con forma nota (righe prodotto/quantità) si mostrano come righe da modificare. */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return GenericForm::toForm($this->getRecord(), $data);
+    }
+
+    /** ...e prima di salvare tornano nella forma in cui le legge il resto del portale. */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return GenericForm::fromForm($this->getRecord(), $data);
     }
 
     protected function handleRecordUpdate(Model $record, array $data): Model

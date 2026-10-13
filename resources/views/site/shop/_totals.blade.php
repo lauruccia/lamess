@@ -19,6 +19,6 @@
  <div class="grand"><dt>Totale <small class="vat-pct">IVA {{ $vatRates }}% inclusa</small></dt><dd>€ {{ \App\Support\Money::eur($t['total']) }}</dd></div>
  @if(! empty($showKmoney) && $priced->kmoneyShare()->isPositive())
   {{-- Quanto si paga in KMoney sull'ordine (prodotti e, se tutto è pagabile in KMoney, spedizione) --}}
-  <div class="km-save" data-km-only @if(empty($kmoneyPicked)) hidden @endif><dt>In KMoney</dt><dd>€ {{ \App\Support\Money::eur($priced->kmoneyShare()) }}</dd></div>
+  <div class="km-save" data-km-only @if(empty($kmoneyPicked)) hidden @endif><dt>In KMoney</dt><dd>{{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY</dd></div>
  @endif
 </dl>

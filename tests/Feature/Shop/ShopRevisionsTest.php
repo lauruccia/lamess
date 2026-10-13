@@ -136,7 +136,7 @@ final class ShopRevisionsTest extends TestCase
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00', ['kmoney_percent' => 50]);
 
-        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('In KMoney €')->assertDontSee('Paga al 50%')->assertDontSee('Risparmia fino al');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('In KMoney')->assertDontSee('Paga al 50%')->assertDontSee('Risparmia fino al');
     }
 
     public function test_order_page_shows_gross_amounts_with_only_the_vat_rate_indicated(): void
@@ -190,8 +190,12 @@ final class ShopRevisionsTest extends TestCase
         $order = Order::firstOrFail();
         $this->assertSame('61.00', $order->kmoney_amount);
         $this->assertNull($order->kmoney_rest_method, 'il resto non si sceglie nel checkout');
-        $this->assertSame(1, $order->payments()->count(), 'per ora esiste solo il pagamento KMoney, già addebitato');
-        $this->assertSame('paid', $order->payments()->firstOrFail()->status);
+        $this->assertSame(1, $order->payments()->count(), 'per ora esiste solo il pagamento KMoney');
+        $this->assertSame('pending', $order->payments()->firstOrFail()->status, 'nessun addebito finché il cliente non conferma');
+
+        // conferma esplicita: solo ora la quota KMoney viene addebitata
+        $this->post("/area/ordini/{$order->id}/riprova");
+        $this->assertSame('paid', $order->payments()->where('method', 'kmoney')->firstOrFail()->status);
 
         // prima la quota KMoney: finché non è incassata il resto non si può scegliere
         $order->payments()->where('method', 'kmoney')->update(['status' => 'pending']);

@@ -634,7 +634,8 @@ class ShopController extends Controller
         }
 
         if ($d['payment_method'] === 'kmoney') {
-            return $this->payKMoneyOrder($r, $order, $orders);
+            // Nessun addebito automatico: il pagamento KMoney si conferma esplicitamente dalla pagina dell'ordine.
+            return redirect("/area/ordini/{$order->id}")->with('status', 'Ordine registrato. Conferma il pagamento con KMoney per completarlo: finché non confermi non addebitiamo nulla.');
         }
 
         return redirect("/area/ordini/{$order->id}")->with('status', 'Ordine registrato: segui le istruzioni per il bonifico.');

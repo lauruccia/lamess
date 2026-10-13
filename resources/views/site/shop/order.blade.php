@@ -30,8 +30,8 @@
  @elseif($order->payment_method === 'kmoney')
   @php($kmPaid = $order->payments->contains(fn ($p) => $p->method === 'kmoney' && $p->status === 'paid'))
   @if(! $kmPaid)
-   <div class="note"><div><strong>Pagamento KMoney da completare</strong>Addebitiamo € {{ $eur($order->kmoney_amount) }} dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
-    <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Paga con KMoney · € {{ $eur($order->kmoney_amount) }}</button></form></div>
+   <div class="note"><div><strong>Conferma il pagamento con KMoney</strong>Finché non confermi non addebitiamo nulla. Quando confermi, addebitiamo {{ $eur($order->kmoney_amount) }} KY dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
+    <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Conferma e paga {{ $eur($order->kmoney_amount) }} KY</button></form></div>
   @elseif($order->kmoney_rest_method === null && (float) $order->restDue() > 0)
    @php($restMethods = app(\App\Domain\Orders\OrderService::class)->enabledMethods())
    <div class="note"><div><strong>Quota KMoney incassata · come vuoi pagare il resto?</strong>Restano € {{ $eur($order->restDue()) }} da pagare.</div>
@@ -107,7 +107,7 @@
    <header><h2>Pagamento e consegna</h2></header>
    <div class="panel-body">
     <dl class="dl">
-     <dt>Pagamento</dt><dd>@if($order->payment_method === 'kmoney')KMoney € {{ $eur($order->kmoney_amount) }}@if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
+     <dt>Pagamento</dt><dd>@if($order->payment_method === 'kmoney')KMoney {{ $eur($order->kmoney_amount) }} KY @if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
      @if($order->paid_at)<dt>Pagato il</dt><dd>{{ \App\Support\Ui::date($order->paid_at) }}</dd>@endif
      @if($order->shipped_at)<dt>Spedito il</dt><dd>{{ \App\Support\Ui::date($order->shipped_at) }}</dd>@endif
      @if($order->carrier)<dt>Corriere</dt><dd>{{ $order->carrier }}</dd>@endif

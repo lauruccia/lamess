@@ -13,7 +13,11 @@ use App\Domain\Onboarding\KycService;
 use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
+use App\Domain\Orders\FakeKMoneyProvider;
+use App\Domain\Orders\KMoneyApiProvider;
+use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\OrderException;
+use App\Domain\Orders\OrderService;
 use App\Domain\Payouts\StatementLifecycle;
 use App\Domain\Payouts\StatementService;
 use App\Domain\Support\SupportException;
@@ -24,6 +28,7 @@ use App\Models\ConsultantPeriodStat;
 use App\Models\Customer;
 use App\Models\IdentityVerification;
 use App\Models\IvdContract;
+use App\Models\KMoneyLink;
 use App\Models\Period;
 use App\Models\Profile;
 use App\Models\Settlement;
@@ -145,7 +150,16 @@ class AreaController extends Controller
         $profile = $this->ensureProfile($user);
         $book = app(ShippingAddressBook::class);
 
-        return view('site.area.profile', ['user' => $user, 'profile' => $profile, 'addresses' => $book->list($user), 'maxAddresses' => $book->max()]);
+        $provider = app(KMoneyProvider::class);
+
+        return view('site.area.profile', [
+            'user' => $user, 'profile' => $profile, 'addresses' => $book->list($user), 'maxAddresses' => $book->max(),
+            // Riquadro «Conto KMoney»: stato del collegamento e se il collegamento è possibile ora.
+            'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(),
+            'kmoneyConnectable' => $provider instanceof KMoneyApiProvider || $provider instanceof FakeKMoneyProvider,
+            'kmoneyLink' => KMoneyLink::where('user_id', $user->id)->first(),
+            'kmoneyRegisterUrl' => (string) (config('lamess.kmoney.register_url') ?: rtrim((string) config('lamess.kmoney.base_url') ?: 'https://kmoney.it', '/').'/register'),
+        ]);
     }
 
     /** Profilo dell'utente; se manca (es. account creato dal pannello) lo si crea vuoto, partendo dal nome dell'account. */

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Orders\FakeKMoneyProvider;
 use App\Domain\Orders\KMoneyApiProvider;
 use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
+use App\Models\KMoneyLink;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,11 +21,26 @@ final class KMoneyController extends Controller
     /** Avvia il collegamento: il cliente si autentica e concede il mandato su KMoney, non qui. */
     public function connect(Request $r, KMoneyProvider $kmoney)
     {
+        // «?da=profilo»: il collegamento parte dal riquadro «Conto KMoney» del profilo e al ritorno si torna lì.
+        $fromProfile = $r->query('da') === 'profilo';
+
+        if ($kmoney instanceof FakeKMoneyProvider) {
+            // Solo sviluppo: collegamento simulato, nessuna credenziale reale.
+            KMoneyLink::updateOrCreate(['user_id' => $r->user()->id], [
+                'access_token' => 'fake', 'refresh_token' => null, 'expires_at' => now()->addYear(),
+                'mandate_uuid' => 'FAKE-MANDATE', 'account_number' => 'KY-FAKE-'.str_pad((string) $r->user()->id, 6, '0', STR_PAD_LEFT),
+            ]);
+
+            return redirect($fromProfile ? '/area/profilo#kmoney' : '/area/checkout')->with('status', 'KMoney collegato (simulazione di sviluppo).');
+        }
         if (! $kmoney instanceof KMoneyApiProvider || ! $kmoney->enabled()) {
-            return redirect('/area/checkout')->withErrors(['order' => 'Il collegamento a KMoney non è disponibile al momento.']);
+            return $fromProfile
+                ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => 'Il collegamento a KMoney non è disponibile al momento.'])
+                : redirect('/area/checkout')->withErrors(['order' => 'Il collegamento a KMoney non è disponibile al momento.']);
         }
         $auth = $kmoney->authorization();
         $r->session()->put('kmoney_oauth', ['state' => $auth['state'], 'verifier' => $auth['verifier']]);
+        $fromProfile ? $r->session()->put('kmoney_from', 'profilo') : $r->session()->forget('kmoney_from');
 
         return redirect()->away($auth['url']);
     }
@@ -32,19 +49,31 @@ final class KMoneyController extends Controller
     public function back(Request $r, KMoneyProvider $kmoney, OrderService $orders)
     {
         $orderId = $r->session()->pull('kmoney_order');
+        $fromProfile = $r->session()->pull('kmoney_from') === 'profilo';
 
         if ($r->filled('code')) {
             $saved = (array) $r->session()->pull('kmoney_oauth');
             if (! $kmoney instanceof KMoneyApiProvider || ! hash_equals((string) ($saved['state'] ?? ''), (string) $r->query('state'))) {
-                return redirect('/area/ordini')->withErrors(['order' => 'Collegamento a KMoney non valido: riprova.']);
+                return $fromProfile
+                    ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => 'Collegamento a KMoney non valido: riprova.'])
+                    : redirect('/area/ordini')->withErrors(['order' => 'Collegamento a KMoney non valido: riprova.']);
             }
             try {
                 $link = $kmoney->connect($r->user(), (string) $r->query('code'), (string) ($saved['verifier'] ?? ''));
             } catch (OrderException $e) {
-                return $this->toOrder($orderId, $r)->withErrors(['order' => $e->getMessage()]);
+                return $fromProfile
+                    ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => $e->getMessage()])
+                    : $this->toOrder($orderId, $r)->withErrors(['order' => $e->getMessage()]);
             }
             if (! $link->mandate_uuid) {
-                return $this->toOrder($orderId, $r)->withErrors(['order' => 'Per pagare in KMoney devi autorizzare i pagamenti in un clic: riprova e conferma l\'autorizzazione.']);
+                $msg = 'Per pagare in KMoney devi autorizzare i pagamenti in un clic: riprova e conferma l\'autorizzazione.';
+
+                return $fromProfile
+                    ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => $msg])
+                    : $this->toOrder($orderId, $r)->withErrors(['order' => $msg]);
+            }
+            if ($fromProfile) {
+                return redirect('/area/profilo#kmoney')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
             }
             if ($orderId && ($order = Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->where('status', 'pending_payment')->first())) {
                 return redirect("/area/ordini/{$order->id}")->with('status', 'KMoney collegato. Premi «Paga con KMoney» per completare l\'ordine.');
@@ -61,9 +90,11 @@ final class KMoneyController extends Controller
     {
         if ($kmoney instanceof KMoneyApiProvider) {
             $kmoney->disconnect($r->user());
+        } elseif ($kmoney instanceof FakeKMoneyProvider) {
+            KMoneyLink::where('user_id', $r->user()->id)->delete();
         }
 
-        return back()->with('status', 'Collegamento a KMoney rimosso.');
+        return redirect('/area/profilo#kmoney')->with('status', 'Collegamento a KMoney rimosso.');
     }
 
     /** Notifica firmata di KMoney: payment_request.paid → incassa la quota KMoney dell'ordine. */

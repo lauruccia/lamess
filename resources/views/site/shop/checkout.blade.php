@@ -63,7 +63,7 @@
        @if($kmLinked)
         Conto KMoney collegato.
        @else
-        @if($kmoneyConnectable ?? false)Se sei registrato, <a href="/area/kmoney/collega">accedi e paga</a>.@else Se sei già registrato, paga con il tuo conto KMoney.@endif Altrimenti <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
+        Per pagare col tuo saldo <a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
        @endif
       </span></small></span><em class="oc-tag oc-tag-accent">{{ $kmBonus > 0 ? 'Risparmia fino al '.$kmBonus.'%' : 'Consigliato' }}</em></label>
      @if($kmRest->isPositive())

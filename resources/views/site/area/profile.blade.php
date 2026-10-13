@@ -40,7 +40,7 @@
       <div><label for="p-sdi">Codice SDI</label><input id="p-sdi" name="sdi_code" value="{{ old('sdi_code', $profile->sdi_code) }}" maxlength="7" autocapitalize="characters"></div>
      @endif
     </div>
-    @foreach($errors->messages() as $k => $m)@unless(in_array($k, ['current_password', 'password'], true))<p class="err">{{ $m[0] }}</p>@endunless @endforeach
+    @foreach($errors->messages() as $k => $m)@unless(in_array($k, ['current_password', 'password', 'kmoney'], true))<p class="err">{{ $m[0] }}</p>@endunless @endforeach
     <div class="form-actions"><button>Salva i dati</button></div>
    </div>
   </form>
@@ -86,6 +86,33 @@
      </details>
     @else
      <p class="muted" style="margin-bottom:0">Hai raggiunto il massimo di {{ $maxAddresses }} indirizzi: elimina quelli che non usi più per aggiungerne altri.</p>
+    @endif
+   </div>
+  </section>
+
+  <section class="panel" id="kmoney">
+   <header><h2>Conto KMoney</h2>@if($kmoneyLink?->mandate_uuid)<span class="st st-ok">collegato</span>@endif</header>
+   <div class="panel-body">
+    @error('kmoney')<div class="note note-err"><div>{{ $message }}</div></div>@enderror
+    @if(! $kmoneyEnabled)
+     <p class="muted" style="margin:0">Il pagamento con KMoney non è attivo al momento: appena lo sarà potrai collegare qui il tuo conto.</p>
+    @elseif($kmoneyLink?->mandate_uuid)
+     <p style="margin-top:0">Il tuo conto KMoney{{ $kmoneyLink->account_number ? ' ('.$kmoneyLink->account_number.')' : '' }} è collegato: al checkout puoi pagare col tuo saldo KY, anche per gli abbonamenti mensili.</p>
+     <div class="form-actions">
+      <form method="post" action="/area/kmoney/scollega">@csrf<button class="btn ghost">Scollega il conto</button></form>
+     </div>
+    @elseif($kmoneyLink)
+     <p style="margin-top:0">Il tuo conto è collegato ma manca l'autorizzazione ai pagamenti: senza, non possiamo addebitare il saldo.</p>
+     <div class="form-actions">
+      <a class="btn accent" href="/area/kmoney/collega?da=profilo">Autorizza i pagamenti</a>
+      <form method="post" action="/area/kmoney/scollega">@csrf<button class="btn ghost">Scollega il conto</button></form>
+     </div>
+    @else
+     <p style="margin-top:0">Collega il tuo conto KMoney per pagare i tuoi ordini col saldo KY. L'accesso e l'autorizzazione si fanno sul sito di KMoney: noi non vediamo né salviamo le tue credenziali.</p>
+     <div class="form-actions">
+      @if($kmoneyConnectable)<a class="btn accent" href="/area/kmoney/collega?da=profilo">Collega il conto KMoney</a>@endif
+      <a class="btn ghost" href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>
+     </div>
     @endif
    </div>
   </section>

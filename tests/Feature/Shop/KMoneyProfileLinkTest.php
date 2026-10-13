@@ -41,7 +41,7 @@ final class KMoneyProfileLinkTest extends TestCase
         $this->assertTrue(KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists());
 
         $this->actingAs($user)->get('/area/profilo')->assertOk()->assertSee('collegato')->assertSee('Scollega il conto');
-        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('Conto KMoney collegato.');
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertDontSee('collega il tuo conto KMoney dal profilo');
     }
 
     public function test_user_can_disconnect_the_account(): void

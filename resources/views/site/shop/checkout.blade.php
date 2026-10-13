@@ -42,28 +42,13 @@
      @php($kmShare = $kmShare->isGreaterThan($kmTotal) ? $kmTotal : $kmShare)
      @php($kmRest = $kmTotal->minus($kmShare))
      @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
-     @php($kmMonthly = $sub === 'monthly')
      @php($kmBonus = max(0, (int) config('lamess.kmoney_bonus_percent', 0)))
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
       @if($kmPct > 0)<span class="km-pct">Paga al {{ $kmPct }}% in KMoney e risparmia</span>@endif
-      <span data-km-single @if($kmMonthly) hidden @endif>
-       @if($kmRest->isPositive())
-        {{ \App\Support\Money::eur($kmShare) }} KY dal tuo saldo KMoney (quota consentita dai prodotti); il resto di € {{ \App\Support\Money::eur($kmRest) }} con carta o bonifico.
-       @else
-        Paghi subito {{ \App\Support\Money::eur($kmShare) }} KY con il tuo saldo KMoney.
-       @endif
-      </span>
-      <span data-km-sub @if(! $kmMonthly) hidden @endif>
-       @if($kmRest->isPositive())
-        Ogni mese {{ \App\Support\Money::eur($kmShare) }} KY dal tuo saldo KMoney; il resto di € {{ \App\Support\Money::eur($kmRest) }} sulla carta, in automatico.
-       @endif
-      </span>
       <span class="km-link">
-       @if($kmLinked)
-        Conto KMoney collegato.
-       @else
+       @unless($kmLinked)
         Per pagare col tuo saldo <a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
-       @endif
+       @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">{{ $kmBonus > 0 ? 'Risparmia fino al '.$kmBonus.'%' : 'Consigliato' }}</em></label>
      @if($kmRest->isPositive())
       <div class="km-rest" data-km-rest style="display:none">

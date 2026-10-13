@@ -508,13 +508,10 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'none']])->get('/area/checkout')->assertOk()->getContent();
         $this->assertLessThan(strpos($html, 'value="card"'), strpos($html, 'value="kmoney"'), 'KMoney è la prima voce');
         $this->assertStringContainsString('Risparmia fino al 25%', $html);
-        $this->assertMatchesRegularExpression('/<span data-km-single\s*>\s*[\d,.]+ KY dal tuo saldo KMoney \(quota consentita/u', $html, 'ordine singolo: pagamento subito, spedizione a parte come resto');
-        $this->assertDoesNotMatchRegularExpression('/<span data-km-single[^>]*>[^<]*automatic/u', $html);
-        $this->assertMatchesRegularExpression('/<span data-km-sub\s+hidden\s*>/', $html);
-
-        $monthly = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'monthly']])->get('/area/checkout')->getContent();
-        $this->assertMatchesRegularExpression('/<span data-km-single\s+hidden\s*>/', $monthly);
-        $this->assertMatchesRegularExpression('/Ogni mese [\d,.]+ KY/u', $monthly);
+        $this->assertStringNotContainsString('data-km-single', $html);
+        $this->assertStringNotContainsString('data-km-sub', $html);
+        $this->assertStringNotContainsString('Ogni mese', $html);
+        $this->assertStringNotContainsString('dal tuo saldo KMoney', $html);
     }
 
     public function test_kmoney_option_shows_the_promo_line_and_the_login_or_register_prompt(): void

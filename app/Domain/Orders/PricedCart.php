@@ -88,9 +88,13 @@ final class PricedCart
     /** Parte dei prodotti (IVA inclusa, dopo gli sconti) pagabile in KMoney, secondo la % impostata su ogni prodotto. */
     public function kmoneyItemsGross(): BigDecimal
     {
-        return array_reduce($this->lines, fn (BigDecimal $c, PricedLine $l) => $c->plus(
-            Num::money($l->grossLine()->multipliedBy($l->product->kmoneyPercent())->dividedBy(100, 10, \Brick\Math\RoundingMode::HalfUp))
-        ), Num::zero());
+        return array_reduce($this->lines, fn (BigDecimal $c, PricedLine $l) => $c->plus($this->kmoneyLineGross($l)), Num::zero());
+    }
+
+    /** Parte di una riga (IVA inclusa, dopo gli sconti) che si paga in KMoney, secondo la % del prodotto. */
+    public function kmoneyLineGross(PricedLine $l): BigDecimal
+    {
+        return Num::money($l->grossLine()->multipliedBy($l->product->kmoneyPercent())->dividedBy(100, 10, \Brick\Math\RoundingMode::HalfUp));
     }
 
     /** Quota pagabile in KMoney: i prodotti secondo la loro %, più la spedizione se tutti i prodotti sono pagabili al 100% in KMoney. */

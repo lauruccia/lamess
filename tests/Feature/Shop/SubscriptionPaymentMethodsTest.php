@@ -507,7 +507,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         // l'abbonamento mensile è preselezionato: l'ordine singolo si sceglie esplicitamente
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'none']])->get('/area/checkout')->assertOk()->getContent();
         $this->assertLessThan(strpos($html, 'value="card"'), strpos($html, 'value="kmoney"'), 'KMoney è la prima voce');
-        $this->assertStringContainsString('Con KMoney risparmi', $html);
+        $this->assertStringContainsString('In KMoney €', $html);
         $this->assertStringNotContainsString('Risparmia fino al', $html);
         $this->assertStringNotContainsString('Ogni mese', $html);
         $this->assertStringNotContainsString('dal tuo saldo KMoney', $html);
@@ -521,14 +521,14 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
         $this->assertStringNotContainsString('Ricarichi solo', $html);
         $this->assertStringNotContainsString('Addebito automatico', $html);
-        $this->assertStringContainsString('Con KMoney risparmi', $html);
+        $this->assertStringContainsString('In KMoney €', $html);
         $this->assertStringNotContainsString('Risparmia fino al', $html);
         $this->assertStringContainsString('Se sei già registrato, paga con il tuo conto KMoney.', $html);
         $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Apri un conto KMoney</a>', $html);
         $this->assertStringNotContainsString('Ti chiederemo di collegare', $html);
 
         config(['lamess.kmoney_bonus_percent' => 0]);
-        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertDontSee('Con KMoney risparmi');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('In KMoney €');
     }
 
     public function test_kmoney_prompt_links_to_login_and_register_with_the_real_provider(): void

@@ -131,12 +131,12 @@ final class ShopRevisionsTest extends TestCase
         $this->get('/negozio?ordina=kmoney')->assertOk()->assertSeeInOrder(['Crema Tutto', 'Crema Cinquanta', 'Crema Solo Euro']);
     }
 
-    public function test_checkout_shows_the_kmoney_saving_in_euro_in_the_summary(): void
+    public function test_checkout_shows_the_kmoney_amount_per_product_in_the_summary(): void
     {
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00', ['kmoney_percent' => 50]);
 
-        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('Con KMoney risparmi')->assertDontSee('Paga al 50%')->assertDontSee('Risparmia fino al');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('In KMoney €')->assertDontSee('Paga al 50%')->assertDontSee('Risparmia fino al');
     }
 
     public function test_order_page_shows_gross_amounts_with_only_the_vat_rate_indicated(): void

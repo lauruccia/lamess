@@ -17,9 +17,8 @@
  @endif
  @php($vatRates = collect($priced->lines)->map(fn ($l) => (string) $l->product->vat_rate)->when($priced->shippingNet->isPositive(), fn ($c) => $c->push((string) $priced->shippingVatRate))->map(fn ($r) => rtrim(rtrim(number_format((float) $r, 2, ',', ''), '0'), ','))->unique()->implode('% / '))
  <div class="grand"><dt>Totale <small class="vat-pct">IVA {{ $vatRates }}% inclusa</small></dt><dd>€ {{ \App\Support\Money::eur($t['total']) }}</dd></div>
- @if(! empty($showKmoney) && ($kmBonus = max(0, (int) config('lamess.kmoney_bonus_percent', 0))) > 0 && $priced->kmoneyShare()->isPositive())
-  {{-- Vantaggio KMoney in euro: sulla quota pagata in KMoney si ricarica solo quota / (1 + bonus%) --}}
-  @php($kmSave = round((float) (string) $priced->kmoneyShare() * $kmBonus / (100 + $kmBonus), 2))
-  <div class="km-save"><dt>Con KMoney risparmi</dt><dd>€ {{ \App\Support\Money::eur($kmSave) }}</dd></div>
+ @if(! empty($showKmoney) && $priced->kmoneyShare()->isPositive())
+  {{-- Quanto si paga in KMoney sull'ordine (prodotti e, se tutto è pagabile in KMoney, spedizione) --}}
+  <div class="km-save"><dt>In KMoney</dt><dd>€ {{ \App\Support\Money::eur($priced->kmoneyShare()) }}</dd></div>
  @endif
 </dl>

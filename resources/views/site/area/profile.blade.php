@@ -104,7 +104,7 @@
     @elseif($kmoneyLink)
      <p style="margin-top:0">Il tuo conto è collegato ma manca l'autorizzazione ai pagamenti: senza, non possiamo addebitare il saldo.</p>
      <div class="form-actions">
-      <a class="btn accent" href="/area/kmoney/collega?da=profilo">Autorizza i pagamenti</a>
+      <a class="btn accent" href="/area/kmoney/mandato?da=profilo">Autorizza i pagamenti</a>
       <form method="post" action="/area/kmoney/scollega">@csrf<button class="btn ghost">Scollega il conto</button></form>
      </div>
     @else

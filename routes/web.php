@@ -126,6 +126,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::get('/ordini/{order}', [ShopController::class, 'order']);
     Route::get('/kmoney/collega', [KMoneyController::class, 'connect'])->middleware('throttle:20,1');
     Route::get('/kmoney/ritorno', [KMoneyController::class, 'back']);
+    Route::get('/kmoney/mandato', [KMoneyController::class, 'mandate'])->middleware('throttle:20,1');
     Route::post('/kmoney/scollega', [KMoneyController::class, 'disconnect'])->middleware('throttle:10,1');
     Route::post('/ordini/{order}/riprova', [ShopController::class, 'retryCard'])->middleware('throttle:10,1');
     Route::post('/ordini/{order}/annulla', [ShopController::class, 'cancelOwn'])->middleware('throttle:10,1');

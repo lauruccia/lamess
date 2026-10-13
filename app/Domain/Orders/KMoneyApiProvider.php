@@ -53,6 +53,32 @@ final class KMoneyApiProvider implements PartialKMoneyRefund
         return ['url' => $url, 'state' => $state, 'verifier' => $verifier];
     }
 
+    /**
+     * Pagina di KMoney dove il cliente concede il mandato «un clic e paghi». Non fa parte del consenso OAuth:
+     * è una rotta a sé (dietro step-up) a cui l'applicazione deve mandare il cliente, con il venditore a cui il
+     * mandato resta limitato e l'indirizzo a cui tornare (uno di quelli registrati per il client).
+     */
+    public function mandateUrl(): string
+    {
+        return $this->url('/oauth/mandate').'?'.http_build_query(array_filter([
+            'client_id' => config('lamess.kmoney.client_id'),
+            'return_url' => self::redirectUri(),
+            'seller' => config('lamess.kmoney.seller_account'),
+        ]));
+    }
+
+    /** Rilegge da KMoney il mandato del cliente (dopo che lo ha concesso) e lo salva; null se il collegamento non è più valido. */
+    public function refreshMandate(User $user): ?KMoneyLink
+    {
+        $link = KMoneyLink::where('user_id', $user->id)->first();
+        if (! $link || ! $this->freshToken($link)) {
+            return null;
+        }
+        $this->syncMandate($link);
+
+        return $link->refresh();
+    }
+
     /** Scambia il codice di autorizzazione coi token e salva il collegamento del cliente. */
     public function connect(User $user, string $code, string $verifier): KMoneyLink
     {

@@ -51,6 +51,11 @@ final class KMoneyController extends Controller
         $orderId = $r->session()->pull('kmoney_order');
         $fromProfile = $r->session()->pull('kmoney_from') === 'profilo';
 
+        // Ritorno dalla pagina del mandato su KMoney: ?mandate=granted|denied.
+        if ($r->query('mandate') !== null) {
+            return $this->afterMandate($r, $kmoney, $orderId, $fromProfile);
+        }
+
         if ($r->filled('code')) {
             $saved = (array) $r->session()->pull('kmoney_oauth');
             if (! $kmoney instanceof KMoneyApiProvider || ! hash_equals((string) ($saved['state'] ?? ''), (string) $r->query('state'))) {
@@ -66,24 +71,67 @@ final class KMoneyController extends Controller
                     : $this->toOrder($orderId, $r)->withErrors(['order' => $e->getMessage()]);
             }
             if (! $link->mandate_uuid) {
-                $msg = 'Per pagare in KMoney devi autorizzare i pagamenti in un clic: riprova e conferma l\'autorizzazione.';
-
-                return $fromProfile
-                    ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => $msg])
-                    : $this->toOrder($orderId, $r)->withErrors(['order' => $msg]);
-            }
-            if ($fromProfile) {
-                return redirect('/area/profilo#kmoney')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
-            }
-            if ($orderId && ($order = Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->where('status', 'pending_payment')->first())) {
-                return redirect("/area/ordini/{$order->id}")->with('status', 'KMoney collegato. Premi «Paga con KMoney» per completare l\'ordine.');
+                // Collegato ma senza mandato: il consenso OAuth non lo concede, serve la pagina del mandato su KMoney.
+                // Si ricordano ordine e provenienza perché il cliente torna da fuori.
+                return $this->sendToMandate($r, $kmoney, $orderId, $fromProfile);
             }
 
-            return redirect('/area/checkout')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
+            return $this->linked($r, $orderId, $fromProfile);
         }
 
         // Ritorno da una conferma manuale: l'esito vero arriva dal webhook firmato, qui si rimanda all'ordine.
         return $this->toOrder($orderId, $r)->with('status', 'Stiamo confermando il pagamento con KMoney: l\'ordine si aggiorna entro pochi istanti.');
+    }
+
+    /** «Autorizza i pagamenti»: manda il cliente collegato alla pagina del mandato su KMoney. */
+    public function mandate(Request $r, KMoneyProvider $kmoney)
+    {
+        $fromProfile = $r->query('da') === 'profilo';
+
+        if (! $kmoney instanceof KMoneyApiProvider || ! $kmoney->enabled() || ! KMoneyLink::where('user_id', $r->user()->id)->exists()) {
+            return redirect('/area/profilo#kmoney')->withErrors(['kmoney' => 'Prima collega il tuo conto KMoney.']);
+        }
+
+        return $this->sendToMandate($r, $kmoney, null, $fromProfile);
+    }
+
+    private function sendToMandate(Request $r, KMoneyApiProvider $kmoney, mixed $orderId, bool $fromProfile)
+    {
+        $orderId ? $r->session()->put('kmoney_order', $orderId) : $r->session()->forget('kmoney_order');
+        $fromProfile ? $r->session()->put('kmoney_from', 'profilo') : $r->session()->forget('kmoney_from');
+
+        return redirect()->away($kmoney->mandateUrl());
+    }
+
+    /** Il cliente è tornato dalla pagina del mandato: si rilegge il mandato da KMoney (mai fidarsi del solo parametro). */
+    private function afterMandate(Request $r, KMoneyProvider $kmoney, mixed $orderId, bool $fromProfile)
+    {
+        $fail = fn (string $msg) => $fromProfile
+            ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => $msg])
+            : $this->toOrder($orderId, $r)->withErrors(['order' => $msg]);
+
+        if ($r->query('mandate') !== 'granted') {
+            return $fail('Non hai autorizzato i pagamenti in un clic: senza, non possiamo addebitare il saldo KMoney. Puoi riprovare quando vuoi.');
+        }
+        $link = $kmoney instanceof KMoneyApiProvider ? $kmoney->refreshMandate($r->user()) : null;
+        if (! $link || ! $link->mandate_uuid) {
+            return $fail('Non risulta ancora nessuna autorizzazione ai pagamenti su KMoney: riprova.');
+        }
+
+        return $this->linked($r, $orderId, $fromProfile);
+    }
+
+    /** Collegamento completo (conto + mandato): torna da dove il cliente era partito. */
+    private function linked(Request $r, mixed $orderId, bool $fromProfile)
+    {
+        if ($fromProfile) {
+            return redirect('/area/profilo#kmoney')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
+        }
+        if ($orderId && ($order = Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->where('status', 'pending_payment')->first())) {
+            return redirect("/area/ordini/{$order->id}")->with('status', 'KMoney collegato. Premi «Paga con KMoney» per completare l\'ordine.');
+        }
+
+        return redirect('/area/checkout')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
     }
 
     public function disconnect(Request $r, KMoneyProvider $kmoney)

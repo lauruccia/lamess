@@ -71,6 +71,7 @@ class IvdContractResource extends Resource
             SelectFilter::make('status')->label('Stato')->options([
                 'awaiting_signature' => 'In attesa di firma', 'signed' => 'Da accettare', 'accepted' => 'Accettata', 'rejected' => 'Rifiutata', 'expired' => 'Scaduta',
             ])->default('signed'),
+            SelectFilter::make('consultant')->label('Incaricato')->relationship('consultant', 'name')->searchable()->preload(),
         ])->recordActions([
             Action::make('accept')->authorize('network.manage')->label('Accetta')->iconButton()->tooltip('Accetta')->icon('heroicon-o-check')->color('success')
                 ->visible(fn (IvdContract $record) => $record->status === 'signed')->requiresConfirmation()

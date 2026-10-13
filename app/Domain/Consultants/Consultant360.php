@@ -215,23 +215,34 @@ final class Consultant360
         $facts = [
             ['Sponsor attuale', $chain[0] ?? 'nessuno'], ['Sponsor originale', $orig ? "{$orig->code} — {$orig->name}" : '—'],
             ['Catena verso l\'alto', $chain === [] ? '—' : implode(' ← ', array_slice($chain, 0, 6))],
-            ['Diretti attuali', (string) Consultant::where('sponsor_id', $this->c->id)->count()],
-            ['Clienti assegnati', (string) Customer::where('assigned_consultant_id', $this->c->id)->count()],
+            ['Incaricati diretti (1° livello)', (string) Consultant::where('sponsor_id', $this->c->id)->count()],
+            ['Clienti diretti', (string) Customer::where('assigned_consultant_id', $this->c->id)->count()],
         ];
 
         $name = fn ($x) => $x ? (Consultant::find($x)?->name ?? "#{$x}") : '—';
         $hist = DB::table('sponsor_history')->where('consultant_id', $this->c->id)->orderByDesc('id')->limit(15)->get()
             ->map(fn ($r) => [$this->d($r->created_at), $name($r->from_sponsor_id), $name($r->to_sponsor_id), $this->sponsorReason((string) $r->reason), (string) ($r->note ?? '')])->all();
-        $directs = Consultant::where('sponsor_id', $this->c->id)->orderBy('code')->limit(30)->get()
-            ->map(fn (Consultant $d) => [$d->code, $d->name, (string) StatusLabels::label($d->status), $this->d($d->since)])->all();
-        $customers = DB::table('customers')->leftJoin('users', 'users.id', '=', 'customers.user_id')->where('customers.assigned_consultant_id', $this->c->id)
-            ->orderByDesc('customers.id')->limit(20)->get(['users.name', 'users.email', 'customers.source', 'customers.registered_at'])
-            ->map(fn ($r) => [(string) ($r->name ?? '—'), (string) ($r->email ?? '—'), (string) StatusLabels::label($r->source), $this->d($r->registered_at)])->all();
+        // Ordini pagati nel mese corrente (fuso Europe/Rome): numero e importo (IVA inclusa), per incaricati e clienti diretti.
+        $monthStart = Carbon::now(self::TZ)->startOfMonth()->utc();
+        $monthEnd = Carbon::now(self::TZ)->endOfMonth()->utc();
+        $monthlyByUser = fn (array $userIds) => Order::whereIn('buyer_user_id', $userIds)
+            ->whereIn('status', Order::PAID_STATES)->whereBetween('paid_at', [$monthStart, $monthEnd])
+            ->selectRaw('buyer_user_id, count(*) as n, sum(total) as amount')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
+        $directRows = Consultant::where('sponsor_id', $this->c->id)->orderBy('code')->limit(30)->get();
+        $directMonthly = $monthlyByUser($directRows->pluck('user_id')->filter()->all());
+        $directs = $directRows->map(fn (Consultant $d) => [$d->code, $d->name, (string) ($directMonthly[$d->user_id]->n ?? 0), $this->eur($directMonthly[$d->user_id]->amount ?? 0)])->all();
+        $customerRows = DB::table('customers')->leftJoin('users', 'users.id', '=', 'customers.user_id')->where('customers.assigned_consultant_id', $this->c->id)
+            ->orderByDesc('customers.id')->limit(20)->get(['customers.user_id', 'users.name', 'users.email', 'customers.registered_at']);
+        $monthly = $monthlyByUser($customerRows->pluck('user_id')->filter()->all());
+        $customers = $customerRows->map(fn ($r) => [
+            (string) ($r->name ?? '—'), (string) ($r->email ?? '—'), $this->d($r->registered_at),
+            (string) ($monthly[$r->user_id]->n ?? 0), $this->eur($monthly[$r->user_id]->amount ?? 0),
+        ])->all();
 
         return ['facts' => $facts, 'tables' => [
             $this->table('Storico sponsor', ['Data', 'Da', 'A', 'Motivo', 'Nota'], $hist, 'Lo sponsor non è mai cambiato.'),
-            $this->table('Diretti', ['Codice', 'Nome', 'Stato', 'Dal'], $directs, 'Nessun diretto.', $this->link('Apri la lista dei diretti', ConsultantResource::class, ['sponsor' => ['value' => $this->c->id]])),
-            $this->table('Clienti assegnati (ultimi 20)', ['Nome', 'Email', 'Origine', 'Registrato il'], $customers, 'Nessun cliente.', $this->link('Apri la lista dei clienti', CustomerResource::class, ['consultant' => ['value' => $this->c->id]])),
+            $this->table('Diretti', ['Codice', 'Nome', 'Ordini del mese', 'Importo del mese'], $directs, 'Nessun diretto.', $this->link('Apri la lista dei diretti', ConsultantResource::class, ['sponsor' => ['value' => $this->c->id]])),
+            $this->table('Clienti diretti (ultimi 20)', ['Nome', 'Email', 'Registrato il', 'Ordini del mese', 'Importo del mese'], $customers, 'Nessun cliente.', $this->link('Apri la lista dei clienti', CustomerResource::class, ['consultant' => ['value' => $this->c->id]])),
         ]];
     }
 
@@ -328,7 +339,7 @@ final class Consultant360
 
         return ['facts' => [['KYC', (string) StatusLabels::label($this->c->kyc_status ?: 'unverified')], ['Onboarding completo', $this->c->onboarding_complete ? 'Sì' : 'No']], 'tables' => [
             $this->table('Documenti KYC', ['Tipo', 'File', 'Stato', 'Verificato il', 'Da', 'Note'], $kyc, 'Nessun documento.', $this->link('Apri i documenti KYC', KycDocumentResource::class, ['consultant' => ['value' => $id], 'status' => ['value' => '']])),
-            $this->table('Contratti IVD', ['Versione', 'Stato', 'Firmato il', 'Accettato il', 'Scade il', 'Anno di contratto'], $ct, 'Nessun contratto.', $this->link('Apri i contratti', IvdContractResource::class, ['consultant' => ['value' => $id]])),
+            $this->table('Contratti IVD', ['Versione', 'Stato', 'Firmato il', 'Accettato il', 'Scade il', 'Anno di contratto'], $ct, 'Nessun contratto.', $this->link('Apri i contratti', IvdContractResource::class, ['consultant' => ['value' => $id], 'status' => ['value' => '']])),
             $this->table('Canoni annuali', ['Anno', 'Importo', 'Scadenza', 'Pagato il', 'Stato'], $fees, 'Nessun canone.', $this->link('Apri i canoni', AnnualFeeResource::class, ['consultant' => ['value' => $id], 'status' => ['value' => '']])),
         ]];
     }

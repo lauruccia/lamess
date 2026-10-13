@@ -30,7 +30,7 @@
  <div class="gallery" data-gallery>
   <div class="gallery-main">
    <img id="gallery-img" @if($firstImage) src="{{ \App\Models\Product::mediaUrl($firstImage) }}" @else hidden @endif alt="{{ $product->displayName() }}" decoding="async"><span class="ph" aria-hidden="true" @if($firstImage) hidden @endif>L</span>
-   <span class="tags" data-v-tags>@if($current->isSoldOut())<span class="tag dark">Esaurito</span>@elseif($saving)<span class="tag hot">−{{ $saving }}%</span>@endif @if($product->badge)<span class="tag">{{ $product->badge }}</span>@endif @if(($kmPct = $product->kmoneyPercent()) > 0)<span class="tag km">Fino al {{ $kmPct }}% in KMoney</span>@endif</span>
+   <span class="tags" data-v-tags>@if($current->isSoldOut())<span class="tag dark">Esaurito</span>@elseif($saving)<span class="tag hot">−{{ $saving }}%</span>@endif @if($product->badge)<span class="tag">{{ $product->badge }}</span>@endif @if(($kmPct = $product->kmoneyPercent()) > 0)<span class="tag km">{{ $kmPct }}% in KMoney</span>@endif</span>
   </div>
   @if(count($images) > 1)
   <div class="gallery-thumbs" role="list">

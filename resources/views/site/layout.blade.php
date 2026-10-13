@@ -20,6 +20,7 @@
 @php($nav = request()->path())
 @php($me = auth()->user())
 @php($isConsultant = $me?->consultant && $me->consultant->status !== 'terminated')
+@php(\App\Domain\Orders\PendingCart::pending(request()))
 @php($cartCount = array_sum((array) session('cart', [])) + array_sum(array_map('array_sum', (array) session('cart_others', []))))
 <header class="site-header">
  <div class="bar">

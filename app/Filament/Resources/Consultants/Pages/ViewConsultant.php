@@ -18,6 +18,8 @@ use App\Models\CompPlanVersion;
 use App\Models\Consultant;
 use App\Models\ConsultantNote;
 use App\Models\Customer;
+use App\Models\IvdContract;
+use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -58,7 +60,7 @@ class ViewConsultant extends ViewRecord
     /** Ultima lettera d'incarico firmata dall'incaricato (per il certificato di firma). */
     private function signedContractId(): ?int
     {
-        $id = \App\Models\IvdContract::where('consultant_id', $this->record->id)->whereNotNull('signed_at')->where(fn ($q) => $q->whereNull('signature_provider')->orWhere('signature_provider', '!=', 'odoo'))->latest('signed_at')->value('id');
+        $id = IvdContract::where('consultant_id', $this->record->id)->whereNotNull('signed_at')->where(fn ($q) => $q->whereNull('signature_provider')->orWhere('signature_provider', '!=', 'odoo'))->latest('signed_at')->value('id');
 
         return $id === null ? null : (int) $id;
     }
@@ -71,7 +73,7 @@ class ViewConsultant extends ViewRecord
     /** Le azioni di servizio diventano icone con la descrizione al passaggio del mouse: stanno su una riga; Sospendi/Riattiva/Cessa restano a testo. */
     protected function getHeaderActions(): array
     {
-        $icons = ['requestKyc', 'sendDocuments', 'printBadge', 'signatureCertificate', 'move', 'reassignClients', 'forceRank', 'addNote', 'revealIban'];
+        $icons = ['requestKyc', 'sendDocuments', 'printBadge', 'signatureCertificate', 'move', 'reassignClients', 'forceRank', 'holdRank', 'addNote', 'revealIban'];
 
         return array_map(
             static fn ($a) => in_array($a->getName(), $icons, true) ? $a->iconButton()->tooltip($a->getLabel()) : $a,
@@ -167,6 +169,26 @@ class ViewConsultant extends ViewRecord
                     } catch (NetworkException $e) {
                         Notification::make()->title('Operazione non consentita')->body($e->getMessage())->danger()->send();
                     }
+                }),
+            Action::make('holdRank')->authorize('network.restructure')->label('Mantieni qualifica')->icon('heroicon-o-shield-check')->color('gray')
+                ->visible(fn () => $this->record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank'))
+                ->modalDescription('La qualifica attuale non si riduce per mancanza di clienti fino alla data scelta (può comunque salire). Lascia la data vuota per togliere la protezione. Viene registrato nel log.')
+                ->fillForm(fn () => ['rank_hold_until' => $this->record->rank_hold_until?->format('Y-m-d'), 'reason' => $this->record->rank_hold_reason])
+                ->schema([
+                    DatePicker::make('rank_hold_until')->label('Mantieni la qualifica fino al')->native(false)->displayFormat('d/m/Y')->format('Y-m-d')
+                        ->helperText('Sono protetti i mesi che finiscono entro questa data: per proteggere tutto ottobre indica il 31/10.'),
+                    Textarea::make('reason')->label('Motivo')->required()->maxLength(500),
+                ])
+                ->action(function (array $data): void {
+                    $until = filled($data['rank_hold_until'] ?? null) ? (string) $data['rank_hold_until'] : null;
+                    $before = $this->record->rank_hold_until?->format('Y-m-d');
+                    $this->record->update(['rank_hold_until' => $until, 'rank_hold_reason' => $until === null ? null : $data['reason']]);
+                    AuditLog::record(
+                        $until === null ? 'rank.hold_removed' : 'rank.hold',
+                        $until === null ? "Protezione della qualifica tolta: incaricato {$this->record->code}" : "Qualifica mantenuta fino al {$until}: incaricato {$this->record->code}",
+                        $this->record, ['fino_al' => ['prima' => $before, 'dopo' => $until]], $data['reason'],
+                    );
+                    Notification::make()->title($until === null ? 'Protezione tolta' : 'Qualifica mantenuta fino al '.CarbonImmutable::parse($until)->format('d/m/Y'))->body('Vale dal prossimo ricalcolo del periodo (automatico ogni notte).')->success()->send();
                 }),
             Action::make('suspend')->authorize('network.manage')->label('Sospendi')->color('warning')->schema($reason)
                 ->visible(fn () => $this->record->status === 'active' && Feature::enabled('consultant360.action.suspend'))->action(fn (array $data) => $this->change('suspended', $data)),

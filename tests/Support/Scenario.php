@@ -63,10 +63,10 @@ final class Scenario
     public function consultant(
         string|int $id, string|int|null $sponsor = null, string $rank = 'CONSULTANT', string $since = '2025-01-01',
         bool $active = true, string $rankAt = '2025-06-15', string $status = 'active', bool $onboardingComplete = true,
-        bool $bonusHold = false, ?string $rankCap = null,
+        bool $bonusHold = false, ?string $rankCap = null, ?string $rankHoldUntil = null,
     ): self {
         $id = (string) $id;
-        $this->nodes[$id] = new Node($id, $sponsor, self::dt($since), $status, $onboardingComplete, $bonusHold, $rankCap, $id);
+        $this->nodes[$id] = new Node($id, $sponsor, self::dt($since), $status, $onboardingComplete, $bonusHold, $rankCap, $id, $rankHoldUntil);
         if ($rank !== 'CONSULTANT') {
             $seq = $this->plan->rank($rank)->sequence;
             foreach ($this->plan->ranks as $r) {

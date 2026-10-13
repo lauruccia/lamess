@@ -3,11 +3,11 @@
 @section('width', 'full')
 @section('content')
 @php
- $isHome = ! $category && $term === '' && $priceMin === null && $priceMax === null && $products->currentPage() === 1;
+ $isHome = ! $category && $term === '' && $priceMin === null && $priceMax === null && $kmoneyMin === null && $products->currentPage() === 1;
  $qs = fn (array $over = []) => http_build_query(array_filter(array_merge(request()->except('page'), $over), fn ($v) => $v !== null && $v !== ''));
  $url = fn (array $over = []) => '/negozio'.(($q = $qs($over)) !== '' ? '?'.$q : '');
  $priceActive = $priceMin !== null || $priceMax !== null;
- $filtered = $category || $term !== '' || $priceActive;
+ $filtered = $category || $term !== '' || $priceActive || $kmoneyMin !== null;
  $total = $products->total();
  $ico = fn ($d) => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.$d.'</svg>';
  $bars = function (int $n) {
@@ -87,6 +87,19 @@
    </details>
    @endif
 
+   @if($kmoneyAvailable)
+   <details class="dd {{ $kmoneyMin !== null ? 'active' : '' }}" data-dd>
+    <summary>KMoney @if($kmoneyMin !== null)<b>{{ $kmoneyFilters[$kmoneyMin] }}</b>@endif</summary>
+    <div class="dd-panel">
+     <p class="muted small">Quota del prezzo che puoi pagare con KMoney</p>
+     <ul class="cat-list" aria-label="Filtro KMoney">
+      <li><a href="{{ $url(['kmoney' => null]) }}" class="{{ $kmoneyMin === null ? 'on' : '' }}">Tutti i prodotti</a></li>
+      @foreach($kmoneyFilters as $min => $label)<li><a href="{{ $url(['kmoney' => $min]) }}" class="{{ $kmoneyMin === $min ? 'on' : '' }}">{{ $label }}</a></li>@endforeach
+     </ul>
+    </div>
+   </details>
+   @endif
+
    <p class="count" aria-live="polite">@if($total > 1){{ $products->firstItem() }}–{{ $products->lastItem() }} di {{ $total }} prodotti @else {{ $total }} {{ $total === 1 ? 'prodotto' : 'prodotti' }} @endif</p>
    <div class="tb-right">
     <label class="tb-sel" for="ordina">Ordina<select id="ordina" name="ordina" onchange="this.form.submit()">@foreach($sorts as $k => $label)<option value="{{ $k }}" @selected($sort === $k)>{{ $label }}</option>@endforeach</select></label>
@@ -106,6 +119,7 @@
   @if($category)<a class="pill-x" href="{{ $url(['categoria' => null]) }}">{{ $category->name }} <span aria-hidden="true">✕</span><span class="sr">Rimuovi</span></a>@endif
   @if($term !== '')<a class="pill-x" href="{{ $url(['q' => null]) }}">«{{ $term }}» <span aria-hidden="true">✕</span><span class="sr">Rimuovi</span></a>@endif
   @if($priceActive)<a class="pill-x" href="{{ $url(['prezzo_min' => null, 'prezzo_max' => null]) }}">Prezzo <span aria-hidden="true">✕</span><span class="sr">Rimuovi</span></a>@endif
+  @if($kmoneyMin !== null)<a class="pill-x" href="{{ $url(['kmoney' => null]) }}">KMoney: {{ $kmoneyFilters[$kmoneyMin] }} <span aria-hidden="true">✕</span><span class="sr">Rimuovi</span></a>@endif
   <a class="clear-all" href="/negozio">Azzera tutti i filtri</a>
  </div>
  @endif

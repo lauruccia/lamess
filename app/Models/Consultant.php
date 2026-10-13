@@ -50,6 +50,6 @@ class Consultant extends Model
 
     protected function casts(): array
     {
-        return ['since' => 'immutable_datetime', 'network_since' => 'immutable_datetime', 'terminated_at' => 'immutable_datetime', 'onboarding_complete' => 'boolean', 'bonus_hold' => 'boolean', 'onboarding_completed_at' => 'immutable_datetime', 'badge_valid_until' => 'immutable_date'];
+        return ['since' => 'immutable_datetime', 'network_since' => 'immutable_datetime', 'terminated_at' => 'immutable_datetime', 'onboarding_complete' => 'boolean', 'bonus_hold' => 'boolean', 'onboarding_completed_at' => 'immutable_datetime', 'badge_valid_until' => 'immutable_date', 'rank_hold_until' => 'immutable_date'];
     }
 }

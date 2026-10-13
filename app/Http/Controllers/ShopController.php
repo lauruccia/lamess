@@ -12,6 +12,7 @@ use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Domain\Orders\PaymentProvider;
+use App\Domain\Orders\PendingCart;
 use App\Domain\Orders\PricedCart;
 use App\Domain\Orders\ReturnRequestService;
 use App\Domain\Orders\StripeCheckoutProvider;
@@ -49,8 +50,11 @@ class ShopController extends Controller
     private const COLS_MAX = 6;
 
     private const SORTS = [
-        'consigliati' => 'Consigliati', 'novita' => 'Novità', 'prezzo-asc' => 'Prezzo: dal più basso', 'prezzo-desc' => 'Prezzo: dal più alto', 'nome' => 'Nome A-Z',
+        'consigliati' => 'Consigliati', 'novita' => 'Novità', 'prezzo-asc' => 'Prezzo: dal più basso', 'prezzo-desc' => 'Prezzo: dal più alto', 'nome' => 'Nome A-Z', 'kmoney' => 'KMoney: % più alta',
     ];
+
+    /** Filtro «KMoney» del negozio: soglia minima della % pagabile in KMoney => etichetta. */
+    private const KMONEY_FILTERS = [1 => 'Pagabili in KMoney', 25 => 'Almeno 25%', 50 => 'Almeno 50%', 75 => 'Almeno 75%', 100 => 'Solo 100% in KMoney'];
 
     /** @return array<int,int> */
     private function cart(Request $r): array
@@ -175,6 +179,7 @@ class ShopController extends Controller
 
     private function cartJson(Request $r, string $message = ''): JsonResponse
     {
+        PendingCart::pending($r);
         $this->tidyCart($r);
 
         return response()->json(['count' => $this->cartCount($r), 'message' => $message, 'html' => view('site.shop.drawer', $this->cartViewData($r))->render()]);
@@ -230,6 +235,11 @@ class ShopController extends Controller
                     ->orWhereHas('variants', fn ($v) => $v->whereRaw("$grossExpr $op ?", [$bound * 100])));
             }
         }
+        $kmoneyMin = array_key_exists((int) $r->query('kmoney'), self::KMONEY_FILTERS) ? (int) $r->query('kmoney') : null;
+        if ($kmoneyMin !== null) {
+            $query->where('kmoney_percent', '>=', $kmoneyMin);
+        }
+        $kmoneyAvailable = $kmoneyMin !== null || Product::whereIn('id', $visibleIds)->where('kmoney_percent', '>', 0)->exists();
         $bounds = Product::whereIn('id', $visibleIds)->selectRaw("min($grossExpr) as lo, max($grossExpr) as hi")->first();
         $priceBounds = $bounds && $bounds->hi !== null && $bounds->lo != $bounds->hi ? [(int) floor($bounds->lo / 100), (int) ceil($bounds->hi / 100)] : null;
         $sort = array_key_exists((string) $r->query('ordina'), self::SORTS) ? (string) $r->query('ordina') : 'consigliati';
@@ -238,6 +248,7 @@ class ShopController extends Controller
             'prezzo-asc' => $query->orderByRaw('net_price * (100 + vat_rate) asc'),
             'prezzo-desc' => $query->orderByRaw('net_price * (100 + vat_rate) desc'),
             'nome' => $query->orderBy('name'),
+            'kmoney' => $query->orderByDesc('kmoney_percent')->orderByDesc('featured')->orderBy('sort_order')->orderBy('name'),
             default => $query->orderByDesc('featured')->orderBy('sort_order')->orderBy('name'),
         };
 
@@ -262,6 +273,7 @@ class ShopController extends Controller
             'products' => $query->paginate($perPage)->withQueryString(), 'cols' => $cols, 'view' => $view, 'perPage' => $perPage, 'perPageOptions' => $perPageOptions, 'categories' => $categories, 'category' => $category, 'navRoot' => $navRoot,
             'term' => $term, 'sort' => $sort, 'sorts' => self::SORTS, 'totalVisible' => $visibleIds->count(),
             'priceMin' => $min, 'priceMax' => $max, 'priceBounds' => $priceBounds,
+            'kmoneyMin' => $kmoneyMin, 'kmoneyFilters' => self::KMONEY_FILTERS, 'kmoneyAvailable' => $kmoneyAvailable,
             'shippingPromo' => $this->shippingPromo(),
         ]);
     }
@@ -350,6 +362,7 @@ class ShopController extends Controller
     public function add(Request $r)
     {
         $d = $r->validate(['product_id' => 'required|exists:products,id', 'qty' => 'required|integer|min:1|max:99']);
+        PendingCart::pending($r); // se l'ordine precedente è ormai pagato, il carrello riparte vuoto
         $product = Product::buyable()->find($d['product_id']);
         if ($product === null || ! $product->sellableIn(self::COUNTRY)) {
             $why = Product::find($d['product_id'])?->hasVariants() ? 'Scegli prima una variante (formato, taglia, colore…).' : 'Prodotto non disponibile.';
@@ -470,6 +483,7 @@ class ShopController extends Controller
 
     public function cartView(Request $r)
     {
+        $pendingOrder = PendingCart::pending($r);
         $notes = $this->tidyCart($r);
         $data = $this->cartViewData($r);
         // Un codice che nel frattempo non vale più (scaduto, esaurito…) si toglie e si avvisa.
@@ -486,11 +500,12 @@ class ShopController extends Controller
             $data = $this->cartViewData($r);
         }
 
-        return view('site.shop.cart', $data + ['notes' => $notes]);
+        return view('site.shop.cart', $data + ['notes' => $notes, 'pendingOrder' => $pendingOrder]);
     }
 
     public function checkoutForm(Request $r)
     {
+        PendingCart::pending($r);
         $this->tidyCart($r);
         if ($this->cart($r) === [] && $this->others($r) === []) {
             return redirect('/negozio');
@@ -506,7 +521,7 @@ class ShopController extends Controller
 
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => (string) (config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register'), 'methods' => app(OrderService::class)->enabledMethods()]);
+        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => (string) (config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register'), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r)]);
     }
 
     /**
@@ -557,6 +572,21 @@ class ShopController extends Controller
             return back()->withInput()->withErrors(['order' => $e->getMessage()]);
         }
 
+        // Un ordine rimasto in attesa (pagina di pagamento abbandonata, poi «torna al carrello») si chiude prima di crearne uno nuovo: la merce non resta bloccata.
+        if (($stale = PendingCart::pending($r)) !== null) {
+            try {
+                $staleSub = $stale->subscription_id !== null ? Subscription::find($stale->subscription_id) : null;
+                if ($staleSub !== null && $subs->awaitingFirstPayment($staleSub)) {
+                    $subs->cancel($staleSub, 'Pagamento iniziale non completato');
+                } else {
+                    $orders->cancel($stale);
+                }
+                $r->session()->forget(PendingCart::KEY);
+            } catch (OrderException) {
+                return redirect("/area/ordini/{$stale->id}")->withErrors(['order' => "Hai già un pagamento in corso per l'ordine {$stale->number}: completalo da qui, oppure contatta l'assistenza prima di riordinare."]);
+            }
+        }
+
         if ($subscribe !== 'none') {
             $this->rememberBilling($r, $d);
             try {
@@ -564,15 +594,16 @@ class ShopController extends Controller
             } catch (OrderException $e) {
                 return back()->withInput()->withErrors(['order' => $e->getMessage()]);
             }
-            $r->session()->forget(['cart', 'cart_others', 'cart_codes']);
-
-            // Carta su pagina esterna: il primo pagamento si fa lì (e salva la carta per i mesi successivi).
+            // Carta su pagina esterna: il primo pagamento si fa lì (e salva la carta per i mesi successivi). Il carrello resta finché non è pagato.
             if ($orders->usesRedirectCheckout() && $subs->awaitingFirstPayment($sub)) {
                 $first = $sub->orders()->where('status', 'pending_payment')->latest('id')->first();
                 if ($first !== null && ($first->payment_method === 'card' || $first->kmoney_rest_method === 'card')) {
+                    PendingCart::hold($r, $first);
+
                     return $this->toCardCheckout($first, $orders);
                 }
             }
+            PendingCart::clear($r);
 
             return redirect('/area/abbonamenti')->with('status', $sub->status === 'active' ? 'Abbonamento attivato: primo ordine pagato.' : 'Abbonamento creato ma il primo addebito non è riuscito: puoi riprovare da qui.');
         }
@@ -582,7 +613,12 @@ class ShopController extends Controller
             return back()->withInput()->withErrors(['order' => $e->getMessage()]);
         }
         $this->rememberBilling($r, $d);
-        $r->session()->forget(['cart', 'cart_others', 'cart_codes']);
+        // Bonifico: l'ordine è registrato e il carrello si svuota. Carta o KMoney: il carrello resta finché l'ordine non risulta pagato.
+        if ($d['payment_method'] === 'transfer') {
+            PendingCart::clear($r);
+        } else {
+            PendingCart::hold($r, $order);
+        }
 
         if ($d['payment_method'] === 'card') {
             if ($orders->usesRedirectCheckout()) {
@@ -685,6 +721,10 @@ class ShopController extends Controller
     public function order(Request $r, Order $order)
     {
         $order = $this->own($r, $order);
+        // Ritorno dalla pagina di pagamento a pagamento riuscito: gli articoli sono stati acquistati, il carrello si svuota.
+        if ($r->query('da') === 'carta' && (int) $r->session()->get(PendingCart::KEY) === $order->id) {
+            PendingCart::clear($r);
+        }
         if ($r->query('da') === 'carta' && $order->status === 'pending_payment') {
             session()->now('status', 'Stiamo confermando il pagamento: l\'ordine si aggiorna entro pochi istanti.');
         }

@@ -48,6 +48,7 @@ final class SnapshotBuilder
                 id: $c->id, sponsorId: $c->sponsor_id, since: $c->membershipSince(), status: $c->status,
                 onboardingComplete: $c->onboarding_complete, bonusHold: $c->bonus_hold,
                 rankCapCode: $c->rank_cap_code, name: $c->name,
+                rankHoldUntil: $c->rank_hold_until?->format('Y-m-d'),
             ))->all();
 
         $dbMovements = PvMovement::query()
@@ -215,8 +216,8 @@ final class SnapshotBuilder
         $achieved = RankAchievement::query()
             ->where(fn ($q) => $q->whereNull('period_id')->orWhere('period_id', '!=', $period->id)->orWhere('source', '!=', 'calculated'))
             ->orderBy('id')->get()->map(static fn (RankAchievement $a) => new AchievedRank(
-            $a->consultant_id, $a->rank_code, $a->achieved_at, $a->source,
-        ))->all();
+                $a->consultant_id, $a->rank_code, $a->achieved_at, $a->source,
+            ))->all();
 
         $awards = RankAward::query()->pluck('award_key')->all();
 

@@ -65,7 +65,7 @@
  <section class="panel">
   <header><h2>Prodotti</h2></header>
   <div class="tbl-wrap"><table class="tbl cards">
-   <thead><tr><th>Prodotto</th><th class="num">Q.tà</th><th class="num">Importo</th></tr></thead>
+   <thead><tr><th>Prodotto</th><th class="num">Q.tà</th><th class="num">Importo (IVA inclusa)</th></tr></thead>
    <tbody>
    @foreach($order->items as $i)
     <tr>
@@ -73,16 +73,16 @@
       @if($i->recipient_user_id && $i->recipient_user_id !== $order->buyer_user_id)<br><span class="muted">per {{ \App\Models\User::find($i->recipient_user_id)?->name }}</span>@endif
       @if($i->is_gift) <span class="st st-ok">omaggio</span>@elseif($i->parent_item_id)<br><span class="muted">incluso nel kit</span>@endif</td>
      <td data-l="Q.tà" class="num">{{ $i->qty }}</td>
-     <td data-l="Importo" class="num">€ {{ $eur($i->unit_net * $i->qty) }}</td>
+     <td data-l="Importo" class="num">€ {{ $eur(\App\Domain\Orders\PricedLine::gross(\App\Domain\Engine\Support\Num::of((string) $i->unit_net)->multipliedBy($i->qty), (string) $i->vat_rate)) }}</td>
     </tr>
    @endforeach
    </tbody>
   </table></div>
   <div class="panel-body" style="border-top:1px solid var(--hair)">
    <dl class="dl">
-    @if($order->shipping_net > 0)<dt>Spedizione</dt><dd>€ {{ $eur($order->shipping_net) }}</dd>@endif
-    <dt>IVA</dt><dd>€ {{ $eur($order->vat_total) }}</dd>
+    @if($order->shipping_net > 0)<dt>Spedizione</dt><dd>€ {{ $eur(\App\Domain\Orders\PricedLine::gross(\App\Domain\Engine\Support\Num::of((string) $order->shipping_net), (string) $order->shipping_vat_rate)) }}</dd>@endif
     <dt><strong>Totale</strong></dt><dd style="font-size:18px"><strong>€ {{ $eur($order->total) }}</strong></dd>
+    <dt class="muted">di cui IVA</dt><dd class="muted">€ {{ $eur($order->vat_total) }}</dd>
    </dl>
   </div>
  </section>

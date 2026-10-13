@@ -4,6 +4,7 @@
 @section('content')
 <header class="page-head"><h1>Carrello</h1>@unless($priced->isEmpty() && count($others) === 0)@include('site.shop._steps', ['current' => 1])@endunless</header>
 @foreach($notes as $n)<div class="warn">{{ $n }}</div>@endforeach
+@if(! empty($pendingOrder))<div class="warn">Hai un ordine in attesa di pagamento ({{ $pendingOrder->number }}): <a href="/area/ordini/{{ $pendingOrder->id }}">completa il pagamento</a>. Se invece riordini da qui, quell'ordine in sospeso viene annullato.</div>@endif
 @if($priced->isEmpty() && count($others) === 0)
  <div class="empty empty-cart"><span class="empty-ico"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></span><strong>Il carrello è vuoto</strong>Quando aggiungi un prodotto lo trovi qui.<br><a class="btn accent" href="/negozio">Vai al negozio</a></div>
 @else

@@ -11,6 +11,7 @@
    @if($product->isSoldOut())<span class="tag dark">Esaurito</span>@elseif($saving)<span class="tag hot">−{{ $saving }}%</span>@endif
    @if($product->badge)<span class="tag">{{ $product->badge }}</span>@endif
    @if($product->is_kit)<span class="tag">Kit</span>@endif
+   @if(($kmPct = $product->kmoneyPercent()) > 0)<span class="tag km" title="Puoi pagare il {{ $kmPct }}% di questo prodotto con KMoney">{{ $kmPct }}% in KMoney</span>@endif
   </span>
  </a>
  <div class="pcard-body">
@@ -24,7 +25,6 @@
      <p class="price"><b>€ {{ \App\Support\Money::eur($product->grossPrice()) }}</b>@if($product->compareAtGross()) <s>€ {{ \App\Support\Money::eur($product->compareAtGross()) }}</s>@endif</p>
     @endif
     @if($product->category)<span class="pcard-chip">{{ $product->category->name }}</span>@endif
-    @if(($kmPct = $product->kmoneyPercent()) > 0)<span class="pcard-chip pcard-km" title="Puoi pagare fino al {{ $kmPct }}% di questo prodotto con KMoney">KMoney {{ $kmPct }}%</span>@endif
    </div>
    <div class="pcard-act">
     @if($product->isSoldOut())

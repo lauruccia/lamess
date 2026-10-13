@@ -5,6 +5,7 @@
 @section('content')
 <header class="page-head"><h1>Checkout</h1>@include('site.shop._steps', ['current' => 2])</header>
 @error('order')<div class="warn">{{ $message }}</div>@enderror
+@if(! empty($pendingOrder))<div class="warn">Hai un ordine in attesa di pagamento ({{ $pendingOrder->number }}): <a href="/area/ordini/{{ $pendingOrder->id }}">completa il pagamento</a>. Se invece riordini da qui, quell'ordine in sospeso viene annullato.</div>@endif
 <div class="cart-grid checkout">
  <form method="post" action="/area/checkout" class="co-form" id="checkout-form">@csrf
   <section class="card">
@@ -35,6 +36,8 @@
     <legend>Come vuoi pagare</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
      @php($kmShare = $priced->kmoneyGross())
+     {{-- % pagabile in KMoney impostata sulla pagina prodotto; con più prodotti è la quota complessiva dei prodotti nel carrello --}}
+     @php($kmPct = $priced->itemsGross()->isPositive() ? (int) round((float) (string) $kmShare / (float) (string) $priced->itemsGross() * 100) : 0)
      @php($kmTotal = \App\Domain\Engine\Support\Num::of($priced->totals()['total']))
      @php($kmShare = $kmShare->isGreaterThan($kmTotal) ? $kmTotal : $kmShare)
      @php($kmRest = $kmTotal->minus($kmShare))
@@ -44,6 +47,7 @@
      @php($kmCost = $kmBonus > 0 ? round((float) (string) $kmShare / (1 + $kmBonus / 100), 2) : (float) (string) $kmShare)
      @php($kmSaving = round((float) (string) $kmShare - $kmCost, 2))
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
+      @if($kmPct > 0)<span class="km-pct">Paga al {{ $kmPct }}% in KMoney e risparmia</span>@endif
       <span data-km-single @if($kmMonthly) hidden @endif>
        @if($kmRest->isPositive())
         {{ \App\Support\Money::eur($kmShare) }} KY dal tuo saldo KMoney (quota consentita dai prodotti); il resto di € {{ \App\Support\Money::eur($kmRest) }} con carta o bonifico.

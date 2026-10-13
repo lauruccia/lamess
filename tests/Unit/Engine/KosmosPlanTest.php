@@ -465,10 +465,10 @@ final class KosmosPlanTest extends EngineTestCase
     }
 
     /** @return array<string, string> codice qualifica pagata */
-    private function paidRanks(PlanConfig $plan): array
+    private function paidRanks(PlanConfig $plan, ?string $holdUntil = null): array
     {
         $s = $this->scenario(plan: $plan);
-        $s->consultant('C', null, rank: 'CRYSTAL');
+        $s->consultant('C', null, rank: 'CRYSTAL', rankHoldUntil: $holdUntil);
         foreach (['a', 'b', 'c', 'd', 'e'] as $i) {
             $this->buy($s, 'C', "C{$i}");
         }
@@ -484,6 +484,16 @@ final class KosmosPlanTest extends EngineTestCase
         $this->assertSame(['C' => 'CRYSTAL'], $this->paidRanks($this->planWithKosmos(['rank_grace_until' => '2026-12-31'], $maintain)));
         $this->assertSame(['C' => 'PEARL'], $this->paidRanks($this->planWithKosmos(['rank_grace_until' => '2026-10-30'], $maintain)), 'il mese finisce dopo la data: non protetto');
         $this->assertSame(['C' => 'PEARL'], $this->paidRanks($this->planWithKosmos(['rank_grace_until' => '2026-09-30'], $maintain)), 'data già passata');
+    }
+
+    public function test_the_rank_of_a_single_incaricato_is_kept_until_the_date_chosen_by_the_admin(): void
+    {
+        $plan = $this->planWithKosmos([], ['kosmos_rank_maintenance' => 'clients']);
+        $this->assertSame(['C' => 'PEARL'], $this->paidRanks($plan), 'senza protezione: scende a Pearl con 5 clienti');
+        $this->assertSame(['C' => 'CRYSTAL'], $this->paidRanks($plan, '2026-10-31'), 'ottobre finisce il 31: protetto');
+        $this->assertSame(['C' => 'CRYSTAL'], $this->paidRanks($plan, '2027-03-31'));
+        $this->assertSame(['C' => 'PEARL'], $this->paidRanks($plan, '2026-10-30'), 'il mese finisce dopo la data: non protetto');
+        $this->assertSame(['C' => 'PEARL'], $this->paidRanks($plan, '2026-09-30'), 'data già passata');
     }
 
     public function test_ranks_are_kept_for_the_days_chosen_by_the_admin_counted_from_the_activation_of_the_plan(): void

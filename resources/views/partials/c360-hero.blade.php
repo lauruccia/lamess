@@ -45,6 +45,7 @@
     <div class="c360h-pills">
         <span class="c360h-pill {{ $statusTone }}">{{ \App\Support\StatusLabels::label($c->status) }}</span>
         <span class="c360h-pill brand">{{ $rank }}</span>
+        @if($c->rank_hold_until)<span class="c360h-pill warn" title="{{ $c->rank_hold_reason }}">Qualifica mantenuta fino al {{ $c->rank_hold_until->format('d/m/Y') }}</span>@endif
         @if($showActivity ?? true)<span class="c360h-pill {{ $actTone }}">{{ $actLabel }}</span>@endif
         <span class="c360h-pill {{ $kycTone }}">{{ $kycLabel }}</span>
         @unless($c->onboarding_complete)<span class="c360h-pill warn">Onboarding da completare</span>@endunless

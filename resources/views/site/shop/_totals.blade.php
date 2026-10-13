@@ -16,5 +16,5 @@
   </div>
  @endif
  <div class="grand"><dt>Totale</dt><dd>€ {{ \App\Support\Money::eur($t['total']) }}</dd></div>
- <p class="muted small vat">IVA inclusa (€ {{ \App\Support\Money::eur($t['vat']) }})</p>
+ <div class="vat-row"><dt>di cui IVA</dt><dd>€ {{ \App\Support\Money::eur($t['vat']) }}</dd></div>
 </dl>

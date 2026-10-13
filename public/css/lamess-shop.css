@@ -121,6 +121,7 @@ button.add:hover,a.add:hover{background:var(--lm-terracotta);color:var(--lm-ink)
 .totals .grand{margin-top:6px;padding-top:12px;border-top:1px solid var(--line);font-size:18px}
 .totals .grand dt{font-weight:600;color:var(--ink)}.totals .grand dd{font:400 26px var(--lm-font-display)}
 .totals .vat{margin:0;text-align:right}
+.totals .vat-row{padding-top:0;font-size:13px}.totals .vat-row dt,.totals .vat-row dd{color:var(--muted);font-weight:400}
 .codebox{margin:12px 0 4px}
 .code-form{display:flex;gap:8px}.code-form input{padding:10px 12px;text-transform:uppercase}
 .chip-code{display:inline-flex;align-items:center;gap:8px;margin:0 8px 8px 0;padding:5px 10px 5px 12px;border-radius:99px;background:var(--lm-ok-bg);color:var(--ok);font:600 13px var(--lm-font-text)}
@@ -730,6 +731,7 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 /* KMoney: quota pagabile col saldo KMoney */
 .pcard-km{background:#eaf6ef;color:#1d6b43;border-color:#cfe8da;margin-left:6px}
 .tag.km{background:#eaf6ef;color:#1d6b43}
+.km-pct{display:block;margin:2px 0 4px;font-weight:600;color:#1d6b43}
 .km-rest{margin:-4px 0 14px;padding:12px 14px;border:1px dashed var(--line,#d9d4cc);border-radius:12px}
 .km-rest label{display:block;font-size:.85rem;margin-bottom:6px;color:var(--ink-soft,#5b564f)}
 .km-rest select{width:100%}

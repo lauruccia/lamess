@@ -62,6 +62,10 @@ final class StripeWebhook
             return 'unknown_order';
         }
         if ($order->status !== 'pending_payment') {
+            if ($order->status === 'cancelled') {
+                Log::warning('Stripe: pagamento ricevuto per un ordine già annullato, da verificare e rimborsare', ['order' => $order->number]);
+            }
+
             return 'already_processed';
         }
         if ((int) ($obj['amount_total'] ?? -1) !== StripeCheckoutProvider::cents($order->restDue()) || strtolower((string) ($obj['currency'] ?? '')) !== 'eur') {

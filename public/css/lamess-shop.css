@@ -786,3 +786,7 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 .shop-form .filters .vs:hover{background:rgb(255 255 255/.7);color:var(--ink)}
 .shop-form .filters .vs.on{background:var(--white);color:var(--lm-terracotta);box-shadow:0 1px 3px rgb(19 17 14/.14)}
 .shop-form .filters .cat-list a.on{box-shadow:inset 3px 0 0 var(--lm-terracotta)}
+
+/* % KMoney in basso a sinistra sull'immagine: non copre il nome né le altre etichette */
+.tags.tags-bottom{top:auto;bottom:10px;left:10px}
+@media(max-width:640px){.tags.tags-bottom{top:auto;bottom:7px;left:7px}}

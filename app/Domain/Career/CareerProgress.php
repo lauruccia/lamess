@@ -114,7 +114,8 @@ final class CareerProgress
         $d = $s['next'];
         $thr = (float) (string) $plan->activityThreshold;
         $todo = [];
-        $legacy = LegacyPlan::visible();   // vecchio piano nascosto: niente PR, Direct di qualifica, Rank Bonus, Matching, rate
+        $isIncaricati = $plan->kosmos !== null;
+        $legacy = LegacyPlan::visible() && ! $isIncaricati;   // vecchio piano nascosto (o piano Incaricati): niente PR, Direct di qualifica, Rank Bonus, Matching, rate
 
         $hasActiveStatus = $plan->kosmos === null; // il piano Incaricati non ha lo stato ATTIVO
         $activity = ['applies' => $hasActiveStatus, 'points' => $s['activity'], 'threshold' => $thr, 'missing' => max(0.0, $thr - $s['activity']), 'active' => $s['active'], 'reason' => $s['reason']];
@@ -128,6 +129,7 @@ final class CareerProgress
         $next = null;
         $pr = ['required' => 0.0, 'counted' => 0.0, 'missing' => 0.0, 'percent' => 100, 'personal' => $s['personal_pr'], 'group' => $s['group_pr']];
         $fifty = null;
+        $requirements = [];
         $structure = ['required' => [], 'missing' => [], 'ok' => true];
         if ($nextDef !== null && $d !== []) {
             $required = (float) ($d['pr_required'] ?? 0);
@@ -164,7 +166,14 @@ final class CareerProgress
             if ($missing !== []) {
                 $todo[] = 'Struttura richiesta: '.self::group($missing).'.';
             }
-            if (($legacy ? $pr['missing'] <= 0 : true) && $structure['ok']) {
+            $requirements = $isIncaricati ? self::incaricatiRequirements($d) : [];
+            foreach ($requirements as $r) {
+                if (! $r['ok']) {
+                    $todo[] = $r['todo'];
+                }
+            }
+            $requirementsOk = array_reduce($requirements, static fn (bool $c, array $r): bool => $c && $r['ok'], true);
+            if (($legacy ? $pr['missing'] <= 0 : true) && $structure['ok'] && $requirementsOk) {
                 $todo[] = $legacy
                     ? "Requisiti per {$next['name']} soddisfatti: la qualifica è effettiva dal 1° del mese successivo al raggiungimento."
                     : "Requisiti per {$next['name']} soddisfatti.";
@@ -208,8 +217,41 @@ final class CareerProgress
         return [
             'consultant_id' => $id, 'rank' => ['code' => $rank->code, 'name' => $rank->name, 'sequence' => $rank->sequence, 'direct_pct' => (float) (string) $rank->directRate * 100],
             'effective_rank' => $plan->rank($s['effective'])->name, 'next' => $next, 'pr' => $pr, 'fifty' => $fifty, 'structure' => $structure,
-            'activity' => $activity, 'legacy_hidden' => ! $legacy, 'gates' => $gates, 'bonuses' => $bonuses, 'todo' => $todo,
+            'requirements' => $requirements, 'activity' => $activity, 'legacy_hidden' => ! $legacy, 'gates' => $gates, 'bonuses' => $bonuses, 'todo' => $todo,
         ];
+    }
+
+    /**
+     * Requisiti del piano Incaricati per la prossima qualifica, dal dettaglio del motore (clienti personali,
+     * Pearl al 1° livello, colonne). La struttura (linee per qualifica) ha già le sue righe.
+     *
+     * @param  array<string, mixed>  $d
+     * @return list<array{label: string, required: int, counted: int, ok: bool, todo: string}>
+     */
+    private static function incaricatiRequirements(array $d): array
+    {
+        $out = [];
+        if (isset($d['clients_required'])) {
+            $req = (int) $d['clients_required'];
+            $got = (int) ($d['clients_counted'] ?? 0);
+            $out[] = ['label' => 'Clienti personali', 'required' => $req, 'counted' => $got, 'ok' => (bool) ($d['clients_ok'] ?? $got >= $req),
+                'todo' => "Ti mancano ".max(0, $req - $got).' clienti personali (ne hai '.$got.' su '.$req.').'];
+        }
+        if (isset($d['pearl_first_level_required'])) {
+            $req = (int) $d['pearl_first_level_required'];
+            $got = (int) ($d['pearl_first_level_counted'] ?? 0);
+            $out[] = ['label' => 'Incaricati Pearl al 1° livello', 'required' => $req, 'counted' => $got, 'ok' => (bool) ($d['pearl_first_level_ok'] ?? $got >= $req),
+                'todo' => 'Ti mancano '.max(0, $req - $got).' incaricati Pearl al 1° livello (ne hai '.$got.' su '.$req.').'];
+        }
+        if (isset($d['columns_required'])) {
+            $req = (int) $d['columns_required'];
+            $got = (int) ($d['columns_counted'] ?? 0);
+            $each = (int) ($d['column_clients_required'] ?? 0);
+            $out[] = ['label' => "Colonne con almeno {$each} clienti", 'required' => $req, 'counted' => $got, 'ok' => (bool) ($d['columns_ok'] ?? $got >= $req),
+                'todo' => 'Ti servono '.$req." colonne con almeno {$each} clienti ciascuna (ne hai ".$got.').'];
+        }
+
+        return $out;
     }
 
     private static function n(float $v): string

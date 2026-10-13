@@ -731,7 +731,7 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 /* KMoney: quota pagabile col saldo KMoney */
 .pcard-km{background:#eaf6ef;color:#1d6b43;border-color:#cfe8da;margin-left:6px}
 .tag.km{background:#eaf6ef;color:#1d6b43}
-.km-pct{display:block;margin:2px 0 4px;font-weight:600;color:#1d6b43}
+.totals .km-save{margin-top:6px;padding:8px 12px;border-radius:10px;background:var(--lm-ok-bg);align-items:center}.totals .km-save dt,.totals .km-save dd{color:#1d6b43;font-weight:600}
 .km-rest{margin:-4px 0 14px;padding:12px 14px;border:1px dashed var(--line,#d9d4cc);border-radius:12px}
 .km-rest label{display:block;font-size:.85rem;margin-bottom:6px;color:var(--ink-soft,#5b564f)}
 .km-rest select{width:100%}

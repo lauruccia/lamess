@@ -36,16 +36,13 @@
     <legend>Come vuoi pagare</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
      {{-- % pagabile in KMoney impostata sulla pagina prodotto; con più prodotti è la quota complessiva dei prodotti nel carrello --}}
-     @php($kmPct = $priced->itemsGross()->isPositive() ? (int) round((float) (string) $priced->kmoneyItemsGross() / (float) (string) $priced->itemsGross() * 100) : 0)
      @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
-     @php($kmBonus = max(0, (int) config('lamess.kmoney_bonus_percent', 0)))
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
-      @if($kmPct > 0)<span class="km-pct">Paga al {{ $kmPct }}% in KMoney e risparmia</span>@endif
       <span class="km-link">
        @unless($kmLinked)
         Per pagare col tuo saldo <a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
        @endunless
-      </span></small></span><em class="oc-tag oc-tag-accent">{{ $kmBonus > 0 ? 'Risparmia fino al '.$kmBonus.'%' : 'Consigliato' }}</em></label>
+      </span></small></span><em class="oc-tag oc-tag-accent">Consigliato</em></label>
      @if($priced->kmoneyRest()->isPositive() || $pricedSub->kmoneyRest()->isPositive())
       <div class="km-rest" data-km-rest data-rest-single="{{ $priced->kmoneyRest()->isPositive() ? 1 : 0 }}" data-rest-sub="{{ $pricedSub->kmoneyRest()->isPositive() ? 1 : 0 }}" style="display:none">
        <label for="kmoney_rest">Come vuoi pagare il resto (<span data-sum-single @if($sub === 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($priced->kmoneyRest()) }}</span><span data-sum-sub @if($sub !== 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}</span>)</label>
@@ -81,8 +78,8 @@
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  <div data-sum-single @if($sub === 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $priced])</div>
-  <div data-sum-sub @if($sub !== 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub])</div>
+  <div data-sum-single @if($sub === 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney()])</div>
+  <div data-sum-sub @if($sub !== 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney()])</div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>

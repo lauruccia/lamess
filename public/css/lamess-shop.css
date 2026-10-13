@@ -800,4 +800,4 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 .pcard h3{-webkit-line-clamp:1}
 
 [data-km-only][hidden]{display:none!important}
-.co-confirm{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.co-confirm .chk{margin:0 0 10px;font-size:13px}.co-confirm .secure-note{margin:10px 0 0;text-align:center}
+.co-confirm{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.co-confirm .chk{margin:0 0 10px;font-size:13px;line-height:1.5}.co-confirm .chk input{flex:none;margin-top:3px}.co-confirm .chk span{min-width:0}.co-confirm .secure-note{margin:10px 0 0;text-align:center}

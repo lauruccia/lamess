@@ -38,12 +38,12 @@ final class LegacyPlan
         return ! self::hidden();
     }
 
-    /** Chi può nascondere/mostrare: super_admin e chi gestisce il piano compensi. */
+    /** Chi può nascondere/mostrare: solo il super_admin. */
     public static function canToggle(?Authenticatable $user = null): bool
     {
         $user ??= Auth::user();
 
-        return $user instanceof User && ($user->isSuperAdmin() || $user->can('plan.manage'));
+        return $user instanceof User && $user->isSuperAdmin();
     }
 
     public static function hide(?string $reason = null): void

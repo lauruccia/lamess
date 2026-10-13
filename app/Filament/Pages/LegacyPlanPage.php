@@ -14,7 +14,7 @@ use UnitEnum;
 
 /**
  * Interruttore a un click: nasconde (o rimostra) tutti i riferimenti al vecchio piano di marketing.
- * Non cancella nulla: vedi {@see LegacyPlan}. Accesso: super_admin e chi gestisce il piano compensi.
+ * Non cancella nulla: vedi {@see LegacyPlan}. Accesso: solo super_admin.
  */
 class LegacyPlanPage extends Page
 {

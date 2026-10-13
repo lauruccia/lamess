@@ -66,21 +66,17 @@ final class LegacyPlanHiddenTest extends TestCase
         $this->assertFalse(LegacyPlan::hidden());
     }
 
-    public function test_the_admin_who_manages_the_plan_can_toggle_but_not_other_admins(): void
+    public function test_only_the_super_admin_can_toggle(): void
     {
-        $manager = User::factory()->role('admin')->create();
-        $manager->givePermissionTo(['plan.view', 'plan.manage']);
-        $other = User::factory()->role('admin')->create();
-        $other->givePermissionTo(['plan.view']);
+        $admin = User::factory()->role('admin')->create();
+        $admin->givePermissionTo(['plan.view', 'plan.manage', 'features.manage']);
 
-        $this->assertTrue(LegacyPlan::canToggle($manager));
-        $this->assertFalse(LegacyPlan::canToggle($other));
+        $this->assertTrue(LegacyPlan::canToggle($this->super));
+        $this->assertFalse(LegacyPlan::canToggle($admin));
 
-        $this->actingAs($manager);
-        Livewire::test(LegacyPlanPage::class)->callAction('toggle');
-        $this->assertTrue(LegacyPlan::hidden());
-
-        $this->actingAs($other)->get('/admin/piano-precedente')->assertForbidden();
+        $this->actingAs($admin)->get('/admin/piano-precedente')->assertForbidden();
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        LegacyPlan::hide();
     }
 
     public function test_hiding_removes_the_legacy_screens_even_for_the_super_admin_but_deletes_nothing(): void

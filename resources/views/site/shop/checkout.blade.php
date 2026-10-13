@@ -44,8 +44,6 @@
      @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
      @php($kmMonthly = $sub === 'monthly')
      @php($kmBonus = max(0, (int) config('lamess.kmoney_bonus_percent', 0)))
-     @php($kmCost = $kmBonus > 0 ? round((float) (string) $kmShare / (1 + $kmBonus / 100), 2) : (float) (string) $kmShare)
-     @php($kmSaving = round((float) (string) $kmShare - $kmCost, 2))
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
       @if($kmPct > 0)<span class="km-pct">Paga al {{ $kmPct }}% in KMoney e risparmia</span>@endif
       <span data-km-single @if($kmMonthly) hidden @endif>
@@ -58,11 +56,8 @@
       <span data-km-sub @if(! $kmMonthly) hidden @endif>
        @if($kmRest->isPositive())
         Ogni mese {{ \App\Support\Money::eur($kmShare) }} KY dal tuo saldo KMoney; il resto di € {{ \App\Support\Money::eur($kmRest) }} sulla carta, in automatico.
-       @else
-        Addebito automatico di {{ \App\Support\Money::eur($kmShare) }} KY ogni mese dal tuo saldo KMoney.
        @endif
       </span>
-      @if($kmBonus > 0 && $kmSaving > 0)<span class="km-promo">Ricarichi solo € {{ \App\Support\Money::eur($kmCost) }} e paghi {{ \App\Support\Money::eur($kmShare) }} KY: risparmi € {{ \App\Support\Money::eur($kmSaving) }}, fino al {{ $kmBonus }}% in più.</span>@endif
       <span class="km-link">
        @if($kmLinked)
         Conto KMoney collegato.

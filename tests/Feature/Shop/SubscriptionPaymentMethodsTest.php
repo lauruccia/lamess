@@ -523,14 +523,15 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $p = $this->product('A', '150.00', ['kmoney_percent' => 100]);
 
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
-        $this->assertMatchesRegularExpression('/Ricarichi solo € 146,40 e paghi 183,00 KY: risparmi € 36,60, fino al 25% in più\./u', $html);
+        $this->assertStringNotContainsString('Ricarichi solo', $html);
+        $this->assertStringNotContainsString('Addebito automatico', $html);
         $this->assertStringContainsString('Risparmia fino al 25%', $html);
         $this->assertStringContainsString('Se sei già registrato, paga con il tuo conto KMoney.', $html);
         $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Apri un conto KMoney</a>', $html);
         $this->assertStringNotContainsString('Ti chiederemo di collegare', $html);
 
         config(['lamess.kmoney_bonus_percent' => 0]);
-        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertDontSee('Ricarichi solo')->assertDontSee('Risparmia fino al');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertDontSee('Risparmia fino al');
     }
 
     public function test_kmoney_prompt_links_to_login_and_register_with_the_real_provider(): void

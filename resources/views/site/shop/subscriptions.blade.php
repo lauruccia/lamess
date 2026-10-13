@@ -19,7 +19,7 @@
 @error('order')<div class="note note-err"><div>{{ $message }}</div></div>@enderror
 
 @if($subs->isEmpty())
- <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'repeat'])</span><div><strong>Nessun abbonamento attivo</strong><p>Attivalo dal checkout pagando con carta o KMoney: ripeti l'ordine ogni mese e, con impegno di 12 mesi, la spedizione è gratuita.</p><a class="btn accent" href="/negozio">Vai al negozio</a></div></div></section>
+ <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'repeat'])</span><div><strong>Nessun abbonamento attivo</strong><p>Attivalo dal checkout pagando con carta o KMoney: ripeti l'ordine ogni mese con spedizione gratuita. L'impegno è di 12 mesi, ma puoi annullare quando vuoi.</p><a class="btn accent" href="/negozio">Vai al negozio</a></div></div></section>
 @else
  <div class="kpis">
   <div class="kpi k-ok"><small>Attivi</small><strong>{{ $active->count() }}</strong><span>{{ $subs->where('status', 'paused')->count() }} in pausa</span></div>
@@ -72,7 +72,7 @@
        <button class="btn accent">Salva indirizzo</button>
       </form>
      </details>
-     @if($s->free_shipping && $s->cycles_done < $s->commitment_months)<p class="muted" style="margin:12px 0 0;font-size:13px">Annullando prima della fine dell'impegno potrebbero applicarsi le condizioni previste dal regolamento.</p>@endif
+     @if($s->free_shipping && $s->cycles_done < $s->commitment_months)<p class="muted" style="margin:12px 0 0;font-size:13px">L'impegno è di {{ $s->commitment_months }} mesi, ma puoi annullare quando vuoi: la disdetta anticipata viene solo registrata.</p>@endif
     @endif
    </div>
   </section>

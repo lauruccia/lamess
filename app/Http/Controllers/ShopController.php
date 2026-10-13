@@ -590,7 +590,7 @@ class ShopController extends Controller
         if ($subscribe !== 'none') {
             $this->rememberBilling($r, $d);
             try {
-                $sub = $subs->subscribe($r->user(), $this->cart($r), self::COUNTRY, $d, 0, $this->others($r), null, $d['payment_method']);
+                $sub = $subs->subscribe($r->user(), $this->cart($r), self::COUNTRY, $d, 12, $this->others($r), null, $d['payment_method']);
             } catch (OrderException $e) {
                 return back()->withInput()->withErrors(['order' => $e->getMessage()]);
             }

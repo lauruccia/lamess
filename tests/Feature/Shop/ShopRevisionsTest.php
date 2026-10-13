@@ -136,7 +136,7 @@ final class ShopRevisionsTest extends TestCase
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00', ['kmoney_percent' => 50]);
 
-        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('In KMoney')->assertDontSee('Paga al 50%')->assertDontSee('Risparmia fino al');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('Da pagare in KMoney')->assertSee('Da pagare in euro')->assertDontSee('Paga al 50%')->assertDontSee('Risparmia fino al');
     }
 
     public function test_order_page_shows_gross_amounts_with_only_the_vat_rate_indicated(): void

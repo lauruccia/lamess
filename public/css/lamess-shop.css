@@ -801,3 +801,4 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 
 [data-km-only][hidden]{display:none!important}
 .co-confirm{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.co-confirm .chk{margin:0 0 10px;font-size:13px;line-height:1.5}.co-confirm .chk input{flex:none;margin-top:3px}.co-confirm .chk span{min-width:0}.co-confirm .secure-note{margin:10px 0 0;text-align:center}
+.totals .km-save+.km-save{margin-top:4px}.totals .km-save-eur{background:#f3efe9}.totals .km-save-eur dt,.totals .km-save-eur dd{color:var(--ink)}.co-name .co-km .co-km-eur{display:block;margin-top:1px;color:var(--ink);font-weight:500}

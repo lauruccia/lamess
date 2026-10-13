@@ -31,6 +31,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -115,6 +116,10 @@ class OrderResource extends Resource
             TextColumn::make('buyer.email')->label('Email')->searchable()->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('buyer_type')->label('Tipo')->formatStateUsing(fn (string $state) => $state === 'consultant' ? 'Incaricato' : 'Cliente'),
             TextColumn::make('beneficiary.name')->label(fn (): string => LegacyPlan::hidden() ? 'Incaricato' : 'PV a')->placeholder('— (vendita casa)'),
+            TextColumn::make('subscription_id')->label('Ordine')->badge()
+                ->state(fn (Order $r) => $r->subscription_id ? 'Abbonamento' : 'Singolo')
+                ->color(fn (Order $r) => $r->subscription_id ? 'info' : 'gray')
+                ->icon(fn (Order $r) => $r->subscription_id ? 'heroicon-o-arrow-path' : null),
             TextColumn::make('status')->label('Stato')->badge()->formatStateUsing(fn (string $state) => self::STATUS[$state] ?? $state)
                 ->color(fn (string $state) => match ($state) {
                     'pending_payment' => 'warning', 'paid', 'processing', 'shipped', 'delivered' => 'success', 'cancelled' => 'gray', default => 'danger',
@@ -127,6 +132,7 @@ class OrderResource extends Resource
             TextColumn::make('tracking_code')->label('Tracking')->placeholder('—'),
         ])->filters([
             SelectFilter::make('status')->label('Stato')->options(self::STATUS),
+            TernaryFilter::make('subscription_id')->label('Abbonamento')->nullable()->placeholder('Tutti')->trueLabel('Solo abbonamenti')->falseLabel('Solo ordini singoli'),
             SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico']),
         ])->recordUrl(fn (Order $record) => static::getUrl('view', ['record' => $record]))
             ->recordActions(array_map(fn (Action $a) => $a->iconButton()->tooltip($a->getLabel()), self::orderActions()));

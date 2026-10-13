@@ -77,4 +77,10 @@ class Order extends Model
     {
         return $this->belongsTo(Consultant::class, 'beneficiary_consultant_id');
     }
+
+    /** Abbonamento da cui nasce l'ordine (null = ordine singolo). */
+    public function subscription(): BelongsTo
+    {
+        return $this->belongsTo(Subscription::class);
+    }
 }

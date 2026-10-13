@@ -7,8 +7,8 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Orders\OrderService;
 use App\Domain\Orders\PricedLine;
-use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Models\Order;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -29,6 +29,12 @@ class ViewOrder extends ViewRecord
     private static function shippingGross(Order $r): string
     {
         return (string) PricedLine::gross(Num::of((string) $r->shipping_net), (string) $r->shipping_vat_rate);
+    }
+
+    /** Numero del ciclo di abbonamento a cui appartiene l'ordine (1 = primo ordine). */
+    private static function subscriptionCycle(Order $r): int
+    {
+        return Order::where('subscription_id', $r->subscription_id)->where('id', '<=', $r->id)->count();
     }
 
     private static function eur(string|int|float|null $v): string
@@ -56,6 +62,11 @@ class ViewOrder extends ViewRecord
                 TextEntry::make('buyer.email')->label('Email')->placeholder('—'),
                 TextEntry::make('beneficiary.name')->label('Incaricato (vendita)')->placeholder('— (vendita casa)'),
                 TextEntry::make('payment_method')->label('Pagamento')->state(fn (Order $r) => OrderService::methodLabel($r->payment_method).($r->kmoney_rest_method ? ' + '.OrderService::methodLabel($r->kmoney_rest_method) : '')),
+                TextEntry::make('order_kind')->label('Tipo ordine')->badge()
+                    ->state(fn (Order $r) => $r->subscription_id ? 'Abbonamento mensile · n. '.$r->subscription_id.' · ciclo '.self::subscriptionCycle($r) : 'Ordine singolo')
+                    ->color(fn (Order $r) => $r->subscription_id ? 'info' : 'gray')
+                    ->icon(fn (Order $r) => $r->subscription_id ? 'heroicon-o-arrow-path' : null)
+                    ->url(fn (Order $r) => $r->subscription_id ? SubscriptionResource::getUrl('edit', ['record' => $r->subscription_id]) : null),
             ]),
             Section::make('Consegna')->columns(4)->schema([
                 TextEntry::make('carrier')->label('Corriere')->placeholder('—'),
@@ -89,7 +100,7 @@ class ViewOrder extends ViewRecord
             ]),
             Section::make('Cronologia')->schema([
                 TextEntry::make('timeline')->hiddenLabel()->state(fn (Order $r) => $r->events()->with('user')->get()->map(fn ($e) => sprintf(
-                    '[%s] %s%s%s', self::when($e->created_at), $e->internal ? 'NOTA INTERNA — ' : '', LegacyPlan::scrub((string) $e->message), $e->user ? ' ('.$e->user->name.')' : '',
+                    '[%s] %s%s%s', self::when($e->created_at), $e->internal ? 'NOTA INTERNA — ' : '', $e->message, $e->user ? ' ('.$e->user->name.')' : '',
                 ))->implode("\n") ?: 'Nessun evento registrato')->extraAttributes(['style' => 'white-space: pre-line']),
             ]),
         ]);

@@ -138,8 +138,11 @@ final class OrderService
             $share = $priced->kmoneyShare();
             $kmoneyAmount = (string) Num::money($share);
             if (Num::of($kmoneyAmount)->isLessThan($total)) {
-                if (! in_array($kmoneyRest, ['card', 'transfer'], true)) {
-                    throw new OrderException('Scegli come pagare il resto: carta o bonifico.');
+                // Ordine singolo: il resto si sceglie dopo l'addebito della quota KMoney (chooseKMoneyRest). Abbonamenti: il resto è sempre indicato (carta).
+                if ($kmoneyRest !== null || $subscription !== null) {
+                    if (! in_array($kmoneyRest, ['card', 'transfer'], true)) {
+                        throw new OrderException('Scegli come pagare il resto: carta o bonifico.');
+                    }
                 }
             } else {
                 $kmoneyRest = null;
@@ -295,6 +298,40 @@ final class OrderService
     public function hasKMoneyToRefund(Order $order): bool
     {
         return $order->payment_method === 'kmoney' && $order->payments()->where('method', 'kmoney')->where('status', 'paid')->exists();
+    }
+
+    /**
+     * Dopo l'addebito della quota KMoney: il cliente sceglie come pagare il resto, fra i metodi attivi (carta o bonifico).
+     */
+    public function chooseKMoneyRest(Order $order, string $method, ?DateTimeImmutable $now = null): Order
+    {
+        $now ??= CarbonImmutable::now();
+        if (! in_array($method, ['card', 'transfer'], true) || ! ($this->enabledMethods()[$method] ?? false)) {
+            throw new OrderException('Questo metodo di pagamento non è disponibile al momento: scegline un altro.');
+        }
+
+        $order = DB::transaction(function () use ($order, $method, $now): Order {
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($order->status !== 'pending_payment' || $order->payment_method !== 'kmoney' || $order->kmoney_rest_method !== null || ! Num::of($order->restDue())->isPositive()) {
+                throw new OrderException("Per l'ordine {$order->number} non c'è un resto da scegliere.");
+            }
+            if (! $order->payments()->where('method', 'kmoney')->where('status', 'paid')->exists()) {
+                throw new OrderException('Prima si paga la quota KMoney: poi potrai scegliere come pagare il resto.');
+            }
+            $order->update(['kmoney_rest_method' => $method]);
+            Payment::create(['order_id' => $order->id, 'provider' => $method === 'card' ? $this->payments->name() : 'bank_transfer', 'method' => $method, 'amount' => $order->restDue()]);
+            OrderEvent::log($order, 'rest_method', 'Resto da € '.$order->restDue().' da pagare con '.self::methodLabel($method));
+            if ($method === 'transfer') {
+                $period = $this->periods->forDate($now, open: false);
+                if ($period) {
+                    $this->createMovements($order->load('items'), $order->beneficiary, $period, $now, 'pending_payment');
+                }
+            }
+
+            return $order;
+        });
+
+        return $order->refresh();
     }
 
     /** Il cliente non ha pagato la parte in euro: riaccredita la quota KMoney e annulla l'ordine. */

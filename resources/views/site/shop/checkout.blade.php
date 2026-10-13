@@ -43,15 +43,10 @@
         Per pagare col tuo saldo <a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">Consigliato</em></label>
-     @if($priced->kmoneyRest()->isPositive() || $pricedSub->kmoneyRest()->isPositive())
-      <div class="km-rest" data-km-rest data-rest-single="{{ $priced->kmoneyRest()->isPositive() ? 1 : 0 }}" data-rest-sub="{{ $pricedSub->kmoneyRest()->isPositive() ? 1 : 0 }}" style="display:none">
-       <label for="kmoney_rest">Come vuoi pagare il resto (<span data-sum-single @if($sub === 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($priced->kmoneyRest()) }}</span><span data-sum-sub @if($sub !== 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}</span>)</label>
-       <select id="kmoney_rest" name="kmoney_rest">
-        <option value="card" @selected(old('kmoney_rest', 'card') === 'card')>Carta di credito o debito</option>
-        <option value="transfer" @selected(old('kmoney_rest') === 'transfer')>Bonifico bancario</option>
-       </select>
-      </div>
-     @endif
+     <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>
+      <span data-sum-single @if($sub === 'monthly') hidden @endif>1. Addebitiamo € {{ \App\Support\Money::eur($priced->kmoneyShare()) }} in KMoney.@if($priced->kmoneyRest()->isPositive()) 2. Poi ti chiediamo come pagare il resto (€ {{ \App\Support\Money::eur($priced->kmoneyRest()) }}).@endif</span>
+      <span data-sum-sub @if($sub !== 'monthly') hidden @endif>1. Addebitiamo € {{ \App\Support\Money::eur($pricedSub->kmoneyShare()) }} in KMoney.@if($pricedSub->kmoneyRest()->isPositive()) 2. Il resto (€ {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}) si addebita in automatico sulla carta.@endif</span>
+     </p>
     @endif
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif

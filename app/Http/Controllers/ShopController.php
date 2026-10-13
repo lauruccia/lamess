@@ -775,6 +775,21 @@ class ShopController extends Controller
         return redirect("/area/ordini/{$order->id}")->with('status', $paid ? 'Pagamento ricevuto. Grazie!' : 'Pagamento non riuscito.');
     }
 
+    /** Dopo la quota KMoney il cliente sceglie come pagare il resto (carta o bonifico, se attivi). */
+    public function chooseRest(Request $r, Order $order, OrderService $orders)
+    {
+        $order = $this->own($r, $order);
+        abort_unless($order->status === 'pending_payment' && $order->payment_method === 'kmoney', 404);
+        $d = $r->validate(['kmoney_rest' => 'required|in:card,transfer'], SiteController::MESSAGES);
+        try {
+            $order = $orders->chooseKMoneyRest($order, $d['kmoney_rest']);
+        } catch (OrderException $e) {
+            return redirect("/area/ordini/{$order->id}")->withErrors(['order' => $e->getMessage()]);
+        }
+
+        return $this->payKMoneyOrder($r, $order, $orders);
+    }
+
     /** Ordine pagato (anche in parte) con KMoney: addebita la quota, poi passa al resto con carta se serve. */
     private function payKMoneyOrder(Request $r, Order $order, OrderService $orders)
     {
@@ -794,6 +809,9 @@ class ShopController extends Controller
             return redirect($url)->withErrors(['order' => $res->error ?: 'Pagamento con KMoney non riuscito: riprova dall\'ordine.']);
         }
         $order->refresh();
+        if ($order->status === 'pending_payment' && $order->kmoney_rest_method === null && (float) $order->restDue() > 0) {
+            return redirect($url)->with('status', 'Quota KMoney addebitata. Ora scegli come pagare il resto.');
+        }
         if ($order->status === 'pending_payment' && $order->kmoney_rest_method === 'card') {
             if ($orders->usesRedirectCheckout()) {
                 return $this->toCardCheckout($order, $orders);

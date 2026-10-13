@@ -32,6 +32,21 @@
   @if(! $kmPaid)
    <div class="note"><div><strong>Pagamento KMoney da completare</strong>Addebitiamo € {{ $eur($order->kmoney_amount) }} dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
     <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Paga con KMoney · € {{ $eur($order->kmoney_amount) }}</button></form></div>
+  @elseif($order->kmoney_rest_method === null && (float) $order->restDue() > 0)
+   @php($restMethods = app(\App\Domain\Orders\OrderService::class)->enabledMethods())
+   <div class="note"><div><strong>Quota KMoney incassata · come vuoi pagare il resto?</strong>Restano € {{ $eur($order->restDue()) }} da pagare.</div>
+    @if($restMethods['card'] || $restMethods['transfer'])
+     <form method="post" action="/area/ordini/{{ $order->id }}/resto">@csrf
+      <fieldset class="choice">
+       @if($restMethods['card'])<label class="opt-card"><input type="radio" name="kmoney_rest" value="card" checked><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
+       @if($restMethods['transfer'])<label class="opt-card"><input type="radio" name="kmoney_rest" value="transfer" @checked(! $restMethods['card'])><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
+      </fieldset>
+      <button class="btn">Continua · € {{ $eur($order->restDue()) }}</button>
+     </form>
+    @else
+     <div class="note note-err"><div>Al momento non ci sono metodi attivi per pagare il resto: contatta l'assistenza.</div></div>
+    @endif
+   </div>
   @elseif($order->kmoney_rest_method === 'transfer')
    <div class="note"><div><strong>Quota KMoney incassata · manca il bonifico</strong>{{ config('lamess.bank_transfer_instructions') }}<br>Causale: <strong>{{ $order->number }}</strong> · Importo: <strong>€ {{ $eur($order->restDue()) }}</strong>. L'ordine sarà confermato alla ricezione del pagamento.</div></div>
   @else

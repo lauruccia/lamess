@@ -181,6 +181,46 @@ final class ShopRevisionsTest extends TestCase
         $this->assertSame('card', $order->kmoney_rest_method);
     }
 
+    public function test_with_kmoney_the_rest_is_chosen_after_the_kmoney_share_is_charged(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 50]);
+
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['payment_method' => 'kmoney']))->assertSessionHasNoErrors();
+        $order = Order::firstOrFail();
+        $this->assertSame('61.00', $order->kmoney_amount);
+        $this->assertNull($order->kmoney_rest_method, 'il resto non si sceglie nel checkout');
+        $this->assertSame(1, $order->payments()->count(), 'per ora esiste solo il pagamento KMoney, già addebitato');
+        $this->assertSame('paid', $order->payments()->firstOrFail()->status);
+
+        // prima la quota KMoney: finché non è incassata il resto non si può scegliere
+        $order->payments()->where('method', 'kmoney')->update(['status' => 'pending']);
+        $this->post("/area/ordini/{$order->id}/resto", ['kmoney_rest' => 'card'])->assertSessionHasErrors('order');
+        $this->assertNull($order->refresh()->kmoney_rest_method);
+
+        $order->payments()->where('method', 'kmoney')->update(['status' => 'paid']);
+        $this->get("/area/ordini/{$order->id}")->assertOk()->assertSee('come vuoi pagare il resto');
+        $this->post("/area/ordini/{$order->id}/resto", ['kmoney_rest' => 'transfer']);
+        $order->refresh();
+        $this->assertSame('transfer', $order->kmoney_rest_method);
+        $this->assertSame('67.10', $order->payments()->where('method', 'transfer')->firstOrFail()->amount);
+    }
+
+    public function test_the_rest_cannot_be_paid_with_a_method_that_is_switched_off(): void
+    {
+        config(['lamess.payments.transfer' => false]);
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 50]);
+
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['payment_method' => 'kmoney']));
+        $order = Order::firstOrFail();
+        $order->payments()->where('method', 'kmoney')->update(['status' => 'paid']);
+
+        $this->get("/area/ordini/{$order->id}")->assertOk()->assertDontSee('value="transfer"', false);
+        $this->post("/area/ordini/{$order->id}/resto", ['kmoney_rest' => 'transfer'])->assertSessionHasErrors('order');
+        $this->assertNull($order->refresh()->kmoney_rest_method);
+    }
+
     public function test_checkout_shows_free_shipping_in_the_subscription_summary_and_no_rest_when_all_in_kmoney(): void
     {
         $u = $this->buyer($this->activeSponsor());

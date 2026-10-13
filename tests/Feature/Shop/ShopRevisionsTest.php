@@ -156,4 +156,51 @@ final class ShopRevisionsTest extends TestCase
             ->assertDontSee('di cui IVA')
             ->assertSeeInOrder(['Totale', 'IVA 22% inclusa']);
     }
+
+    public function test_a_cart_fully_payable_in_kmoney_pays_the_shipping_in_kmoney_too(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['payment_method' => 'kmoney']));
+        $order = Order::firstOrFail();
+
+        $this->assertSame('128.10', $order->kmoney_amount, 'prodotto e spedizione, IVA inclusa');
+        $this->assertNull($order->kmoney_rest_method, 'nessun resto da pagare con carta o bonifico');
+    }
+
+    public function test_a_partly_kmoney_cart_leaves_the_shipping_in_the_rest(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 50]);
+
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['payment_method' => 'kmoney', 'kmoney_rest' => 'card']));
+        $order = Order::firstOrFail();
+
+        $this->assertSame('61.00', $order->kmoney_amount);
+        $this->assertSame('card', $order->kmoney_rest_method);
+    }
+
+    public function test_checkout_shows_free_shipping_in_the_subscription_summary_and_no_rest_when_all_in_kmoney(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<div data-sum-sub\s*>.*?Gratuita.*?€ 122,00/su', $html, 'con l\'abbonamento la spedizione è gratuita e il totale è solo il prodotto');
+        $this->assertMatchesRegularExpression('/<div data-sum-single\s+hidden\s*>/', $html, 'l\'abbonamento è preselezionato');
+        $this->assertStringNotContainsString('data-km-rest', $html, 'con tutto in KMoney non c\'è nessun resto da scegliere');
+    }
+
+    public function test_the_subscription_order_never_charges_shipping(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00');
+
+        $sub = app(\App\Domain\Subscriptions\SubscriptionService::class)->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 0);
+
+        $this->assertTrue((bool) $sub->free_shipping);
+        $this->assertSame('0.00', Order::where('subscription_id', $sub->id)->firstOrFail()->shipping_net);
+    }
 }

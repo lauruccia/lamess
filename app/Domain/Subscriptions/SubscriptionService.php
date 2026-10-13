@@ -56,7 +56,8 @@ final class SubscriptionService
         if (Subscription::where('user_id', $user->id)->whereIn('status', [Subscription::ACTIVE, Subscription::PAUSED])->exists()) {
             throw new OrderException('Hai già un abbonamento attivo o in pausa: gestiscilo dalla tua area.');
         }
-        $free = (bool) config('lamess.free_shipping_repeat.enabled') && $commitmentMonths >= (int) config('lamess.free_shipping_repeat.min_months');
+        // Con l'abbonamento la spedizione è sempre gratuita, senza impegno minimo.
+        $free = true;
         $sub = Subscription::create([
             'user_id' => $user->id, 'status' => Subscription::ACTIVE, 'lines' => $lines, 'for_others' => $forOthers ?: null, 'country_code' => $country,
             'billing' => $billing, 'payment_method' => $method, 'commitment_months' => $commitmentMonths, 'free_shipping' => $free, 'started_at' => $now, 'next_run_at' => $now,

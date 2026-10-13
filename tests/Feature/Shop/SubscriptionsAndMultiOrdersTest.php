@@ -167,17 +167,6 @@ final class SubscriptionsAndMultiOrdersTest extends TestCase
         $this->assertSame('0.00', Order::where('subscription_id', $sub->id)->firstOrFail()->shipping_net);
     }
 
-    public function test_subscription_without_enough_commitment_pays_shipping(): void
-    {
-        config(['lamess.free_shipping_repeat.min_months' => 12]);
-        $u = $this->buyer($this->activeSponsor());
-        $p = $this->product('A', '123.00');
-        $sub = $this->subs()->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 6);
-
-        $this->assertFalse((bool) $sub->free_shipping);
-        $this->assertSame('10.00', Order::where('subscription_id', $sub->id)->firstOrFail()->shipping_net);
-    }
-
     public function test_skip_next_month_shifts_the_calendar_without_an_order(): void
     {
         $u = $this->buyer($this->activeSponsor());

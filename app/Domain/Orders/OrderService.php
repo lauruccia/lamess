@@ -127,17 +127,14 @@ final class OrderService
             }
         }
 
-        // Pagamento KMoney: la quota dipende dalla % impostata su ogni prodotto; il resto (spedizione inclusa) si paga con carta o bonifico.
+        // Pagamento KMoney: la quota dipende dalla % impostata su ogni prodotto; con tutti i prodotti al 100% anche la spedizione è in KMoney; altrimenti il resto (spedizione inclusa) si paga con carta o bonifico.
         $kmoneyAmount = '0.00';
         if ($method === 'kmoney') {
             $total = Num::of($priced->totals()['total']);
-            $share = $priced->kmoneyGross();
-            if (! $share->isPositive()) {
+            if (! $priced->kmoneyGross()->isPositive()) {
                 throw new OrderException('Nessun prodotto del carrello può essere pagato con KMoney.');
             }
-            if ($share->isGreaterThan($total)) {
-                $share = $total;
-            }
+            $share = $priced->kmoneyShare();
             $kmoneyAmount = (string) Num::money($share);
             if (Num::of($kmoneyAmount)->isLessThan($total)) {
                 if (! in_array($kmoneyRest, ['card', 'transfer'], true)) {

@@ -85,12 +85,50 @@ final class PricedCart
         return Num::money($this->listGross()->minus($this->itemsGross()));
     }
 
-    /** Parte dei prodotti (IVA inclusa, dopo gli sconti) pagabile in KMoney, secondo la % impostata su ogni prodotto. La spedizione si paga sempre col resto. */
-    public function kmoneyGross(): BigDecimal
+    /** Parte dei prodotti (IVA inclusa, dopo gli sconti) pagabile in KMoney, secondo la % impostata su ogni prodotto. */
+    public function kmoneyItemsGross(): BigDecimal
     {
         return array_reduce($this->lines, fn (BigDecimal $c, PricedLine $l) => $c->plus(
             Num::money($l->grossLine()->multipliedBy($l->product->kmoneyPercent())->dividedBy(100, 10, \Brick\Math\RoundingMode::HalfUp))
         ), Num::zero());
+    }
+
+    /** Quota pagabile in KMoney: i prodotti secondo la loro %, più la spedizione se tutti i prodotti sono pagabili al 100% in KMoney. */
+    public function kmoneyGross(): BigDecimal
+    {
+        $share = $this->kmoneyItemsGross();
+        if ($this->lines !== [] && $this->allKMoney()) {
+            $share = $share->plus($this->shippingGross());
+        }
+
+        return $share;
+    }
+
+    /** Quota KMoney effettiva: mai oltre il totale dell'ordine. */
+    public function kmoneyShare(): BigDecimal
+    {
+        $total = Num::of($this->totals()['total']);
+        $share = $this->kmoneyGross();
+
+        return $share->isGreaterThan($total) ? $total : $share;
+    }
+
+    /** Resto da pagare con carta o bonifico dopo la quota KMoney. */
+    public function kmoneyRest(): BigDecimal
+    {
+        return Num::of($this->totals()['total'])->minus($this->kmoneyShare());
+    }
+
+    /** True se ogni prodotto del carrello si paga al 100% in KMoney. */
+    public function allKMoney(): bool
+    {
+        foreach ($this->lines as $l) {
+            if ($l->product->kmoneyPercent() < 100) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** True se almeno un prodotto del carrello accetta KMoney. */

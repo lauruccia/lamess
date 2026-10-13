@@ -129,7 +129,7 @@ class ShopController extends Controller
         return max(0, min($qty, $max));
     }
 
-    private function priced(Request $r, ?Collection $products = null): PricedCart
+    private function priced(Request $r, ?Collection $products = null, bool $shippingWaived = false): PricedCart
     {
         $products ??= $this->sellableProducts($r);
         $entries = [];
@@ -146,7 +146,7 @@ class ShopController extends Controller
             }
         }
 
-        return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, self::COUNTRY);
+        return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, self::COUNTRY, $shippingWaived);
     }
 
     private function cartCount(Request $r): int
@@ -521,7 +521,7 @@ class ShopController extends Controller
 
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => (string) (config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register'), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r)]);
+        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => (string) (config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register'), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r)]);
     }
 
     /**
@@ -590,7 +590,7 @@ class ShopController extends Controller
         if ($subscribe !== 'none') {
             $this->rememberBilling($r, $d);
             try {
-                $sub = $subs->subscribe($r->user(), $this->cart($r), self::COUNTRY, $d, (int) config('lamess.free_shipping_repeat.min_months'), $this->others($r), null, $d['payment_method']);
+                $sub = $subs->subscribe($r->user(), $this->cart($r), self::COUNTRY, $d, 0, $this->others($r), null, $d['payment_method']);
             } catch (OrderException $e) {
                 return back()->withInput()->withErrors(['order' => $e->getMessage()]);
             }

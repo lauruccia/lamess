@@ -104,10 +104,6 @@ return [
     'return_window_days' => 14,                    // giorni dalla consegna per chiedere un reso
     'order_prefix' => 'ORD',
     // Abbonamento e spedizione gratuita sugli ordini ripetitivi (RF-A01, RF-A03). Modificabili da Impostazioni di sistema.
-    'free_shipping_repeat' => [
-        'enabled' => true,
-        'min_months' => 0,         // impegno minimo in mesi: 0 = nessun impegno, ogni abbonamento ha la spedizione gratuita e si disdice quando si vuole
-    ],
     'subscription' => [
         'retry_days' => 1,         // giorni tra un tentativo di addebito e il successivo
         'max_retries' => 3,        // dopo l'ultimo tentativo fallito l'abbonamento va in pausa

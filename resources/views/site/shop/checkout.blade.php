@@ -35,12 +35,8 @@
    <fieldset class="choice">
     <legend>Come vuoi pagare</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
-     @php($kmShare = $priced->kmoneyGross())
      {{-- % pagabile in KMoney impostata sulla pagina prodotto; con più prodotti è la quota complessiva dei prodotti nel carrello --}}
-     @php($kmPct = $priced->itemsGross()->isPositive() ? (int) round((float) (string) $kmShare / (float) (string) $priced->itemsGross() * 100) : 0)
-     @php($kmTotal = \App\Domain\Engine\Support\Num::of($priced->totals()['total']))
-     @php($kmShare = $kmShare->isGreaterThan($kmTotal) ? $kmTotal : $kmShare)
-     @php($kmRest = $kmTotal->minus($kmShare))
+     @php($kmPct = $priced->itemsGross()->isPositive() ? (int) round((float) (string) $priced->kmoneyItemsGross() / (float) (string) $priced->itemsGross() * 100) : 0)
      @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
      @php($kmBonus = max(0, (int) config('lamess.kmoney_bonus_percent', 0)))
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
@@ -50,9 +46,9 @@
         Per pagare col tuo saldo <a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">{{ $kmBonus > 0 ? 'Risparmia fino al '.$kmBonus.'%' : 'Consigliato' }}</em></label>
-     @if($kmRest->isPositive())
-      <div class="km-rest" data-km-rest style="display:none">
-       <label for="kmoney_rest">Come vuoi pagare il resto (€ {{ \App\Support\Money::eur($kmRest) }})</label>
+     @if($priced->kmoneyRest()->isPositive() || $pricedSub->kmoneyRest()->isPositive())
+      <div class="km-rest" data-km-rest data-rest-single="{{ $priced->kmoneyRest()->isPositive() ? 1 : 0 }}" data-rest-sub="{{ $pricedSub->kmoneyRest()->isPositive() ? 1 : 0 }}" style="display:none">
+       <label for="kmoney_rest">Come vuoi pagare il resto (<span data-sum-single @if($sub === 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($priced->kmoneyRest()) }}</span><span data-sum-sub @if($sub !== 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}</span>)</label>
        <select id="kmoney_rest" name="kmoney_rest">
         <option value="card" @selected(old('kmoney_rest', 'card') === 'card')>Carta di credito o debito</option>
         <option value="transfer" @selected(old('kmoney_rest') === 'transfer')>Bonifico bancario</option>
@@ -71,7 +67,7 @@
    </fieldset>
    <label class="chk"><input type="checkbox" name="privacy" value="1"> Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</label>
    @error('privacy')<div class="err">{{ $message }}</div>@enderror
-   <button class="btn accent wide cta-lock"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · € {{ \App\Support\Money::eur($priced->totals()['total']) }}</button>
+   <button class="btn accent wide cta-lock"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($sub === 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if($sub !== 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
    <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
   </section>
  </form>
@@ -85,7 +81,8 @@
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  @include('site.shop._totals')
+  <div data-sum-single @if($sub === 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $priced])</div>
+  <div data-sum-sub @if($sub !== 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub])</div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>

@@ -508,8 +508,6 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'none']])->get('/area/checkout')->assertOk()->getContent();
         $this->assertLessThan(strpos($html, 'value="card"'), strpos($html, 'value="kmoney"'), 'KMoney è la prima voce');
         $this->assertStringContainsString('Risparmia fino al 25%', $html);
-        $this->assertStringNotContainsString('data-km-single', $html);
-        $this->assertStringNotContainsString('data-km-sub', $html);
         $this->assertStringNotContainsString('Ogni mese', $html);
         $this->assertStringNotContainsString('dal tuo saldo KMoney', $html);
     }

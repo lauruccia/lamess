@@ -120,8 +120,8 @@
       if (tr) { tr.disabled = !!mInput.checked; if (tr.disabled && rest.value === 'transfer') rest.value = 'card'; }
       if (!card && mInput.checked && single) single.checked = true;
       // Testi di KMoney e nota dell'abbonamento seguono la scelta «ordine singolo / abbonamento».
-      $$('[data-km-single]').forEach(function (e) { e.hidden = !!mInput.checked; });
-      $$('[data-km-sub]').forEach(function (e) { e.hidden = !mInput.checked; });
+      $$('[data-sum-single]').forEach(function (e) { e.hidden = !!mInput.checked; });
+      $$('[data-sum-sub]').forEach(function (e) { e.hidden = !mInput.checked; });
       if (note) note.style.display = mInput.checked ? '' : 'none';
       if (note) note.textContent = card ? "Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico " + (pm && pm.value === 'kmoney' ? "sul tuo saldo KMoney (l'eventuale resto sulla carta; se un addebito non riesce riproviamo, poi l'abbonamento va in pausa)." : "sulla carta.") : "L'abbonamento mensile è disponibile solo con carta o KMoney.";
     }
@@ -133,8 +133,13 @@
   // Checkout: con KMoney compare la scelta del metodo per il resto
   function kmoneyRest() {
     var box = $('[data-km-rest]'); if (!box) return;
-    function sync() { var pm = $('input[name=payment_method]:checked'); box.style.display = pm && pm.value === 'kmoney' ? '' : 'none'; }
+    function sync() {
+      var pm = $('input[name=payment_method]:checked'), sub = $('input[name=subscribe]:checked');
+      var needed = (sub && sub.value === 'monthly' ? box.dataset.restSub : box.dataset.restSingle) === '1';
+      box.style.display = pm && pm.value === 'kmoney' && needed ? '' : 'none';
+    }
     $$('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    $$('input[name=subscribe]').forEach(function (r) { r.addEventListener('change', sync); });
     sync();
   }
 

@@ -798,3 +798,5 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 .co-name,.line-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .line-name{display:block}
 .pcard h3{-webkit-line-clamp:1}
+
+[data-km-only][hidden]{display:none!important}

@@ -75,12 +75,12 @@
   <div class="co-items">
    @foreach($priced->lines as $key => $line)
     @php($p = $line->product)
-    <div class="co-item"><span class="co-thumb">@include('site.shop._thumb', ['product' => $p])<i>{{ $line->qty }}</i></span><span class="co-name">{{ $p->displayName() }}@if($showKmoneyLines && $line->product->kmoneyPercent() > 0)<small class="co-km">In KMoney € {{ \App\Support\Money::eur($priced->kmoneyLineGross($line)) }}@if($line->product->kmoneyPercent() < 100) · resto € {{ \App\Support\Money::eur($line->grossLine()->minus($priced->kmoneyLineGross($line))) }}@endif</small>@endif</span><span class="co-price">€ {{ \App\Support\Money::eur($line->grossLine()) }}</span></div>
+    <div class="co-item"><span class="co-thumb">@include('site.shop._thumb', ['product' => $p])<i>{{ $line->qty }}</i></span><span class="co-name">{{ $p->displayName() }}@if($showKmoneyLines && $line->product->kmoneyPercent() > 0)<small class="co-km" data-km-only @if($pay !== 'kmoney') hidden @endif>In KMoney € {{ \App\Support\Money::eur($priced->kmoneyLineGross($line)) }}@if($line->product->kmoneyPercent() < 100) · resto € {{ \App\Support\Money::eur($line->grossLine()->minus($priced->kmoneyLineGross($line))) }}@endif</small>@endif</span><span class="co-price">€ {{ \App\Support\Money::eur($line->grossLine()) }}</span></div>
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  <div data-sum-single @if($sub === 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney()])</div>
-  <div data-sum-sub @if($sub !== 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney()])</div>
+  <div data-sum-single @if($sub === 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-sub @if($sub !== 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>

@@ -130,6 +130,14 @@
     sync();
   }
 
+  // Checkout: gli importi «In KMoney» nel riepilogo compaiono solo se si sceglie KMoney come pagamento
+  function kmoneyAmounts() {
+    var els = $$('[data-km-only]'); if (!els.length) return;
+    function sync() { var pm = $('input[name=payment_method]:checked'); els.forEach(function (e) { e.hidden = !(pm && pm.value === 'kmoney'); }); }
+    $$('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  }
+
   // Checkout: con KMoney compare la scelta del metodo per il resto
   function kmoneyRest() {
     var box = $('[data-km-rest]'); if (!box) return;
@@ -194,7 +202,7 @@
     $$('[data-js-hide]').forEach(function (b) { b.style.display = 'none'; });
     var sel = $('#type'); if (sel) { sel.addEventListener('change', company); company(); }
     subscription();
-    kmoneyRest();
+    kmoneyRest(); kmoneyAmounts();
   });
 })();
 

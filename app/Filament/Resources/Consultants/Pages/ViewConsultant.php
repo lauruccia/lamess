@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants\Pages;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Access\Actor;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Features\Feature;
@@ -116,7 +117,7 @@ class ViewConsultant extends ViewRecord
                             return 'Scegli il nuovo sponsor per vedere l\'anteprima.';
                         }
                         $p = app(TreeOperations::class)->previewMove($this->record, $new, (bool) $get('with_branch'), $get('effective_from') ? new DateTimeImmutable($get('effective_from')) : null);
-                        $fmt = fn (array $x) => $x === [] ? 'nessuno' : collect($x)->map(fn ($v, $k) => "{$k} ({$v['movements']} mov., {$v['pv']} PV)")->implode(', ');
+                        $fmt = fn (array $x) => $x === [] ? 'nessuno' : collect($x)->map(fn ($v, $k) => "{$k} ({$v['movements']} mov.".(LegacyPlan::hidden() ? '' : ", {$v['pv']} PV").')')->implode(', ');
                         $lines = $p['ok'] ? [] : array_map(fn ($e) => "⚠ {$e}", $p['errors']);
                         $lines[] = "Persone spostate: {$p['moved_count']} · variazione di profondità: {$p['depth_shift']}";
                         $lines[] = 'Da: '.(implode(' ← ', $p['from_chain']) ?: 'nessuno sponsor').' | A: '.(implode(' ← ', $p['to_chain']));

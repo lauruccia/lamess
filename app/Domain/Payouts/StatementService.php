@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payouts;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Support\Num;
 use App\Models\Consultant;
 use App\Models\Period;
@@ -39,12 +40,13 @@ final class StatementService
         $held = BigDecimal::zero();
         foreach ($rows as $r) {
             $expl = json_decode((string) $r->explanation, true) ?: [];
-            $g = &$groups[$r->bonus_type];
-            $g ??= ['label' => self::LABELS[$r->bonus_type] ?? $r->bonus_type, 'lines' => [], 'accrued' => BigDecimal::zero(), 'held' => BigDecimal::zero()];
+            $hide = LegacyPlan::hidden() && LegacyPlan::isLegacyBonus((string) $r->bonus_type);   // vecchio piano nascosto: una sola voce neutra
+            $g = &$groups[$hide ? 'legacy' : $r->bonus_type];
+            $g ??= ['label' => $hide ? LegacyPlan::NEUTRAL_LABEL : (self::LABELS[$r->bonus_type] ?? $r->bonus_type), 'lines' => [], 'accrued' => BigDecimal::zero(), 'held' => BigDecimal::zero()];
             $g['lines'][] = [
                 'source' => $r->source_code ? "{$r->source_name} [{$r->source_code}]" : '—',
-                'level' => $r->level, 'base' => (string) $r->base_amount, 'pct' => $r->pct === null ? null : Num::pctLabel(BigDecimal::of((string) $r->pct)),
-                'amount' => (string) $r->amount, 'held' => $r->engine_status === 'held', 'why' => $expl['formula'] ?? $r->reason,
+                'level' => $hide ? null : $r->level, 'base' => (string) $r->base_amount, 'pct' => $r->pct === null ? null : Num::pctLabel(BigDecimal::of((string) $r->pct)),
+                'amount' => (string) $r->amount, 'held' => $r->engine_status === 'held', 'why' => $hide ? '' : ($expl['formula'] ?? $r->reason),
             ];
             if ($r->engine_status === 'held') {
                 $g['held'] = $g['held']->plus((string) $r->amount);

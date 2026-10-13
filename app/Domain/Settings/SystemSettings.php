@@ -40,6 +40,8 @@ final class SystemSettings
     public const DEFINITIONS = [
         'site_open' => ['config' => 'site.open', 'type' => 'bool', 'group' => 'Sito', 'label' => 'Sito aperto al pubblico',
             'help' => 'Spento: i visitatori vedono la pagina «Lamèss apre presto» e nessuno può registrarsi o ordinare. Il back-office (/admin) resta raggiungibile e chi è già collegato come amministratore vede il sito normalmente, per provarlo. Accendere solo quando si decide di aprire.', 'rules' => 'boolean'],
+        'legacy_plan_hidden' => ['config' => 'lamess.legacy_plan_hidden', 'type' => 'bool', 'group' => 'Piano di marketing', 'label' => 'Nascondi il vecchio piano di marketing',
+            'help' => 'Acceso: in tutto il portale non compare più nessun riferimento al vecchio piano (punti PV/PVF/PVC/PR, Team, Matching, Rank Bonus, Fast Start). Non si cancella e non si ricalcola nulla: i dati restano e tornano visibili spegnendo l\'interruttore.', 'rules' => 'boolean'],
         'mail_enabled' => ['config' => 'lamess.mail_enabled', 'type' => 'bool', 'group' => 'Email', 'label' => 'Invio email attivo',
             'help' => 'Spento: nessuna email parte (notifiche, recupero password) e tutto viene scritto solo nel registro. Accendere solo quando la posta è configurata e si decide di inviare davvero.', 'rules' => 'boolean'],
         'reenrollment_days' => ['config' => 'lamess.reenrollment_days', 'type' => 'int', 'group' => 'Rete', 'label' => 'Giorni di attesa per ri-iscriversi',

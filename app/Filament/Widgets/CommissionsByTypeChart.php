@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Features\Feature;
 use App\Domain\Kpi\KpiService;
 use App\Support\Brand;
@@ -35,7 +36,7 @@ class CommissionsByTypeChart extends ChartWidget
     protected function getData(): array
     {
         $svc = app(KpiService::class);
-        $c = $svc->snapshot($this->pageFilters['period'] ?? $svc->latestPeriodCode())['commissions'];
+        $c = LegacyPlan::collapseBonusTypes($svc->snapshot($this->pageFilters['period'] ?? $svc->latestPeriodCode())['commissions']);
 
         return [
             'datasets' => [['data' => array_map('floatval', array_values($c)), 'backgroundColor' => Brand::chart(count($c))]],

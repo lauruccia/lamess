@@ -26,7 +26,7 @@
   @if(count($recipients) > 0)
   <form method="post" action="/area/carrello/per-altri" class="card">@csrf
    <h2>Ordine per altri</h2>
-   <p class="muted">Aggiungi prodotti per un tuo cliente o per un incaricato della tua rete: un solo ordine, una sola spedizione, i punti vanno a chi riceve.</p>
+   <p class="muted">Aggiungi prodotti per un tuo cliente o per un incaricato della tua rete: un solo ordine, una sola spedizione{{ \App\Domain\Plan\LegacyPlan::visible() ? ', i punti vanno a chi riceve' : '' }}.</p>
    <div class="row">
     <div><label>Destinatario</label><select name="recipient_id">@foreach($recipients as $uid=>$label)<option value="{{ $uid }}">{{ $label }}</option>@endforeach</select></div>
     <div><label>Prodotto</label><select name="product_id">@foreach($catalog as $c)<option value="{{ $c->id }}">{{ $c->name }}</option>@endforeach</select></div>

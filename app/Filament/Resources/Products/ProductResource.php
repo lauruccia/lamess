@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Products;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Support\Num;
 use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\Products\Pages\CreateProduct;
@@ -396,7 +397,7 @@ class ProductResource extends Resource
                                     TextInput::make('qty')->label('Quantità')->numeric()->minValue(1)->default(1)->required(),
                                 ]),
                         ]),
-                        Tab::make('Punti (vecchio piano)')->icon('heroicon-o-star')->columns(1)->schema([
+                        Tab::make('Punti (vecchio piano)')->icon('heroicon-o-star')->columns(1)->visible(fn (): bool => LegacyPlan::visible())->schema([
                             Section::make('Punti del vecchio piano')->description('Non servono al Piano Incaricati, che calcola sul V.A.P. (sezione «Commissioni e durata» sopra). Restano per il piano attuale a punti.')
                                 ->columns(['default' => 1, 'md' => 3])->schema([
                                     TextInput::make('pv')->label('PV unitari')->numeric()->helperText('Vuoto = calcolo automatico'),
@@ -471,8 +472,8 @@ class ProductResource extends Resource
 
                 return $r->tracksStock() ? ($r->isSoldOut() ? 'Esaurito' : (string) $r->stock_qty) : '—';
             })->badge()->color(fn (Product $r) => $r->hasVariants() ? ($r->isSoldOut() ? 'danger' : 'gray') : (! $r->tracksStock() ? 'gray' : ($r->isSoldOut() ? 'danger' : ($r->isLowStock(self::LOW_STOCK) ? 'warning' : 'success')))),
-            TextColumn::make('pv')->label('PV')->state(fn (Product $r) => $r->pvUnit())->toggleable(isToggledHiddenByDefault: true),
-            TextColumn::make('cv')->label('CV')->state(fn (Product $r) => $r->cvUnit())->toggleable(isToggledHiddenByDefault: true),
+            TextColumn::make('pv')->label('PV')->state(fn (Product $r) => $r->pvUnit())->toggleable(isToggledHiddenByDefault: true)->visible(fn (): bool => LegacyPlan::visible()),
+            TextColumn::make('cv')->label('CV')->state(fn (Product $r) => $r->cvUnit())->toggleable(isToggledHiddenByDefault: true)->visible(fn (): bool => LegacyPlan::visible()),
             TextColumn::make('vap_value')->label('V.A.P. (commissione)')->state(function (Product $r): string {
                 $v = $r->vapSetting();
 

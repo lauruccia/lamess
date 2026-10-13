@@ -146,6 +146,8 @@ return [
     'structure_bonus_auto' => false,
     'structure_bonus_weekday' => 1,
     'structure_bonus_hour' => 6,
+    // Interruttore «nascondi il vecchio piano di marketing» (PV/PR): nasconde senza cancellare. Modificabile da pannello.
+    'legacy_plan_hidden' => (bool) env('LAMESS_LEGACY_PLAN_HIDDEN', false),
     // Bonifici SEPA (pain.001): conto dell'azienda da cui partono i pagamenti agli incaricati
     'sepa' => [
         'debtor_name' => env('LAMESS_SEPA_NAME', ''),

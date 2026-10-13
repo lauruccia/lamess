@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\CompPlanVersions;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Plan\PlanConfig;
 use App\Domain\Engine\Policy\PolicySpecs;
 use App\Domain\Plan\PlanFormMapper;
@@ -65,13 +66,24 @@ class CompPlanVersionResource extends Resource
     /** Il Piano Incaricati ha una pagina propria, fedele alle presentazioni; il piano a PR resta nella forma storica. */
     private static function isIncaricati(Get $get): bool
     {
-        return $get('data.settings.engine', isAbsolute: true) === 'kosmos_v1';
+        return LegacyPlan::hidden() || $get('data.settings.engine', isAbsolute: true) === 'kosmos_v1';
+    }
+
+    /** Versione del piano precedente (non Incaricati): con il vecchio piano nascosto non si vede, non si apre, non si modifica. */
+    private static function isLegacyVersion(CompPlanVersion $r): bool
+    {
+        return ! self::isKosmos($r);
+    }
+
+    public static function canView($record): bool
+    {
+        return ! (LegacyPlan::hidden() && $record instanceof CompPlanVersion && self::isLegacyVersion($record));
     }
 
     public static function form(Schema $schema): Schema
     {
         $inc = static fn (Get $get): bool => self::isIncaricati($get);
-        $leg = static fn (Get $get): bool => ! self::isIncaricati($get);
+        $leg = static fn (Get $get): bool => LegacyPlan::visible() && ! self::isIncaricati($get);
 
         $policyFields = [];
         foreach (PolicySpecs::all() as $key => $spec) {
@@ -92,7 +104,7 @@ class CompPlanVersionResource extends Resource
             Section::make('Versione')->columnSpanFull()->columns(2)->schema([
                 TextInput::make('name')->label('Nome versione')->required(),
                 Select::make('settings.engine')->label('Piano')->required()->live()->visible($leg)
-                    ->options(['kosmos_v1' => 'Piano Incaricati (presentazioni 08/10/2026)', 'multilevel_v3' => 'Piano a PR (pre-lancio, vecchio)'])
+                    ->options(['kosmos_v1' => 'Piano Incaricati (presentazioni 08/10/2026)'] + (LegacyPlan::visible() ? ['multilevel_v3' => 'Piano a PR (pre-lancio, vecchio)'] : []))
                     ->helperText('Scegli «Piano Incaricati» per usare la nuova pagina.'),
                 Textarea::make('notes')->label('Note')->rows(2)->visible($leg),
                 TextInput::make('reason')->label('Motivo della modifica')->helperText('Finisce nel log di audit insieme ai valori prima e dopo.')
@@ -267,6 +279,10 @@ class CompPlanVersionResource extends Resource
 
     public static function canEdit($record): bool
     {
+        if (LegacyPlan::hidden() && $record instanceof CompPlanVersion && self::isLegacyVersion($record)) {
+            return false;
+        }
+
         return (PlanVersionService::isSuper() || $record->status === CompPlanVersion::DRAFT) && (bool) auth()->user()?->can(static::managePermission());
     }
 
@@ -296,14 +312,14 @@ class CompPlanVersionResource extends Resource
             Section::make('Piano Incaricati')->visible(fn (CompPlanVersion $r) => self::isKosmos($r))->columnSpanFull()->schema([
                 TextEntry::make('summary')->hiddenLabel()->state(fn (CompPlanVersion $r) => new HtmlString(self::kosmosSummary($r->data)))->html(),
             ]),
-            Section::make('Qualifiche')->visible(fn (CompPlanVersion $r) => ! self::isKosmos($r))->schema([
+            Section::make('Qualifiche')->visible(fn (CompPlanVersion $r) => ! self::isKosmos($r) && LegacyPlan::visible())->schema([
                 TextEntry::make('ranks')->hiddenLabel()->state(function (CompPlanVersion $r): string {
                     return collect($r->data['ranks'] ?? [])->map(fn ($x) => sprintf(
                         '%s — PR %s · Direct %s%% · Rank Bonus %s €', $x['code'] ?? '?', $x['pr_required'] ?? '0', $x['direct_pct'] ?? '0', $x['rank_bonus'] ?? '0',
                     ))->implode("\n");
                 })->extraAttributes(['style' => 'white-space: pre-line']),
             ]),
-            Section::make('Politiche attive')->visible(fn (CompPlanVersion $r) => ! self::isKosmos($r))->schema([
+            Section::make('Politiche attive')->visible(fn (CompPlanVersion $r) => ! self::isKosmos($r) && LegacyPlan::visible())->schema([
                 TextEntry::make('policies')->hiddenLabel()->state(function (CompPlanVersion $r): string {
                     $vals = $r->plan()->policies->toArray();
                     $specs = PolicySpecs::all();
@@ -360,7 +376,7 @@ class CompPlanVersionResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')->columns([
+        return $table->modifyQueryUsing(fn ($query) => LegacyPlan::hidden() ? $query->where('data->settings->engine', 'kosmos_v1') : $query)->defaultSort('id', 'desc')->columns([
             TextColumn::make('id')->label('#')->sortable(),
             TextColumn::make('name')->label('Nome')->searchable(),
             TextColumn::make('status')->label('Stato')->badge()->color(fn (string $state) => match ($state) {

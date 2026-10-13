@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\IvdContracts;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Access\Actor;
 use App\Domain\Onboarding\IvdService;
 use App\Domain\Onboarding\OnboardingException;
@@ -84,7 +85,7 @@ class IvdContractResource extends Resource
             Action::make('reject')->authorize('network.manage')->label('Rifiuta')->iconButton()->tooltip('Rifiuta')->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (IvdContract $record) => $record->status === 'signed')
                 ->schema([Textarea::make('reason')->label('Motivazione (interna)')])
-                ->modalDescription("L'account torna Cliente; i punti maturati nel frattempo restano allo sponsor proposto (OPEN-22).")
+                ->modalDescription(LegacyPlan::hidden() ? "L'account torna Cliente; gli acquisti dei suoi clienti nel frattempo restano allo sponsor proposto (OPEN-22)." : "L'account torna Cliente; i punti maturati nel frattempo restano allo sponsor proposto (OPEN-22).")
                 ->action(function (IvdContract $record, array $data): void {
                     try {
                         app(IvdService::class)->reject($record, Actor::label(), (string) ($data['reason'] ?? ''));

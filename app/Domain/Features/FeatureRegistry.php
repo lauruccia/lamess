@@ -18,6 +18,7 @@ namespace App\Domain\Features;
  *  - super    true = riservata al super_admin (l'admin non la vede se è spenta e non può accenderla)
  *  - bypass   true (default) = il super_admin la vede sempre, anche se spenta per gli altri, così non si chiude fuori
  *  - menu     solo per le voci del menu e i blocchi del cruscotto: gruppo in cui compaiono nella scelta «Voci di menu visibili»
+ *  - legacy   true = appartiene al vecchio piano di marketing: sparisce per tutti quando l'admin lo nasconde (LegacyPlan)
  *  - menu_label  etichetta breve della voce nella stessa scelta
  */
 final class FeatureRegistry
@@ -37,7 +38,7 @@ final class FeatureRegistry
             'consultant360.tab.overview' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Riepilogo e carriera»', 'help' => 'Avanzamento di carriera, cosa manca per il livello successivo, attività del mese.'],
             'consultant360.tab.profile' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Anagrafica e contratto»', 'help' => 'Dati personali, sponsor, contratto IVD, canone annuale, onboarding.'],
             'consultant360.tab.network' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Rete»', 'help' => 'Sponsor, storico sponsor, diretti, clienti assegnati.'],
-            'consultant360.tab.volumes' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Volumi e rank»', 'help' => 'PVF, PVC e PR mese per mese; qualifiche raggiunte e premi.'],
+            'consultant360.tab.volumes' => ['legacy' => true, 'type' => 'tab', 'group' => $card, 'label' => 'Tab «Volumi e rank»', 'help' => 'PVF, PVC e PR mese per mese; qualifiche raggiunte e premi.'],
             'consultant360.tab.commissions' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Commissioni»', 'help' => 'Righe di commissione per periodo, con la spiegazione.'],
             'consultant360.tab.wallet' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Liquidazioni e pagamenti»', 'help' => 'Liquidazioni mensili, pagamenti, IBAN mascherato.'],
             'consultant360.tab.sales' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Ordini e movimenti PV»', 'help' => 'Ordini a nome dell’incaricato e ultimi movimenti PV.'],
@@ -51,7 +52,7 @@ final class FeatureRegistry
             'consultant360.counter.directs' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Diretti»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.customers' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Clienti»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.orders' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Ordini»', 'parent' => 'consultant360.section.counters'],
-            'consultant360.counter.movements' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Movimenti PV»', 'parent' => 'consultant360.section.counters'],
+            'consultant360.counter.movements' => ['legacy' => true, 'type' => 'link', 'group' => $card, 'label' => 'Contatore «Movimenti PV»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.settlements' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Liquidazioni»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.payouts' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Pagamenti»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.contracts' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Contratti IVD»', 'parent' => 'consultant360.section.counters'],
@@ -88,6 +89,7 @@ final class FeatureRegistry
             $defs["backoffice.resource.{$slug}"] = ['type' => 'view', 'group' => $bo, 'menu' => $menu, 'label' => "Elenco «{$label}»", 'menu_label' => $label, 'help' => $slug === 'consultants' ? 'Spegnerlo nasconde anche la scheda incaricato.' : null];
         }
         $defs['backoffice.resource.consultants']['bypass'] = true;
+        $defs['backoffice.resource.pv_movements']['legacy'] = true;
 
         // ---- Back-office: pagine del menu che non sono elenchi
         $pages = [
@@ -99,6 +101,8 @@ final class FeatureRegistry
             $defs["backoffice.page.{$slug}"] = ['type' => 'view', 'group' => $bo, 'menu' => $menu, 'label' => "Pagina «{$label}»", 'menu_label' => $label];
         }
 
+        $defs['backoffice.page.confronto_qualifiche']['legacy'] = true;
+
         // ---- Back-office: blocchi della pagina iniziale (Cruscotto)
         $widgets = [
             'kpi' => 'Indicatori del periodo', 'rank_distribution' => 'Incaricati per qualifica',
@@ -108,7 +112,7 @@ final class FeatureRegistry
             $defs["backoffice.widget.{$slug}"] = ['type' => 'widget', 'group' => $bo, 'menu' => 'Cruscotto', 'label' => "Cruscotto: «{$label}»", 'menu_label' => $label];
         }
         $defs['backoffice.consultants_list.tabs'] = ['type' => 'section', 'group' => $bo, 'label' => 'Elenco incaricati: schede per stato', 'help' => 'Le schede «Attivi», «Sospesi», «Da completare»… con i conteggi sopra la tabella.', 'parent' => 'backoffice.resource.consultants'];
-        $defs['backoffice.consultants_list.volumes'] = ['type' => 'section', 'group' => $bo, 'label' => 'Elenco incaricati: colonne PR', 'help' => 'PR personali e di gruppo dell\'ultimo calcolo.', 'parent' => 'backoffice.resource.consultants'];
+        $defs['backoffice.consultants_list.volumes'] = ['legacy' => true, 'type' => 'section', 'group' => $bo, 'label' => 'Elenco incaricati: colonne PR', 'help' => 'PR personali e di gruppo dell\'ultimo calcolo.', 'parent' => 'backoffice.resource.consultants'];
         $defs['backoffice.consultants_list.balance'] = ['type' => 'section', 'group' => $bo, 'label' => 'Elenco incaricati: «Da pagare» e filtro saldo', 'help' => 'Saldo delle liquidazioni aperte non ancora in un pagamento.', 'parent' => 'backoffice.resource.consultants'];
 
         // valori di default e pulizia

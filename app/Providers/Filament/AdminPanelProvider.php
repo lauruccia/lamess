@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\AuditVerificationPage;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
+use App\Filament\Pages\LegacyPlanPage;
 use App\Filament\Pages\ConsultantLevelsPage;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\FeaturesPage;
@@ -81,6 +82,7 @@ class AdminPanelProvider extends PanelProvider
                 ShopSettingsPage::class,
                 AuditVerificationPage::class,
                 BackupPage::class,
+                LegacyPlanPage::class,
                 FeaturesPage::class,
                 GoLiveCheckPage::class,
                 RankComparisonPage::class,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Pages;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
@@ -45,7 +46,7 @@ class ListOrders extends SuperadminListRecords
     {
         return Action::make('createOrder')->label('Nuovo ordine')->icon('heroicon-o-plus')->authorize('orders.manage')
             ->modalWidth('4xl')
-            ->modalDescription('Crea un ordine per conto di un cliente o incaricato. Prezzi, sconti, spedizione, punti e fattura sono gli stessi del negozio.')
+            ->modalDescription(LegacyPlan::hidden() ? 'Crea un ordine per conto di un cliente o incaricato. Prezzi, sconti, spedizione e fattura sono gli stessi del negozio.' : 'Crea un ordine per conto di un cliente o incaricato. Prezzi, sconti, spedizione, punti e fattura sono gli stessi del negozio.')
             ->schema([
                 Select::make('user_id')->label('Cliente')->required()->searchable()->live()
                     ->getSearchResultsUsing(fn (string $search) => User::where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")->limit(30)->get()->mapWithKeys(fn (User $u) => [$u->id => $u->name.' — '.$u->email])->all())
@@ -77,7 +78,7 @@ class ListOrders extends SuperadminListRecords
                     Select::make('country')->label('Paese')->options(fn () => collect((array) config('lamess.shop_countries'))->mapWithKeys(fn ($c) => [$c => $c])->all())->default('IT')->required(),
                 ]),
                 Select::make('method')->label('Metodo di pagamento')->options(['transfer' => 'Bonifico', 'card' => 'Carta', 'kmoney' => 'KMoney'])->default('transfer')->required(),
-                Toggle::make('paid')->label('Già pagato: conferma subito il pagamento (genera punti e fattura)')->default(false),
+                Toggle::make('paid')->label(LegacyPlan::hidden() ? 'Già pagato: conferma subito il pagamento (genera la fattura)' : 'Già pagato: conferma subito il pagamento (genera punti e fattura)')->default(false),
                 Textarea::make('notes')->label('Note (facoltative)'),
             ])
             ->action(function (array $data): void {

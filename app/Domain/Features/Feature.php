@@ -6,6 +6,7 @@ namespace App\Domain\Features;
 
 use App\Domain\Access\Actor;
 use App\Domain\Audit\AuditLog;
+use App\Domain\Plan\LegacyPlan;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Ordine di decisione per una funzionalità e un utente:
  *  1. chiave sconosciuta → abilitata (il codice non si blocca mai per una chiave dimenticata)
+ *  1b. funzionalità del vecchio piano (`legacy`) con il vecchio piano nascosto → spenta per tutti, super_admin compreso
  *  2. super_admin → abilitata, salvo `bypass=false` (il titolare non si chiude fuori)
  *  3. `lock=system` → abilitata, non si spegne
  *  4. genitore spento → spenta
@@ -43,6 +45,9 @@ final class Feature
         $def = FeatureRegistry::get($key);
         if ($def === null) {
             return true;
+        }
+        if (LegacyPlan::hides($key)) {
+            return false;   // vecchio piano nascosto: vale per tutti, super_admin compreso (nessun riferimento visibile)
         }
         $user ??= Auth::user();
         $user = $user instanceof User ? $user : null;

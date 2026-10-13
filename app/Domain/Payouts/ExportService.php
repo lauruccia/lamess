@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payouts;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Models\Payout;
 use App\Models\Period;
 use Illuminate\Support\Facades\DB;
@@ -27,10 +28,10 @@ final class ExportService
         $data = [];
         foreach ($rows as $r) {
             $data[] = [
-                $period->code, $r->bcode, $r->bname, StatementService::LABELS[$r->bonus_type] ?? $r->bonus_type,
+                $period->code, $r->bcode, $r->bname, LegacyPlan::bonusLabel((string) $r->bonus_type, StatementService::LABELS[$r->bonus_type] ?? $r->bonus_type),
                 ['accrued' => 'maturato', 'held' => 'trattenuto', 'excluded' => 'escluso'][$r->engine_status] ?? $r->engine_status,
                 $this->num($r->base_amount), $r->pct === null ? '' : $this->num((string) ((float) $r->pct * 100)), $this->num($r->amount),
-                $r->level ?? '', $r->scode ?? '', $r->reason,
+                $r->level ?? '', $r->scode ?? '', LegacyPlan::hidden() && LegacyPlan::isLegacyBonus((string) $r->bonus_type) ? '' : $r->reason,
             ];
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Domain\Orders\RefundService;
@@ -113,7 +114,7 @@ class OrderResource extends Resource
             TextColumn::make('buyer.name')->label('Cliente')->searchable(),
             TextColumn::make('buyer.email')->label('Email')->searchable()->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('buyer_type')->label('Tipo')->formatStateUsing(fn (string $state) => $state === 'consultant' ? 'Incaricato' : 'Cliente'),
-            TextColumn::make('beneficiary.name')->label('PV a')->placeholder('— (vendita casa)'),
+            TextColumn::make('beneficiary.name')->label(fn (): string => LegacyPlan::hidden() ? 'Incaricato' : 'PV a')->placeholder('— (vendita casa)'),
             TextColumn::make('status')->label('Stato')->badge()->formatStateUsing(fn (string $state) => self::STATUS[$state] ?? $state)
                 ->color(fn (string $state) => match ($state) {
                     'pending_payment' => 'warning', 'paid', 'processing', 'shipped', 'delivered' => 'success', 'cancelled' => 'gray', default => 'danger',
@@ -121,7 +122,7 @@ class OrderResource extends Resource
             TextColumn::make('payment_method')->label('Pagamento')->formatStateUsing(fn (string $state) => match ($state) { 'card' => 'Carta', 'kmoney' => 'KMoney', default => 'Bonifico' }),
             TextColumn::make('discount_net')->label('Sconto')->state(fn (Order $r) => $r->discounts ? collect($r->discounts)->map(fn ($d) => $d['code'] ?: $d['name'])->implode(', ') : null)->placeholder('—')->toggleable(),
             TextColumn::make('total')->label('Totale €')->numeric(2),
-            TextColumn::make('pv_total')->label('PV')->numeric(2),
+            TextColumn::make('pv_total')->label('PV')->numeric(2)->visible(fn (): bool => LegacyPlan::visible()),
             TextColumn::make('paid_at')->label('Pagato il')->dateTime('d/m/Y H:i', 'Europe/Rome')->placeholder('—')->sortable(),
             TextColumn::make('tracking_code')->label('Tracking')->placeholder('—'),
         ])->filters([
@@ -141,8 +142,8 @@ class OrderResource extends Resource
         return [
             Action::make('confirm')->authorize('orders.manage')->label('Conferma pagamento')->icon('heroicon-o-check')->color('success')
                 ->visible(fn (Order $record) => $record->status === 'pending_payment')->requiresConfirmation()
-                ->modalDescription('Conferma di aver ricevuto il pagamento. Verranno generati i punti e la fattura.')
-                ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->markPaid($record), 'Pagamento confermato: punti e fattura generati')),
+                ->modalDescription(LegacyPlan::hidden() ? 'Conferma di aver ricevuto il pagamento. Verrà generata la fattura.' : 'Conferma di aver ricevuto il pagamento. Verranno generati i punti e la fattura.')
+                ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->markPaid($record), LegacyPlan::hidden() ? 'Pagamento confermato: fattura generata' : 'Pagamento confermato: punti e fattura generati')),
             Action::make('processing')->authorize('orders.manage')->label('In preparazione')->icon('heroicon-o-cube')->color('gray')
                 ->visible(fn (Order $record) => $record->status === 'paid')
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->startProcessing($record), 'Ordine in preparazione')),
@@ -167,7 +168,7 @@ class OrderResource extends Resource
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->cancel($record), 'Ordine annullato')),
             Action::make('refund')->authorize('orders.manage')->label('Reso e rimborso')->icon('heroicon-o-arrow-uturn-left')->color('warning')
                 ->visible(fn (Order $record) => in_array($record->status, Order::PAID_STATES, true))
-                ->modalDescription('Emette una nota di credito e storna i punti (se il periodo è già chiuso lo storno va nel mese corrente). Puoi anche restituire i soldi al cliente e rimettere la merce in giacenza.')
+                ->modalDescription(LegacyPlan::hidden() ? 'Emette una nota di credito e storna i compensi (se il periodo è già chiuso lo storno va nel mese corrente). Puoi anche restituire i soldi al cliente e rimettere la merce in giacenza.' : 'Emette una nota di credito e storna i punti (se il periodo è già chiuso lo storno va nel mese corrente). Puoi anche restituire i soldi al cliente e rimettere la merce in giacenza.')
                 ->fillForm(fn (Order $record) => ['restock' => true, 'money' => true, 'items' => $record->items->filter(fn ($i) => $i->unit_net > 0)->map(fn ($i) => [
                     'id' => $i->id, 'label' => $i->name.' (resi '.$i->qty_refunded.'/'.$i->qty.')', 'qty' => 0,
                 ])->values()->all()])

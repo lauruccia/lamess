@@ -145,13 +145,13 @@
                             this.el('text', { x: 28, y: H / 2 + 1, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#fff' }, gr).textContent = this.ini(d.name);
                             let nm = d.name; if (nm.length > 20) nm = nm.slice(0, 19) + '…';
                             this.el('text', { x: 52, y: H / 2 - 9, 'font-size': 12, 'font-weight': 700, fill: 'var(--lt-ink)' }, gr).textContent = nm;
-                            this.el('text', { x: 52, y: H / 2 + 5, 'font-size': 10.5, 'font-weight': 600, fill: 'var(--lt-muted)' }, gr).textContent = r.name + ' · ' + this.fmt(d.pr) + ' PR';
+                            this.el('text', { x: 52, y: H / 2 + 5, 'font-size': 10.5, 'font-weight': 600, fill: 'var(--lt-muted)' }, gr).textContent = d.hide_pr ? r.name : r.name + ' · ' + this.fmt(d.pr) + ' PR';
                             if (d.status !== 'active') this.el('circle', { cx: W - 9, cy: 9, r: 4.5, fill: '#C62828' }, gr); else if (d.active) this.el('circle', { cx: W - 9, cy: 9, r: 4.5, fill: '#2E9E5B' }, gr);
                             // avanzamento verso la qualifica successiva
-                            this.el('rect', { x: 52, y: H - 12, width: W - 64, height: 5, rx: 2.5, fill: 'rgba(127,127,127,.25)' }, gr);
-                            if (d.next) this.el('rect', { x: 52, y: H - 12, width: Math.max(2, (W - 64) * d.pct / 100), height: 5, rx: 2.5, fill: d.pct >= 100 ? '#2E9E5B' : '#C2663A' }, gr);
+                            if (!d.hide_pr) this.el('rect', { x: 52, y: H - 12, width: W - 64, height: 5, rx: 2.5, fill: 'rgba(127,127,127,.25)' }, gr);
+                            if (d.hide_pr) {} else if (d.next) this.el('rect', { x: 52, y: H - 12, width: Math.max(2, (W - 64) * d.pct / 100), height: 5, rx: 2.5, fill: d.pct >= 100 ? '#2E9E5B' : '#C2663A' }, gr);
                             else this.el('rect', { x: 52, y: H - 12, width: W - 64, height: 5, rx: 2.5, fill: '#2E9E5B' }, gr);
-                            const tt = this.el('title', {}, gr); tt.textContent = d.next ? d.name + ' — verso ' + d.next + ': ' + d.pct + '% (mancano ' + this.fmt(d.missing) + ' PR)' : d.name + ' — qualifica massima';
+                            const tt = this.el('title', {}, gr); tt.textContent = d.next ? d.hide_pr ? d.name + ' — prossima qualifica: ' + d.next : d.name + ' — verso ' + d.next + ': ' + d.pct + '% (mancano ' + this.fmt(d.missing) + ' PR)' : d.name + ' — qualifica massima';
                         }
                         const nk = this.kidsOf(+id).length;
                         if (nk) {

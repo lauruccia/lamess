@@ -9,8 +9,10 @@
 </div>
 <div class="kpis">
  <div class="kpi"><small>Persone nel ramo</small><strong>{{ $total }}</strong><span>{{ $direct }} {{ $direct === 1 ? 'diretta' : 'dirette' }} · {{ $levels }} {{ $levels === 1 ? 'livello' : 'livelli' }}</span></div>
+ @if(\App\Domain\Plan\LegacyPlan::visible())
  <div class="kpi"><small>PVF personali del mese</small><strong>{{ $mine ? $n($mine['pvf']) : '—' }}</strong><span>{{ $mine ? 'Gruppo '.$n($mine['group_pv']).' PV' : 'Nessun calcolo ancora' }}</span></div>
  <div class="kpi"><small>PR del mese</small><strong>{{ $mine ? $n($mine['pr']) : '—' }}</strong><span>{{ $mine ? 'Gruppo '.$n($mine['group_pr']).' PR' : 'Nessun calcolo ancora' }}</span></div>
+ @endif
  @if(\App\Domain\Plan\ActiveStatus::applies())
  <div class="kpi {{ $mine && $mine['active'] ? 'k-ok' : '' }}"><small>Il mio stato</small><strong>{{ $mine ? ($mine['active'] ? 'Attivo' : 'Non attivo') : '—' }}</strong><span>{{ $mine && $mine['rank'] ? 'Qualifica '.ucfirst(strtolower($mine['rank'])) : 'Qualifica in attesa di calcolo' }}</span></div>
  @endif

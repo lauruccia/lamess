@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Consultants;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Features\Feature;
 use App\Domain\Payouts\PayoutService;
 use App\Filament\Resources\AnnualFees\AnnualFeeResource;
@@ -62,7 +63,7 @@ final class Consultant360
         $defs = [
             ['directs', 'Diretti', ConsultantResource::class, fn () => Consultant::where('sponsor_id', $id)->count(), ['sponsor' => ['value' => $id]], null],
             ['customers', 'Clienti', CustomerResource::class, fn () => Customer::where('assigned_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
-            ['orders', 'Ordini', OrderResource::class, fn () => Order::where('beneficiary_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], 'a nome suo (PV a lui)'],
+            ['orders', 'Ordini', OrderResource::class, fn () => Order::where('beneficiary_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], LegacyPlan::hidden() ? 'a nome suo' : 'a nome suo (PV a lui)'],
             ['movements', 'Movimenti PV', PvMovementResource::class, fn () => PvMovement::where('consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
             ['settlements', 'Liquidazioni', SettlementResource::class, fn () => Settlement::where('consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
             ['payouts', 'Pagamenti', PayoutResource::class, fn () => Payout::where('consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
@@ -138,7 +139,7 @@ final class Consultant360
             $add($r->paid_at, 'Pagamento', 'Pagamento effettuato: '.$this->eur($r->amount), $r->paid_by);
         }
         foreach (DB::table('orders')->where('beneficiary_consultant_id', $id)->whereNotNull('paid_at')->orderByDesc('paid_at')->limit(15)->get() as $r) {
-            $add($r->paid_at, 'Ordine', "Ordine {$r->number} pagato: ".$this->eur($r->total).' · '.$this->n($r->pv_total).' PV');
+            $add($r->paid_at, 'Ordine', "Ordine {$r->number} pagato: ".$this->eur($r->total).(LegacyPlan::hidden() ? '' : ' · '.$this->n($r->pv_total).' PV'));
         }
         foreach (DB::table('customer_assignment_history')->where(fn ($w) => $w->where('from_consultant_id', $id)->orWhere('to_consultant_id', $id))->orderByDesc('id')->limit(15)->get() as $r) {
             $add($r->created_at, 'Clienti', 'Cliente #'.$r->customer_id.($r->to_consultant_id === $id ? ' assegnato a lui' : ' passato a '.$name($r->to_consultant_id !== null ? (int) $r->to_consultant_id : null)).($r->reason ? " ({$r->reason})" : ''), $r->changed_by);
@@ -264,7 +265,7 @@ final class Consultant360
             ->map(fn ($r) => [$r->code, $this->bonus($r->bonus_type), (string) StatusLabels::label($r->engine_status), (string) $r->n, $this->eur($r->amount)])->all();
         $lines = (clone $base)->orderByDesc('cl.id')->limit(25)
             ->get(['p.code', 'cl.bonus_type', 'cl.base_amount', 'cl.pct', 'cl.amount', 'cl.reason', 'cl.engine_status', 'cl.source_consultant_id'])
-            ->map(fn ($r) => [$r->code, $this->bonus($r->bonus_type), $this->n($r->base_amount), $r->pct !== null ? $this->n((float) $r->pct * 100).'%' : '—', $this->eur($r->amount), (string) StatusLabels::label($r->engine_status), (string) ($r->reason ?? '')])->all();
+            ->map(fn ($r) => [$r->code, $this->bonus($r->bonus_type), $this->n($r->base_amount), $r->pct !== null ? $this->n((float) $r->pct * 100).'%' : '—', $this->eur($r->amount), (string) StatusLabels::label($r->engine_status), LegacyPlan::hidden() && LegacyPlan::isLegacyBonus((string) $r->bonus_type) ? '' : (string) ($r->reason ?? '')])->all();
         $total = (clone $base)->where('cl.engine_status', '!=', 'excluded')->sum('cl.amount');
         $excluded = (clone $base)->where('cl.engine_status', 'excluded')->sum('cl.amount');
 
@@ -300,12 +301,17 @@ final class Consultant360
     {
         $id = $this->c->id;
         $ord = Order::where('beneficiary_consultant_id', $id)->orderByDesc('id')->limit(15)->get()
-            ->map(fn (Order $o) => [(string) $o->number, $this->d($o->created_at), (string) StatusLabels::label($o->status), $this->eur($o->total), $this->n($o->pv_total)])->all();
+            ->map(fn (Order $o) => array_values(array_filter([(string) $o->number, $this->d($o->created_at), (string) StatusLabels::label($o->status), $this->eur($o->total), LegacyPlan::hidden() ? null : $this->n($o->pv_total)], static fn ($v) => $v !== null)))->all();
         $mov = PvMovement::where('consultant_id', $id)->orderByDesc('id')->limit(15)->get()
             ->map(fn (PvMovement $m) => ['#'.$m->id, $this->d($m->event_at), strtoupper((string) $m->kind), (string) $m->type, $this->n($m->pv), (string) StatusLabels::label($m->status)])->all();
 
+        $orders = $this->table('Ultimi ordini', LegacyPlan::hidden() ? ['Numero', 'Data', 'Stato', 'Totale'] : ['Numero', 'Data', 'Stato', 'Totale', 'PV'], $ord, 'Nessun ordine.', $this->link('Apri gli ordini', OrderResource::class, ['consultant' => ['value' => $id]]));
+        if (LegacyPlan::hidden()) {
+            return ['facts' => [['Ordini a suo nome', (string) Order::where('beneficiary_consultant_id', $id)->count()]], 'tables' => [$orders]];
+        }
+
         return ['facts' => [['Ordini a suo nome', (string) Order::where('beneficiary_consultant_id', $id)->count()], ['Movimenti PV', (string) PvMovement::where('consultant_id', $id)->count()]], 'tables' => [
-            $this->table('Ultimi ordini', ['Numero', 'Data', 'Stato', 'Totale', 'PV'], $ord, 'Nessun ordine.', $this->link('Apri gli ordini', OrderResource::class, ['consultant' => ['value' => $id]])),
+            $orders,
             $this->table('Ultimi movimenti PV', ['#', 'Data', 'Tipo', 'Causale', 'PV', 'Stato'], $mov, 'Nessun movimento.', $this->link('Apri i movimenti PV', PvMovementResource::class, ['consultant' => ['value' => $id]])),
         ]];
     }
@@ -398,6 +404,10 @@ final class Consultant360
 
     private function bonus(string $t): string
     {
+        if (LegacyPlan::hidden() && LegacyPlan::isLegacyBonus($t)) {
+            return LegacyPlan::NEUTRAL_LABEL;
+        }
+
         return ['direct' => 'Direct', 'team' => 'Team', 'matching' => 'Matching', 'rank' => 'Rank Bonus', 'fsb' => 'Fast Start', 'clawback' => 'Storno', 'rank_installment' => 'Rata Rank Bonus', 'indirect' => 'Compenso indiretto', 'indirect_ext' => 'Indiretto esteso', 'structure' => 'Bonus di Struttura'][$t] ?? $t;
     }
 

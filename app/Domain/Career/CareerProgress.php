@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Career;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Calc\PeriodCalculator;
 use App\Domain\Engine\Plan\PlanConfig;
 use App\Domain\Periods\SnapshotBuilder;
@@ -113,13 +114,14 @@ final class CareerProgress
         $d = $s['next'];
         $thr = (float) (string) $plan->activityThreshold;
         $todo = [];
+        $legacy = LegacyPlan::visible();   // vecchio piano nascosto: niente PR, Direct di qualifica, Rank Bonus, Matching, rate
 
         $hasActiveStatus = $plan->kosmos === null; // il piano Incaricati non ha lo stato ATTIVO
         $activity = ['applies' => $hasActiveStatus, 'points' => $s['activity'], 'threshold' => $thr, 'missing' => max(0.0, $thr - $s['activity']), 'active' => $s['active'], 'reason' => $s['reason']];
         $blocked = preg_match('/sospes|cessat/i', $s['reason']) === 1;
         if (! $s['active'] && $blocked) {
             $todo[] = 'Non risulti attivo: '.mb_strtolower($s['reason']).'.';
-        } elseif ($hasActiveStatus && ! $s['active'] && $activity['missing'] > 0) {
+        } elseif ($legacy && $hasActiveStatus && ! $s['active'] && $activity['missing'] > 0) {
             $todo[] = 'Per risultare attivo questo mese ti mancano '.self::n($activity['missing']).' PR (soglia '.self::n($thr).').';
         }
 
@@ -153,22 +155,24 @@ final class CareerProgress
             $missing = array_map($codeName, (array) ($d['structure_missing'] ?? []));
             $structure = ['required' => $req, 'missing' => $missing, 'ok' => (bool) ($d['structure_ok'] ?? true)];
 
-            if ($pr['missing'] > 0) {
+            if ($legacy && $pr['missing'] > 0) {
                 $todo[] = "Per {$next['name']} ti mancano ".self::n($pr['missing']).' PR di gruppo (ne hai '.self::n($pr['counted']).' su '.self::n($pr['required']).').';
             }
-            if ($fifty !== null && $fifty['capped'] > 0) {
+            if ($legacy && $fifty !== null && $fifty['capped'] > 0) {
                 $todo[] = 'Regola del 50%: ogni linea conta al massimo '.self::n($fifty['cap']).' PR; '.$fifty['capped'].($fifty['capped'] === 1 ? ' tua linea ha' : ' tue linee hanno').' già raggiunto il tetto, i PR in più vanno costruiti in altre linee.';
             }
             if ($missing !== []) {
                 $todo[] = 'Struttura richiesta: '.self::group($missing).'.';
             }
-            if ($pr['missing'] <= 0 && $structure['ok']) {
-                $todo[] = "Requisiti per {$next['name']} soddisfatti: la qualifica è effettiva dal 1° del mese successivo al raggiungimento.";
+            if (($legacy ? $pr['missing'] <= 0 : true) && $structure['ok']) {
+                $todo[] = $legacy
+                    ? "Requisiti per {$next['name']} soddisfatti: la qualifica è effettiva dal 1° del mese successivo al raggiungimento."
+                    : "Requisiti per {$next['name']} soddisfatti.";
             }
-            if ($next['rank_bonus'] > 0) {
+            if ($legacy && $next['rank_bonus'] > 0) {
                 $todo[] = "Raggiunta {$next['name']} avrai un Rank Bonus di € ".self::n($next['rank_bonus']).($next['installments'] > 1 ? " in {$next['installments']} rate" : ' una tantum').'.';
             }
-            if ($next['direct_pct'] > $next['current_pct']) {
+            if ($legacy && $next['direct_pct'] > $next['current_pct']) {
                 $todo[] = 'La percentuale Direct sale dal '.self::n($next['current_pct']).'% al '.self::n($next['direct_pct']).'%.';
             }
         } else {
@@ -178,6 +182,9 @@ final class CareerProgress
         $gates = [];
         foreach (['indirect' => ['Bonus Indiretti', $plan->indirectMinRank], 'matching' => ['Matching', $plan->matchingMinRank]] as $k => [$label, $code]) {
             $need = $plan->rank($code);
+            if (! $legacy && $k === 'matching') {
+                continue;
+            }
             $reached = $rank->sequence >= $need->sequence;
             $gates[$k] = ['label' => $label, 'rank' => $need->name, 'reached' => $reached, 'status' => $s[$k]];
             if (! $reached && $nextDef !== null && $need->sequence === $nextDef->sequence) {
@@ -191,6 +198,9 @@ final class CareerProgress
             'installments' => array_map(static fn ($i) => ['rank' => $plan->rank($i->rank_code)->name, 'number' => (int) $i->number, 'of' => (int) $i->of, 'amount' => (float) $i->amount, 'due' => $i->due_period, 'status' => $i->status], $installments),
             'awards' => array_map(static fn ($a) => ['rank' => $plan->rank($a->rank_code)->name, 'amount' => (float) $a->amount, 'status' => $a->status, 'reason' => (string) $a->reason], $awards),
         ];
+        if (! $legacy) {
+            $bonuses = ['installments' => [], 'awards' => []];
+        }
         foreach ($bonuses['installments'] as $i) {
             $todo[] = "Rata Rank Bonus {$i['rank']} {$i['number']}/{$i['of']}: € ".self::n($i['amount']).' in scadenza '.$i['due'].($i['status'] === 'held' ? ' (trattenuta)' : '').'.';
         }
@@ -198,7 +208,7 @@ final class CareerProgress
         return [
             'consultant_id' => $id, 'rank' => ['code' => $rank->code, 'name' => $rank->name, 'sequence' => $rank->sequence, 'direct_pct' => (float) (string) $rank->directRate * 100],
             'effective_rank' => $plan->rank($s['effective'])->name, 'next' => $next, 'pr' => $pr, 'fifty' => $fifty, 'structure' => $structure,
-            'activity' => $activity, 'gates' => $gates, 'bonuses' => $bonuses, 'todo' => $todo,
+            'activity' => $activity, 'legacy_hidden' => ! $legacy, 'gates' => $gates, 'bonuses' => $bonuses, 'todo' => $todo,
         ];
     }
 

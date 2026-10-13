@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Periods;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Engine\Calc\ImpactReport;
 use App\Domain\Engine\Calc\PeriodCalculator;
@@ -124,7 +125,7 @@ final class PeriodService
             }
             $pending = PvMovement::where('period_id', $period->id)->where('status', 'pending_payment')->count();
             if ($pending > 0) {
-                throw new PeriodStateException("Ci sono {$pending} movimenti PV in attesa di pagamento: confermali o annullali prima di chiudere.");
+                throw new PeriodStateException("Ci sono {$pending} movimenti ".(LegacyPlan::hidden() ? '' : 'PV ')."in attesa di pagamento: confermali o annullali prima di chiudere.");
             }
             $input = SnapshotBuilder::build($period);
             $result = PeriodCalculator::calculate($input);

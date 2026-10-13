@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Features\Feature;
 use App\Domain\Career\CareerProgress;
 use App\Filament\Resources\Consultants\ConsultantResource;
@@ -67,7 +68,7 @@ class NetworkTreePage extends Page
                 'id' => $c->id, 'parent' => $c->sponsor_id, 'code' => $c->code, 'name' => $c->name, 'status' => $c->status,
                 'rank' => $p['rank']['code'] ?? $entry, 'active' => (bool) ($p['activity']['active'] ?? false), 'pr' => (float) ($p['activity']['points'] ?? 0),
                 'next' => $p['next']['name'] ?? null, 'pct' => $p === null || $p['next'] === null ? 100 : $p['pr']['percent'], 'missing' => (float) ($p['pr']['missing'] ?? 0),
-                'clients' => (int) ($clients[$c->id] ?? 0), 'team' => (int) ($team[$c->id] ?? 0),
+                'hide_pr' => LegacyPlan::hidden(), 'clients' => (int) ($clients[$c->id] ?? 0), 'team' => (int) ($team[$c->id] ?? 0),
                 'since' => $c->since ? date('d/m/Y', strtotime((string) $c->since)) : '', 'url' => ConsultantResource::getUrl('view', ['record' => $c->id]),
             ];
         }

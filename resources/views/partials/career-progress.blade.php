@@ -4,6 +4,7 @@
 @php
     $n = fn ($v) => number_format((float) $v, fmod((float) $v, 1.0) === 0.0 ? 0 : 2, ',', '.');
     $next = $p['next'];
+    $leg = \App\Domain\Plan\LegacyPlan::visible();
 @endphp
 <style>
     .cp { font-size:.92rem; line-height:1.45; }
@@ -25,7 +26,7 @@
 </style>
 <div class="cp">
     <div class="cp-row"><span>Qualifica</span><span>{{ $p['rank']['name'] }}@if($p['effective_rank'] !== $p['rank']['name']) <span class="cp-pill" title="Qualifica effettiva nel mese">effettiva: {{ $p['effective_rank'] }}</span>@endif</span></div>
-    <div class="cp-row"><span>Percentuale Direct</span><span>{{ $n($p['rank']['direct_pct']) }}%</span></div>
+    @if($leg)<div class="cp-row"><span>Percentuale Direct</span><span>{{ $n($p['rank']['direct_pct']) }}%</span></div>@endif
 
     @if(! empty($p['todo']))
         <h4>Cosa fare</h4>
@@ -34,10 +35,12 @@
 
     @if($next)
         <h4>Verso {{ $next['name'] }}</h4>
+        @if($leg)
         <div class="cp-row"><span>PR di gruppo conteggiati</span><span>{{ $n($p['pr']['counted']) }} / {{ $n($p['pr']['required']) }}</span></div>
         <div class="cp-bar {{ $p['pr']['missing'] <= 0 ? 'ok' : '' }}" role="progressbar" aria-valuenow="{{ $p['pr']['percent'] }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $p['pr']['percent'] }}%"></i></div>
         <div class="cp-row"><span>Mancano</span><span>{{ $n($p['pr']['missing']) }} PR</span></div>
         <div class="cp-row"><span>PR personali</span><span>{{ $n($p['pr']['personal']) }}</span></div>
+        @endif
         <div class="cp-row"><span>Struttura</span><span>
             @if($p['structure']['required'] === []) nessun requisito
             @elseif($p['structure']['ok']) soddisfatta
@@ -45,7 +48,7 @@
         @if($p['structure']['required'] !== [])
             <div style="opacity:.75;font-size:.82rem">Richiesto: {{ implode(', ', $p['structure']['required']) }}@if($p['structure']['missing'] !== []) · mancano: {{ implode(', ', $p['structure']['missing']) }}@endif</div>
         @endif
-        @if($p['fifty'])
+        @if($leg && $p['fifty'])
             <h4>Regola del 50% (tetto {{ $n($p['fifty']['cap']) }} PR per linea)</h4>
             <table><tr><th>Linea</th><th>PR</th><th>Contati</th></tr>
             @foreach(array_slice($p['fifty']['lines'], 0, 8) as $l)
@@ -56,7 +59,7 @@
         @endif
     @endif
 
-    @if($p['activity']['applies'] ?? true)
+    @if($leg && ($p['activity']['applies'] ?? true))
     <h4>Attività del mese</h4>
     <div class="cp-row"><span>Punti</span><span>{{ $n($p['activity']['points']) }} / {{ $n($p['activity']['threshold']) }}</span></div>
     <div class="cp-bar {{ $p['activity']['active'] ? 'ok' : '' }}"><i style="width:{{ $p['activity']['threshold'] > 0 ? (int) min(100, floor($p['activity']['points'] / $p['activity']['threshold'] * 100)) : 100 }}%"></i></div>
@@ -67,7 +70,7 @@
     @foreach($p['gates'] as $g)
         <div class="cp-row"><span>{{ $g['label'] }}</span><span>{{ $g['reached'] ? 'sbloccato' : 'dalla qualifica '.$g['rank'] }}</span></div>
     @endforeach
-    @if($next && $next['rank_bonus'] > 0)
+    @if($leg && $next && $next['rank_bonus'] > 0)
         <div class="cp-row"><span>Rank Bonus {{ $next['name'] }}</span><span>€ {{ $n($next['rank_bonus']) }}@if($next['installments'] > 1) in {{ $next['installments'] }} rate @endif</span></div>
     @endif
     @foreach($p['bonuses']['installments'] as $i)

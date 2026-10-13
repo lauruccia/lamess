@@ -14,6 +14,9 @@ final class ActiveStatus
     /** Vero se il piano dell'ultimo periodo prevede lo stato ATTIVO (senza periodi: sì, come il piano ufficiale). */
     public static function applies(): bool
     {
+        if (LegacyPlan::hidden()) {
+            return false;   // vecchio piano nascosto: nessun riferimento allo stato ATTIVO (non si memorizza, l'interruttore può cambiare)
+        }
         if (self::$applies === null) {
             $period = Period::query()->orderByDesc('code')->first();
             self::$applies = $period === null || $period->planVersion->plan()->kosmos === null;

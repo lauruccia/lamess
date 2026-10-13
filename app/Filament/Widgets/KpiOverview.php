@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Features\Feature;
 use App\Domain\Kpi\KpiService;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -34,9 +35,9 @@ class KpiOverview extends StatsOverviewWidget
         $kind = $k['run_type'] === 'official' ? 'calcolo ufficiale' : ($k['run_type'] ? 'stima live' : 'nessun calcolo');
         $eur = fn (string $v) => '€ '.number_format((float) $v, 2, ',', '.');
 
-        return [
+        return array_values(array_filter([
             Stat::make('Fatturato (CV)', $eur($k['cv']))->description("{$k['movements']} movimenti confermati"),
-            Stat::make('Punti volume (PV)', number_format((float) $k['pv'], 2, ',', '.'))->description($k['pending_payment'].' in attesa di pagamento'),
+            LegacyPlan::visible() ? Stat::make('Punti volume (PV)', number_format((float) $k['pv'], 2, ',', '.'))->description($k['pending_payment'].' in attesa di pagamento') : null,
             Stat::make('Compensi maturati', $eur($k['commissions_total']))->description($kind),
             Stat::make('Payout ratio', $k['payout_ratio'] === null ? '—' : number_format($k['payout_ratio'], 2, ',', '.').' %')->description('compensi / CV'),
             Stat::make('Incaricati attivi', (string) $k['active'])->description(($st['active'] ?? 0).' in organico · '.($st['terminated'] ?? 0).' cessati'),
@@ -47,6 +48,6 @@ class KpiOverview extends StatsOverviewWidget
             Stat::make('Documenti KYC da verificare', (string) $k['kyc_pending'])->color($k['kyc_pending'] ? 'warning' : 'success'),
             Stat::make('Canoni da incassare', (string) $k['fees_due'])->description($eur($k['fees_due_amount']))->color($k['fees_due'] ? 'warning' : 'success'),
             Stat::make('Compensi trattenuti', $eur($k['held_total']))->description('in attesa di sblocco'),
-        ];
+        ]));
     }
 }

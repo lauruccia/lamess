@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Domain\Plan\LegacyPlan;
 use Filament\Facades\Filament;
 use Illuminate\Support\HtmlString;
 
@@ -138,8 +139,53 @@ final class PageHelp
         ];
     }
 
-    /** Guida della pagina corrente, oppure null se non c'è. */
+    /** Guida della pagina corrente, oppure null se non c'è. Con il vecchio piano nascosto toglie i riferimenti ai punti. */
     public static function current(): ?array
+    {
+        $h = self::resolve();
+
+        return $h !== null && LegacyPlan::hidden() ? self::withoutLegacy($h) : $h;
+    }
+
+    /**
+     * @param  array<string, mixed>  $h
+     * @return array<string, mixed>|null
+     */
+    private static function withoutLegacy(array $h): ?array
+    {
+        if (str_starts_with((string) ($h['scopo'] ?? ''), 'Registro dei punti')) {
+            return null;
+        }
+        $swap = [
+            ', punti,' => ',', ' soglia di punti prevista dal piano' => ' requisiti previsti dal piano', 'A chi vanno i punti dei suoi acquisti.' => 'Incaricato a cui fa capo il cliente.',
+            'Incaricato a cui vanno i punti.' => 'Incaricato a cui fa capo l\'ordine.', 'Cambiare prezzo o punti vale' => 'Cambiare il prezzo vale',
+            ' I PV delle righe scontate seguono la politica D02 del piano compensi.' => '',
+        ];
+        $clean = static fn (string $s): string => strtr($s, $swap);
+        foreach (['scopo', 'nota'] as $k) {
+            if (isset($h[$k])) {
+                $h[$k] = $clean((string) $h[$k]);
+            }
+        }
+        foreach (['colonne', 'azioni'] as $group) {
+            if (! isset($h[$group])) {
+                continue;
+            }
+            $out = [];
+            foreach ($h[$group] as $name => $text) {
+                if (in_array($name, ['PV', 'PV / CV', 'PV a', 'PR pers. / gruppo'], true)) {
+                    continue;
+                }
+                $out[$name] = $clean((string) $text);
+            }
+            $h[$group] = $out;
+        }
+
+        return $h;
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function resolve(): ?array
     {
         $seg = array_values(array_filter(explode('/', trim(request()->path(), '/'))));
         $slug = $seg[1] ?? null;

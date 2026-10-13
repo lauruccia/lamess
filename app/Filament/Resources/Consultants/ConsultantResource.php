@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
@@ -143,7 +144,7 @@ class ConsultantResource extends Resource
                 $tab('volumes', 'Volumi e rank'),
                 $tab('commissions', 'Commissioni'),
                 $tab('wallet', 'Pagamenti'),
-                $tab('sales', 'Ordini e PV'),
+                $tab('sales', LegacyPlan::hidden() ? 'Ordini' : 'Ordini e PV'),
                 $tab('documents', 'Documenti'),
                 $tab('audit', 'Audit'),
             ]),
@@ -187,7 +188,7 @@ class ConsultantResource extends Resource
                     ->color(fn (string $state) => match ($state) {
                         'Attivo' => 'success', 'Non attivo' => 'warning', default => 'gray',
                     })
-                    ->tooltip(fn (Consultant $r): ?string => filled($r->stat_reason) ? (string) $r->stat_reason : 'Soglia di PR del mese per maturare le commissioni'),
+                    ->tooltip(fn (Consultant $r): ?string => filled($r->stat_reason) ? (string) $r->stat_reason : (LegacyPlan::hidden() ? 'Requisiti del mese per maturare le commissioni' : 'Soglia di PR del mese per maturare le commissioni')),
                 TextColumn::make('rank_hold_until')->label('Qualifica mantenuta fino al')->date('d/m/Y')->placeholder('—')->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn (Consultant $r): ?string => $r->rank_hold_reason),
                 TextColumn::make('sponsor_name')->label('Sponsor')

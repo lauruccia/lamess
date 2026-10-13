@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders;
 
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Ledger\PvLedger;
@@ -365,7 +366,7 @@ final class OrderService
         });
 
         $this->invoices->issueForOrder($order->load('items'));
-        OrderEvent::log($order, 'paid', 'Pagamento confermato'.(filled($reference) ? " (rif. {$reference})" : '').': fattura e punti generati');
+        OrderEvent::log($order, 'paid', 'Pagamento confermato'.(filled($reference) ? " (rif. {$reference})" : '').(LegacyPlan::hidden() ? ': fattura generata' : ': fattura e punti generati'));
         Notification::send($order->buyer, new OrderPaid($order));
 
         return $order->refresh();

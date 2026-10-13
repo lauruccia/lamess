@@ -51,9 +51,11 @@
 {{-- Numeri --}}
 <div class="kpis">
  @if($c && ($month ?? null))
+  @if(\App\Domain\Plan\LegacyPlan::visible())
   <div class="kpi"><small>PVF di {{ $month['period'] }}</small><strong>{{ $n($month['pvf']) }}</strong><span>Personali {{ $n($month['pvc']) }} · gruppo {{ $n($month['group_pv']) }}</span></div>
   <div class="kpi"><small>PR del mese</small><strong>{{ $n($month['pr']) }}</strong><span>Gruppo {{ $n($month['group_pr']) }} PR</span></div>
-  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? ucfirst(strtolower($month['rank'])) : '—' }}</strong><span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span></div>
+  @endif
+  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? ucfirst(strtolower($month['rank'])) : '—' }}</strong>@if(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
  @endif
  @if($c)
   <a class="kpi" href="/area/rete"><small>La mia rete</small><strong>{{ $x['network'] }}</strong><span>{{ $x['direct'] }} {{ $x['direct'] === 1 ? 'diretta' : 'dirette' }} · {{ $x['clients'] }} {{ $x['clients'] === 1 ? 'cliente' : 'clienti' }}</span></a>

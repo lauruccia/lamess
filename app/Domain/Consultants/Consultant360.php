@@ -241,7 +241,7 @@ final class Consultant360
 
         return ['facts' => $facts, 'tables' => [
             $this->table('Storico sponsor', ['Data', 'Da', 'A', 'Motivo', 'Nota'], $hist, 'Lo sponsor non è mai cambiato.'),
-            $this->table('Diretti', ['Codice', 'Nome', 'Ordini del mese', 'Importo del mese'], $directs, 'Nessun diretto.', $this->link('Apri la lista dei diretti', ConsultantResource::class, ['sponsor' => ['value' => $this->c->id]])),
+            $this->table('Incaricati diretti (1° livello)', ['Codice', 'Nome', 'Ordini del mese', 'Importo del mese'], $directs, 'Nessun diretto.', $this->link('Apri la lista degli incaricati diretti', ConsultantResource::class, ['sponsor' => ['value' => $this->c->id]])),
             $this->table('Clienti diretti (ultimi 20)', ['Nome', 'Email', 'Registrato il', 'Ordini del mese', 'Importo del mese'], $customers, 'Nessun cliente.', $this->link('Apri la lista dei clienti', CustomerResource::class, ['consultant' => ['value' => $this->c->id]])),
         ]];
     }

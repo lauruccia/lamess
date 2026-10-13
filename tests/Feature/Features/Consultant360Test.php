@@ -189,9 +189,9 @@ final class Consultant360Test extends TestCase
     {
         $this->actingAs($this->super);
         $t = (new Consultant360($this->b))->tab('network');
-        $this->assertNull(collect($t['tables'])->firstWhere('title', 'Diretti')['more']);
+        $this->assertNull(collect($t['tables'])->firstWhere('title', 'Incaricati diretti (1° livello)')['more']);
         $t = (new Consultant360($this->a))->tab('network');
-        $this->assertNotNull(collect($t['tables'])->firstWhere('title', 'Diretti')['more']);
+        $this->assertNotNull(collect($t['tables'])->firstWhere('title', 'Incaricati diretti (1° livello)')['more']);
     }
 
     public function test_counter_without_permission_is_not_offered(): void

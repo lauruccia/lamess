@@ -216,6 +216,25 @@ class ProductResource extends Resource
     public const IMAGE_MAX_PX = 1600;
 
     /** Salva la foto caricata ridimensionata (max 1600 px sul lato lungo) e compressa in WebP: pesa una frazione dell'originale. Senza WebP/GD salva il file com'è. */
+    /**
+     * Anteprima nel pannello: usa la stessa rotta /media del negozio invece del link firmato
+     * temporaneo di Filament (che sul server non viene accettato e lascia il riquadro grigio).
+     */
+    public static function previewFile(FileUpload $component, string $file, string|array|null $names): ?array
+    {
+        $disk = Storage::disk('local');
+        if (! $disk->exists($file)) {
+            return null;
+        }
+
+        return [
+            'name' => ($component->isMultiple() ? ($names[$file] ?? null) : $names) ?? basename($file),
+            'size' => $disk->size($file),
+            'type' => $disk->mimeType($file),
+            'url' => '/media/'.$file,
+        ];
+    }
+
     public static function storeOptimized(TemporaryUploadedFile $file): string
     {
         $dir = 'shop/products';
@@ -269,7 +288,8 @@ class ProductResource extends Resource
                     Section::make('Immagini')->icon('heroicon-o-photo')->description('La prima è la copertina. Trascina per cambiare l\'ordine; quando scegli un file si apre «Sistema l\'immagine»: ritagli, ingrandisci o ruoti. Le foto escono ridimensionate (max 1600 px) e compresse in WebP.')->schema([
                         FileUpload::make('images')->label('')->multiple()->image()->reorderable()->maxFiles(8)->maxSize(4096)
                             ->acceptedFileTypes($imageTypes)
-                            ->disk('local')->directory('shop/products')->visibility('private')->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): string => self::storeOptimized($file))->panelLayout('grid'),
+                            ->disk('local')->directory('shop/products')->visibility('private')->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): string => self::storeOptimized($file))
+                            ->getUploadedFileUsing(fn (FileUpload $component, string $file, string|array|null $names): ?array => self::previewFile($component, $file, $names))->panelLayout('grid'),
                     ]),
                     Section::make('Prezzo e disponibilità')->icon('heroicon-o-currency-euro')->columns(['default' => 1, 'md' => 2, '2xl' => 4])->schema([
                         TextInput::make('gross_price')->label('Prezzo al pubblico (IVA incl.)')->prefix('€')->numeric()->dehydrated(false)->minValue(0)->live(onBlur: true)
@@ -382,6 +402,7 @@ class ProductResource extends Resource
                                     Toggle::make('active')->label('Pubblicata')->default(true)->inline(false),
                                     FileUpload::make('images')->label('Foto di questa variante (facoltativa)')->image()->imagePreviewHeight('110')->panelLayout('compact')->multiple()->maxFiles(1)->maxSize(4096)
                                         ->acceptedFileTypes($imageTypes)->disk('local')->directory('shop/products')->visibility('private')->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): string => self::storeOptimized($file))
+                            ->getUploadedFileUsing(fn (FileUpload $component, string $file, string|array|null $names): ?array => self::previewFile($component, $file, $names))
                                         ->columnSpanFull()->helperText('Se la carichi, scegliendo questa variante il cliente vede la sua foto; altrimenti restano quelle del prodotto.'),
                                 ])
                                 ->helperText('Una variante già venduta non si può eliminare: nascondila. Giacenza vuota = sempre disponibile.'.(LegacyPlan::visible() ? ' I PV si calcolano dal prezzo di ogni variante.' : '')),

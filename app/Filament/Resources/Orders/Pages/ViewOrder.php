@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Orders\OrderService;
 use App\Domain\Orders\PricedLine;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -88,7 +89,7 @@ class ViewOrder extends ViewRecord
             ]),
             Section::make('Cronologia')->schema([
                 TextEntry::make('timeline')->hiddenLabel()->state(fn (Order $r) => $r->events()->with('user')->get()->map(fn ($e) => sprintf(
-                    '[%s] %s%s%s', self::when($e->created_at), $e->internal ? 'NOTA INTERNA — ' : '', $e->message, $e->user ? ' ('.$e->user->name.')' : '',
+                    '[%s] %s%s%s', self::when($e->created_at), $e->internal ? 'NOTA INTERNA — ' : '', LegacyPlan::scrub((string) $e->message), $e->user ? ' ('.$e->user->name.')' : '',
                 ))->implode("\n") ?: 'Nessun evento registrato')->extraAttributes(['style' => 'white-space: pre-line']),
             ]),
         ]);

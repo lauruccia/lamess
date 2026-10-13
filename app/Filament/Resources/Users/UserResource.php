@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Users;
 use App\Domain\Access\Roles;
 use App\Domain\Access\UserAdministration;
 use App\Domain\Features\FeatureRegistry;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -92,7 +93,7 @@ class UserResource extends Resource
                         ->options(Roles::PRESET_LABELS)->placeholder('Scegli un profilo per pre-compilare i permessi')
                         ->live()->afterStateUpdated(fn ($state, Set $set) => $set('permissions', $state ? Roles::preset((string) $state) : [])),
                     CheckboxList::make('permissions')->label('Permessi concessi')->columns(2)->bulkToggleable()
-                        ->options(collect(Roles::grantable())->mapWithKeys(fn (string $p) => [$p => Roles::PERMISSIONS[$p]])->all()),
+                        ->options(collect(Roles::grantable())->mapWithKeys(fn (string $p) => [$p => LegacyPlan::scrub(Roles::PERMISSIONS[$p])])->all()),
                 ]),
             Section::make('Voci di menu visibili')
                 ->description('Il permesso decide cosa può fare; qui scegli cosa vede. Le voci non spuntate sono nascoste dal menu e bloccate anche se l\'utente conosce l\'indirizzo. Le caselle del Cruscotto riguardano i grafici della pagina iniziale.')

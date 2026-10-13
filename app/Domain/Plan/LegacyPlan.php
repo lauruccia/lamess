@@ -123,4 +123,36 @@ final class LegacyPlan
 
         return $out;
     }
+
+    /** Frasi del vecchio piano e il loro equivalente neutro (usate da {@see self::scrub()}). */
+    private const NEUTRAL_PHRASES = [
+        'Ordini e movimenti PV' => 'Ordini',
+        'Ordine senza movimenti PV' => 'Ordine senza movimenti',
+        'PR ordine ≠ PV movimenti' => 'Importo ordine ≠ movimenti',
+        'Importo senza PR' => 'Importo senza movimenti',
+        'Verifica motore: PR diversi' => 'Verifica motore: valori diversi',
+        ': fattura e punti generati' => ': fattura generata',
+        ' e movimenti PV' => '',
+        ', registrare movimenti PV' => '',
+        'movimenti PV' => 'movimenti',
+        'Movimenti PV' => 'Movimenti',
+        'Team Bonus' => self::NEUTRAL_LABEL,
+        'Matching Bonus' => self::NEUTRAL_LABEL,
+        'Rank Bonus' => self::NEUTRAL_LABEL,
+        'Fast Start Bonus' => self::NEUTRAL_LABEL,
+    ];
+
+    /**
+     * Testo senza riferimenti al vecchio piano, se nascosto (frasi note, poi rete di sicurezza sulle sigle PV/PVF/PVC/PR).
+     * Serve per etichette e messaggi memorizzati: il dato resta com'è, cambia solo come lo si legge.
+     */
+    public static function scrub(string $text): string
+    {
+        if (self::visible() || $text === '') {
+            return $text;
+        }
+        $text = strtr($text, self::NEUTRAL_PHRASES);
+
+        return (string) preg_replace('/\b(PVF|PVC|PV|PR)\b/u', 'valori', $text);
+    }
 }

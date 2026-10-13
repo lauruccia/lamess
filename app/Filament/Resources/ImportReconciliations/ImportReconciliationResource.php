@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ImportReconciliations;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\GatedByPermission;
-use App\Filament\Resources\ImportReconciliations\Pages\ListImportReconciliations;
 use App\Filament\Resources\ImportReconciliations\Pages\EditImportReconciliation;
+use App\Filament\Resources\ImportReconciliations\Pages\ListImportReconciliations;
 use App\Models\ImportReconciliation;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -82,17 +83,17 @@ class ImportReconciliationResource extends Resource
             TextColumn::make('severity')->label('Gravità')->badge()->sortable()
                 ->formatStateUsing(fn (string $state) => ['error' => 'Bloccante', 'warning' => 'Da verificare', 'info' => 'Informativa'][$state] ?? $state)
                 ->color(fn (string $state) => ['error' => 'danger', 'warning' => 'warning', 'info' => 'gray'][$state] ?? 'gray'),
-            TextColumn::make('code')->label('Tipo')->formatStateUsing(fn (string $state) => ImportReconciliation::CODES[$state] ?? $state)->sortable(),
+            TextColumn::make('code')->label('Tipo')->formatStateUsing(fn (string $state) => LegacyPlan::scrub(ImportReconciliation::CODES[$state] ?? $state))->sortable(),
             TextColumn::make('subject_ref')->label('Riferimento')->searchable()->sortable(),
             TextColumn::make('subject_name')->label('Nome')->searchable()->limit(28),
-            TextColumn::make('message')->label('Dettaglio')->wrap()->limit(140)->tooltip(fn (ImportReconciliation $r) => $r->message),
+            TextColumn::make('message')->label('Dettaglio')->wrap()->limit(140)->formatStateUsing(fn (?string $state): ?string => $state === null ? null : LegacyPlan::scrub($state))->tooltip(fn (ImportReconciliation $r) => LegacyPlan::scrub((string) $r->message)),
             TextColumn::make('status')->label('Stato')->badge()
                 ->formatStateUsing(fn (string $state) => $state === 'accepted' ? 'Approvata' : 'Aperta')
                 ->color(fn (string $state) => $state === 'accepted' ? 'success' : 'warning'),
         ])->filters([
             SelectFilter::make('status')->label('Stato')->options(['open' => 'Aperte', 'accepted' => 'Approvate'])->default('open'),
             SelectFilter::make('severity')->label('Gravità')->options(['error' => 'Bloccanti', 'warning' => 'Da verificare', 'info' => 'Informative']),
-            SelectFilter::make('code')->label('Tipo')->options(ImportReconciliation::CODES),
+            SelectFilter::make('code')->label('Tipo')->options(array_map(fn (string $l): string => LegacyPlan::scrub($l), ImportReconciliation::CODES)),
         ])->recordActions([
             Action::make('accept')->authorize('orders.manage')->label('Approva')->iconButton()->tooltip('Approva')->icon('heroicon-o-check')->color('success')
                 ->visible(fn (ImportReconciliation $r) => $r->status === 'open')

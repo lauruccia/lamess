@@ -8,6 +8,7 @@ use App\Domain\Access\Roles;
 use App\Domain\Features\Feature;
 use App\Domain\Features\FeatureException;
 use App\Domain\Features\FeatureRegistry;
+use App\Domain\Plan\LegacyPlan;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -166,6 +167,11 @@ class FeaturesPage extends Page implements HasActions
         $needle = mb_strtolower(trim($this->search));
         $groups = [];
         foreach (FeatureRegistry::all() as $key => $def) {
+            if (LegacyPlan::hides($key)) {
+                continue;   // voce del vecchio piano: con il piano nascosto non si elenca nemmeno qui
+            }
+            $def['label'] = LegacyPlan::scrub((string) $def['label']);
+            $def['help'] = LegacyPlan::scrub((string) ($def['help'] ?? ''));
             if (($def['super'] || $this->underMenuEntry($key)) && ! $this->isSuper()) {
                 continue;   // le voci di menu le gestisce solo il super_admin: l'admin non sa nemmeno che esistono
             }

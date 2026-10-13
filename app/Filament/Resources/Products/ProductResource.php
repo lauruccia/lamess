@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Products;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Support\Num;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
@@ -384,7 +384,7 @@ class ProductResource extends Resource
                                         ->acceptedFileTypes($imageTypes)->disk('local')->directory('shop/products')->visibility('private')->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): string => self::storeOptimized($file))
                                         ->columnSpanFull()->helperText('Se la carichi, scegliendo questa variante il cliente vede la sua foto; altrimenti restano quelle del prodotto.'),
                                 ])
-                                ->helperText('Una variante già venduta non si può eliminare: nascondila. Giacenza vuota = sempre disponibile. I PV si calcolano dal prezzo di ogni variante.'),
+                                ->helperText('Una variante già venduta non si può eliminare: nascondila. Giacenza vuota = sempre disponibile.'.(LegacyPlan::visible() ? ' I PV si calcolano dal prezzo di ogni variante.' : '')),
                         ]),
                         Tab::make('Kit')->icon('heroicon-o-gift')->badge(fn (Get $get) => $get('is_kit') ? 'attivo' : null)->schema([
                             Text::make('Un kit è una confezione che riunisce più prodotti venduti insieme a un prezzo unico (per esempio una box regalo con crema, scrub e profumo). Il cliente vede e paga un solo articolo; nell\'ordine compaiono anche i prodotti contenuti, a prezzo e PV zero.')->color('gray'),

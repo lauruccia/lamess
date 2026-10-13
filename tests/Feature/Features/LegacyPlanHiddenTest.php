@@ -11,14 +11,17 @@ use App\Domain\Payouts\StatementService;
 use App\Domain\Periods\PeriodService;
 use App\Domain\Plan\ActiveStatus;
 use App\Domain\Plan\LegacyPlan;
+use App\Filament\Pages\FeaturesPage;
 use App\Filament\Pages\LegacyPlanPage;
 use App\Models\Consultant;
+use App\Models\ImportReconciliation;
 use App\Models\Period;
 use App\Models\PvMovement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Support\NetworkDb;
 use Tests\TestCase;
 
@@ -75,7 +78,7 @@ final class LegacyPlanHiddenTest extends TestCase
         $this->assertFalse(LegacyPlan::canToggle($admin));
 
         $this->actingAs($admin)->get('/admin/piano-precedente')->assertForbidden();
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         LegacyPlan::hide();
     }
 
@@ -178,5 +181,27 @@ final class LegacyPlanHiddenTest extends TestCase
 
         $this->hide();
         $this->get('/admin/comp-plan-versions')->assertOk()->assertDontSee($legacyName);
+    }
+
+    public function test_stored_texts_and_labels_lose_the_old_terms_only_while_hidden(): void
+    {
+        $this->assertSame('Ordine senza movimenti PV', LegacyPlan::scrub('Ordine senza movimenti PV'));
+
+        $this->hide();
+        $this->assertSame('Ordine senza movimenti', LegacyPlan::scrub('Ordine senza movimenti PV'));
+        $this->assertSame('Pagamento confermato: fattura generata', LegacyPlan::scrub('Pagamento confermato: fattura e punti generati'));
+        $this->assertSame('Vedere periodi, calcoli', LegacyPlan::scrub('Vedere periodi, calcoli e movimenti PV'));
+        $this->assertDoesNotMatchRegularExpression('/\b(PVF|PVC|PV|PR)\b/', LegacyPlan::scrub('PR di gruppo 12, PVF 3 e PV 4'));
+        foreach (ImportReconciliation::CODES as $label) {
+            $this->assertDoesNotMatchRegularExpression('/\b(PVF|PVC|PV|PR)\b/', LegacyPlan::scrub($label));
+        }
+    }
+
+    public function test_the_features_page_does_not_list_old_plan_entries_when_hidden(): void
+    {
+        $this->actingAs($this->super);
+        Livewire::test(FeaturesPage::class)->assertSee('Volumi e rank');
+        $this->hide();
+        Livewire::test(FeaturesPage::class)->assertDontSee('Volumi e rank')->assertDontSee('Movimenti PV');
     }
 }

@@ -65,7 +65,7 @@ final class ConsultantList
         $run = $this->runId();
         $stat = static fn (string $col): string => $run === null ? 'null' : "(select s.{$col} from consultant_period_stats s where s.run_id = {$run} and s.consultant_id = consultants.id)";
 
-        return $query->select('consultants.*')->selectRaw(implode(', ', [
+        return $query->with('latestIvdContract')->select('consultants.*')->selectRaw(implode(', ', [
             '(select sp.code from consultants sp where sp.id = consultants.sponsor_id) as sponsor_code',
             '(select sp.name from consultants sp where sp.id = consultants.sponsor_id) as sponsor_name',
             '(select u.email from users u where u.id = consultants.user_id) as user_email',

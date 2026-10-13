@@ -8,6 +8,7 @@ use App\Domain\Network\NetworkException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Consultant extends Model
 {
@@ -33,6 +34,12 @@ class Consultant extends Model
     public function kycDocuments(): HasMany
     {
         return $this->hasMany(KycDocument::class);
+    }
+
+    /** Ultima lettera IVD: precaricabile in lista per non fare una query per riga. */
+    public function latestIvdContract(): HasOne
+    {
+        return $this->hasOne(IvdContract::class)->latestOfMany();
     }
 
     /** Data di ingresso usata dal motore: l'ingresso effettivo in rete se noto, altrimenti la firma della lettera. */

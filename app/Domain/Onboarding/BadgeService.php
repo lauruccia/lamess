@@ -6,11 +6,11 @@ namespace App\Domain\Onboarding;
 
 use App\Models\Consultant;
 use App\Models\IvdContract;
-use Barryvdh\DomPDF\Facade\Pdf;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
@@ -102,6 +102,10 @@ final class BadgeService
 
     private function latestContract(Consultant $c): ?IvdContract
     {
+        if ($c->relationLoaded('latestIvdContract')) {
+            return $c->latestIvdContract;
+        }
+
         return IvdContract::where('consultant_id', $c->id)->latest('id')->first();
     }
 

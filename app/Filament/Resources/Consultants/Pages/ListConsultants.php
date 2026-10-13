@@ -9,6 +9,7 @@ use App\Filament\Pages\Base\SuperadminListRecords;
 use App\Filament\Pages\ConsultantLevelsPage;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\ConsultantList;
+use App\Filament\Support\RankHoldAction;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Schemas\Components\Tabs;
@@ -25,6 +26,7 @@ class ListConsultants extends SuperadminListRecords
         return [
             Action::make('levels')->label('Elenco per livelli')->icon('heroicon-o-bars-3-bottom-left')->color('gray')
                 ->visible(fn (): bool => ConsultantLevelsPage::canAccess())->url(fn (): string => ConsultantLevelsPage::getUrl()),
+            RankHoldAction::all()->visible(fn (): bool => Feature::enabled('consultant360.action.hold_rank')),
             CreateAction::make()->label('Nuovo incaricato'),
         ];
     }

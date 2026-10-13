@@ -13,6 +13,7 @@ use App\Domain\Network\TreeOperations;
 use App\Domain\Onboarding\BadgeService;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\KycRequestAction;
+use App\Filament\Support\RankHoldAction;
 use App\Filament\Support\SendDocumentsAction;
 use App\Models\CompPlanVersion;
 use App\Models\Consultant;
@@ -174,20 +175,11 @@ class ViewConsultant extends ViewRecord
                 ->visible(fn () => $this->record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank'))
                 ->modalDescription('La qualifica attuale non si riduce per mancanza di clienti fino alla data scelta (può comunque salire). Lascia la data vuota per togliere la protezione. Viene registrato nel log.')
                 ->fillForm(fn () => ['rank_hold_until' => $this->record->rank_hold_until?->format('Y-m-d'), 'reason' => $this->record->rank_hold_reason])
-                ->schema([
-                    DatePicker::make('rank_hold_until')->label('Mantieni la qualifica fino al')->native(false)->displayFormat('d/m/Y')->format('Y-m-d')
-                        ->helperText('Sono protetti i mesi che finiscono entro questa data: per proteggere tutto ottobre indica il 31/10.'),
-                    Textarea::make('reason')->label('Motivo')->required()->maxLength(500),
-                ])
+                ->schema(RankHoldAction::form())
                 ->action(function (array $data): void {
                     $until = filled($data['rank_hold_until'] ?? null) ? (string) $data['rank_hold_until'] : null;
-                    $before = $this->record->rank_hold_until?->format('Y-m-d');
-                    $this->record->update(['rank_hold_until' => $until, 'rank_hold_reason' => $until === null ? null : $data['reason']]);
-                    AuditLog::record(
-                        $until === null ? 'rank.hold_removed' : 'rank.hold',
-                        $until === null ? "Protezione della qualifica tolta: incaricato {$this->record->code}" : "Qualifica mantenuta fino al {$until}: incaricato {$this->record->code}",
-                        $this->record, ['fino_al' => ['prima' => $before, 'dopo' => $until]], $data['reason'],
-                    );
+                    RankHoldAction::apply([$this->record], $until, (string) $data['reason']);
+                    $this->record->refresh();
                     Notification::make()->title($until === null ? 'Protezione tolta' : 'Qualifica mantenuta fino al '.CarbonImmutable::parse($until)->format('d/m/Y'))->body('Vale dal prossimo ricalcolo del periodo (automatico ogni notte).')->success()->send();
                 }),
             Action::make('suspend')->authorize('network.manage')->label('Sospendi')->color('warning')->schema($reason)

@@ -56,7 +56,7 @@ final class KycRequestAction
     /** Azione sulla riga dell'elenco (il record arriva da Filament). */
     public static function forRow(): Action
     {
-        return self::base()->iconButton()->tooltip('Richiedi documenti')
+        return self::base()
             ->visible(fn (Consultant $record): bool => $record->status !== 'terminated')
             ->fillForm(fn (Consultant $record): array => ['types' => app(KycService::class)->missingTypes($record)])
             ->action(function (array $data, Consultant $record): void {

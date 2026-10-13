@@ -8,6 +8,7 @@ use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
 use App\Domain\Network\NetworkService;
 use App\Domain\Periods\PeriodService;
+use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Resources\Consultants\Pages\ViewConsultant;
 use App\Filament\Resources\KycDocuments\Pages\ListKycDocuments;
 use App\Filament\Resources\PvMovements\Pages\ListPvMovements;
@@ -91,6 +92,35 @@ final class Consultant360Test extends TestCase
         $c = new Consultant360($this->b);
         $this->assertSame('IT60•••••••••••••••••••3456', $c->maskIban('IT60X0542811101000000123456'));
         $this->open($this->super, $this->b)->assertOk()->assertDontSee('IT60X0542811101000000123456');
+    }
+
+    public function test_the_rank_of_one_incaricato_can_be_held_until_a_date_and_removed(): void
+    {
+        $this->actingAs($this->super);
+        Livewire::test(ViewConsultant::class, ['record' => $this->b->id])
+            ->callAction('holdRank', ['rank_hold_until' => '2026-12-31', 'reason' => 'Già registrato'])->assertNotified();
+        $this->assertSame('2026-12-31', $this->b->refresh()->rank_hold_until->format('Y-m-d'));
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'rank.hold')->where('subject_id', (string) $this->b->id)->count());
+
+        Livewire::test(ViewConsultant::class, ['record' => $this->b->id])->callAction('holdRank', ['rank_hold_until' => null, 'reason' => 'Fine']);
+        $this->assertNull($this->b->refresh()->rank_hold_until);
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'rank.hold_removed')->count());
+    }
+
+    public function test_the_rank_can_be_held_for_the_selected_incaricati_and_for_all_the_registered_ones(): void
+    {
+        $gone = $this->consultant('Z', $this->a, 'PEARL');
+        $gone->update(['status' => 'terminated']);
+        $this->actingAs($this->super);
+
+        Livewire::test(ListConsultants::class)->callTableBulkAction('holdRankBulk', [$this->b], ['rank_hold_until' => '2026-11-30', 'reason' => 'Selezione']);
+        $this->assertSame('2026-11-30', $this->b->refresh()->rank_hold_until->format('Y-m-d'));
+        $this->assertNull($this->a->refresh()->rank_hold_until);
+
+        Livewire::test(ListConsultants::class)->callAction('holdRankAll', ['rank_hold_until' => '2026-12-31', 'reason' => 'Tutti']);
+        $this->assertSame('2026-12-31', $this->a->refresh()->rank_hold_until->format('Y-m-d'));
+        $this->assertSame('2026-12-31', $this->b->refresh()->rank_hold_until->format('Y-m-d'));
+        $this->assertNull($gone->refresh()->rank_hold_until, 'i cessati sono esclusi');
     }
 
     public function test_reveal_iban_is_off_by_default_and_logged_when_on(): void

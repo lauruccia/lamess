@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Pages;
 
+use App\Domain\Engine\Support\Num;
 use App\Domain\Orders\OrderService;
+use App\Domain\Orders\PricedLine;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -21,6 +23,11 @@ class ViewOrder extends ViewRecord
     public function getTitle(): string
     {
         return 'Ordine '.$this->record->number;
+    }
+
+    private static function shippingGross(Order $r): string
+    {
+        return (string) PricedLine::gross(Num::of((string) $r->shipping_net), (string) $r->shipping_vat_rate);
     }
 
     private static function eur(string|int|float|null $v): string
@@ -61,15 +68,15 @@ class ViewOrder extends ViewRecord
                 RepeatableEntry::make('items')->hiddenLabel()->columns(5)->schema([
                     TextEntry::make('name')->label('Prodotto')->columnSpan(2),
                     TextEntry::make('qty')->label('Q.tà'),
-                    TextEntry::make('unit_net')->label('Netto unitario')->money('EUR'),
+                    TextEntry::make('unit_gross')->label('Prezzo unitario (IVA incl.)')->state(fn ($record) => self::eur((string) PricedLine::gross(Num::of((string) $record->unit_net), (string) $record->vat_rate))),
                     TextEntry::make('qty_refunded')->label('Resi'),
                 ]),
             ]),
             Section::make('Totali')->columns(5)->schema([
-                TextEntry::make('subtotal_net')->label('Imponibile prodotti')->state(fn (Order $r) => self::eur($r->subtotal_net)),
-                TextEntry::make('shipping_net')->label('Spedizione (netto)')->state(fn (Order $r) => self::eur($r->shipping_net)),
-                TextEntry::make('vat_total')->label('IVA')->state(fn (Order $r) => self::eur($r->vat_total)),
+                TextEntry::make('products_gross')->label('Prodotti (IVA incl.)')->state(fn (Order $r) => self::eur((float) $r->total - (float) self::shippingGross($r))),
+                TextEntry::make('shipping_gross')->label('Spedizione (IVA incl.)')->state(fn (Order $r) => self::eur(self::shippingGross($r))),
                 TextEntry::make('total')->label('Totale')->state(fn (Order $r) => self::eur($r->total))->weight('bold'),
+                TextEntry::make('vat_total')->label('di cui IVA')->state(fn (Order $r) => self::eur($r->vat_total)),
                 TextEntry::make('discounts_text')->label('Sconti')->state(fn (Order $r) => $r->discounts ? collect($r->discounts)->map(fn ($d) => $d['code'] ?: $d['name'])->implode(', ') : '—'),
             ]),
             Section::make('Pagamenti e rimborsi')->schema([
@@ -105,7 +112,9 @@ class ViewOrder extends ViewRecord
             $lines[] = sprintf('Pagamento %s · %s · %s%s', OrderService::methodLabel($p->method), self::eur($p->amount), $p->status, $p->provider_ref ? ' · rif. '.$p->provider_ref : '');
         }
         foreach ($r->refunds()->get() as $f) {
-            $lines[] = sprintf('Rimborso %s · %s · %s%s', OrderService::methodLabel($f->method), self::eur($f->amount), match ($f->status) { 'done' => 'eseguito', 'failed' => 'NON RIUSCITO', default => 'da eseguire' }, $f->error ? ' · '.$f->error : '');
+            $lines[] = sprintf('Rimborso %s · %s · %s%s', OrderService::methodLabel($f->method), self::eur($f->amount), match ($f->status) {
+                'done' => 'eseguito', 'failed' => 'NON RIUSCITO', default => 'da eseguire'
+            }, $f->error ? ' · '.$f->error : '');
         }
 
         return implode("\n", $lines) ?: 'Nessun pagamento registrato';

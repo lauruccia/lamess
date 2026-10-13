@@ -10,7 +10,7 @@
  <a class="line-img" href="{{ $p->shopUrl() }}">@include('site.shop._thumb', ['product' => $p])</a>
  <div class="line-main">
   <a class="line-name" href="{{ $p->shopUrl() }}">{{ $p->displayName() }}</a>
-  <p class="line-price">€ {{ \App\Support\Money::eur($unitGross) }}@if($line->isDiscounted()) <s>€ {{ \App\Support\Money::eur($listGross) }}</s>@endif <span class="muted">cad.</span></p>
+  <p class="line-price">€ {{ \App\Support\Money::eur($unitGross) }}@if($line->isDiscounted()) <s>€ {{ \App\Support\Money::eur($listGross) }}</s>@endif <span class="muted">cad. · IVA inclusa</span></p>
   @if($max < 99 && $line->qty >= $max)<p class="line-warn">Massimo disponibile</p>@endif
   <div class="line-ctl">
    <div class="qty sm" data-qty @if($variant === 'drawer') data-line-update data-product="{{ $pid }}" @if($for) data-for="{{ $for }}" @endif @endif>

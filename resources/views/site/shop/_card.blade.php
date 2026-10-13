@@ -20,9 +20,9 @@
   <div class="pcard-foot">
    <div class="pcard-price">
     @if($withVariants && $range)
-     <p class="price">@if($range[0] !== $range[1])<span class="muted small">da</span> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b></p>
+     <p class="price">@if($range[0] !== $range[1])<span class="muted small">da</span> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b><span class="vat-note">IVA inclusa</span></p>
     @else
-     <p class="price"><b>€ {{ \App\Support\Money::eur($product->grossPrice()) }}</b>@if($product->compareAtGross()) <s>€ {{ \App\Support\Money::eur($product->compareAtGross()) }}</s>@endif</p>
+     <p class="price"><b>€ {{ \App\Support\Money::eur($product->grossPrice()) }}</b>@if($product->compareAtGross()) <s>€ {{ \App\Support\Money::eur($product->compareAtGross()) }}</s>@endif<span class="vat-note">IVA inclusa</span></p>
     @endif
     @if($product->category)<span class="pcard-chip">{{ $product->category->name }}</span>@endif
    </div>

@@ -6,6 +6,8 @@ namespace App\Domain\Orders;
 
 use App\Models\KMoneyLink;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\Subscription;
 use App\Models\User;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -18,7 +20,7 @@ use Illuminate\Support\Str;
  * Pagamento con KMoney tramite kmoney-app: «Accedi con KMoney» (OAuth2 + PKCE) e addebito col mandato del cliente.
  * Le credenziali del cliente non passano mai di qui: il cliente le inserisce solo su KMoney.
  */
-final class KMoneyApiProvider implements PartialKMoneyRefund
+final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRefund
 {
     public const SCOPES = 'profile account.read mandate';
 
@@ -127,7 +129,7 @@ final class KMoneyApiProvider implements PartialKMoneyRefund
                 'order_title' => "Ordine {$order->number} · Lamèss", 'quantity' => 1,
                 // Stabile sui tentativi: lo stesso ordine e importo non può mai essere addebitato due volte.
                 'idempotency_key' => "lamess-{$order->number}-{$cents}", 'return_url' => self::redirectUri(),
-            ]);
+            ] + ($order->subscription_id ? ['subscription_id' => (string) $order->subscription_id] : []));
         } catch (\Throwable $e) {
             Log::error('KMoney: errore di rete nell\'addebito', ['order' => $order->number, 'error' => $e->getMessage()]);
 
@@ -139,6 +141,10 @@ final class KMoneyApiProvider implements PartialKMoneyRefund
         if ($res->status() === 402) {
             return new PaymentResult(false, null, (string) ($res->json('reason') ?? 'confirmation_required'), $res->json('confirmation_url'));
         }
+        // Il cliente ha bloccato questo abbonamento su KMoney: non è un errore da ritentare né una conferma da chiedere.
+        if ($res->status() === 403 && $res->json('reason') === 'subscription_blocked') {
+            return new PaymentResult(false, null, 'subscription_blocked');
+        }
         if ($res->status() === 404 && $res->json('reason') === 'mandate_not_found') {
             $link->update(['mandate_uuid' => null]);
 
@@ -147,6 +153,47 @@ final class KMoneyApiProvider implements PartialKMoneyRefund
         Log::warning('KMoney: addebito rifiutato', ['order' => $order->number, 'status' => $res->status(), 'reason' => $res->json('reason')]);
 
         return new PaymentResult(false, null, (string) ($res->json('message') ?? 'Addebito KMoney non riuscito.'));
+    }
+
+    /**
+     * Manda a KMoney lo stato dell'abbonamento: da lì il cliente vede importo, prossimo addebito e stato, e può bloccarlo.
+     * Mai bloccante: senza collegamento, senza rete o con KMoney che risponde male si registra l'avviso e si va avanti.
+     */
+    public function syncSubscription(Subscription $subscription): void
+    {
+        try {
+            $link = KMoneyLink::where('user_id', $subscription->user_id)->first();
+            if (! $link || ! $this->freshToken($link)) {
+                return;
+            }
+            $lines = (array) $subscription->lines;
+            $names = Product::whereIn('id', array_keys($lines))->pluck('name', 'id');
+            $items = [];
+            foreach ($lines as $productId => $qty) {
+                $items[] = Str::limit($qty.' × '.($names[$productId] ?? 'prodotto'), 250, '');
+            }
+            $qty = (int) array_sum($lines);
+            $kmoneyAmount = $subscription->orders()->where('payment_method', 'kmoney')->latest('id')->value('kmoney_amount');
+            $res = $this->api($link)->timeout(8)->put($this->url('/api/v1/subscriptions/'.$subscription->id), [
+                'title' => $qty.' '.($qty === 1 ? 'prodotto' : 'prodotti').' al mese',
+                'items' => $items,
+                'seller_account_number' => config('lamess.kmoney.seller_account'),
+                'amount' => $kmoneyAmount === null ? null : BigDecimal::of((string) $kmoneyAmount)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp)->toInt(),
+                'interval_months' => 1,
+                'status' => match ($subscription->status) {
+                    Subscription::ACTIVE => 'active',
+                    Subscription::CANCELLED => 'cancelled',
+                    default => 'paused',
+                },
+                'next_charge_at' => $subscription->next_run_at?->toIso8601String(),
+                'last_error' => $subscription->last_error ? Str::limit($subscription->last_error, 250, '') : null,
+            ]);
+            if (! $res->successful()) {
+                Log::warning('KMoney: copia dell\'abbonamento non accettata', ['subscription' => $subscription->id, 'status' => $res->status(), 'reason' => $res->json('reason')]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('KMoney: copia dell\'abbonamento non inviata', ['subscription' => $subscription->id, 'error' => $e->getMessage()]);
+        }
     }
 
     /** Rimborso: trasferimento dal conto venditore al conto KMoney del cliente (API con token del venditore). */

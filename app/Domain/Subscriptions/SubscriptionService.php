@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Subscriptions;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Orders\KMoneyProvider;
+use App\Domain\Orders\KMoneySubscriptionSync;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Models\Order;
@@ -13,6 +15,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use Throwable;
 
@@ -27,6 +30,8 @@ use Throwable;
 final class SubscriptionService
 {
     private const NOT_LINKED = 'Per pagare con KMoney collega prima il tuo conto KMoney dalla tua area.';
+
+    private const BLOCKED = 'Hai bloccato questo abbonamento su KMoney: sbloccalo su KMoney e poi riprendilo da qui.';
 
     public function __construct(private readonly OrderService $orders) {}
 
@@ -146,9 +151,12 @@ final class SubscriptionService
                 $order = $sub->orders()->where('status', 'pending_payment')->latest('id')->first()
                     ?? $this->orders->place($sub->user, $sub->lines, $sub->country_code, $sub->payment_method, $sub->billing, $now, 'Ordine da abbonamento #'.$sub->id, $sub->for_others ?? [], $sub, [], $kmoney ? 'card' : null);
                 if ($kmoney) {
+                    // KMoney deve conoscere l'abbonamento prima dell'addebito: è così che il ciclo si lega all'abbonamento e il cliente può bloccarlo.
+                    $this->syncKMoney($sub);
                     $r = $this->orders->payByKMoney($order);
                     if (! $r->paid) {
                         throw new OrderException(match (true) {
+                            $r->error === 'subscription_blocked' => self::BLOCKED,
                             $r->error === 'not_linked' => self::NOT_LINKED,
                             $r->redirectUrl !== null => 'KMoney chiede una conferma del cliente: un addebito automatico non è possibile.',
                             default => $r->error ?: 'Addebito KMoney non riuscito: saldo insufficiente o servizio non raggiungibile.',
@@ -168,6 +176,11 @@ final class SubscriptionService
                     $this->orders->cancel($order);
                 }
 
+                // Il cliente ha fermato l'abbonamento su KMoney: ritentare non serve, si mette subito in pausa.
+                if ($e->getMessage() === self::BLOCKED) {
+                    return $this->pauseBlocked($sub);
+                }
+
                 return $this->fail($sub, $e->getMessage(), $now);
             }
             $done = $sub->cycles_done + 1;
@@ -175,6 +188,7 @@ final class SubscriptionService
                 'cycles_done' => $done, 'retry_count' => 0, 'last_error' => null,
                 'next_run_at' => CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow($done + $sub->skip_months),
             ]);
+            $this->syncKMoney($sub);
 
             return 'paid';
         } finally {
@@ -212,6 +226,7 @@ final class SubscriptionService
         }
         $sub->update(['status' => Subscription::PAUSED, 'paused_at' => now(), 'next_run_at' => null]);
         AuditLog::record('subscription.paused', "Abbonamento #{$sub->id} in pausa", $sub, [], $reason);
+        $this->syncKMoney($sub);
 
         return $sub->refresh();
     }
@@ -247,6 +262,7 @@ final class SubscriptionService
         }
         $sub->update(['skip_months' => $sub->skip_months + 1, 'next_run_at' => $next]);
         AuditLog::record('subscription.skipped', "Abbonamento #{$sub->id}: prossimo addebito spostato al {$next->format('d/m/Y')}", $sub, ['mesi_saltati' => $sub->skip_months]);
+        $this->syncKMoney($sub);
 
         return $sub->refresh();
     }
@@ -280,6 +296,7 @@ final class SubscriptionService
         $early = $sub->status !== Subscription::PENDING && $sub->commitment_months > 0 && $sub->cycles_done < $sub->commitment_months;
         $sub->update(['status' => Subscription::CANCELLED, 'cancelled_at' => now(), 'cancel_reason' => $reason, 'early_cancel' => $early, 'next_run_at' => null]);
         AuditLog::record('subscription.cancelled', "Abbonamento #{$sub->id} annullato".($early ? ' prima dell\'impegno minimo' : ''), $sub, ['disdetta_anticipata' => $early, 'cicli' => $sub->cycles_done], $reason);
+        $this->syncKMoney($sub);
 
         return $sub->refresh();
     }
@@ -311,11 +328,43 @@ final class SubscriptionService
             $sub->update(['status' => Subscription::PAUSED, 'paused_at' => now(), 'retry_count' => $tries, 'last_error' => $error, 'next_run_at' => null]);
             $this->releasePendingOrders($sub);
             AuditLog::record('subscription.paused', "Abbonamento #{$sub->id} in pausa dopo {$tries} addebiti non riusciti", $sub, ['errore' => $error]);
+            $this->syncKMoney($sub);
 
             return 'paused';
         }
         $sub->update(['retry_count' => $tries, 'last_error' => $error, 'next_run_at' => CarbonImmutable::instance($now)->addDays((int) config('lamess.subscription.retry_days'))]);
+        $this->syncKMoney($sub);
 
         return 'failed';
+    }
+
+    /** Il cliente ha bloccato l'abbonamento su KMoney: pausa subito, senza consumare i tentativi, e l'ordine in attesa si chiude. */
+    private function pauseBlocked(Subscription $sub): string
+    {
+        $sub->update(['status' => Subscription::PAUSED, 'paused_at' => now(), 'last_error' => self::BLOCKED, 'next_run_at' => null]);
+        $this->releasePendingOrders($sub);
+        AuditLog::record('subscription.paused', "Abbonamento #{$sub->id} in pausa: bloccato dal cliente su KMoney", $sub, [], 'Bloccato dal cliente su KMoney');
+        $this->syncKMoney($sub);
+
+        return 'paused';
+    }
+
+    /**
+     * Manda a KMoney la copia dell'abbonamento, così il cliente lo vede nella sua area KMoney (con importi e date) e può bloccarlo.
+     * Solo per gli abbonamenti pagati con KMoney e mai bloccante: un problema qui non deve fermare né un addebito né una disdetta.
+     */
+    private function syncKMoney(Subscription $sub): void
+    {
+        if ($sub->payment_method !== Subscription::METHOD_KMONEY) {
+            return;
+        }
+        try {
+            $provider = app(KMoneyProvider::class);
+            if ($provider instanceof KMoneySubscriptionSync) {
+                $provider->syncSubscription($sub->refresh());
+            }
+        } catch (Throwable $e) {
+            Log::warning('KMoney: copia dell\'abbonamento non inviata', ['subscription' => $sub->id, 'error' => $e->getMessage()]);
+        }
     }
 }

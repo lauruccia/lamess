@@ -15,6 +15,6 @@
    @endif
   </div>
  @endif
- <div class="grand"><dt>Totale</dt><dd>€ {{ \App\Support\Money::eur($t['total']) }}</dd></div>
- <div class="vat-row"><dt>di cui IVA</dt><dd>€ {{ \App\Support\Money::eur($t['vat']) }}</dd></div>
+ @php($vatRates = collect($priced->lines)->map(fn ($l) => (string) $l->product->vat_rate)->when($priced->shippingNet->isPositive(), fn ($c) => $c->push((string) $priced->shippingVatRate))->map(fn ($r) => rtrim(rtrim(number_format((float) $r, 2, ',', ''), '0'), ','))->unique()->implode('% / '))
+ <div class="grand"><dt>Totale <small class="vat-pct">IVA {{ $vatRates }}% inclusa</small></dt><dd>€ {{ \App\Support\Money::eur($t['total']) }}</dd></div>
 </dl>

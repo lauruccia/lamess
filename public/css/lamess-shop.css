@@ -790,3 +790,11 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 /* % KMoney in basso a sinistra sull'immagine: non copre il nome né le altre etichette */
 .tags.tags-bottom{top:auto;bottom:10px;left:10px}
 @media(max-width:640px){.tags.tags-bottom{top:auto;bottom:7px;left:7px}}
+
+/* Una sola riga: IVA indicata solo in %, nomi e immagini mancanti non vanno a capo né invadono le righe */
+.totals .vat-pct{font-size:12px;font-weight:400;color:var(--muted);margin-left:6px;white-space:nowrap}
+.totals .grand dt{white-space:nowrap}
+.co-thumb img,.line-img img,.pcard-img img{overflow:hidden;font-size:0;color:transparent}
+.co-name,.line-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.line-name{display:block}
+.pcard h3{-webkit-line-clamp:1}

@@ -81,8 +81,8 @@
   <div class="panel-body" style="border-top:1px solid var(--hair)">
    <dl class="dl">
     @if($order->shipping_net > 0)<dt>Spedizione</dt><dd>€ {{ $eur(\App\Domain\Orders\PricedLine::gross(\App\Domain\Engine\Support\Num::of((string) $order->shipping_net), (string) $order->shipping_vat_rate)) }}</dd>@endif
-    <dt><strong>Totale</strong></dt><dd style="font-size:18px"><strong>€ {{ $eur($order->total) }}</strong></dd>
-    <dt class="muted">di cui IVA</dt><dd class="muted">€ {{ $eur($order->vat_total) }}</dd>
+    @php($vatRates = $order->items->map(fn ($i) => (string) $i->vat_rate)->when($order->shipping_net > 0, fn ($c) => $c->push((string) $order->shipping_vat_rate))->map(fn ($r) => rtrim(rtrim(number_format((float) $r, 2, ',', ''), '0'), ','))->unique()->implode('% / '))
+    <dt><strong>Totale</strong> <small class="muted">IVA {{ $vatRates }}% inclusa</small></dt><dd style="font-size:18px"><strong>€ {{ $eur($order->total) }}</strong></dd>
    </dl>
   </div>
  </section>

@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ShopDb;
 use Tests\TestCase;
 
-/** Carrello che resta finché l'ordine non è pagato, % KMoney nel negozio, IVA «di cui» sull'ordine. */
+/** Carrello che resta finché l'ordine non è pagato, % KMoney nel negozio, IVA inclusa con la sola % sull'ordine. */
 final class ShopRevisionsTest extends TestCase
 {
     use RefreshDatabase;
@@ -139,7 +139,7 @@ final class ShopRevisionsTest extends TestCase
         $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('Paga al 50% in KMoney e risparmia');
     }
 
-    public function test_order_page_shows_gross_amounts_with_the_vat_as_a_part_of_the_total(): void
+    public function test_order_page_shows_gross_amounts_with_only_the_vat_rate_indicated(): void
     {
         $this->card(true);
         $u = $this->buyer($this->activeSponsor());
@@ -152,8 +152,8 @@ final class ShopRevisionsTest extends TestCase
             ->assertSee('€ 122,00')            // riga prodotto IVA inclusa
             ->assertSee('€ 6,10')              // spedizione IVA inclusa
             ->assertSee('€ 128,10')            // totale
-            ->assertSee('di cui IVA')
-            ->assertSee('€ 23,10')
-            ->assertSeeInOrder(['Totale', 'di cui IVA']);
+            ->assertSee('IVA 22% inclusa')
+            ->assertDontSee('di cui IVA')
+            ->assertSeeInOrder(['Totale', 'IVA 22% inclusa']);
     }
 }

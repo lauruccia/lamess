@@ -75,7 +75,7 @@
   <div class="co-items">
    @foreach($priced->lines as $key => $line)
     @php($p = $line->product)
-    <div class="co-item"><span class="co-thumb">@include('site.shop._thumb', ['product' => $p])<i>{{ $line->qty }}</i></span><span class="co-name">{{ $p->displayName() }}@if($showKmoneyLines && $line->product->kmoneyPercent() > 0)<small class="co-km" data-km-only @if($pay !== 'kmoney') hidden @endif>In KMoney € {{ \App\Support\Money::eur($priced->kmoneyLineGross($line)) }}@if($line->product->kmoneyPercent() < 100) · resto € {{ \App\Support\Money::eur($line->grossLine()->minus($priced->kmoneyLineGross($line))) }}@endif</small>@endif</span><span class="co-price">€ {{ \App\Support\Money::eur($line->grossLine()) }}</span></div>
+    <div class="co-item"><span class="co-thumb">@include('site.shop._thumb', ['product' => $p])<i>{{ $line->qty }}</i></span><span class="co-name">{{ $p->displayName() }}@if($showKmoneyLines && $line->product->kmoneyPercent() > 0)<small class="co-km" data-km-only @if($pay !== 'kmoney') hidden @endif><b class="km-pill">{{ (int) $line->product->kmoneyPercent() }}%</b> In KMoney € {{ \App\Support\Money::eur($priced->kmoneyLineGross($line)) }}@if($line->product->kmoneyPercent() < 100) · resto € {{ \App\Support\Money::eur($line->grossLine()->minus($priced->kmoneyLineGross($line))) }}@endif</small>@endif</span><span class="co-price">€ {{ \App\Support\Money::eur($line->grossLine()) }}</span></div>
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])

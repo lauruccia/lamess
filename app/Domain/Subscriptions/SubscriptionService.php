@@ -184,10 +184,15 @@ final class SubscriptionService
                 return $this->fail($sub, $e->getMessage(), $now);
             }
             $done = $sub->cycles_done + 1;
-            $sub->update([
-                'cycles_done' => $done, 'retry_count' => 0, 'last_error' => null,
-                'next_run_at' => CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow($done + $sub->skip_months),
-            ]);
+            $skipped = $sub->skip_months;
+            $anchor = CarbonImmutable::instance($sub->started_at);
+            $next = $anchor->addMonthsNoOverflow($done + $skipped);
+            // Dopo una pausa lunga i mesi passati non si recuperano: si salta alla prima scadenza futura.
+            while ($next->lessThanOrEqualTo($now)) {
+                $skipped++;
+                $next = $anchor->addMonthsNoOverflow($done + $skipped);
+            }
+            $sub->update(['cycles_done' => $done, 'retry_count' => 0, 'last_error' => null, 'skip_months' => $skipped, 'next_run_at' => $next]);
             $this->syncKMoney($sub);
 
             return 'paid';
@@ -231,16 +236,25 @@ final class SubscriptionService
         return $sub->refresh();
     }
 
-    /** Riprende un abbonamento in pausa: il primo ordine parte subito, poi si riallinea al giorno di partenza. */
+    /**
+     * Riprende un abbonamento in pausa. Se il mese in corso è già pagato non addebita nulla: il prossimo ordine resta alla sua data.
+     * Se invece la scadenza è passata, l'ordine parte subito e i mesi di pausa non vengono recuperati.
+     */
     public function resume(Subscription $sub, ?DateTimeImmutable $now = null): Subscription
     {
         if ($sub->status !== Subscription::PAUSED) {
             throw new OrderException('Solo un abbonamento in pausa si può riprendere.');
         }
         $now ??= CarbonImmutable::now();
-        $sub->update(['status' => Subscription::ACTIVE, 'paused_at' => null, 'retry_count' => 0, 'last_error' => null, 'next_run_at' => $now]);
-        AuditLog::record('subscription.resumed', "Abbonamento #{$sub->id} ripreso", $sub);
-        $this->runCycle($sub, $now);
+        $due = CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow($sub->cycles_done + $sub->skip_months);
+        $payNow = $due->lessThanOrEqualTo($now);
+        $sub->update(['status' => Subscription::ACTIVE, 'paused_at' => null, 'retry_count' => 0, 'last_error' => null, 'next_run_at' => $payNow ? $now : $due]);
+        AuditLog::record('subscription.resumed', "Abbonamento #{$sub->id} ripreso", $sub, ['addebito_subito' => $payNow]);
+        if ($payNow) {
+            $this->runCycle($sub, $now);
+        } else {
+            $this->syncKMoney($sub);
+        }
 
         return $sub->refresh();
     }

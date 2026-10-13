@@ -248,6 +248,41 @@ final class SubscriptionsAndMultiOrdersTest extends TestCase
         $this->assertSame(1, $sub->cycles_done);
     }
 
+    public function test_pause_and_resume_in_the_same_month_does_not_charge_twice(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '10.00');
+        $sub = $this->subs()->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 12);
+        $this->assertSame(1, $sub->cycles_done);
+
+        $this->subs()->pause($sub->refresh());
+        $this->subs()->resume($sub->refresh());
+
+        $sub->refresh();
+        $this->assertSame('active', $sub->status);
+        $this->assertSame(1, $sub->cycles_done);
+        $this->assertSame(1, Order::where('subscription_id', $sub->id)->count(), 'il mese era già pagato: nessun secondo ordine');
+        $this->assertTrue($sub->next_run_at->equalTo(CarbonImmutable::instance($sub->started_at)->addMonthNoOverflow()));
+    }
+
+    public function test_resume_after_a_long_pause_charges_once_and_does_not_catch_up(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '10.00');
+        $sub = $this->subs()->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 12);
+        $this->subs()->pause($sub->refresh());
+
+        $this->travelTo(CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow(3)->addDays(5));
+        $this->subs()->resume($sub->refresh());
+
+        $sub->refresh();
+        $this->assertSame(2, $sub->cycles_done);
+        $this->assertSame(2, Order::where('subscription_id', $sub->id)->count());
+        $this->assertTrue($sub->next_run_at->greaterThan(now()), 'la prossima scadenza è futura');
+        $this->assertTrue($sub->next_run_at->lessThanOrEqualTo(now()->addMonthNoOverflow()->addDay()));
+        $this->assertSame(0, $this->subs()->runDue()['paid'], 'i mesi di pausa non si recuperano il giorno dopo');
+    }
+
     public function test_early_cancellation_is_flagged_and_audited(): void
     {
         $u = $this->buyer($this->activeSponsor());

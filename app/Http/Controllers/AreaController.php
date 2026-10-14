@@ -57,9 +57,21 @@ class AreaController extends Controller
 
         return view('site.area.home', [
             'user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
-            'progress' => $live ? app(\App\Domain\Career\CareerProgress::class)->forConsultant($live->id) : null,
-            'earn' => $live ? app(\App\Domain\Career\EarningsSummary::class)->for($live->id) : null,
+            // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
+            'progress' => $live ? $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($live->id)) : null,
+            'earn' => $live ? $this->safely(static fn () => app(\App\Domain\Career\EarningsSummary::class)->for($live->id)) : null,
         ]);
+    }
+
+    private function safely(\Closure $fn): mixed
+    {
+        try {
+            return $fn();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     /**
@@ -111,7 +123,7 @@ class AreaController extends Controller
     {
         $me = $this->activeConsultant($request);
         $data = app(\App\Domain\Career\NetworkOverview::class)->for($me);
-        $progress = app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id);
+        $progress = $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id));
 
         return view('site.area.network', $data + ['progress' => $progress, 'kosmos' => $data['plan']?->kosmos !== null]);
     }
@@ -125,7 +137,7 @@ class AreaController extends Controller
             ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
         $period = Period::query()->orderByDesc('code')->first();
         $kosmos = $period?->planVersion->plan()->kosmos;
-        $progress = $kosmos !== null ? app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id) : null;
+        $progress = $kosmos !== null ? $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id)) : null;
 
         return view('site.area.customers', ['rows' => $rows, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress]);
     }

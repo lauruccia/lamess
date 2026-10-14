@@ -9,6 +9,7 @@ use App\Domain\Plan\LegacyPlan;
 use App\Models\CalculationRun;
 use App\Models\Period;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * «Quanto sto maturando»: compensi dell'ultimo calcolo per tipo (maturati, trattenuti) e Bonus di Struttura per stato.
@@ -40,7 +41,7 @@ final class EarningsSummary
             }
         }
         $structure = ['calculated' => 0.0, 'confirmed' => 0.0, 'paid' => 0.0, 'count' => 0];
-        foreach (DB::table('structure_bonuses')->where('beneficiary_id', $consultantId)->where('status', '!=', 'cancelled')->selectRaw('status, sum(amount) as amount, count(*) as n')->groupBy('status')->get() as $r) {
+        foreach (! Schema::hasTable('structure_bonuses') ? [] : DB::table('structure_bonuses')->where('beneficiary_id', $consultantId)->where('status', '!=', 'cancelled')->selectRaw('status, sum(amount) as amount, count(*) as n')->groupBy('status')->get() as $r) {
             if (isset($structure[(string) $r->status])) {
                 $structure[(string) $r->status] = (float) $r->amount;
             }

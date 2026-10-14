@@ -10,6 +10,7 @@ use App\Models\Consultant;
 use App\Models\ConsultantPeriodStat;
 use App\Models\Period;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Dati della pagina «Il mio ramo» per il piano Incaricati: per ogni persona della rete qualifica, clienti, diretti,
@@ -141,10 +142,11 @@ final class NetworkOverview
     private function volume(Period $period, array $ids, ?PlanConfig $plan): array
     {
         $perPv = $plan === null ? '1.5' : (string) $plan->commissionBasePerPv;
+        $expr = Schema::hasColumn('pv_movements', 'amount') ? 'coalesce(amount, pv * ?)' : 'pv * ?';
 
         return DB::table('pv_movements')->where('period_id', $period->id)->where('status', 'confirmed')->where('kind', 'pvf')->where('excluded_from_bonus', false)
             ->whereIn('consultant_id', $ids)->groupBy('consultant_id')
-            ->selectRaw('consultant_id, sum(coalesce(amount, pv * ?)) as eur', [$perPv])->pluck('eur', 'consultant_id')
+            ->selectRaw("consultant_id, sum({$expr}) as eur", [$perPv])->pluck('eur', 'consultant_id')
             ->map(static fn ($v) => (float) $v)->all();
     }
 }

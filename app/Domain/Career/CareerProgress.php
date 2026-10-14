@@ -56,7 +56,11 @@ final class CareerProgress
 
         $out = [];
         foreach ($stats as $id => $s) {
-            $out[$id] = $this->build($id, $s, $plan, $names, $awards->get($id, collect())->all(), $installments->get($id, collect())->all());
+            try {
+                $out[$id] = $this->build($id, $s, $plan, $names, $awards->get($id, collect())->all(), $installments->get($id, collect())->all());
+            } catch (\Throwable $e) {
+                report($e);   // un dato anomalo di un incaricato non deve bloccare gli altri
+            }
         }
 
         return $this->cache = $out;

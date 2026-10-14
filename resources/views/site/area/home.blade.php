@@ -88,7 +88,7 @@
   @if($c && $c->status === 'active' && $c->onboarding_complete)
    <section class="panel">
     <header><h2>Il mio avanzamento</h2><a href="/area/rete">Il mio ramo →</a></header>
-    <div class="panel-body">@include('partials.career-progress', ['p' => app(\App\Domain\Career\CareerProgress::class)->forConsultant($c->id)])</div>
+    <div class="panel-body">@include('partials.career-progress', ['p' => $progress])</div>
    </section>
   @endif
 

@@ -95,6 +95,7 @@ final class FeatureRegistry
         $pages = [
             'albero_rete' => ['Albero della rete', 'Rete'], 'elenco_livelli' => ['Elenco per livelli', 'Rete'],
             'confronto_qualifiche' => ['Confronto qualifiche', 'Compensi'],
+            'simulazione_incaricati' => ['Simulazione incaricati', 'Compensi'],
             'cruscotto_vendite' => ['Cruscotto vendite', 'Vendite'], 'negozio_pagamenti' => ['Pagamenti e spedizioni', 'Vendite'],
         ];
         foreach ($pages as $slug => [$label, $menu]) {

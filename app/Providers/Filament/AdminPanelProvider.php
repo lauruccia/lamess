@@ -11,6 +11,7 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\FeaturesPage;
 use App\Filament\Pages\GoLiveCheckPage;
 use App\Filament\Pages\NetworkTreePage;
+use App\Filament\Pages\IncaricatiSimulationPage;
 use App\Filament\Pages\RankComparisonPage;
 use App\Filament\Pages\SalesDashboardPage;
 use App\Filament\Pages\ShopSettingsPage;
@@ -86,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
                 FeaturesPage::class,
                 GoLiveCheckPage::class,
                 RankComparisonPage::class,
+                IncaricatiSimulationPage::class,
                 SalesDashboardPage::class,
             ])
             ->widgets([

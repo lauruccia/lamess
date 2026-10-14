@@ -478,7 +478,11 @@ class ProductResource extends Resource
     {
         return $table->defaultSort('sort_order')->columns([
             ImageColumn::make('cover')->label('')->state(fn (Product $r) => $r->coverUrl())->imageSize(44)->extraImgAttributes(['style' => 'object-fit:cover;border-radius:8px']),
-            TextColumn::make('name')->label('Prodotto')->searchable()->sortable()->description(fn (Product $r) => $r->sku)
+            TextColumn::make('name')->label('Prodotto')->sortable()
+                ->limit(28)
+                ->tooltip(fn (Product $r): string => $r->name.' — '.$r->sku)
+                ->description(fn (Product $r) => Str::limit((string) $r->sku, 28))
+                ->extraAttributes(['style' => 'max-width:16rem'])
                 ->searchable(['name', 'sku']),
             TextColumn::make('category.name')->label('Categoria')->badge()->color('gray')->placeholder('—')->toggleable(),
             TextColumn::make('price')->label('Prezzo IVA incl. €')->alignEnd()

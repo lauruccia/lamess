@@ -12,6 +12,7 @@ use App\Domain\Orders\OrderService;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\SubscriptionChargeFailed;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Support\Arr;
@@ -343,13 +344,25 @@ final class SubscriptionService
             $this->releasePendingOrders($sub);
             AuditLog::record('subscription.paused', "Abbonamento #{$sub->id} in pausa dopo {$tries} addebiti non riusciti", $sub, ['errore' => $error]);
             $this->syncKMoney($sub);
+            $this->notifyChargeFailed($sub, true);
 
             return 'paused';
         }
         $sub->update(['retry_count' => $tries, 'last_error' => $error, 'next_run_at' => CarbonImmutable::instance($now)->addDays((int) config('lamess.subscription.retry_days'))]);
         $this->syncKMoney($sub);
+        $this->notifyChargeFailed($sub, false);
 
         return 'failed';
+    }
+
+    /** Email al cliente: un errore di posta non deve mai fermare il ciclo di addebiti. */
+    private function notifyChargeFailed(Subscription $sub, bool $paused): void
+    {
+        try {
+            $sub->user?->notify(new SubscriptionChargeFailed($sub, $paused, (int) config('lamess.subscription.retry_days')));
+        } catch (Throwable $e) {
+            AuditLog::record('subscription.notify_failed', "Abbonamento #{$sub->id}: email di addebito non riuscito non inviata", $sub, ['errore' => $e->getMessage()]);
+        }
     }
 
     /** Il cliente ha bloccato l'abbonamento su KMoney: pausa subito, senza consumare i tentativi, e l'ordine in attesa si chiude. */

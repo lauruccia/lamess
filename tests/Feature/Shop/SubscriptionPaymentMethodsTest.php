@@ -15,6 +15,7 @@ use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\SubscriptionChargeFailed;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -391,6 +392,12 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->assertSame(1, $sub->cycles_done);
         $this->assertStringContainsString('card was declined', (string) $sub->last_error);
         $this->assertSame(0, Order::where('subscription_id', $sub->id)->where('status', 'pending_payment')->count(), 'nessun ordine in sospeso');
+        Notification::assertSentTo($u, SubscriptionChargeFailed::class, fn ($n) => ! $n->paused);
+
+        // Terzo tentativo fallito: l'abbonamento va in pausa e il cliente lo sa.
+        $sub->update(['retry_count' => 2, 'next_run_at' => now()]);
+        $this->subs()->runDue();
+        Notification::assertSentTo($u, SubscriptionChargeFailed::class, fn ($n) => $n->paused);
     }
 
     public function test_abandoned_stripe_page_does_not_block_a_new_subscription_and_cancels_the_waiting_order(): void

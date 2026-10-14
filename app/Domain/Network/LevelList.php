@@ -46,6 +46,8 @@ final class LevelList
         }
 
         $ranks = $this->ranks();
+        $entryCode = app(ConsultantList::class)->entryRankCode();
+        $entryRank = $entryCode === null ? null : app(ConsultantList::class)->rankName($entryCode);
         $clients = DB::table('customers')->whereNotNull('assigned_consultant_id')->groupBy('assigned_consultant_id')
             ->selectRaw('assigned_consultant_id as id, count(*) as n')->pluck('n', 'id');
 
@@ -72,7 +74,7 @@ final class LevelList
                 if (count($rows) < self::LIMIT) {
                     $rows[] = [
                         'id' => $id, 'parent' => $shownParent, 'level' => $level, 'code' => (string) $p->code, 'name' => (string) $p->name, 'status' => (string) $p->status,
-                        'rank' => $ranks[$id] ?? null, 'directs' => count($children[$id] ?? []), 'clients' => (int) ($clients[$id] ?? 0), 'buyers' => (int) ($buyers[$id] ?? 0),
+                        'rank' => $ranks[$id] ?? ((string) $p->status === 'terminated' ? null : $entryRank), 'directs' => count($children[$id] ?? []), 'clients' => (int) ($clients[$id] ?? 0), 'buyers' => (int) ($buyers[$id] ?? 0),
                         'since' => $p->since ? substr((string) $p->since, 0, 10) : null,
                     ];
                 }

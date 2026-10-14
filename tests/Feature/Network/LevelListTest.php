@@ -78,7 +78,12 @@ final class LevelListTest extends TestCase
 
         $b = collect(app(LevelList::class)->rows()['rows'])->firstWhere('code', 'B');
         $this->assertSame(2, $b['clients']);
-        $this->assertNull($b['rank'], 'senza calcolo ufficiale non c\'è una qualifica da mostrare');
+        $entry = ($code = app(\App\Filament\Support\ConsultantList::class)->entryRankCode()) === null ? null : app(\App\Filament\Support\ConsultantList::class)->rankName($code);
+        $this->assertSame($entry, $b['rank'], 'senza calcolo ufficiale si mostra la qualifica d\'ingresso del piano (se c\'è un piano in vigore)');
+
+        $this->c['C']->update(['status' => 'terminated']);
+        $c = collect(app(LevelList::class)->rows()['rows'])->firstWhere('code', 'C');
+        $this->assertNull($c['rank'], 'un incaricato cessato senza calcolo non ha qualifica');
     }
 
     public function test_buyers_count_each_assigned_customer_once_when_they_have_a_paid_order_in_the_period(): void

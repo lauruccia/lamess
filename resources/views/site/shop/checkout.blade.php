@@ -59,7 +59,7 @@
     <legend>Come vuoi riceverla</legend>
     <label class="opt-card"><input type="radio" name="subscribe" value="none" @checked($sub !== 'monthly')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
     <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
-    <p class="muted small" data-subscribe-note @if($sub !== 'monthly') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul saldo KMoney, secondo il metodo scelto.</p>
+    <p class="muted small" data-subscribe-note @if($sub !== 'monthly') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
    </fieldset>
   </section>
  </form>

@@ -123,7 +123,7 @@
       $$('[data-sum-single]').forEach(function (e) { e.hidden = !!mInput.checked; });
       $$('[data-sum-sub]').forEach(function (e) { e.hidden = !mInput.checked; });
       if (note) note.style.display = mInput.checked ? '' : 'none';
-      if (note) note.textContent = card ? "Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico " + (pm && pm.value === 'kmoney' ? "sul tuo saldo KMoney (l'eventuale resto sulla carta; se un addebito non riesce riproviamo, poi l'abbonamento va in pausa)." : "sulla carta.") : "L'abbonamento mensile è disponibile solo con carta o KMoney.";
+      if (note) note.textContent = card ? "Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico " + (pm && pm.value === 'kmoney' ? "sul tuo conto KMoney." : "sulla carta.") : "L'abbonamento mensile è disponibile solo con carta o KMoney.";
     }
     $$('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
     $$('input[name=subscribe]', box).forEach(function (r) { r.addEventListener('change', sync); });

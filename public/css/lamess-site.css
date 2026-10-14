@@ -92,7 +92,7 @@ ul.todo{padding-left:20px}
 .tree details>summary::-webkit-details-marker{display:none}
 .node{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--white);border:1px solid var(--hair);border-radius:12px;padding:9px 13px;font-size:14px;box-shadow:var(--sh-sm);transition:border-color .15s}
 .node:hover{border-color:var(--lm-terracotta)}
-.node .nm{font-weight:600}.node .cd{color:var(--muted);font-size:12px}.node .kv{font-size:12px;color:var(--muted)}
+.node .nm{font-weight:600}.node .cd{color:var(--muted);font-size:12px}.node .kv{font-size:12px;color:var(--muted)}.rank-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--lm-ink,#13110E)}.rank-chip::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--stone,#bbb4af);box-shadow:0 0 0 1px rgba(0,0,0,.18) inset}.rank-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 14px}
 .node .tog{width:18px;text-align:center;color:var(--lm-terracotta);font-weight:700}
 details[open]>summary .tog::before{content:'−'}details:not([open])>summary .tog::before{content:'+'}
 .leaf .tog::before{content:'•'}

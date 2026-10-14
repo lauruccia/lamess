@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
-use App\Domain\Plan\LegacyPlan;
-use App\Domain\Features\Feature;
 use App\Domain\Career\CareerProgress;
+use App\Domain\Career\RankPalette;
+use App\Domain\Features\Feature;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Models\CompPlanVersion;
 use BackedEnum;
@@ -33,13 +34,10 @@ class NetworkTreePage extends Page
     protected string $view = 'filament.pages.network-tree';
 
     /** Dal più basso al più alto: sabbia → terracotta → viola scuro. Il nome della qualifica è sempre scritto, il colore non è l'unico segnale. */
-    public const RANK_COLORS = ['#B9B1A5', '#D9A27E', '#C2663A', '#A98625', '#6A8F58', '#4A7A9B', '#5B6FA8', '#8A5C8E', '#B04A6A', '#8C2F39', '#5A3A4F', '#2B2B2B'];
+    public const RANK_COLORS = RankPalette::FALLBACK;
 
     /** Colore fisso per qualifica, quello della pietra: perla, cristallo, zaffiro, rubino, smeraldo, diamante. */
-    public const RANK_COLOR_BY_CODE = [
-        'CONSULTANT' => '#BBB4AF', 'PEARL' => '#C8B6A6', 'CRYSTAL' => '#6EC6E6', 'SAPPHIRE' => '#0F52BA',
-        'RUBY' => '#D0103A', 'EMERALD' => '#1E9E5A', 'DIAMOND' => '#AAB7C4', 'BLUE_DIAMOND' => '#2E86DE',
-    ];
+    public const RANK_COLOR_BY_CODE = RankPalette::BY_CODE;
 
     public static function canAccess(): bool
     {

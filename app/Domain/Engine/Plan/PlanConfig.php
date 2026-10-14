@@ -31,7 +31,7 @@ final class PlanConfig
         'payout_day' => ['Giorno del mese successivo entro cui si paga', '15', 'PMK 070726 p.14'],
         'min_payout' => ['Pagamento minimo (€)', '15', 'lamess.config (Odoo): Minimum Payout'],
         'scn_threshold' => ['Soglia SCN (€)', '5000', 'lamess.config (Odoo): SCN Threshold — significato da chiarire'],
-        'engine' => ['Motore di calcolo (multilevel_v3 | kosmos_v1)', 'multilevel_v3', 'multilevel_v3 = piano Incaricati (Direct/Team/Matching/Rank Bonus/Fast Start); kosmos_v1 = piano Incaricati (presentazioni 08/10/2026). Con kosmos_v1 servono le tabelle «Piano Incaricati»'],
+        'engine' => ['Motore di calcolo (multilevel_v3 | kosmos_v1)', 'multilevel_v3', 'multilevel_v3 = piano precedente a PR (Direct/Team/Matching/Rank Bonus/Fast Start); kosmos_v1 = Piano Incaricati (presentazioni 08/10/2026). Con kosmos_v1 servono le tabelle «Piano Incaricati»'],
         'move_node_window_days' => ['Finestra per spostare un incaricato nell\'albero (giorni)', '7', 'lamess.config (Odoo): Move Node Window — significato da chiarire'],
     ];
 

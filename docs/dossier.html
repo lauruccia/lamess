@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 14/10/2026 08:31</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale dell'incaricato e del cliente</h1>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 14/10/2026 08:55</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale dell'incaricato e del cliente</h1>
 <blockquote>
 <p>Aggiornato il 14/10/2026. Il portale è ancora chiuso al pubblico: si apre quando lo decide il Consorzio.
 Qui trovi come funzionano acquisti, abbonamenti e compensi, e come si usano le pagine dell'area riservata.
@@ -99,7 +99,7 @@ Dove si parla di «incaricato» (prima «consulente») ci si riferisce a chi ha 
 </ul>
 <h2>Pagine dell'area personale</h2>
 <ul>
-<li><strong>Il mio ramo</strong> (solo incaricati): la tua rete ad albero, in sola lettura. Tocca un nome per aprire o chiudere il ramo; per ogni persona vedi qualifica, stato e numero di diretti. I numeri sono quelli dell'ultimo calcolo.</li>
+<li><strong>Il mio ramo</strong> (solo incaricati): la tua rete ad albero, in sola lettura. Tocca un nome per aprire o chiudere il ramo; per ogni persona vedi qualifica, stato e numero di diretti. Ogni qualifica ha il colore della sua pietra, con la legenda sopra l'albero. I numeri sono quelli dell'ultimo calcolo.</li>
 <li><strong>I miei clienti</strong> (solo incaricati): chi si è iscritto con il tuo link o è assegnato a te, con ordini pagati (IVA inclusa) e ultimo ordine.</li>
 <li><strong>I miei dati</strong> (tutti): anagrafica e indirizzo di fatturazione, indirizzi di spedizione, conto KMoney e cambio password. Email e dati fiscali si cambiano scrivendo al Consorzio.</li>
 <li><strong>Assistenza</strong>: apri una richiesta (domanda generale, problema tecnico, segnalazione, altro), segui le risposte del Consorzio e puoi rispondere o chiudere. Ricevi una risposta in pagina; le email partono solo quando l'invio email è attivo.</li>
@@ -263,8 +263,8 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 </ul>
 <p><strong>Wallet, prelievi e ricevute</strong> sono attivi <strong>solo se il piano in vigore ha il pagamento «su richiesta»</strong> (<code>payout_mode = on_request</code>); con il pagamento mensile automatico (attuale) restano inattivi. <em>Prelievi su richiesta</em>: richiesto → approvato → pagato (o respinto/annullato); <strong>Approva</strong> (permesso <code>payouts.manage</code>); bonifico entro 5 giorni lavorativi. <em>Movimenti wallet</em>: registro dei movimenti, con <strong>Rettifica manuale</strong> (motivo obbligatorio). <em>Ricevute provvigionali</em>: vedi sopra (spente).</p>
 <h2>Vendite, ordini e fatture</h2>
-<p><strong>Modelli di vendita</strong> (indicazione della titolare, non una funzione del portale): <strong>Inhoreca</strong> vende direttamente ai clienti; la rete è di <strong>Cadeo</strong>, che paga l'Enasarco e fattura a Inhoreca le provvigioni.</p>
-<p><strong>Prezzi</strong>: ovunque (negozio, carrello, ordini, riepiloghi, fatture di cortesia) i prezzi sono <strong>IVA inclusa</strong> e dell'IVA si mostra solo l'aliquota («IVA 22% inclusa»). Nel pannello (<em>Prodotti</em>, <em>Spedizioni</em>) si scrive il prezzo IVA inclusa e l'<strong>Aliquota IVA</strong>; il netto si calcola da solo. Un prodotto ha anche <strong>V.A.P.</strong> (% del prezzo o importo fisso), «Quanti clienti vale» e «Durata (mesi)», peso (per le spedizioni a fascia di peso) e <strong>% pagabile in KMoney</strong>.</p>
+<p><strong>Modelli di vendita</strong> (indicazione della titolare, non una funzione del portale): <strong>Inhoreca</strong> vende direttamente ai clienti; la rete è di <strong>Kadeo Group</strong>, che paga l'Enasarco e fattura a Inhoreca le provvigioni.</p>
+<p><strong>Prezzi</strong>: ovunque (negozio, carrello, ordini, riepiloghi, fatture di cortesia) i prezzi sono <strong>IVA inclusa</strong> e dell'IVA si mostra solo l'aliquota («IVA 22% inclusa»). Nel pannello (<em>Prodotti</em>, varianti, listino barrato e spedizione del prodotto) si scrive il <strong>prezzo IVA esclusa</strong> e l'<strong>Aliquota IVA</strong>; il prezzo IVA inclusa, quello che vede il cliente, si calcola da solo e compare accanto. Le tariffe di <em>Spedizioni</em> sono invece IVA inclusa. Un prodotto ha anche <strong>V.A.P.</strong> (% del prezzo o importo fisso), «Quanti clienti vale» e «Durata (mesi)», peso (per le spedizioni a fascia di peso) e <strong>% pagabile in KMoney</strong>.</p>
 <p><strong>Prodotti e catalogo</strong>:</p>
 <ul>
 <li><em>Prodotti</em>: scheda con foto, varianti (ogni variante ha il suo prezzo), kit, giacenza, categoria, pagina e testi per Google. I valori si congelano sull'ordine: cambiare un prodotto non tocca gli ordini già fatti. «Paesi» vuoto = tutti i paesi abilitati.</li>
@@ -514,7 +514,7 @@ App\Domain\Billing       InvoiceService, FatturaPaBuilder, InvoiceSink (+ Fake, 
 <li><strong>PV solo da eventi di pagamento</strong>: <code>markPaid</code> crea (o conferma) un movimento per riga con PV &gt; 0, nel periodo del mese di pagamento (OPEN-25), <code>external_ref</code> = <code>order:{numero}:{riga}</code> (idempotenza). Bonifico: movimento <code>pending_payment</code> creato all'ordine se il periodo del mese è già aperto; la chiusura periodo è bloccata finché esiste.</li>
 <li><strong>Beneficiario</strong>: acquirente incaricato attivo → movimento <code>pvc</code> a sé (con K04 acceso vale come cliente di sé stesso); cliente → <code>pvf</code> all'incaricato assegnato (se non cessato); senza incaricato = vendita «casa», nessun compenso.</li>
 <li><strong>Resi</strong>: <code>ReturnService::refund</code> → nota di credito + movimento negativo con <code>reverses_movement_id</code>; periodo originale chiuso → storno nel mese corrente. Il cliente può chiedere il reso dalla pagina ordine entro <code>return_window_days</code> (14) dalla consegna (<code>ReturnRequestService</code>).</li>
-<li><strong>Prezzi</strong>: l'admin digita il prezzo <strong>IVA inclusa</strong>; in database restano <code>net_price</code> (8 decimali, netto esatto) e <code>vat_rate</code>. Cliente e admin vedono importi IVA inclusa con la sola aliquota («IVA 22% inclusa»). Il netto si arrotonda <strong>una sola volta sul totale per aliquota</strong> (<code>InvoiceService::totals</code>): 159,90 IVA inclusa torna a 159,90 al centesimo; le righe documento possono differire di 1 centesimo dal totale (come nel formato FatturaPA). Un prodotto a prezzo zero non è acquistabile direttamente (serve come omaggio).</li>
+<li><strong>Prezzi</strong>: l'admin digita il prezzo <strong>IVA esclusa</strong> (<code>net_price</code>) e l'aliquota (<code>vat_rate</code>); il prezzo IVA inclusa è calcolato e mostrato accanto (campi <code>gross_price</code>, <code>compare_at_gross</code>, <code>shipping_gross</code> e <code>price_gross</code> delle varianti, di sola lettura e non salvati). Il netto si salva con la precisione digitata. Cliente e admin vedono importi IVA inclusa con la sola aliquota («IVA 22% inclusa»). Il netto si arrotonda <strong>una sola volta sul totale per aliquota</strong> (<code>InvoiceService::totals</code>): un netto di 131,07 a 22% si mostra a 159,91; le righe documento possono differire di 1 centesimo dal totale (come nel formato FatturaPA). Un prodotto a prezzo zero non è acquistabile direttamente (serve come omaggio).</li>
 <li><strong>Carrello</strong>: in sessione (<code>cart</code>, <code>cart_others</code>, <code>cart_codes</code>); <code>PendingCart::hold()</code> ricorda l'ordine non pagato (<code>cart_pending_order</code>), <code>pending()</code> allinea la sessione, <code>clear()</code> lo svuota solo a ordine pagato. Chi si registra con il carrello pieno torna al checkout.</li>
 <li><strong>Spedizione</strong>: tariffe per paese e fascia di peso (<code>shipping_rates</code>), costo proprio per prodotto, tariffa Italia predefinita 9,00 € IVA inclusa creata dall'installazione guidata. Indirizzi di spedizione: rubrica fino a 10 per utente.</li>
 <li><strong>Abbonamenti</strong>: <code>SubscriptionService::runDue()</code> dal comando <code>lamess:abbonamenti</code>; ogni ciclo è un ordine normale pagato con carta o KMoney. Impegno di 12 mesi <strong>non vincolante</strong> passato da <code>ShopController</code> (la disdetta è sempre libera e solo registrata) e spedizione sempre gratuita; il vecchio impegno minimo configurabile non esiste più. <code>Order::subscription()</code> lega l'ordine all'abbonamento. Ordine per altri: <code>OrderService::place(..., $forOthers, $subscription)</code>, destinatari in <code>recipientsFor</code>.</li>
@@ -1313,7 +1313,7 @@ App\Domain\Billing        InvoiceService, FatturaPaBuilder, InvoiceSink (+ Fake 
 </code></pre>
 <ul>
 <li><strong>Carrello in sessione</strong>: <code>PendingCart</code> ricorda l'ordine registrato ma non ancora pagato (<code>cart_pending_order</code>) e svuota il carrello (<code>cart</code>, <code>cart_others</code>, <code>cart_codes</code>) solo quando l'ordine risulta pagato; «torna al carrello» dalla pagina esterna non lo perde. Gli ordini in attesa vecchi si annullano al nuovo ordine.</li>
-<li><strong>Prezzi IVA inclusa</strong> in frontend e backend (cliente e admin; dell'IVA si mostra solo l'aliquota). In database restano <code>net_price</code> (8 decimali) e <code>vat_rate</code>: l'IVA inclusa è <code>Product::grossPrice()</code> / <code>OrderService::grossUnit()</code>; nel modulo prodotto si digita il prezzo IVA inclusa e il netto si ricava (<code>ProductResource::netFromGross</code>). Il totale fattura si arrotonda una sola volta per aliquota.</li>
+<li><strong>Prezzi IVA inclusa</strong> in frontend e backend (cliente e admin; dell'IVA si mostra solo l'aliquota). In database restano <code>net_price</code> (8 decimali) e <code>vat_rate</code>: l'IVA inclusa è <code>Product::grossPrice()</code> / <code>OrderService::grossUnit()</code>; nel modulo prodotto si digita il prezzo IVA esclusa e l'IVA inclusa si ricava da sola (<code>ProductResource::grossFromNet</code>). Il totale fattura si arrotonda una sola volta per aliquota.</li>
 <li><strong>Abbonamenti</strong>: <code>Order::subscription()</code> collega l'ordine all'abbonamento da cui nasce (badge «Tipo ordine», filtro nell'elenco ordini). I nuovi abbonamenti partono con <code>commitment_months</code> = 12, <strong>non vincolante</strong>, e spedizione sempre gratuita (<code>free_shipping</code>); non esiste più l'impegno minimo configurabile.</li>
 <li><strong>KMoney</strong>: porta <code>KMoneyProvider</code>, driver scelto da <code>lamess.kmoney_driver</code>: <code>fake</code> (sviluppo), <code>api</code> (<code>KMoneyApiProvider</code>: OAuth2 + PKCE e mandato di pagamento; abilitato solo con base URL, client id/secret e conto venditore), altro = <code>DisabledKMoneyProvider</code>. Il collegamento del cliente è <code>KMoneyLink</code> (token cifrati, <code>mandate_uuid</code>, <code>account_number</code>); il pannello «Conto KMoney» sta nel profilo (<code>/area/profilo#kmoney</code>). Rotte: <code>/area/kmoney/collega|ritorno|mandato|scollega</code> e webhook firmato <code>POST /webhooks/kmoney</code>. Il resto dell'ordine non coperto dalla % KMoney dei prodotti si paga con carta o bonifico (<code>orders.kmoney_amount</code>, <code>kmoney_rest_method</code>). <code>lamess:abbonamenti-kmoney</code> rimanda a KMoney la copia degli abbonamenti pagati con KMoney (non è nello scheduler).</li>
 </ul>
@@ -1883,8 +1883,23 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 </tr>
 <tr>
 <td>Prezzi</td>
-<td>sempre IVA inclusa, di cliente e admin (OPEN-34 chiusa)</td>
-<td>13/10</td>
+<td>l'admin li inserisce <strong>IVA esclusa</strong> con l'aliquota; cliente e admin li vedono sempre IVA inclusa con la sola aliquota (OPEN-34 chiusa)</td>
+<td>13-14/10</td>
+</tr>
+<tr>
+<td>Indiretti</td>
+<td>livello 5 all'8%, confermato</td>
+<td>14/10</td>
+</tr>
+<tr>
+<td>Dati dell'azienda</td>
+<td>KADEO GROUP – CONSORZIO KADEO GROUP, Via G. Ferraris 63, Arezzo, P.IVA 02530190517, PEC <a href="mailto:kadeogroup@pec.it">kadeogroup@pec.it</a>, nel piè di pagina di ogni pagina del sito</td>
+<td>14/10</td>
+</tr>
+<tr>
+<td>Albero dell'incaricato</td>
+<td>colori delle pietre anche nell'area riservata</td>
+<td>14/10</td>
 </tr>
 <tr>
 <td>Canone annuale</td>
@@ -3101,6 +3116,11 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <li>Test del checkout KMoney allineati al testo attuale («collega il tuo conto KMoney dal profilo»).</li>
 <li>Gli abbonamenti partono con impegno di 12 mesi, non vincolante: si possono interrompere quando si vuole.</li>
 <li>Sul sito live non c'è terminale: dopo ogni deploy, per svuotare la cache, cancellare da File Manager i file in <code>bootstrap/cache</code> (tranne <code>.gitignore</code>) e <code>storage/framework/views</code>.</li>
+<li><strong>Documentazione aggiornata</strong>: manuali (admin, utente, sviluppatori), guida breve, scheda incaricato, architettura, specifica del motore, parametri, messa online, installazione cPanel, decisioni aperte e README riallineati al Piano Incaricati, alla terminologia «Incaricato», all'IVA inclusa, a KMoney e alla messa online senza terminale. Il dossier <code>docs/dossier.html</code> è stato rigenerato con <code>php artisan lamess:manuale</code>.</li>
+<li><strong>Prezzi prodotto IVA esclusa</strong>: nel form prodotto (prezzo, listino barrato, spedizione del prodotto e varianti) si inserisce il prezzo IVA esclusa con l'aliquota; il prezzo IVA inclusa si calcola e compare accanto. Cliente e admin continuano a vedere sempre l'IVA inclusa con la sola aliquota.</li>
+<li><strong>Piè di pagina</strong>: anche la versione ridotta riporta «KADEO GROUP – Tutti i diritti riservati» e i dati dell'azienda.</li>
+<li><strong>Area incaricato</strong>: l'albero della rete mostra il colore della pietra di ogni qualifica, con legenda (<code>App\Domain\Career\RankPalette</code>, usata anche dall'albero del back-office).</li>
+<li>Corretto il testo del parametro <code>engine</code> (multilevel_v3 = piano precedente a PR) e il commento di <code>SubscriptionService</code> sull'impegno di 12 mesi non vincolante.</li>
 </ul>
 </section>
 </body></html>

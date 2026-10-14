@@ -14,18 +14,18 @@ use App\Models\Subscription;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
 use Throwable;
 
 /**
  * Abbonamenti (RF-A01, RF-A03, RF-A05).
  *
- * Ogni mese un ordine normale pagato con carta o con il saldo KMoney del cliente: i punti, il Direct, il Team e il Matching maturano come per qualsiasi ordine.
- * Con l'impegno minimo configurato (default 12 mesi, un ordine al mese) la spedizione è gratuita.
+ * Ogni mese un ordine normale pagato con carta o con il saldo KMoney del cliente: le provvigioni maturano come per qualsiasi ordine.
+ * La spedizione è sempre gratuita. L'impegno di 12 mesi (un ordine al mese) non è strettamente vincolante: il cliente può disdire quando vuole.
  * Addebito fallito → nuovo tentativo dopo qualche giorno; esauriti i tentativi l'abbonamento va in pausa e il cliente può riprenderlo.
- * Disdetta prima dell'impegno: consentita e registrata (OPEN-40, regola commerciale da definire).
+ * Disdetta prima dell'impegno: sempre consentita e registrata (OPEN-40, chiusa: nessun vincolo).
  */
 final class SubscriptionService
 {

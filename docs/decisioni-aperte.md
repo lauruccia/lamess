@@ -107,7 +107,10 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 | Reso | rimborso facoltativo della spedizione; reso richiedibile dal cliente entro 14 giorni dalla consegna (OPEN-33 chiusa) | 09/10 |
 | Metodi di pagamento | carta (Stripe), bonifico, KMoney; il vantaggio KMoney mostrato al checkout si regola in Impostazioni di sistema → Metodi di pagamento | 09-13/10 |
 | Abbonamenti | 12 mesi non vincolanti, spedizione sempre gratuita, disdetta libera (OPEN-40 chiusa) | 13-14/10 |
-| Prezzi | sempre IVA inclusa, di cliente e admin (OPEN-34 chiusa) | 13/10 |
+| Prezzi | l'admin li inserisce **IVA esclusa** con l'aliquota; cliente e admin li vedono sempre IVA inclusa con la sola aliquota (OPEN-34 chiusa) | 13-14/10 |
+| Indiretti | livello 5 all'8%, confermato | 14/10 |
+| Dati dell'azienda | KADEO GROUP – CONSORZIO KADEO GROUP, Via G. Ferraris 63, Arezzo, P.IVA 02530190517, PEC kadeogroup@pec.it, nel piè di pagina di ogni pagina del sito | 14/10 |
+| Albero dell'incaricato | colori delle pietre anche nell'area riservata | 14/10 |
 | Canone annuale | 19 € IVA compresa, con interruttore per spegnerlo | 12/10 |
 | Terminologia | «Incaricato/Incaricati» al posto di «Consulente» nel prodotto | 13/10 |
 | Vecchio piano a PR | si nasconde con un interruttore (solo super_admin), senza cancellare né ricalcolare | 13/10 |

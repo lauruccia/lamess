@@ -230,3 +230,7 @@
 - Gli abbonamenti partono con impegno di 12 mesi, non vincolante: si possono interrompere quando si vuole.
 - Sul sito live non c'è terminale: dopo ogni deploy, per svuotare la cache, cancellare da File Manager i file in `bootstrap/cache` (tranne `.gitignore`) e `storage/framework/views`.
 - **Documentazione aggiornata**: manuali (admin, utente, sviluppatori), guida breve, scheda incaricato, architettura, specifica del motore, parametri, messa online, installazione cPanel, decisioni aperte e README riallineati al Piano Incaricati, alla terminologia «Incaricato», all'IVA inclusa, a KMoney e alla messa online senza terminale. Il dossier `docs/dossier.html` è stato rigenerato con `php artisan lamess:manuale`.
+- **Prezzi prodotto IVA esclusa**: nel form prodotto (prezzo, listino barrato, spedizione del prodotto e varianti) si inserisce il prezzo IVA esclusa con l'aliquota; il prezzo IVA inclusa si calcola e compare accanto. Cliente e admin continuano a vedere sempre l'IVA inclusa con la sola aliquota.
+- **Piè di pagina**: anche la versione ridotta riporta «KADEO GROUP – Tutti i diritti riservati» e i dati dell'azienda.
+- **Area incaricato**: l'albero della rete mostra il colore della pietra di ogni qualifica, con legenda (`App\Domain\Career\RankPalette`, usata anche dall'albero del back-office).
+- Corretto il testo del parametro `engine` (multilevel_v3 = piano precedente a PR) e il commento di `SubscriptionService` sull'impegno di 12 mesi non vincolante.

@@ -14,7 +14,7 @@
  <div class="kpi"><small>PR del mese</small><strong>{{ $mine ? $n($mine['pr']) : '—' }}</strong><span>{{ $mine ? 'Gruppo '.$n($mine['group_pr']).' PR' : 'Nessun calcolo ancora' }}</span></div>
  @endif
  @if(\App\Domain\Plan\ActiveStatus::applies())
- <div class="kpi {{ $mine && $mine['active'] ? 'k-ok' : '' }}"><small>Il mio stato</small><strong>{{ $mine ? ($mine['active'] ? 'Attivo' : 'Non attivo') : '—' }}</strong><span>{{ $mine && $mine['rank'] ? 'Qualifica '.ucfirst(strtolower($mine['rank'])) : 'Qualifica in attesa di calcolo' }}</span></div>
+ <div class="kpi {{ $mine && $mine['active'] ? 'k-ok' : '' }}"><small>Il mio stato</small><strong>{{ $mine ? ($mine['active'] ? 'Attivo' : 'Non attivo') : '—' }}</strong><span>{{ $mine && $mine['rank'] ? 'Qualifica '.\App\Domain\Career\RankPalette::label($mine['rank']) : 'Qualifica in attesa di calcolo' }}</span></div>
  @endif
 </div>
 
@@ -23,7 +23,9 @@
 @else
  <section class="panel">
   <header><h2>Albero della rete</h2><span class="muted" style="font-size:13px">Tocca un nome per aprire o chiudere il ramo</span></header>
-  <div class="panel-body"><ul class="tree">@include('site.area._node', ['ids' => $children[$me->id] ?? []])</ul></div>
+  <div class="panel-body">
+   @if(! empty($ranks))<p class="rank-legend" aria-label="Colori delle qualifiche">@foreach($ranks as $r)<span class="rank-chip" style="--stone: {{ $r['color'] }}">{{ \App\Domain\Career\RankPalette::label($r['code']) }}</span>@endforeach</p>@endif
+   <ul class="tree">@include('site.area._node', ['ids' => $children[$me->id] ?? []])</ul></div>
  </section>
 @endif
 @endsection

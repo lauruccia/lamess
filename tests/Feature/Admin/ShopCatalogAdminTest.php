@@ -106,13 +106,14 @@ final class ShopCatalogAdminTest extends TestCase
         Storage::disk('local')->assertExists($p->imagePaths()[0]);
     }
 
-    public function test_gross_price_field_fills_the_exact_net(): void
+    public function test_net_price_field_fills_the_gross_price_shown_to_the_customer(): void
     {
         $this->plan();
         $this->admin();
 
-        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'G1', 'name' => 'Da lordo', 'vat_rate' => '22'])
-            ->set('data.gross_price', '159.90')->assertSet('data.net_price', '131.06557377');
+        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'G1', 'name' => 'Da netto', 'vat_rate' => '22'])
+            ->set('data.net_price', '131.07')->assertSet('data.gross_price', '159.91')
+            ->set('data.vat_rate', '10')->assertSet('data.gross_price', '144.18');
     }
 
     public function test_untracked_stock_is_saved_as_null_and_compare_price_must_be_higher(): void
@@ -230,16 +231,17 @@ final class ShopCatalogAdminTest extends TestCase
     {
         $options = [['name' => 'Formato', 'values' => ['50 bustine', '100 bustine']], ['name' => 'Gusto', 'values' => ['Limone', 'Arancia']]];
 
-        [$rows, $added, $tooMany] = ProductResource::generateVariantRows($options, [], 'INT', '12.20');
+        [$rows, $added, $tooMany] = ProductResource::generateVariantRows($options, [], 'INT', '10.00', 22);
         $this->assertSame(4, $added);
         $this->assertFalse($tooMany);
         $labels = collect($rows)->pluck('variant_label')->all();
         $this->assertContains('100 bustine / Arancia', $labels);
         $this->assertSame('INT-50-BUSTINE-LIMONE', collect($rows)->firstWhere('variant_label', '50 bustine / Limone')['sku']);
+        $this->assertSame('10.00', collect($rows)->first()['net_price']);
         $this->assertSame('12.20', collect($rows)->first()['price_gross']);
 
         $options[1]['values'][] = 'Menta';
-        [$more, $addedNow] = ProductResource::generateVariantRows($options, $rows, 'INT', '12.20');
+        [$more, $addedNow] = ProductResource::generateVariantRows($options, $rows, 'INT', '10.00', 22);
         $this->assertSame(2, $addedNow);
         $this->assertCount(6, $more);
         $this->assertSame(array_keys($rows), array_slice(array_keys($more), 0, 4));
@@ -248,7 +250,7 @@ final class ShopCatalogAdminTest extends TestCase
         $this->assertTrue($tooMany);
     }
 
-    public function test_variants_are_saved_from_the_product_form_with_net_price_from_gross(): void
+    public function test_variants_are_saved_from_the_product_form_with_net_prices(): void
     {
         $this->plan();
         $this->admin();
@@ -258,8 +260,8 @@ final class ShopCatalogAdminTest extends TestCase
             ->fillForm([
                 'options' => [['name' => 'Formato', 'values' => ['50 bustine', '100 bustine']]],
                 'variants' => [
-                    'new-1' => ['variant_options' => ['Formato' => '50 bustine'], 'variant_label' => '50 bustine', 'sku' => 'INT-50', 'price_gross' => '12.20', 'stock_qty' => '7', 'active' => true],
-                    'new-2' => ['variant_options' => ['Formato' => '100 bustine'], 'variant_label' => '100 bustine', 'sku' => '', 'price_gross' => '21.96', 'compare_gross' => '24.40', 'stock_qty' => '', 'active' => true],
+                    'new-1' => ['variant_options' => ['Formato' => '50 bustine'], 'variant_label' => '50 bustine', 'sku' => 'INT-50', 'net_price' => '10.00', 'stock_qty' => '7', 'active' => true],
+                    'new-2' => ['variant_options' => ['Formato' => '100 bustine'], 'variant_label' => '100 bustine', 'sku' => '', 'net_price' => '18.00', 'compare_at_net' => '20.00', 'stock_qty' => '', 'active' => true],
                 ],
             ])
             ->call('save')

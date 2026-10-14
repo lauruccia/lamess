@@ -146,7 +146,7 @@ class ProductResource extends Resource
      * @param  array<string,mixed>  $existing  righe del ripetitore, per chiave
      * @return array{0: array<string,mixed>, 1: int, 2: bool} righe, quante nuove, troppe combinazioni
      */
-    public static function generateVariantRows(array $options, array $existing, string $parentSku, string $grossPrice): array
+    public static function generateVariantRows(array $options, array $existing, string $parentSku, string $netPrice, mixed $vatRate = 22): array
     {
         $groups = [];
         foreach ($options as $o) {
@@ -184,7 +184,8 @@ class ProductResource extends Resource
             $existing[(string) Str::uuid()] = [
                 'variant_options' => $combo, 'variant_label' => implode(' / ', $combo),
                 'sku' => $parentSku !== '' ? Str::upper(Str::limit($parentSku, 30, '').'-'.Str::slug(implode('-', $combo))) : null,
-                'price_gross' => $grossPrice !== '' ? $grossPrice : null, 'compare_gross' => null, 'stock_qty' => null, 'active' => true,
+                'net_price' => $netPrice !== '' ? $netPrice : null, 'price_gross' => $netPrice !== '' ? self::grossFromNet($netPrice, $vatRate) : null,
+                'compare_at_net' => null, 'compare_gross' => null, 'stock_qty' => null, 'active' => true,
             ];
             $added++;
         }
@@ -193,7 +194,7 @@ class ProductResource extends Resource
     }
 
     /**
-     * Dati di una variante pronti per il salvataggio: dal prezzo IVA inclusa al netto (con l'aliquota del principale).
+     * Dati di una variante pronti per il salvataggio: prezzi IVA esclusa (l'IVA inclusa si calcola) con l'aliquota del principale.
      *
      * @param  array<string,mixed>  $data
      * @return array<string,mixed>
@@ -201,8 +202,8 @@ class ProductResource extends Resource
     public static function variantPayload(array $data, mixed $livewire): array
     {
         $vat = $livewire->data['vat_rate'] ?? 22;
-        $data['net_price'] = self::netFromGross($data['price_gross'] ?? null, $vat) ?? 0;
-        $data['compare_at_net'] = filled($data['compare_gross'] ?? null) ? self::netFromGross($data['compare_gross'], $vat) : null;
+        $data['net_price'] = filled($data['net_price'] ?? null) ? str_replace(',', '.', trim((string) $data['net_price'])) : 0;
+        $data['compare_at_net'] = filled($data['compare_at_net'] ?? null) ? str_replace(',', '.', trim((string) $data['compare_at_net'])) : null;
         $data['stock_qty'] = filled($data['stock_qty'] ?? null) ? (int) $data['stock_qty'] : null;
         $data['vat_rate'] = $vat;
         unset($data['price_gross'], $data['compare_gross']);
@@ -292,32 +293,30 @@ class ProductResource extends Resource
                             ->getUploadedFileUsing(fn (FileUpload $component, string $file, string|array|null $names): ?array => self::previewFile($component, $file, $names))->panelLayout('grid'),
                     ]),
                     Section::make('Prezzo e disponibilità')->icon('heroicon-o-currency-euro')->columns(['default' => 1, 'md' => 2, '2xl' => 4])->schema([
-                        TextInput::make('gross_price')->label('Prezzo al pubblico (IVA incl.)')->prefix('€')->numeric()->dehydrated(false)->minValue(0)->live(onBlur: true)
-                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record ? self::grossFromNet($record->net_price, $record->vat_rate) : null))
-                            ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('net_price', self::netFromGross($state, $get('vat_rate'))))
-                            ->helperText(fn (Get $get) => filled($get('variants')) ? 'Con le varianti ogni variante ha il suo prezzo: questo valore si aggiorna da solo al più basso.' : 'È il prezzo che vede il cliente.'),
-                        TextInput::make('compare_at_gross')->label('Prezzo di listino barrato (IVA incl.)')->prefix('€')->numeric()->dehydrated(false)->minValue(0)->live(onBlur: true)
-                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->compare_at_net !== null ? self::grossFromNet($record->compare_at_net, $record->vat_rate) : null))
-                            ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('compare_at_net', filled($state) ? self::netFromGross($state, $get('vat_rate')) : null))
-                            ->rule(fn (Get $get) => function (string $attribute, $value, \Closure $fail) use ($get): void {
-                                if (filled($value) && filled($get('gross_price')) && (float) $value <= (float) $get('gross_price')) {
-                                    $fail('Il listino barrato deve essere più alto del prezzo al pubblico.');
-                                }
-                            })
-                            ->helperText('Facoltativo: se è più alto del prezzo, nel negozio compare barrato con il risparmio.'),
-                        TextInput::make('vat_rate')->label('Aliquota IVA')->suffix('%')->numeric()->required()->default(22)->datalist(['22', '10', '5', '4', '0'])->live(onBlur: true)
-                            ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('net_price', self::netFromGross($get('gross_price'), $state) ?? $get('net_price'))),
-                        TextInput::make('net_price')->label('Prezzo netto (calcolato)')->prefix('€')->numeric()->readOnly()->required(fn (Get $get) => blank($get('variants')))->default(0)->minValue(0)->live(onBlur: true)
+                        TextInput::make('net_price')->label('Prezzo IVA esclusa')->prefix('€')->numeric()->minValue(0)->required(fn (Get $get) => blank($get('variants')))->default(0)->live(onBlur: true)
                             ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : 0)
                             ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('gross_price', self::grossFromNet($state, $get('vat_rate'))))
-                            ->helperText('Si calcola da solo: non serve compilarlo.'),
-                        // Listino netto: calcolato dal listino IVA incl.; resta nel form (non visibile) per la validazione.
-                        TextInput::make('compare_at_net')->numeric()->minValue(0)->gt('net_price')->nullable()->hiddenLabel()->extraFieldWrapperAttributes(['class' => 'hidden'])->columnSpan(['default' => 'hidden']),
-                        TextInput::make('shipping_gross')->label('Costo di spedizione del prodotto (IVA incl.)')->prefix('€')->numeric()->minValue(0)->dehydrated(false)->live(onBlur: true)
-                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->shipping_net !== null ? self::grossFromNet($record->shipping_net, config('lamess.default_vat_rate')) : null))
-                            ->afterStateUpdated(fn (Set $set, $state) => $set('shipping_net', filled($state) ? self::netFromGross($state, config('lamess.default_vat_rate')) : null))
+                            ->helperText(fn (Get $get) => filled($get('variants')) ? 'Con le varianti ogni variante ha il suo prezzo: questo valore si aggiorna da solo al più basso.' : 'Inserisci il prezzo senza IVA: il cliente vede sempre il prezzo IVA inclusa.'),
+                        TextInput::make('vat_rate')->label('Aliquota IVA')->suffix('%')->numeric()->required()->default(22)->datalist(['22', '10', '5', '4', '0'])->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state): void {
+                                $set('gross_price', self::grossFromNet($get('net_price'), $state));
+                                $set('compare_at_gross', filled($get('compare_at_net')) ? self::grossFromNet($get('compare_at_net'), $state) : null);
+                            }),
+                        TextInput::make('gross_price')->label('Prezzo al pubblico (IVA incl., calcolato)')->prefix('€')->numeric()->readOnly()->dehydrated(false)
+                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record ? self::grossFromNet($record->net_price, $record->vat_rate) : null))
+                            ->helperText('È il prezzo che vede il cliente, con l\'aliquota indicata.'),
+                        TextInput::make('compare_at_net')->label('Prezzo di listino barrato (IVA esclusa)')->prefix('€')->numeric()->minValue(0)->gt('net_price')->nullable()->live(onBlur: true)
+                            ->validationMessages(['gt' => 'Il listino barrato deve essere più alto del prezzo.'])
+                            ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('compare_at_gross', filled($state) ? self::grossFromNet($state, $get('vat_rate')) : null))
+                            ->helperText('Facoltativo: se è più alto del prezzo, nel negozio compare barrato con il risparmio.'),
+                        TextInput::make('compare_at_gross')->label('Listino barrato (IVA incl., calcolato)')->prefix('€')->numeric()->readOnly()->dehydrated(false)
+                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->compare_at_net !== null ? self::grossFromNet($record->compare_at_net, $record->vat_rate) : null)),
+                        TextInput::make('shipping_net')->label('Costo di spedizione del prodotto (IVA esclusa)')->prefix('€')->numeric()->minValue(0)->live(onBlur: true)
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
+                            ->afterStateUpdated(fn (Set $set, $state) => $set('shipping_gross', filled($state) ? self::grossFromNet($state, config('lamess.default_vat_rate')) : null))
                             ->helperText('Vuoto: vale la tariffa generale (Vendite → Spedizioni). 0: spedizione gratuita per questo prodotto. Con più prodotti nel carrello si paga la voce più alta.'),
-                        Hidden::make('shipping_net'),
+                        TextInput::make('shipping_gross')->label('Spedizione del prodotto (IVA incl., calcolata)')->prefix('€')->numeric()->readOnly()->dehydrated(false)
+                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->shipping_net !== null ? self::grossFromNet($record->shipping_net, config('lamess.default_vat_rate')) : null)),
                         TextInput::make('weight_g')->label('Peso (g)')->numeric()->integer()->minValue(0)->nullable()->helperText('Serve per le tariffe di spedizione a fascia di peso.'),
                         Grid::make(['default' => 1, 'md' => 3])->columnSpanFull()->extraAttributes(['class' => 'lm-stock-row'])->schema([
                             Toggle::make('track_stock')->label('Tieni traccia della giacenza')->dehydrated(false)->live()->inline(false)
@@ -368,7 +367,7 @@ class ProductResource extends Resource
                             Actions::make([
                                 Action::make('generate_variants')->label('Crea le varianti dalle opzioni')->icon('heroicon-o-sparkles')->color('gray')
                                     ->action(function (Get $get, Set $set): void {
-                                        [$rows, $added, $tooMany] = self::generateVariantRows((array) $get('options'), (array) $get('variants'), (string) $get('sku'), (string) ($get('gross_price') ?? ''));
+                                        [$rows, $added, $tooMany] = self::generateVariantRows((array) $get('options'), (array) $get('variants'), (string) $get('sku'), (string) ($get('net_price') ?? ''), $get('vat_rate') ?? 22);
                                         if ($tooMany) {
                                             Notification::make()->title('Troppe combinazioni (massimo '.self::MAX_VARIANTS.'): riduci i valori.')->danger()->send();
 
@@ -378,7 +377,7 @@ class ProductResource extends Resource
                                         Notification::make()->title($added > 0 ? "{$added} varianti create: controlla prezzi e giacenze, poi salva." : 'Nessuna variante nuova: ci sono già tutte.')->success()->send();
                                     }),
                             ]),
-                            Repeater::make('variants')->label('Varianti')->relationship('variants')->columns(['default' => 2, 'xl' => 5])->itemLabel(fn (array $state): ?string => $state['variant_label'] ?? null)->addable(false)->reorderable()->orderColumn('sort_order')->defaultItems(0)->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                            Repeater::make('variants')->label('Varianti')->relationship('variants')->columns(['default' => 2, 'xl' => 4])->itemLabel(fn (array $state): ?string => $state['variant_label'] ?? null)->addable(false)->reorderable()->orderColumn('sort_order')->defaultItems(0)->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
                                 $data['price_gross'] = self::grossFromNet($data['net_price'] ?? null, $data['vat_rate'] ?? 22);
                                 $data['compare_gross'] = self::grossFromNet($data['compare_at_net'] ?? null, $data['vat_rate'] ?? 22);
 
@@ -396,13 +395,17 @@ class ProductResource extends Resource
                                     Hidden::make('variant_label'),
                                     Hidden::make('variant_options'),
                                     TextInput::make('sku')->label('Codice (SKU)')->placeholder('automatico')->maxLength(60)->distinct()->unique(ignoreRecord: true),
-                                    TextInput::make('price_gross')->label('Prezzo IVA incl.')->prefix('€')->numeric()->minValue(0.01)->required()->dehydrated(),
-                                    TextInput::make('compare_gross')->label('Listino barrato')->prefix('€')->numeric()->minValue(0)->dehydrated(),
+                                    TextInput::make('net_price')->label('Prezzo IVA esclusa')->prefix('€')->numeric()->minValue(0.01)->required()->live(onBlur: true)
+                                        ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('price_gross', self::grossFromNet($state, $get('../../vat_rate') ?? 22))),
+                                    TextInput::make('price_gross')->label('Prezzo IVA incl. (calcolato)')->prefix('€')->readOnly()->dehydrated(false),
+                                    TextInput::make('compare_at_net')->label('Listino barrato IVA esclusa')->prefix('€')->numeric()->minValue(0)->live(onBlur: true)
+                                        ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('compare_gross', filled($state) ? self::grossFromNet($state, $get('../../vat_rate') ?? 22) : null)),
+                                    TextInput::make('compare_gross')->label('Listino IVA incl. (calcolato)')->prefix('€')->readOnly()->dehydrated(false),
                                     TextInput::make('stock_qty')->label('Giacenza')->numeric()->integer()->minValue(0)->placeholder('sempre'),
                                     Toggle::make('active')->label('Pubblicata')->default(true)->inline(false),
                                     FileUpload::make('images')->label('Foto di questa variante (facoltativa)')->image()->imagePreviewHeight('110')->panelLayout('compact')->multiple()->maxFiles(1)->maxSize(4096)
                                         ->acceptedFileTypes($imageTypes)->disk('local')->directory('shop/products')->visibility('private')->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): string => self::storeOptimized($file))
-                            ->getUploadedFileUsing(fn (FileUpload $component, string $file, string|array|null $names): ?array => self::previewFile($component, $file, $names))
+                                        ->getUploadedFileUsing(fn (FileUpload $component, string $file, string|array|null $names): ?array => self::previewFile($component, $file, $names))
                                         ->columnSpanFull()->helperText('Se la carichi, scegliendo questa variante il cliente vede la sua foto; altrimenti restano quelle del prodotto.'),
                                 ])
                                 ->helperText('Una variante già venduta non si può eliminare: nascondila. Giacenza vuota = sempre disponibile.'.(LegacyPlan::visible() ? ' I PV si calcolano dal prezzo di ogni variante.' : '')),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Onboarding;
 
+use App\Domain\Career\RankPalette;
 use App\Domain\Network\NetworkService;
 use App\Models\Consultant;
 use App\Models\Customer;
@@ -39,6 +40,21 @@ final class AreaPagesTest extends TestCase
 
         $this->get('/area/rete')->assertOk()->assertSee('Incaricato B')->assertSee('Incaricato C')->assertDontSee('Incaricato X')->assertDontSee('Incaricato A</span>', false);
         $this->actingAs($this->withUser($x))->get('/area/rete')->assertOk()->assertSee('Il tuo ramo è ancora vuoto');
+    }
+
+    public function test_branch_tree_shows_the_stone_colour_of_each_rank(): void
+    {
+        $this->plan();
+        $this->openPeriod('2026-10');
+        $a = $this->consultant('A');
+        $this->consultant('B', $a);
+        app(NetworkService::class)->rebuildClosure();
+
+        $html = $this->actingAs($this->withUser($a))->get('/area/rete')->assertOk()->getContent();
+        $this->assertStringContainsString('class="rank-legend"', $html);
+        $this->assertStringContainsString('--stone: #', $html);
+        $this->assertSame('#0F52BA', RankPalette::color('sapphire'));
+        $this->assertSame('Blue diamond', RankPalette::label('BLUE_DIAMOND'));
     }
 
     public function test_branch_and_customers_are_for_consultants_only(): void

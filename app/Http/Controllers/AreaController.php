@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Career\RankPalette;
 use App\Domain\Customers\ReferralResolver;
 use App\Domain\Customers\ShippingAddressBook;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
 use App\Domain\Onboarding\IvdService;
 use App\Domain\Onboarding\KycService;
-use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
+use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Orders\FakeKMoneyProvider;
 use App\Domain\Orders\KMoneyApiProvider;
 use App\Domain\Orders\KMoneyProvider;
@@ -120,7 +121,7 @@ class AreaController extends Controller
             'me' => $me, 'nodes' => $nodes, 'children' => $children, 'stats' => $stats, 'total' => count($links),
             'direct' => count($children[$me->id] ?? []), 'mine' => $this->latestStats([$me->id])[$me->id] ?? null,
             'period' => collect($stats)->first()['period'] ?? null,
-            'levels' => $links === [] ? 0 : max($links),
+            'levels' => $links === [] ? 0 : max($links), 'ranks' => RankPalette::forPlan(),
         ]);
     }
 

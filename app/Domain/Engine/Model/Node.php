@@ -23,6 +23,7 @@ final readonly class Node
         public ?string $rankCapCode = null,     // provvedimento: revoca/sospensione qualifica (Reg. 8.1.c)
         public string $name = '',
         public ?string $rankHoldUntil = null,   // piano Incaricati: la qualifica attuale non si riduce fino a questa data (Y-m-d), scelta dall'admin per il singolo incaricato
+        public ?string $previousRank = null,    // piano Incaricati: qualifica del sistema precedente (importato da Odoo); solo chi ce l'ha gode della protezione generale del piano
     ) {
         $this->id = (string) $id;
         $this->sponsorId = $sponsorId === null ? null : (string) $sponsorId;
@@ -43,7 +44,7 @@ final readonly class Node
         $v = array_replace([
             'id' => $this->id, 'sponsorId' => $this->sponsorId, 'since' => $this->since, 'status' => $this->status,
             'onboardingComplete' => $this->onboardingComplete, 'bonusHold' => $this->bonusHold,
-            'rankCapCode' => $this->rankCapCode, 'name' => $this->name, 'rankHoldUntil' => $this->rankHoldUntil,
+            'rankCapCode' => $this->rankCapCode, 'name' => $this->name, 'rankHoldUntil' => $this->rankHoldUntil, 'previousRank' => $this->previousRank,
         ], $changes);
 
         return new self(...$v);

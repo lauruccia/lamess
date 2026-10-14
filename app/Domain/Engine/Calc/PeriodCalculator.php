@@ -125,7 +125,7 @@ final class PeriodCalculator
                 : self::withoutActiveStatus($node);
             $active[$id] = $ok;
             $eff[$id] = $career->effectiveSeq($node, $period);
-            if ($plan->kosmos !== null && $plan->policies->is('kosmos_rank_maintenance', 'clients') && ! $plan->kosmos->ranksProtectedIn($period->end()) && ! $node->rankHeldIn($period->end())) {
+            if ($plan->kosmos !== null && $plan->policies->is('kosmos_rank_maintenance', 'clients') && ! ($node->previousRank !== null && $plan->kosmos->ranksProtectedIn($period->end())) && ! $node->rankHeldIn($period->end())) {
                 while ($eff[$id] > 0 && $plan->bySeq($eff[$id])->requires('clients') && ($clients[$id] ?? 0) < $plan->bySeq($eff[$id])->minClients) {
                     $eff[$id]--;
                 }

@@ -16,7 +16,7 @@ use UnitEnum;
 final class Canonical
 {
     /** Campi aggiunti dopo il rilascio: se vuoti non entrano nell'hash, così gli hash dei calcoli esistenti non cambiano. */
-    private const OPTIONAL_WHEN_EMPTY = ['kosmos', 'minClients', 'minPearlFirstLevel', 'minColumns', 'minColumnClients', 'disabled', 'customerId', 'customerFirstPurchase', 'amountEur', 'orderId', 'vapEur', 'validityMonths', 'clientCount', 'makesClient', 'customerCoverage', 'rankGraceDays', 'activationDate', 'rankHoldUntil'];
+    private const OPTIONAL_WHEN_EMPTY = ['kosmos', 'minClients', 'minPearlFirstLevel', 'minColumns', 'minColumnClients', 'disabled', 'customerId', 'customerFirstPurchase', 'amountEur', 'orderId', 'vapEur', 'validityMonths', 'clientCount', 'makesClient', 'customerCoverage', 'rankGraceDays', 'activationDate', 'rankHoldUntil', 'previousRank'];
 
     public static function hash(mixed $value): string
     {

@@ -26,6 +26,9 @@ final class CareerProgress
 
     private ?string $periodCode = null;
 
+    /** @var array<int, true>|null incaricati con qualifica del sistema precedente: gli unici protetti dalla data generale del piano */
+    private ?array $legacyIds = null;
+
     private string $source = '';
 
     /** @return array<string, mixed>|null */
@@ -253,6 +256,14 @@ final class CareerProgress
         ];
     }
 
+    /** Qualifica del sistema precedente registrata: solo questi incaricati sono protetti dalla data generale del piano. */
+    private function isLegacy(int $id): bool
+    {
+        $this->legacyIds ??= array_fill_keys(DB::table('consultants')->whereNotNull('previous_rank_code')->pluck('id')->map(static fn ($v) => (int) $v)->all(), true);
+
+        return isset($this->legacyIds[$id]);
+    }
+
     /**
      * Piano Incaricati: nessun PR, nessuno stato attivo. Contano clienti personali, Pearl al 1° livello, linee e colonne.
      * Restituisce le stesse chiavi del piano a PR (così le schermate non si rompono) più il blocco «kosmos».
@@ -363,7 +374,7 @@ final class CareerProgress
         if ($plan->policies->is('kosmos_rank_maintenance', 'clients') && $rank->requires('clients') && $rank->minClients > 0) {
             $maintenance = [
                 'rank' => $rank->name, 'required' => $rank->minClients, 'counted' => $c, 'ok' => $known && $c >= $rank->minClients,
-                'protected_until' => $cfg->rankGraceEnd(),
+                'protected_until' => $this->isLegacy($id) ? $cfg->rankGraceEnd() : null,
             ];
             if ($known && ! $maintenance['ok']) {
                 $todo[] = "Per mantenere {$rank->name} servono almeno {$rank->minClients} clienti: ne hai {$c}.".($maintenance['protected_until'] ? ' Fino al '.date('d/m/Y', (int) strtotime($maintenance['protected_until'])).' la qualifica è comunque protetta.' : '');

@@ -49,6 +49,7 @@ final class SnapshotBuilder
                 onboardingComplete: $c->onboarding_complete, bonusHold: $c->bonus_hold,
                 rankCapCode: $c->rank_cap_code, name: $c->name,
                 rankHoldUntil: $c->rank_hold_until?->format('Y-m-d'),
+                previousRank: $c->previous_rank_code,
             ))->all();
 
         $dbMovements = PvMovement::query()

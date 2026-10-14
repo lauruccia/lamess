@@ -176,6 +176,30 @@ final class IncaricatiSimulationTest extends TestCase
         }
     }
 
+    public function test_tree_shows_the_whole_network_with_before_and_after_ranks(): void
+    {
+        [$p, $v, $fra, $lau] = $this->network();
+        $other = $this->consultant('ALT', null, null, '2026-01-12 08:00');
+
+        $res = $this->simulate($p, $v, [
+            ['type' => 'clients', 'target' => $lau->id, 'count' => 3],
+            ['type' => 'agents', 'target' => $other->id, 'count' => 1, 'rank' => 'CRYSTAL'],
+        ]);
+
+        $tree = array_column($res['tree'], null, 'id');
+        foreach ([$fra, $lau, $other] as $c) {
+            $this->assertArrayHasKey((string) $c->id, $tree, 'Tutta la rete è nell\'albero, anche chi non cambia');
+        }
+        $this->assertSame((string) $fra->id, $tree[(string) $lau->id]['parent']);
+        $this->assertSame('Incaricato', $tree[(string) $lau->id]['rank_before']);
+        $this->assertSame('Pearl', $tree[(string) $lau->id]['rank_after']);
+        $this->assertTrue($tree[(string) $lau->id]['changed']);
+        $this->assertGreaterThanOrEqual(1, $tree[(string) $fra->id]['sub_changes'], 'Il ramo di Francesco segnala i cambiamenti sotto di lui');
+        $virtual = array_values(array_filter($res['tree'], static fn (array $t) => $t['virtual']));
+        $this->assertCount(1, $virtual, 'Gli agenti simulati annidati sono riassunti in quello in cima al ramo');
+        $this->assertGreaterThan(0, $virtual[0]['extra']);
+    }
+
     public function test_only_super_admin_and_admins_with_the_permission_can_open_the_page(): void
     {
         Roles::sync();
@@ -206,6 +230,12 @@ final class IncaricatiSimulationTest extends TestCase
             ->set('changes', [['type' => 'clients', 'target' => 'nessuno', 'count' => '3', 'amount' => '', 'rank' => 'PEARL', 'sponsor' => '']])
             ->call('simulate')
             ->assertSee('scegli');
+
+        Livewire::test(IncaricatiSimulationPage::class)
+            ->call('addChangeFor', 'clients', 'LAU — Incaricato LAU')
+            ->assertSet('error', null)
+            ->assertSet('changes.0.target', 'LAU — Incaricato LAU')
+            ->assertSee('Tutta la rete dopo la simulazione');
 
         $this->assertSame($lines, CommissionLine::count());
         $this->assertSame(0, PvMovement::count());

@@ -21,7 +21,12 @@
         .sim .banner { background:color-mix(in srgb, var(--s-acc) 12%, var(--s-card)); border:1px solid var(--s-acc); border-radius:.75rem; padding:.7rem 1rem; font-size:.88rem; }
         .sim .err { background:color-mix(in srgb, var(--s-down) 12%, var(--s-card)); border:1px solid var(--s-down); border-radius:.75rem; padding:.7rem 1rem; }
         .sim .warn { background:color-mix(in srgb, var(--s-move) 14%, var(--s-card)); border:1px solid var(--s-move); border-radius:.75rem; padding:.6rem 1rem; font-size:.86rem; }
-        .sim .tr { font-size:.88rem; line-height:1.7; } .sim .tr > div { border-left:1px solid var(--s-line); padding-left:.7rem; margin-left:.3rem; }
+        .sim .tr { font-size:.88rem; line-height:1.5; }
+        .sim .tr .node { display:flex; flex-wrap:wrap; align-items:center; gap:.2rem .55rem; padding-top:.2rem; padding-bottom:.2rem; border-bottom:1px solid color-mix(in srgb, var(--s-line) 25%, transparent); }
+        .sim .tr .node.chg { background:color-mix(in srgb, var(--s-acc) 9%, transparent); }
+        .sim .tr .tg { width:1.3rem; padding:0; text-align:center; border:0; background:none; }
+        .sim .tr .dot { width:.75rem; height:.75rem; border-radius:50%; border:1px solid var(--s-line); flex:none; }
+        .sim .tr .acts { margin-left:auto; display:flex; gap:.25rem; } .sim .tr .acts button { font-size:.72rem; padding:.1rem .45rem; font-weight:500; }
         .sim .chip { display:inline-block; font-size:.7rem; font-weight:700; padding:.05rem .45rem; border-radius:99px; border:1px solid currentColor; margin-left:.35rem; vertical-align:1px; }
     </style>
 
@@ -55,17 +60,18 @@
             </div>
 
             <div class="box">
-                <h3>Cosa vuoi simulare?</h3>
+                <h3>Cosa vuoi cambiare?</h3>
+                <div class="bar" style="margin-bottom:.4rem">
+                    <button type="button" wire:click="addChange('clients')">+ Aggiungi clienti</button>
+                    <button type="button" wire:click="addChange('orders')">+ Aggiungi ordini</button>
+                    <button type="button" wire:click="addChange('agents')">+ Aggiungi agenti (numero e livello)</button>
+                    <button type="button" wire:click="addChange('move')">+ Sposta nell'albero</button>
+                </div>
                 <datalist id="sim-incaricati">@foreach($options as $o)<option value="{{ $o }}"></option>@endforeach</datalist>
-                @foreach($changes as $i => $c)
+                @forelse($changes as $i => $c)
                     <div class="row" wire:key="change-{{ $i }}">
                         <span class="n">{{ $i + 1 }}</span>
-                        <select wire:model.live="changes.{{ $i }}.type" aria-label="Tipo di modifica">
-                            <option value="clients">Dai clienti a…</option>
-                            <option value="orders">Aggiungi ordini a…</option>
-                            <option value="agents">Dai agenti di livello a…</option>
-                            <option value="move">Sposta nell'albero…</option>
-                        </select>
+                        <strong>{{ ['clients' => 'Aggiungi clienti', 'orders' => 'Aggiungi ordini', 'agents' => 'Aggiungi agenti', 'move' => 'Sposta nell\'albero'][$c['type']] ?? $c['type'] }}</strong>
                         @if($c['type'] === 'move')
                             <input class="target" list="sim-incaricati" wire:model="changes.{{ $i }}.target" placeholder="Incaricato da spostare (codice o nome)" aria-label="Incaricato da spostare">
                             <span>sotto lo sponsor</span>
@@ -73,7 +79,8 @@
                         @else
                             <input class="num" type="number" min="1" max="{{ $c['type'] === 'agents' ? 20 : 500 }}" wire:model="changes.{{ $i }}.count" aria-label="Quantità">
                             @if($c['type'] === 'agents')
-                                <select wire:model="changes.{{ $i }}.rank" aria-label="Qualifica degli agenti">@foreach($ranks as $r)<option value="{{ $r['code'] }}">{{ $r['name'] }}</option>@endforeach</select>
+                                <span>agenti di livello</span>
+                                <select wire:model="changes.{{ $i }}.rank" aria-label="Livello degli agenti">@foreach($ranks as $r)<option value="{{ $r['code'] }}">{{ $r['name'] }}</option>@endforeach</select>
                                 <span>sotto</span>
                             @else
                                 <span>{{ $c['type'] === 'clients' ? 'clienti, ciascuno con un ordine da €' : 'ordini da €' }}</span>
@@ -84,20 +91,21 @@
                         @endif
                         <button type="button" wire:click="removeChange({{ $i }})" aria-label="Togli la modifica {{ $i + 1 }}">✕</button>
                     </div>
-                @endforeach
+                @empty
+                    <p class="muted" style="margin:.2rem 0">Scegli un'azione qui sopra, oppure usa i pulsanti accanto a ogni incaricato nell'albero dopo la prima simulazione.</p>
+                @endforelse
                 <div class="bar" style="margin-top:.7rem">
-                    <button type="button" wire:click="addChange">+ Aggiungi un'altra modifica</button>
-                    <button type="button" class="pri" wire:click="simulate" wire:loading.attr="disabled" wire:target="simulate">Simula</button>
-                    <button type="button" wire:click="resetSimulation">Azzera</button>
-                    <span class="muted" wire:loading wire:target="simulate">Calcolo in corso…</span>
+                    <button type="button" class="pri" wire:click="simulate" wire:loading.attr="disabled" wire:target="simulate,addChangeFor">Simula</button>
+                    <button type="button" wire:click="resetSimulation">Azzera tutto</button>
+                    <span class="muted" wire:loading wire:target="simulate,addChangeFor">Calcolo in corso…</span>
                 </div>
-                <p class="muted" style="margin:.5rem 0 0">«Dai agenti di livello» crea agenti virtuali con tutto ciò che serve per raggiungere quella qualifica (clienti, Pearl e linee richieste dal piano). «Aggiungi ordini» usa i clienti che l'incaricato ha già, senza aumentarne il numero. Le modifiche si applicano nell'ordine in cui le scrivi.</p>
+                <p class="muted" style="margin:.5rem 0 0">«Aggiungi agenti» crea agenti virtuali del livello scelto con tutto ciò che serve per raggiungerlo (clienti, Pearl e linee richieste dal piano). «Aggiungi ordini» usa i clienti che l'incaricato ha già, senza aumentarne il numero. Le modifiche si applicano nell'ordine in cui le scrivi.</p>
             </div>
 
             @if($error)<div class="err" role="alert">{{ $error }}</div>@endif
 
             @if($result)
-                @php($s = $result['summary'])
+                @php $s = $result['summary']; @endphp
                 <div class="box">
                     <h3>Risultato per il periodo {{ $result['period'] }}</h3>
                     <div class="kpis">
@@ -109,6 +117,59 @@
                 </div>
 
                 @foreach($result['warnings'] as $w)<div class="warn" role="status">{{ $w }}</div>@endforeach
+
+                @if($result['tree'])
+                    @php
+                        $parents = [];
+                        $hasKids = [];
+                        foreach ($result['tree'] as $t) { $parents[$t['id']] = $t['parent']; if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; } }
+                    @endphp
+                    <div class="box" wire:key="tree-{{ md5(json_encode($result['tree'])) }}"
+                         x-data="{ closed: {}, only: false, parents: @js($parents), kids: @js(array_keys($hasKids)),
+                                   hidden(id) { for (let p = this.parents[id]; p; p = this.parents[p]) { if (this.closed[p]) { return true; } } return false; },
+                                   show(id, changed, sub) { return ! this.hidden(id) && (! this.only || changed || sub > 0); },
+                                   closeAll() { this.kids.forEach(k => this.closed[k] = true); }, openAll() { this.closed = {}; } }">
+                        <div class="bar" style="justify-content:space-between">
+                            <h3 style="margin:0">Tutta la rete dopo la simulazione</h3>
+                            <div class="bar">
+                                <label><input type="checkbox" x-model="only"> solo i rami con cambiamenti</label>
+                                <button type="button" @click="openAll()">Apri tutto</button>
+                                <button type="button" @click="closeAll()">Chiudi tutto</button>
+                            </div>
+                        </div>
+                        <p class="muted" style="margin:.3rem 0 .6rem">Ogni incaricato mostra la qualifica <em>prima → dopo</em> (il colore è quello della pietra), i clienti personali e la variazione dei compensi del mese. Le righe evidenziate sono quelle che cambiano. Usa i pulsanti a destra di ogni incaricato per aggiungere clienti, agenti o spostarlo.</p>
+                        <div class="tr">
+                            @foreach($result['tree'] as $t)
+                                <div class="node {{ $t['changed'] ? 'chg' : '' }}" x-show="show({{ \Illuminate\Support\Js::from($t['id']) }}, {{ $t['changed'] ? 'true' : 'false' }}, {{ $t['sub_changes'] }})" style="padding-left:{{ $t['depth'] * 1.3 }}rem">
+                                    @if(isset($hasKids[$t['id']]))
+                                        <button type="button" class="tg" @click="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] = ! closed[{{ \Illuminate\Support\Js::from($t['id']) }}]" x-text="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '▸' : '▾'" aria-label="Apri o chiudi il ramo"></button>
+                                    @else<span class="tg"></span>@endif
+                                    <span class="dot" style="background:{{ $t['color_after'] }}"></span>
+                                    <span class="nm" style="{{ $t['changed'] || $t['target'] ? 'font-weight:700' : '' }}">{{ $t['label'] }}</span>
+                                    <span class="rk">
+                                        @if($t['rank_before'] !== null && $t['rank_before'] !== $t['rank_after'])
+                                            <span class="muted">{{ $t['rank_before'] }}</span> → <span class="{{ $t['dir'] >= 0 ? 'up' : 'down' }}">{{ $t['rank_after'] }} {{ $t['dir'] > 0 ? '▲' : '▼' }}</span>
+                                        @else{{ $t['rank_after'] }}@endif
+                                    </span>
+                                    <span class="muted">· clienti @if($t['clients_before'] !== null && $t['clients_before'] !== $t['clients_after']){{ $t['clients_before'] }} → <strong>{{ $t['clients_after'] }}</strong>@else{{ $t['clients_after'] }}@endif</span>
+                                    @if((float) $t['earned_diff'] != 0)<span class="{{ $cls($t['earned_diff']) }}">{{ $signed($t['earned_diff']) }} €</span>@endif
+                                    @if($t['tag'] === 'new')<span class="chip newc">nuovo{{ $t['extra'] > 0 ? ' · +'.$t['extra'].' agenti sotto' : '' }}</span>@endif
+                                    @if($t['tag'] === 'moved')<span class="chip" style="color:var(--s-move)">spostato{{ $t['moved_from'] ? ' da '.$t['moved_from'] : '' }}</span>@endif
+                                    @if($t['target'] && $t['tag'] !== 'moved')<span class="chip">scelto</span>@endif
+                                    <span x-show="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] && {{ $t['sub_changes'] }} > 0" class="chip" style="color:var(--s-acc)">{{ $t['sub_changes'] }} cambiamenti sotto</span>
+                                    @unless($t['virtual'])
+                                        <span class="acts">
+                                            <button type="button" wire:click="addChangeFor('clients', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Aggiungi clienti a questo incaricato">+ clienti</button>
+                                            <button type="button" wire:click="addChangeFor('agents', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Aggiungi agenti sotto questo incaricato">+ agenti</button>
+                                            <button type="button" wire:click="addChangeFor('move', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Sposta questo incaricato sotto un altro sponsor">sposta</button>
+                                        </span>
+                                    @endunless
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
 
                 @if($result['agents'])
                     <div class="box">
@@ -161,24 +222,6 @@
                     </div>
                 @endif
 
-                @if($result['tree'])
-                    <div class="box">
-                        <h3>Albero dopo la simulazione</h3>
-                        <p class="muted" style="margin:0 0 .5rem">Sono mostrati solo i rami toccati dalle modifiche. Tra parentesi: clienti personali.</p>
-                        <div class="tr">
-                            @foreach($result['tree'] as $t)
-                                <div style="margin-left:{{ $t['depth'] * 1.1 }}rem">
-                                    <span style="{{ $t['highlight'] ? 'font-weight:700' : 'opacity:.75' }}">{{ $t['label'] }}</span>
-                                    <span class="muted">({{ $t['clients'] }})</span>
-                                    — @if($t['rank_before'] !== null && $t['rank_before'] !== $t['rank_after'])<span class="{{ $t['tag'] === 'down' ? 'down' : 'up' }}">{{ $t['rank_before'] }} → {{ $t['rank_after'] }}</span>@else{{ $t['rank_after'] }}@endif
-                                    @if($t['tag'] === 'new')<span class="chip newc">nuovo{{ $t['extra'] > 0 ? ' · +'.$t['extra'].' agenti sotto' : '' }}</span>@endif
-                                    @if($t['tag'] === 'moved')<span class="chip" style="color:var(--s-move)">spostato</span>@endif
-                                    @if($t['tag'] === 'target')<span class="chip">scelto</span>@endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
             @endif
         @endif
     </div>

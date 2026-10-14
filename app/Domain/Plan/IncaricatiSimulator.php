@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Plan;
 
+use App\Domain\Career\RankPalette;
 use App\Domain\Engine\Calc\ImpactReport;
 use App\Domain\Engine\Calc\KosmosCalculator;
 use App\Domain\Engine\Calc\NetworkException;
@@ -469,8 +470,8 @@ final class IncaricatiSimulator
     }
 
     /**
-     * Albero ridotto: solo i rami che contengono modifiche, cambi di qualifica o agenti simulati.
-     * Gli agenti simulati annidati sono riassunti nell'agente in cima al loro ramo.
+     * Albero completo della rete dopo le modifiche, in ordine di visita: ogni incaricato con qualifica prima e dopo, clienti e
+     * compensi. Gli agenti simulati annidati sono riassunti nell'agente simulato in cima al loro ramo.
      *
      * @param  array<string, array<string, mixed>>  $a
      * @param  array<string, array<string, mixed>>  $b
@@ -480,39 +481,17 @@ final class IncaricatiSimulator
     private function treeRows(SimulationDraft $d, PeriodInput $scenIn, array $a, array $b, array $labels, callable $name, callable $seq): array
     {
         $tree = new Tree($scenIn->nodes);
-        $interesting = [];
-        foreach ($a as $id => $now) {
-            $id = (string) $id;
-            if ($d->isVirtual($id)) {
-                if ($d->virtual[$id]['top'] === $id) {
-                    $interesting[$id] = true;
-                }
-
-                continue;
-            }
-            $was = $b[$id] ?? null;
-            if (isset($d->targets[$id]) || ($was !== null && $seq($was['achieved']) !== $seq($now['achieved']))) {
-                $interesting[$id] = true;
-            }
-        }
-        $include = [];
-        foreach (array_keys($interesting) as $id) {
-            for ($x = (string) $id; $x !== null && ! isset($include[$x]); $x = $tree->parentOf($x)) {
-                $include[$x] = true;
-            }
-        }
+        $plan = $scenIn->plan;
         $sub = [];
         foreach ($d->virtual as $id => $v) {
             if ($v['top'] !== $id) {
                 $sub[$v['top']] = ($sub[$v['top']] ?? 0) + 1;
             }
         }
+        $color = static fn (?string $code): ?string => $code === null ? null : RankPalette::color($code, $plan->hasCode($code) ? $plan->rank($code)->sequence : 0);
 
         $rows = [];
-        $walk = function (string $id, int $depth) use (&$walk, &$rows, $tree, $include, $d, $a, $b, $labels, $name, $seq, $interesting, $sub): void {
-            if (! isset($include[$id])) {
-                return;
-            }
+        $walk = function (string $id, int $depth, ?string $parent) use (&$walk, &$rows, $tree, $d, $a, $b, $labels, $name, $seq, $sub, $color): void {
             $virtual = $d->isVirtual($id);
             if ($virtual && $d->virtual[$id]['top'] !== $id) {
                 return;
@@ -520,25 +499,46 @@ final class IncaricatiSimulator
             $now = $a[$id] ?? null;
             $was = $b[$id] ?? null;
             $dir = ($was !== null && $now !== null) ? $seq($now['achieved']) <=> $seq($was['achieved']) : 0;
+            $moved = isset($d->moved[$id]);
             $tag = match (true) {
                 $virtual => 'new',
-                isset($d->moved[$id]) => 'moved',
+                $moved => 'moved',
                 $dir > 0 => 'up',
                 $dir < 0 => 'down',
                 isset($d->targets[$id]) => 'target',
                 default => '',
             };
+            $earnedDiff = ($now !== null && $was !== null) ? $now['earned']->minus($was['earned']) : ($now['earned'] ?? null);
+            $changed = $virtual || $moved || $dir !== 0 || ($was !== null && $now !== null && ($now['clients'] !== $was['clients'] || $now['pearl'] !== $was['pearl'] || ! $earnedDiff->isZero()));
             $rows[] = [
-                'depth' => $depth, 'label' => $labels[$id] ?? $id, 'tag' => $tag, 'virtual' => $virtual, 'highlight' => isset($interesting[$id]),
+                'id' => $id, 'parent' => $parent, 'depth' => $depth, 'label' => $labels[$id] ?? $id, 'tag' => $tag, 'virtual' => $virtual,
+                'target' => isset($d->targets[$id]), 'changed' => $changed, 'dir' => $dir, 'moved_from' => $moved ? ($labels[$d->moved[$id]] ?? null) : null,
                 'rank_before' => $was === null ? null : $name($was['achieved']), 'rank_after' => $now === null ? null : $name($now['achieved']),
-                'clients' => $now['clients'] ?? 0, 'extra' => $virtual ? ($sub[$id] ?? 0) : 0,
+                'color_before' => $color($was['achieved'] ?? null), 'color_after' => $color($now['achieved'] ?? null),
+                'clients_before' => $was['clients'] ?? null, 'clients_after' => $now['clients'] ?? 0,
+                'earned_diff' => $earnedDiff === null ? '0' : (string) $earnedDiff, 'extra' => $virtual ? ($sub[$id] ?? 0) : 0,
+                'sub_changes' => 0,
             ];
             foreach ($tree->childrenOf($id) as $child) {
-                $walk($child, $depth + 1);
+                $walk($child, $depth + 1, $id);
             }
         };
         foreach ($tree->children[''] ?? [] as $root) {
-            $walk($root, 0);
+            $walk($root, 0, null);
+        }
+
+        // quanti cambiamenti ci sono sotto ogni nodo: serve a non perderli quando un ramo è chiuso
+        $index = [];
+        foreach ($rows as $i => $r) {
+            $index[$r['id']] = $i;
+        }
+        foreach ($rows as $r) {
+            if (! $r['changed']) {
+                continue;
+            }
+            for ($p = $r['parent']; $p !== null; $p = $rows[$index[$p]]['parent']) {
+                $rows[$index[$p]]['sub_changes']++;
+            }
         }
 
         return $rows;

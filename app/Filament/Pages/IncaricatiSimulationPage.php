@@ -60,7 +60,7 @@ class IncaricatiSimulationPage extends Page
     public function mount(): void
     {
         $this->periodCode = Period::query()->orderByDesc('code')->value('code');
-        $this->changes = [self::blank('clients')];
+        $this->changes = [];
     }
 
     /** @return array{type:string,target:string,count:string,amount:string,rank:string,sponsor:string} */
@@ -78,14 +78,22 @@ class IncaricatiSimulationPage extends Page
     {
         unset($this->changes[$index]);
         $this->changes = array_values($this->changes);
-        if ($this->changes === []) {
-            $this->changes = [self::blank('clients')];
+    }
+
+    /** Aggiunge una modifica già riferita all'incaricato cliccato nell'albero e, se è completa, la simula subito. */
+    public function addChangeFor(string $type, string $label): void
+    {
+        $row = self::blank($type);
+        $row['target'] = $label;
+        $this->changes[] = $row;
+        if ($type !== 'move') {
+            $this->simulate();
         }
     }
 
     public function resetSimulation(): void
     {
-        $this->changes = [self::blank('clients')];
+        $this->changes = [];
         $this->result = null;
         $this->error = null;
     }

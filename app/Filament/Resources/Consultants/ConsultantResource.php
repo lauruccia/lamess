@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Consultants;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
+use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Plan\ActiveStatus;
 use App\Domain\Plan\LegacyPlan;
@@ -82,7 +83,10 @@ class ConsultantResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('code')->label('Codice attività')->required()->unique('consultants', 'code'),
+            TextInput::make('code')->label('Codice attività')->required()->unique('consultants', 'code')
+                ->default(fn (): string => app(ConsultantCodeGenerator::class)->next())
+                ->disabled(fn (): bool => auth()->user()?->isSuperAdmin() !== true)->dehydrated()
+                ->helperText('Assegnato in automatico; lo modifica solo il super admin.'),
             TextInput::make('name')->label('Nome e cognome')->required(),
             TextInput::make('person_key')->label('Codice fiscale')->helperText('Serve a riconoscere la stessa persona (re-iscrizione dopo 180 giorni).'),
             Select::make('sponsor_id')->label('Sponsor')->searchable()
@@ -181,8 +185,9 @@ class ConsultantResource extends Resource
                         'active' => 'success', 'suspended' => 'warning', 'terminated' => 'danger', default => 'gray',
                     }),
                 TextColumn::make('stat_rank')->label('Qualifica')->badge()->color('primary')
+                    ->state(fn (Consultant $r): ?string => $r->stat_rank ?? ($r->status === 'terminated' ? null : $list()->entryRankCode()))
                     ->formatStateUsing(fn (?string $state) => ($n = $list()->rankName($state)) === 'Incaricato' ? $n : preg_replace('/^(Consulente|Incaricato) /', '', $n))
-                    ->placeholder('—')->tooltip(fn (): ?string => ($p = $list()->periodCode()) ? "Dal calcolo del periodo {$p}" : null),
+                    ->placeholder('—')->tooltip(fn (Consultant $r): ?string => $r->stat_rank === null ? 'Qualifica d\'ingresso: non ancora nel calcolo del periodo' : (($p = $list()->periodCode()) ? "Dal calcolo del periodo {$p}" : null)),
                 TextColumn::make('stat_active')->label('Attività mese')->badge()->visible(fn (): bool => ActiveStatus::applies())
                     ->state(fn (Consultant $r): string => $r->stat_active === null ? '—' : ((bool) $r->stat_active ? 'Attivo' : 'Non attivo'))
                     ->color(fn (string $state) => match ($state) {

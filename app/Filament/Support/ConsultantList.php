@@ -54,6 +54,12 @@ final class ConsultantList
         return $this->rankNames ??= collect(CompPlanVersion::inForce()?->data['ranks'] ?? [])->mapWithKeys(fn ($r) => [$r['code'] => $r['name']])->all();
     }
 
+    /** Qualifica d'ingresso del piano in vigore (la prima): vale per chi non è ancora entrato in un calcolo. */
+    public function entryRankCode(): ?string
+    {
+        return array_key_first($this->rankNames());
+    }
+
     public function rankName(?string $code): string
     {
         return $code === null || $code === '' ? '—' : ($this->rankNames()[$code] ?? $code);

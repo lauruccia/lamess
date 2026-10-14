@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants\Pages;
 
+use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Network\NetworkException;
 use App\Domain\Network\NetworkService;
 use App\Filament\Resources\Consultants\ConsultantResource;
@@ -23,7 +24,7 @@ class CreateConsultant extends CreateRecord
     {
         try {
             return app(NetworkService::class)->enroll(
-                ['code' => $data['code'], 'name' => $data['name'], 'person_key' => $data['person_key'] ?? null],
+                ['code' => auth()->user()?->isSuperAdmin() === true && filled($data['code'] ?? null) ? $data['code'] : app(ConsultantCodeGenerator::class)->next(), 'name' => $data['name'], 'person_key' => $data['person_key'] ?? null],
                 ! empty($data['sponsor_id']) ? Consultant::findOrFail($data['sponsor_id']) : null,
                 new DateTimeImmutable((string) $data['since'], new DateTimeZone('UTC')),
             );

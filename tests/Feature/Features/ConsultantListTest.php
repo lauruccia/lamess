@@ -58,6 +58,22 @@ final class ConsultantListTest extends TestCase
             ->assertSee('Incaricato A')->assertSee('Crystal');
     }
 
+    public function test_consultant_added_after_the_calculation_shows_the_entry_rank(): void
+    {
+        $new = Consultant::create(['code' => 'K01001', 'name' => 'Inserito a mano', 'status' => 'active', 'since' => now(), 'sponsor_id' => $this->a->id]);
+        $row = Livewire::test(ListConsultants::class)->instance()->getTableRecords()->firstWhere('id', $new->id);
+        $this->assertNull($row->stat_rank);
+        $this->get('/admin/consultants')->assertOk()->assertSee('Inserito a mano')->assertSee('Incaricato');
+    }
+
+    public function test_next_activity_code_is_consecutive_and_ignores_other_prefixes(): void
+    {
+        $prefix = (string) config('lamess.consultant_code_prefix');
+        Consultant::create(['code' => $prefix.'00143', 'name' => 'X', 'status' => 'active', 'since' => now()]);
+        Consultant::create(['code' => 'K01004', 'name' => 'Y', 'status' => 'active', 'since' => now()]);
+        $this->assertSame($prefix.'00144', app(\App\Domain\Network\ConsultantCodeGenerator::class)->next());
+    }
+
     public function test_sponsor_name_and_directs_come_from_the_same_query(): void
     {
         $rows = Livewire::test(ListConsultants::class)->assertCanSeeTableRecords([$this->a, $this->b, $this->c])->instance()->getTableRecords();

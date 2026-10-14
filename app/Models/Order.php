@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -28,9 +30,15 @@ class Order extends Model
     /** Importo ancora da pagare con carta/bonifico: il totale meno la quota già addebitata in KMoney. */
     public function restDue(): string
     {
-        $rest = \Brick\Math\BigDecimal::of((string) $this->total)->minus((string) ($this->kmoney_amount ?? 0));
+        $rest = BigDecimal::of((string) $this->total)->minus((string) ($this->kmoney_amount ?? 0));
 
-        return (string) $rest->toScale(2, \Brick\Math\RoundingMode::HalfUp);
+        return (string) $rest->toScale(2, RoundingMode::HalfUp);
+    }
+
+    /** L'incasso (o il resto dopo KMoney) è con carta: lo conferma solo Stripe, mai un'azione manuale. */
+    public function paysByCard(): bool
+    {
+        return $this->payment_method === 'card' || ($this->payment_method === 'kmoney' && $this->kmoney_rest_method === 'card');
     }
 
     public function items(): HasMany

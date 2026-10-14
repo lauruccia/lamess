@@ -16,6 +16,7 @@ use App\Domain\Orders\PendingCart;
 use App\Domain\Orders\PricedCart;
 use App\Domain\Orders\ReturnRequestService;
 use App\Domain\Orders\StripeCheckoutProvider;
+use App\Domain\Orders\StripeWebhook;
 use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\BundleRule;
 use App\Models\CreditNote;
@@ -744,6 +745,11 @@ class ShopController extends Controller
         // Ritorno dalla pagina di pagamento a pagamento riuscito: gli articoli sono stati acquistati, il carrello si svuota.
         if ($r->query('da') === 'carta' && (int) $r->session()->get(PendingCart::KEY) === $order->id) {
             PendingCart::clear($r);
+        }
+        // Ritorno da Stripe: si chiede a Stripe l'esito invece di aspettare il webhook (che resta comunque la via principale).
+        if ($r->query('da') === 'carta' && $order->status === 'pending_payment' && ($stripe = app(PaymentProvider::class)) instanceof StripeCheckoutProvider) {
+            app(StripeWebhook::class)->reconcile($order, $stripe);
+            $order->refresh();
         }
         if ($r->query('da') === 'carta' && $order->status === 'pending_payment') {
             session()->now('status', 'Stiamo confermando il pagamento: l\'ordine si aggiorna entro pochi istanti.');

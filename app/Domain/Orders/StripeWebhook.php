@@ -79,6 +79,29 @@ final class StripeWebhook
         return 'paid';
     }
 
+    /**
+     * Allinea un ordine con carta a ciò che dice Stripe, senza aspettare il webhook (ritorno dalla pagina di pagamento, controllo dell'admin).
+     * Conferma solo se Stripe stesso risponde «pagato» per la sessione legata all'ordine.
+     *
+     * @return string esito come handle(), oppure 'no_session' / 'unavailable'
+     */
+    public function reconcile(Order $order, StripeCheckoutProvider $stripe): string
+    {
+        $ref = (string) $order->payments()->where('status', 'pending')->where('provider', 'stripe')->latest('id')->value('provider_ref');
+        if (! str_starts_with($ref, 'cs_')) {
+            return 'no_session';
+        }
+        $session = $stripe->retrieveCheckoutSession($ref);
+        if ($session === null) {
+            return 'unavailable';
+        }
+        if ((int) ($session['client_reference_id'] ?? 0) !== $order->id) {
+            return 'unknown_order';
+        }
+
+        return $this->handle(['type' => 'checkout.session.completed', 'data' => ['object' => $session]]);
+    }
+
     /** Il cliente ha cambiato la carta dell'abbonamento. @param array<string,mixed> $obj */
     private function handleCardUpdate(array $obj): string
     {

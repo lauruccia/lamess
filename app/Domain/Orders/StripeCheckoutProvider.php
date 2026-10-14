@@ -22,6 +22,31 @@ final class StripeCheckoutProvider implements RedirectPaymentProvider, RefundsCa
         return 'stripe';
     }
 
+    /** Chiave segreta (o limitata) di Stripe presente: senza, la carta non si può offrire. */
+    public function isConfigured(): bool
+    {
+        return preg_match('/^(sk|rk)_(test|live)_\S+$/', $this->secretKey) === 1;
+    }
+
+    /**
+     * Sessione di pagamento letta da Stripe (fonte di verità): serve a confermare un ordine quando il webhook è in ritardo o non è arrivato.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function retrieveCheckoutSession(string $sessionId): ?array
+    {
+        if (! str_starts_with($sessionId, 'cs_')) {
+            return null;
+        }
+        try {
+            $r = Http::withToken($this->secretKey)->timeout(15)->get('https://api.stripe.com/v1/checkout/sessions/'.rawurlencode($sessionId));
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $r->successful() && is_array($r->json()) ? $r->json() : null;
+    }
+
     public static function cents(string $amount): int
     {
         return (int) (string) Num::of($amount)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp);
@@ -105,7 +130,7 @@ final class StripeCheckoutProvider implements RedirectPaymentProvider, RefundsCa
     public function createCardUpdate(Subscription $sub, string $successUrl, string $cancelUrl): CheckoutSession
     {
         $body = [
-            'mode' => 'setup', 'payment_method_types' => ['card'],
+            'mode' => 'setup', 'payment_method_types' => ['card'], 'locale' => 'it',
             'success_url' => $successUrl, 'cancel_url' => $cancelUrl,
             'metadata' => ['subscription_id' => (string) $sub->id, 'purpose' => 'card_update'],
             'setup_intent_data' => ['metadata' => ['subscription_id' => (string) $sub->id]],
@@ -147,6 +172,8 @@ final class StripeCheckoutProvider implements RedirectPaymentProvider, RefundsCa
         $email = $order->buyer?->email;
         $body = [
             'mode' => 'payment',
+            'payment_method_types' => ['card'],
+            'locale' => 'it',
             'client_reference_id' => (string) $order->id,
             'success_url' => $successUrl,
             'cancel_url' => $cancelUrl,

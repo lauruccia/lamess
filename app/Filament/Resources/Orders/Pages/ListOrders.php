@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Pages;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
+use App\Domain\Periods\PeriodStateException;
+use App\Domain\Plan\LegacyPlan;
+use App\Filament\Pages\Base\SuperadminListRecords;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Models\OrderEvent;
 use App\Models\Product;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -20,10 +24,6 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use App\Filament\Resources\Orders\OrderResource;
-use App\Models\Order;
-use Filament\Actions\Action;
-use App\Filament\Pages\Base\SuperadminListRecords;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListOrders extends SuperadminListRecords
@@ -77,8 +77,8 @@ class ListOrders extends SuperadminListRecords
                     TextInput::make('province')->label('Provincia')->maxLength(3),
                     Select::make('country')->label('Paese')->options(fn () => collect((array) config('lamess.shop_countries'))->mapWithKeys(fn ($c) => [$c => $c])->all())->default('IT')->required(),
                 ]),
-                Select::make('method')->label('Metodo di pagamento')->options(['transfer' => 'Bonifico', 'card' => 'Carta', 'kmoney' => 'KMoney'])->default('transfer')->required(),
-                Toggle::make('paid')->label(LegacyPlan::hidden() ? 'Già pagato: conferma subito il pagamento (genera la fattura)' : 'Già pagato: conferma subito il pagamento (genera punti e fattura)')->default(false),
+                Select::make('method')->label('Metodo di pagamento')->options(['transfer' => 'Bonifico', 'card' => 'Carta (paga il cliente su Stripe)', 'kmoney' => 'KMoney'])->default('transfer')->required()->live(),
+                Toggle::make('paid')->visible(fn (Get $get) => $get('method') !== 'card')->label(LegacyPlan::hidden() ? 'Già pagato: conferma subito il pagamento (genera la fattura)' : 'Già pagato: conferma subito il pagamento (genera punti e fattura)')->default(false),
                 Textarea::make('notes')->label('Note (facoltative)'),
             ])
             ->action(function (array $data): void {
@@ -87,6 +87,9 @@ class ListOrders extends SuperadminListRecords
                     $lines[(int) $row['product_id']] = ($lines[(int) $row['product_id']] ?? 0) + (int) $row['qty'];
                 }
                 $orders = app(OrderService::class);
+                if ($data['method'] === 'card') {
+                    $data['paid'] = false;   // la carta si conferma solo con il pagamento reale su Stripe
+                }
                 try {
                     $buyer = User::findOrFail($data['user_id']);
                     $order = $orders->place($buyer, $lines, (string) $data['country'], (string) $data['method'], $data, null, ($data['notes'] ?? null) ?: null);
@@ -94,7 +97,7 @@ class ListOrders extends SuperadminListRecords
                     if ($data['paid'] ?? false) {
                         $orders->markPaid($order);
                     }
-                } catch (OrderException|\App\Domain\Periods\PeriodStateException $e) {
+                } catch (OrderException|PeriodStateException $e) {
                     Notification::make()->title($e->getMessage())->danger()->send();
 
                     return;

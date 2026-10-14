@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Ledger\PvLedger;
+use App\Domain\Plan\LegacyPlan;
 use App\Models\BundleRule;
 use App\Models\Consultant;
 use App\Models\Customer;
@@ -249,10 +249,20 @@ final class OrderService
         return $this->kmoney->enabled() && (bool) config('lamess.payments.kmoney', true);
     }
 
+    /** La carta si offre solo se c'è un circuito reale pronto: Stripe con la chiave; il driver di prova mai in produzione. */
+    public function cardAvailable(): bool
+    {
+        return match (true) {
+            $this->payments instanceof StripeCheckoutProvider => $this->payments->isConfigured(),
+            $this->payments instanceof FakePaymentProvider => ! app()->isProduction(),
+            default => true,
+        };
+    }
+
     /** @return array{card: bool, transfer: bool, kmoney: bool} metodi di pagamento offerti ora nel checkout */
     public function enabledMethods(): array
     {
-        return ['card' => (bool) config('lamess.payments.card', true), 'transfer' => (bool) config('lamess.payments.transfer', true), 'kmoney' => $this->kmoneyEnabled()];
+        return ['card' => (bool) config('lamess.payments.card', true) && $this->cardAvailable(), 'transfer' => (bool) config('lamess.payments.transfer', true), 'kmoney' => $this->kmoneyEnabled()];
     }
 
     /**

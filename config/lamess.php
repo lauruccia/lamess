@@ -79,7 +79,7 @@ return [
     'eur_per_pv' => env('LAMESS_EUR_PER_PV', '1.23'),            // PV suggerito = imponibile / 1,23 (RF-040)
     'default_vat_rate' => '22.00',
     'shop_countries' => ['IT'],                                   // mercati aperti (RF-036)
-    'payment_driver' => env('LAMESS_PAYMENT_DRIVER', 'fake'),     // fake | stripe
+    'payment_driver' => env('LAMESS_PAYMENT_DRIVER', env('APP_ENV') === 'production' ? 'stripe' : 'fake'),   // fake (solo sviluppo) | stripe: ogni pagamento con carta passa da Stripe
     'kmoney_driver' => env('LAMESS_KMONEY_DRIVER', 'fake'),   // fake | api | off
     // Connessione a KMoney (kmoney-app): OAuth2 + mandato di pagamento. Le credenziali arrivano da KMoney (client «kshop»).
     'kmoney' => [

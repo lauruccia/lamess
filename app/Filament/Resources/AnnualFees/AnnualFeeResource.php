@@ -7,8 +7,8 @@ namespace App\Filament\Resources\AnnualFees;
 use App\Domain\Onboarding\FeeService;
 use App\Domain\Onboarding\OnboardingException;
 use App\Filament\Concerns\GatedByPermission;
-use App\Filament\Resources\AnnualFees\Pages\ListAnnualFees;
 use App\Filament\Resources\AnnualFees\Pages\EditAnnualFee;
+use App\Filament\Resources\AnnualFees\Pages\ListAnnualFees;
 use App\Models\AnnualFee;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -70,7 +70,7 @@ class AnnualFeeResource extends Resource
         ])->recordActions([
             Action::make('paid')->authorize('fees.manage')->label('Segna pagato')->iconButton()->tooltip('Segna pagato')->icon('heroicon-o-check')->color('success')
                 ->visible(fn (AnnualFee $record) => $record->status === 'due')
-                ->schema([Select::make('method')->label('Metodo')->options(['transfer' => 'Bonifico', 'card' => 'Carta', 'wallet' => 'Wallet'])->required()->default('transfer')])
+                ->schema([Select::make('method')->label('Metodo')->options(['transfer' => 'Bonifico', 'wallet' => 'Wallet'])->required()->default('transfer')])
                 ->action(function (AnnualFee $record, array $data): void {
                     try {
                         app(FeeService::class)->markPaid($record, $data['method']);

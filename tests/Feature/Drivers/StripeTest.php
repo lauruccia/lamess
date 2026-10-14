@@ -10,6 +10,7 @@ use App\Domain\Onboarding\KycService;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
 use App\Domain\Orders\OrderService;
+use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\StripeCheckoutProvider;
 use App\Domain\Orders\StripeWebhook;
 use App\Domain\System\GoLiveCheck;
@@ -147,6 +148,86 @@ final class StripeTest extends TestCase
         $o = $this->cardOrder();
         $this->assertFalse(app(OrderService::class)->payByCard($o));
         $this->assertSame('pending_payment', $o->refresh()->status);
+    }
+
+    public function test_checkout_accepts_only_cards_in_italian(): void
+    {
+        Http::fake(['api.stripe.com/v1/checkout/sessions' => Http::response(['id' => 'cs_only_card', 'url' => 'https://checkout.stripe.com/pay/cs_only_card'])]);
+        $o = $this->cardOrder();
+
+        $this->actingAs($o->buyer)->post("/area/ordini/{$o->id}/riprova")->assertRedirect();
+
+        Http::assertSent(fn ($r) => $r['payment_method_types'] === ['card'] && $r['locale'] === 'it');
+    }
+
+    public function test_return_from_stripe_confirms_the_order_by_asking_stripe_not_the_url(): void
+    {
+        $o = $this->cardOrder();
+        $o->payments()->where('status', 'pending')->update(['provider' => 'stripe', 'provider_ref' => 'cs_ret_1']);
+        Http::fake(['api.stripe.com/v1/checkout/sessions/cs_ret_1' => Http::response([
+            'id' => 'cs_ret_1', 'client_reference_id' => (string) $o->id, 'payment_status' => 'paid', 'mode' => 'payment',
+            'amount_total' => StripeCheckoutProvider::cents((string) $o->total), 'currency' => 'eur', 'payment_intent' => 'pi_ret',
+        ])]);
+
+        $this->actingAs($o->buyer)->get("/area/ordini/{$o->id}?da=carta")->assertOk();
+
+        $this->assertSame('paid', $o->refresh()->status);
+        $this->assertSame('pi_ret', $o->payments()->where('status', 'paid')->firstOrFail()->provider_ref);
+    }
+
+    public function test_return_from_stripe_does_not_confirm_when_stripe_says_unpaid_or_is_unreachable(): void
+    {
+        $o = $this->cardOrder();
+        $o->payments()->where('status', 'pending')->update(['provider' => 'stripe', 'provider_ref' => 'cs_ret_2']);
+        Http::fake(['api.stripe.com/v1/checkout/sessions/cs_ret_2' => Http::response([
+            'id' => 'cs_ret_2', 'client_reference_id' => (string) $o->id, 'payment_status' => 'unpaid', 'amount_total' => 1, 'currency' => 'eur',
+        ])]);
+        $this->actingAs($o->buyer)->get("/area/ordini/{$o->id}?da=carta")->assertOk();
+        $this->assertSame('pending_payment', $o->refresh()->status);
+
+        Http::fake(['api.stripe.com/*' => Http::response([], 500)]);
+        $this->actingAs($o->buyer)->get("/area/ordini/{$o->id}?da=carta")->assertOk();
+        $this->assertSame('pending_payment', $o->refresh()->status);
+    }
+
+    public function test_reconcile_refuses_a_session_that_belongs_to_another_order(): void
+    {
+        $o = $this->cardOrder();
+        $o->payments()->where('status', 'pending')->update(['provider' => 'stripe', 'provider_ref' => 'cs_other']);
+        Http::fake(['api.stripe.com/v1/checkout/sessions/cs_other' => Http::response([
+            'id' => 'cs_other', 'client_reference_id' => '999999', 'payment_status' => 'paid', 'amount_total' => StripeCheckoutProvider::cents((string) $o->total), 'currency' => 'eur',
+        ])]);
+
+        $this->assertSame('unknown_order', app(StripeWebhook::class)->reconcile($o, app(PaymentProvider::class)));
+        $this->assertSame('pending_payment', $o->refresh()->status);
+    }
+
+    public function test_card_is_offered_only_when_stripe_is_really_configured(): void
+    {
+        $this->assertTrue(app(OrderService::class)->enabledMethods()['card']);
+
+        config(['services.stripe.secret' => '']);
+        $this->assertFalse(app(OrderService::class)->enabledMethods()['card'], 'senza chiave Stripe la carta sparisce dal checkout');
+    }
+
+    public function test_test_driver_can_never_take_card_payments_in_production(): void
+    {
+        config(['lamess.payment_driver' => 'fake']);
+        $o = $this->cardOrder();
+        $this->assertTrue(app(OrderService::class)->enabledMethods()['card']);   // in sviluppo resta utilizzabile
+
+        $this->app['env'] = 'production';
+        $this->assertFalse(app(OrderService::class)->enabledMethods()['card']);
+        $this->assertFalse(app(OrderService::class)->payByCard($o), 'nessuna carta risulta pagata senza Stripe');
+        $this->assertSame('pending_payment', $o->refresh()->status);
+    }
+
+    public function test_card_orders_cannot_be_confirmed_by_hand(): void
+    {
+        $o = $this->cardOrder();
+        $this->assertTrue($o->paysByCard());
+        $transfer = app(OrderService::class)->place($o->buyer, [$o->items()->first()->product_id => 1], 'IT', 'transfer', $this->billing());
+        $this->assertFalse($transfer->paysByCard());
     }
 
     private function consultantWithOnlineKyc(): array

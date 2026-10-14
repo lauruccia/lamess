@@ -8,8 +8,8 @@ use App\Domain\Access\Superadmin;
 use App\Domain\Succession\SuccessionException;
 use App\Domain\Succession\TransferService;
 use App\Filament\Concerns\GatedByPermission;
-use App\Filament\Resources\AccountTransfers\Pages\ListAccountTransfers;
 use App\Filament\Resources\AccountTransfers\Pages\EditAccountTransfer;
+use App\Filament\Resources\AccountTransfers\Pages\ListAccountTransfers;
 use App\Models\AccountTransfer;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -102,7 +102,7 @@ class AccountTransferResource extends Resource
         ])->recordActions([
             Action::make('fee')->label('Fee pagata')->iconButton()->tooltip('Fee pagata')->icon('heroicon-o-banknotes')->color('success')->authorize('fees.manage')
                 ->visible(fn (AccountTransfer $t) => $t->status === 'awaiting_payment')
-                ->schema([Select::make('method')->label('Come è stata pagata')->options(['transfer' => 'Bonifico', 'card' => 'Carta', 'cash' => 'Altro'])->default('transfer')->required()])
+                ->schema([Select::make('method')->label('Come è stata pagata')->options(['transfer' => 'Bonifico', 'cash' => 'Altro'])->default('transfer')->required()])
                 ->action(fn (AccountTransfer $t, array $data) => self::run(fn () => app(TransferService::class)->markFeePaid($t, $data['method']), 'Fee registrata')),
             Action::make('approve')->label('Approva')->iconButton()->tooltip('Approva')->icon('heroicon-o-check')->color('success')->authorize('network.manage')
                 ->visible(fn (AccountTransfer $t) => $t->status === 'paid')

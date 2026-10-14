@@ -23,6 +23,10 @@ final class FakePaymentProvider implements PaymentProvider, RefundsCardPayments
 
     public function charge(Order $order, array $details = []): PaymentResult
     {
+        // Rete di sicurezza: in produzione nessuna carta può risultare pagata senza passare da Stripe.
+        if (app()->isProduction()) {
+            return new PaymentResult(false, null, 'Il pagamento con carta non è ancora attivo.');
+        }
         if (($details['simulate'] ?? null) === 'decline') {
             return new PaymentResult(false, null, 'Carta rifiutata (simulazione)');
         }

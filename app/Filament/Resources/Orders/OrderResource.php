@@ -4,20 +4,24 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
+use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\RefundService;
 use App\Domain\Orders\ReturnRequestService;
 use App\Domain\Orders\ReturnService;
-use App\Models\ReturnRequest;
+use App\Domain\Orders\StripeCheckoutProvider;
+use App\Domain\Orders\StripeWebhook;
 use App\Domain\Periods\PeriodStateException;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\GatedByPermission;
-use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\EditOrder;
+use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
+use App\Models\CreditNote;
 use App\Models\Order;
 use App\Models\Refund;
+use App\Models\ReturnRequest;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
@@ -75,7 +79,7 @@ class OrderResource extends Resource
     public const CARRIERS = ['BRT' => 'BRT', 'GLS' => 'GLS', 'DHL' => 'DHL', 'SDA' => 'SDA', 'Poste Italiane' => 'Poste Italiane', 'UPS' => 'UPS', 'Altro' => 'Altro'];
 
     /** Reso + nota di credito + (se richiesto) rimborso in denaro; mostra l'esito all'admin. */
-    private static function doReturn(Order $record, array $qty, string $reason, bool $restock, bool $shipping, bool $money): ?\App\Models\CreditNote
+    private static function doReturn(Order $record, array $qty, string $reason, bool $restock, bool $shipping, bool $money): ?CreditNote
     {
         try {
             $note = app(ReturnService::class)->refund($record, $qty, $reason, $restock, $shipping);
@@ -124,7 +128,9 @@ class OrderResource extends Resource
                 ->color(fn (string $state) => match ($state) {
                     'pending_payment' => 'warning', 'paid', 'processing', 'shipped', 'delivered' => 'success', 'cancelled' => 'gray', default => 'danger',
                 }),
-            TextColumn::make('payment_method')->label('Pagamento')->formatStateUsing(fn (string $state) => match ($state) { 'card' => 'Carta', 'kmoney' => 'KMoney', default => 'Bonifico' }),
+            TextColumn::make('payment_method')->label('Pagamento')->formatStateUsing(fn (string $state) => match ($state) {
+                'card' => 'Carta', 'kmoney' => 'KMoney', default => 'Bonifico'
+            }),
             TextColumn::make('discount_net')->label('Sconto')->state(fn (Order $r) => $r->discounts ? collect($r->discounts)->map(fn ($d) => $d['code'] ?: $d['name'])->implode(', ') : null)->placeholder('—')->toggleable(),
             TextColumn::make('total')->label('Totale €')->numeric(2),
             TextColumn::make('pv_total')->label('PV')->numeric(2)->visible(fn (): bool => LegacyPlan::visible()),
@@ -147,9 +153,24 @@ class OrderResource extends Resource
     {
         return [
             Action::make('confirm')->authorize('orders.manage')->label('Conferma pagamento')->icon('heroicon-o-check')->color('success')
-                ->visible(fn (Order $record) => $record->status === 'pending_payment')->requiresConfirmation()
+                ->visible(fn (Order $record) => $record->status === 'pending_payment' && ! $record->paysByCard())->requiresConfirmation()
                 ->modalDescription(LegacyPlan::hidden() ? 'Conferma di aver ricevuto il pagamento. Verrà generata la fattura.' : 'Conferma di aver ricevuto il pagamento. Verranno generati i punti e la fattura.')
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->markPaid($record), LegacyPlan::hidden() ? 'Pagamento confermato: fattura generata' : 'Pagamento confermato: punti e fattura generati')),
+            Action::make('checkStripe')->authorize('orders.manage')->label('Verifica su Stripe')->icon('heroicon-o-credit-card')->color('info')
+                ->visible(fn (Order $record) => $record->status === 'pending_payment' && $record->paysByCard() && app(PaymentProvider::class) instanceof StripeCheckoutProvider)
+                ->modalDescription('Chiede a Stripe se il cliente ha pagato. Se sì, l\'ordine viene confermato; la carta si conferma solo così, mai a mano.')
+                ->action(function (Order $record): void {
+                    $esito = app(StripeWebhook::class)->reconcile($record, app(PaymentProvider::class));
+                    $msg = match ($esito) {
+                        'paid' => ['Pagamento trovato su Stripe: ordine confermato', 'success'],
+                        'already_processed' => ['L\'ordine risulta già lavorato', 'info'],
+                        'not_paid' => ['Stripe non ha ancora ricevuto il pagamento', 'warning'],
+                        'amount_mismatch' => ['Importo diverso dall\'ordine: non confermato, controlla su Stripe', 'danger'],
+                        'no_session' => ['Il cliente non ha ancora aperto la pagina di pagamento', 'warning'],
+                        default => ['Stripe non risponde: riprova tra poco', 'danger'],
+                    };
+                    Notification::make()->title($msg[0])->{$msg[1]}()->send();
+                }),
             Action::make('processing')->authorize('orders.manage')->label('In preparazione')->icon('heroicon-o-cube')->color('gray')
                 ->visible(fn (Order $record) => $record->status === 'paid')
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->startProcessing($record), 'Ordine in preparazione')),

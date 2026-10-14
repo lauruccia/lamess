@@ -281,3 +281,10 @@
 - Il motore prende la data più lontana tra `rank_grace_until` e i giorni dall'attivazione: per far valere il 31/12/2026 svuotare `rank_grace_days`.
 - Il Piano Incaricati è attivo dal 09/10/2026 (versione 5); il periodo 2026-10 resta legato alla versione precedente finché non lo si sposta (vedi procedura).
 - Tecnico: `Node::$previousRank` (fuori dall'hash se vuoto), `SnapshotBuilder`, `PeriodCalculator`, `CareerProgress::isLegacy()`; test `test_the_plan_wide_date_protects_only_those_coming_from_the_previous_system`.
+
+## 2026-10-14 (sera) — «Il mio ramo»: albero grafico come quello del back-office
+- L'albero dell'area incaricato non è più un elenco: è lo stesso organigramma del back-office (schede con colore della pietra, barra verso la qualifica successiva, ricerca, livelli 1–3 / 1–6, espandi tutto, schermo intero, minimappa, scheda al clic, doppio clic per aprire l'albero di una persona), con l'incaricato alla radice e solo il suo ramo. Niente PV, PR, Fast Start o regola del 50%.
+- La scheda mostra qualifica, livello, clienti, iscritti, senza primo ordine, ultimo ordine, venduto del mese, diretti Pearl e i requisiti per la prossima qualifica, con testi neutri; i requisiti si caricano da `GET /area/rete/{id}/dettaglio` (solo per sé e la propria downline, altrimenti 404).
+- Tecnico: `Domain/Career/NetworkTree` (dati e dettaglio), vista `site/area/_tree.blade.php`, script `public/js/lamess-tree.js` (nessuna libreria, nessun build). Se i dati dell'albero non si possono costruire resta il vecchio elenco ad albero.
+- Test: `AreaPagesTest` (dati dell'albero con radice l'incaricato e senza punti; scheda di dettaglio solo per il proprio ramo). Nessun commit.
+

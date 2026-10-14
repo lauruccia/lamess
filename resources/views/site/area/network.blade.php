@@ -65,18 +65,7 @@
      <div class="panel-body muted" style="font-size:13px">«Validi» sono i clienti che hanno fatto un ordine che conta per il piano. Vedi solo numeri: nome e contatti dei clienti degli altri incaricati restano riservati.</div>
     </section>
 
-    <section class="panel">
-     <header><h2>Albero della rete</h2><span class="muted" style="font-size:13px">Tocca un nome per aprire o chiudere il ramo</span></header>
-     <div class="panel-body">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-       <input id="tree-q" type="search" placeholder="Cerca per nome o codice" style="flex:1 1 200px;padding:8px 12px;border:1px solid var(--hair);border-radius:10px">
-       <button type="button" class="btn ghost" id="tree-open" style="padding:7px 14px;font-size:13.5px">Apri tutto</button>
-       <button type="button" class="btn ghost" id="tree-close" style="padding:7px 14px;font-size:13.5px">Chiudi tutto</button>
-      </div>
-      <ul class="tree" id="tree">@include('site.area._node', ['ids' => $children[$me->id] ?? []])</ul>
-      <p class="muted" id="tree-none" style="display:none">Nessuna persona trovata.</p>
-     </div>
-    </section>
+    @include('site.area._tree')
 
     <section class="panel">
      <header><h2>Le mie colonne</h2><span class="muted" style="font-size:13px">Una colonna è un tuo diretto con tutta la sua discendenza</span></header>
@@ -132,10 +121,7 @@
    @if($total['persons'] === 0)
     <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'tree'])</span><div><strong>Il tuo ramo è ancora vuoto</strong><p>Condividi il tuo link referral: chi si iscrive con quel link entra nella tua rete. <a href="{{ \App\Domain\Content\ReferralQr::url($me) }}">{{ \App\Domain\Content\ReferralQr::pretty($me) }}</a></p><a class="btn accent" href="/area/referral">Link e QR code</a></div></div></section>
    @else
-    <section class="panel">
-     <header><h2>Albero della rete</h2><span class="muted" style="font-size:13px">Tocca un nome per aprire o chiudere il ramo</span></header>
-     <div class="panel-body"><ul class="tree" id="tree">@include('site.area._node', ['ids' => $children[$me->id] ?? []])</ul></div>
-    </section>
+    @include('site.area._tree')
    @endif
   </div>
   <div class="stack">
@@ -150,31 +136,11 @@
 <style>
  .mini-bar{height:8px;min-width:90px;border-radius:5px;background:rgba(127,127,127,.22);overflow:hidden}
  .mini-bar>i{display:block;height:100%;background:#C2663A}.mini-bar>i.ok{background:#2E9E5B}
- .tree .node{display:inline-flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
 </style>
 <script>
  (function(){
   var aq=document.getElementById('act-q');
   if(aq){aq.addEventListener('input',function(){var t=aq.value.trim().toLowerCase();document.querySelectorAll('#act-t tbody tr').forEach(function(r){r.style.display=(t===''||(r.getAttribute('data-name')||'').indexOf(t)>-1)?'':'none';});});}
- })();
- (function(){
-  var q=document.getElementById('tree-q'); if(!q) return;
-  var tree=document.getElementById('tree'), none=document.getElementById('tree-none');
-  function all(open){tree.querySelectorAll('details').forEach(function(d){d.open=open;});}
-  document.getElementById('tree-open').addEventListener('click',function(){all(true);});
-  document.getElementById('tree-close').addEventListener('click',function(){all(false);});
-  q.addEventListener('input',function(){
-   var t=q.value.trim().toLowerCase(), items=tree.querySelectorAll('li'), shown=0;
-   items.forEach(function(li){li.style.display='';});
-   if(t===''){none.style.display='none';return;}
-   items.forEach(function(li){li.style.display='none';});
-   items.forEach(function(li){
-    if((li.getAttribute('data-name')||'').indexOf(t)===-1) return;
-    shown++; var p=li;
-    while(p&&p!==tree){ if(p.tagName==='LI'){p.style.display='';} if(p.tagName==='DETAILS'){p.open=true;} p=p.parentElement; }
-   });
-   none.style.display=shown?'none':'';
-  });
  })();
 </script>
 @endsection

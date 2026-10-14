@@ -123,9 +123,21 @@ class AreaController extends Controller
     {
         $me = $this->activeConsultant($request);
         $data = app(\App\Domain\Career\NetworkOverview::class)->for($me);
-        $progress = $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id));
+        $careers = app(\App\Domain\Career\CareerProgress::class);
+        $progress = $this->safely(static fn () => $careers->forConsultant($me->id));
+        $tree = $data['total']['persons'] > 0 ? $this->safely(static fn () => app(\App\Domain\Career\NetworkTree::class)->for($data, $careers->all())) : null;
 
-        return view('site.area.network', $data + ['progress' => $progress, 'kosmos' => $data['plan']?->kosmos !== null]);
+        return view('site.area.network', $data + ['progress' => $progress, 'tree' => $tree, 'kosmos' => $data['plan']?->kosmos !== null]);
+    }
+
+    /** Requisiti di una persona del proprio ramo (o i propri), caricati al clic sull'albero. Chi è fuori dal ramo non esiste: 404. */
+    public function networkDetail(Request $request, int $id)
+    {
+        $me = $this->activeConsultant($request);
+        abort_unless($id === (int) $me->id || DB::table('network_paths')->where('ancestor_id', $me->id)->where('descendant_id', $id)->where('depth', '>', 0)->exists(), 404);
+        $p = $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($id));
+
+        return response()->json(app(\App\Domain\Career\NetworkTree::class)->detail($p));
     }
 
     /** I clienti assegnati all’incaricato. */

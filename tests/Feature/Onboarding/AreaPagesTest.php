@@ -57,6 +57,49 @@ final class AreaPagesTest extends TestCase
         $this->assertSame('Blue diamond', RankPalette::label('BLUE_DIAMOND'));
     }
 
+    public function test_branch_tree_data_has_the_whole_downline_rooted_in_me_and_no_points(): void
+    {
+        $this->plan();
+        $this->openPeriod('2026-10');
+        $a = $this->consultant('A');
+        $b = $this->consultant('B', $a);
+        $c = $this->consultant('C', $b);
+        $x = $this->consultant('X');
+        app(NetworkService::class)->rebuildClosure();
+
+        $html = $this->actingAs($this->withUser($a))->get('/area/rete')->assertOk()->getContent();
+        $this->assertSame(1, preg_match('#<script type="application/json" id="lt-data">(.*?)</script>#s', $html, $m));
+        $tree = json_decode($m[1], true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame($a->id, $tree['root']);
+        $this->assertSame([$a->id, $b->id, $c->id], array_column($tree['nodes'], 'id'));
+        $this->assertNull($tree['nodes'][0]['parent']);
+        $this->assertSame($a->id, $tree['nodes'][1]['parent']);
+        $this->assertSame($b->id, $tree['nodes'][2]['parent']);
+        $this->assertNotContains($x->id, array_column($tree['nodes'], 'id'));
+        foreach (['pr', 'pvf', 'pv', 'hide_pr'] as $oldKey) {
+            $this->assertArrayNotHasKey($oldKey, $tree['nodes'][1]);
+        }
+    }
+
+    public function test_branch_detail_is_only_for_me_and_my_downline(): void
+    {
+        $this->plan();
+        $this->openPeriod('2026-10');
+        $a = $this->consultant('A');
+        $b = $this->consultant('B', $a);
+        $c = $this->consultant('C', $b);
+        $x = $this->consultant('X');
+        app(NetworkService::class)->rebuildClosure();
+        $this->actingAs($this->withUser($a));
+
+        $this->getJson('/area/rete/'.$b->id.'/dettaglio')->assertOk()->assertJsonStructure(['known']);
+        $this->getJson('/area/rete/'.$c->id.'/dettaglio')->assertOk()->assertJsonStructure(['known']);
+        $this->getJson('/area/rete/'.$a->id.'/dettaglio')->assertOk()->assertJsonStructure(['known']);
+        $this->getJson('/area/rete/'.$x->id.'/dettaglio')->assertNotFound();
+        $this->actingAs($this->withUser($b))->getJson('/area/rete/'.$a->id.'/dettaglio')->assertNotFound();
+    }
+
     public function test_branch_and_customers_are_for_consultants_only(): void
     {
         $fan = User::factory()->create();

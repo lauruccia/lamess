@@ -78,6 +78,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/onboarding/iban', [AreaController::class, 'saveIban']);
     Route::get('/file/{kind}', [AreaController::class, 'download']);
     Route::get('/rete', [AreaController::class, 'network']);
+    Route::get('/rete/{id}/dettaglio', [AreaController::class, 'networkDetail'])->whereNumber('id')->middleware('throttle:120,1');
     Route::get('/clienti', [AreaController::class, 'customers']);
     Route::get('/profilo', [AreaController::class, 'profile']);
     Route::post('/profilo', [AreaController::class, 'saveProfile']);

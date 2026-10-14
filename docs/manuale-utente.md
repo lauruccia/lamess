@@ -96,6 +96,7 @@ Compare **solo se il piano prevede il pagamento su richiesta** (oggi il piano pa
 ## Pagine dell'area personale
 - **Il mio ramo** (solo incaricati): la tua rete ad albero, in sola lettura. Tocca un nome per aprire o chiudere il ramo; per ogni persona vedi qualifica, stato e numero di diretti. Ogni qualifica ha il colore della sua pietra, con la legenda sopra l'albero. I numeri sono quelli dell'ultimo calcolo.
 - **I miei clienti** (solo incaricati): chi si è iscritto con il tuo link o è assegnato a te, con ordini pagati (IVA inclusa) e ultimo ordine.
+- **Password dimenticata o reimpostata dal Consorzio**: se ricevi l'email «Lamèss — recupero della password», il link vale 60 minuti e ti fa scegliere una nuova password; la vecchia resta valida finché non la cambi. Se non l'hai chiesta, ignora l'email.
 - **I miei dati** (tutti): anagrafica e indirizzo di fatturazione, indirizzi di spedizione, conto KMoney e cambio password. Email e dati fiscali si cambiano scrivendo al Consorzio.
 - **Assistenza**: apri una richiesta (domanda generale, problema tecnico, segnalazione, altro), segui le risposte del Consorzio e puoi rispondere o chiudere. Ricevi una risposta in pagina; le email partono solo quando l'invio email è attivo.
 

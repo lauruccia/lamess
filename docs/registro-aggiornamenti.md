@@ -241,3 +241,10 @@
 - **Indiretti estesi**: `kosmos_extended_stop` = `same_or_higher` (stessa qualifica o più alta) predefinito (decisione di Laura) nel codice e in `plan-incaricati-2026-10-08.json`.
 - **Piano precedente nascosto**: nuovi test `LegacyPlanTest` (8) su impostazione, permessi, ambiente e assenza di effetti sui calcoli. Test aggiunti a `Consultant360Test` e `KosmosPlanTest`.
 - Il Piano Incaricati parte il 1° novembre 2026 (ottobre resta sul piano precedente); Fast Start, Team, Matching e Rank Bonus restano spenti.
+
+## 2026-10-14 — Reset password dall'admin, singolo e in blocco
+- **Invia reset password** per incaricati, clienti FAN e utenti: sulla riga, sulle righe selezionate e «Reset password a tutti» (incaricati, clienti o entrambi; conferma INVIA). Manda il link per scegliere una nuova password, senza cambiare quella attuale. Permesso `network.manage`.
+- Salta back-office, email non valide e (se acceso) chi ha già un link delle ultime 24 ore; non crea link se «Invio email attivo» è spento; tempo massimo con conteggio dei rimasti, rilanciabile; audit con soli conteggi.
+- Aggiunta al repository la notifica `ResetPasswordIt` (usata da `User` ma mancante su GitHub: il «password dimenticata» online andava in errore).
+- Test: `AdminPasswordResetLinksTest` (11). Documentazione aggiornata: manuale admin, guida breve, manuale utente, manuale sviluppatori, dossier.
+- Nota: `ConsultantListTest::test_no_per_row_queries` fallisce già prima di questa modifica (soglia di 60 query, ne fa ~120).

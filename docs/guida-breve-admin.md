@@ -32,6 +32,7 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 
 ## Azioni utili
 - **Mantieni qualifica** (scheda incaricato, menu riga, in massa, «a tutti»): congela la qualifica fino alla data scelta oppure «fino a revoca»; resta nel log.
+- **Invia reset password** (Incaricati, Clienti FAN, Utenti: sulla riga, sulle selezionate o «Reset password a tutti», conferma scrivendo INVIA): la persona riceve il link per scegliere una nuova password. Serve «Invio email attivo»; resta nel log.
 - **Rimborsa KMoney** (ordine in attesa con quota KMoney già addebitata) e **Reso e rimborso**.
 - Abbonamento: spedizione gratuita, impegno di 12 mesi non vincolante; il cliente può mettere in pausa o saltare un mese, tu hai **Pausa / Riprendi / Annulla**.
 

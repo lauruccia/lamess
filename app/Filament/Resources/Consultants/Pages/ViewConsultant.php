@@ -13,6 +13,7 @@ use App\Domain\Network\TreeOperations;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Consultants\ConsultantResource;
+use App\Filament\Support\ConsultantAccessAction;
 use App\Filament\Support\KycRequestAction;
 use App\Filament\Support\RankHoldAction;
 use App\Filament\Support\SendDocumentsAction;
@@ -74,7 +75,7 @@ class ViewConsultant extends ViewRecord
     /** Le azioni di servizio diventano icone con la descrizione al passaggio del mouse: stanno su una riga; Sospendi/Riattiva/Cessa restano a testo. */
     protected function getHeaderActions(): array
     {
-        $icons = ['requestKyc', 'sendDocuments', 'printBadge', 'signatureCertificate', 'move', 'reassignClients', 'forceRank', 'holdRank', 'addNote', 'revealIban'];
+        $icons = ['requestKyc', 'sendDocuments', 'grantAccess', 'printBadge', 'signatureCertificate', 'move', 'reassignClients', 'forceRank', 'holdRank', 'addNote', 'revealIban'];
 
         return array_map(
             static fn ($a) => in_array($a->getName(), $icons, true) ? $a->iconButton()->tooltip($a->getLabel()) : $a,
@@ -93,6 +94,7 @@ class ViewConsultant extends ViewRecord
         return [
             KycRequestAction::forPage(fn () => $this->record),
             SendDocumentsAction::forPage(fn () => $this->record),
+            ...ConsultantAccessAction::forPage(fn () => $this->record),
             Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
                 ->visible(fn () => app(BadgeService::class)->isIssuable($this->record))
                 ->url(fn () => url("/admin-files/badge/{$this->record->id}"), shouldOpenInNewTab: true),

@@ -16,6 +16,7 @@ use App\Filament\Resources\Consultants\Pages\CreateConsultant;
 use App\Filament\Resources\Consultants\Pages\EditConsultant;
 use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Resources\Consultants\Pages\ViewConsultant;
+use App\Filament\Support\ConsultantAccessAction;
 use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\ConsultantList;
 use App\Filament\Support\KycRequestAction;
@@ -94,6 +95,8 @@ class ConsultantResource extends Resource
                 ->getSearchResultsUsing(fn (string $search) => Consultant::where('status', 'active')->where(fn ($w) => $w->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))->limit(30)->pluck('name', 'id'))
                 ->getOptionLabelUsing(fn ($value) => Consultant::find($value)?->name)
                 ->helperText('Non modificabile dopo l\'iscrizione.'),
+            TextInput::make('email')->label('Email di accesso (facoltativa)')->email()->trim()->visibleOn('create')
+                ->helperText('Se la compili, crea l’accesso al portale e, se l’invio email è attivo, manda all’incaricato il link per scegliere la password. Puoi anche farlo dopo dalla scheda.'),
             DateTimePicker::make('since')->label('Firma Lettera IVD (ora italiana)')->timezone('Europe/Rome')->required()->default(now())->seconds(false),
         ]);
     }
@@ -253,6 +256,7 @@ class ConsultantResource extends Resource
                 ActionGroup::make([
                     KycRequestAction::forRow(),
                     PasswordResetAction::forRow(),
+                    ...ConsultantAccessAction::forRow(),
                     RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
                     Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
                         ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))

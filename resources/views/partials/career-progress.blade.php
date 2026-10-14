@@ -1,5 +1,5 @@
 @if(empty($p))
-<p style="opacity:.7">Nessun dato di carriera: l’incaricato non è ancora nel calcolo del periodo.</p>
+<p style="opacity:.7">Nessun dato di carriera: l’incaricato non è ancora nel calcolo del periodo. I requisiti compaiono dopo il prossimo calcolo (automatico di notte, o quando l’admin lo rigenera).</p>
 @elseif(! empty($p['kosmos']))
 @include('partials.career-progress-kosmos', ['p' => $p])
 @else

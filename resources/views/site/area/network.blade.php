@@ -127,14 +127,24 @@
   </div>
  </div>
 @else
- @if($total['persons'] === 0)
-  <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'tree'])</span><div><strong>Il tuo ramo è ancora vuoto</strong><p>Condividi il tuo link referral: chi si iscrive con quel link entra nella tua rete. <a href="{{ \App\Domain\Content\ReferralQr::url($me) }}">{{ \App\Domain\Content\ReferralQr::pretty($me) }}</a></p><a class="btn accent" href="/area/referral">Link e QR code</a></div></div></section>
- @else
-  <section class="panel">
-   <header><h2>Albero della rete</h2><span class="muted" style="font-size:13px">Tocca un nome per aprire o chiudere il ramo</span></header>
-   <div class="panel-body"><ul class="tree" id="tree">@include('site.area._node', ['ids' => $children[$me->id] ?? []])</ul></div>
-  </section>
- @endif
+ <div class="split">
+  <div class="stack">
+   @if($total['persons'] === 0)
+    <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'tree'])</span><div><strong>Il tuo ramo è ancora vuoto</strong><p>Condividi il tuo link referral: chi si iscrive con quel link entra nella tua rete. <a href="{{ \App\Domain\Content\ReferralQr::url($me) }}">{{ \App\Domain\Content\ReferralQr::pretty($me) }}</a></p><a class="btn accent" href="/area/referral">Link e QR code</a></div></div></section>
+   @else
+    <section class="panel">
+     <header><h2>Albero della rete</h2><span class="muted" style="font-size:13px">Tocca un nome per aprire o chiudere il ramo</span></header>
+     <div class="panel-body"><ul class="tree" id="tree">@include('site.area._node', ['ids' => $children[$me->id] ?? []])</ul></div>
+    </section>
+   @endif
+  </div>
+  <div class="stack">
+   <section class="panel">
+    <header><h2>Il mio avanzamento</h2></header>
+    <div class="panel-body">@include('partials.career-progress', ['p' => $progress])</div>
+   </section>
+  </div>
+ </div>
 @endif
 
 <style>

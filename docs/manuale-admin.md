@@ -1,198 +1,182 @@
 # Manuale amministratore
 
-> Stato: motore, ordini, chiusura mensile, liquidazioni, pagamenti, statini ed export sono disponibili nel pannello (menu Liquidazioni, Pagamenti, Abbonamenti; scheda del periodo per chiusura, export e riapertura).
-> Questo manuale viene esteso a ogni passo.
+> Aggiornato al 14/10/2026. Il portale è pronto ma resta **chiuso al pubblico** (i visitatori vedono la pagina «Lamèss apre presto») finché la titolare non decide di aprirlo; il back-office `/admin` funziona già.
+> Nel portale si dice sempre **Incaricato / Incaricati** (non più «Consulente»). Le voci di menu citate qui sono quelle reali del pannello.
+> Le istruzioni che richiedono `php artisan` non si possono eseguire sul sito online (non c'è un terminale): sono segnate **«da fare in sviluppo»**.
 
 ## Il mese in breve
-1. **Durante il mese**: ordini e punti arrivano da soli; puoi vedere una stima (*Periodi → Stima live*).
-2. **Il giorno 1 del mese dopo (01:00)**: se la chiusura automatica è accesa, parte il calcolo ufficiale del mese appena finito (e, se scelto, la chiusura).
-3. **Revisione**: apri il mese in *Periodi*, controlla i numeri e premi **Chiudi periodo**. Alla chiusura nascono le **liquidazioni** (maturato e trattenuto di ciascun consulente).
+1. **Durante il mese**: ordini, clienti e qualifiche arrivano da soli. Ogni notte (02:45) il portale ricalcola il mese aperto e aggiorna le qualifiche; per una stima subito: *Periodi → il mese → Stima (live)*.
+2. **Il giorno e l'ora scelti nelle Impostazioni** (di norma il 1° del mese dopo, alle 01:00): se la chiusura automatica è accesa parte il calcolo ufficiale del mese appena finito (e, se scelto, la chiusura).
+3. **Revisione**: apri il mese in *Periodi*, controlla i numeri e premi **Chiudi periodo**. Alla chiusura nascono le **liquidazioni** (maturato e trattenuto di ciascun incaricato).
 4. **Dal 15 (05:00)**: i pagamenti «da pagare» vengono preparati da soli.
-5. **Tu**: *Pagamenti → Esporta bonifici da fare (CSV)*, esegui i bonifici in banca, poi **Segna pagato** (riferimento e data).
-6. I consulenti vedono lo statino del mese in *I miei statini* (pagina e PDF).
+5. **Tu**: *Pagamenti → Esporta file SEPA (XML)* (o *Esporta bonifici da fare (CSV)*), esegui i bonifici in banca, poi **Segna pagato** (riferimento e data).
+6. Gli incaricati vedono lo statino del mese nel loro spazio (pagina e PDF).
 
-## Attenzione
-- Le politiche con stato `provisional` sono default provvisori: non approvare pagamenti reali basati su di esse finché il cliente non conferma.
-- Un cambio di piano non deve alterare periodi già chiusi: ogni risultato conserva l'hash dell'input.
-- Un consulente è pagabile solo con **KYC verificato** e **IBAN** inseriti, e senza blocco bonus. Gli altri restano in saldo e compaiono tra i «bloccati» alla preparazione.
-- Sotto i 15 € (parametro `min_payout`) l'importo non si paga e si somma al mese dopo. I saldi negativi si riportano.
-- Prima dell'uso vero imposta in *Impostazioni → Venditore* la ragione sociale e i dati: compaiono su fatture e statini.
+## Il menu in alto
+- **Rete**: Incaricati, Albero della rete, Elenco per livelli, Domande IVD, Documenti KYC, Canoni annuali, Clienti (FAN), Cessioni del codice, Successioni (decessi).
+- **Compensi**: Piano compensi, Periodi, Movimenti PV (solo con il piano precedente visibile), Liquidazioni, Pagamenti, Prelievi su richiesta, Movimenti wallet, Ricevute provvigionali, Bonus di Struttura, Confronto qualifiche (idem), Visibilità piano precedente (solo super_admin).
+- **Vendite**: Cruscotto vendite, Prodotti, Categorie, Omaggi (bundle), Sconti, Spedizioni, Ordini, Abbonamenti, Fatture, Note di credito, Pagamenti e spedizioni.
+- **Assistenza**: Ticket e reclami, Novità, Materiali scaricabili, Eventi e corsi, Registro download, Casi di conformità, Sanzioni, Materiali da approvare.
+- **Sistema**: Utenti, Impostazioni di sistema, Funzionalità e viste, Log di audit, Verifica del log, Backup, Controllo messa online (tutte solo super_admin, salvo *Funzionalità e viste*, concessa anche a un admin con il permesso apposito), più Riconciliazione Odoo (per chi vede gli ordini).
 
-## Ciclo mensile da riga di comando (aggiunta 01/10/2026)
-Con il pannello non serve, ma in locale o in emergenza il periodo si gestisce anche con `php artisan lamess:periodo`:
-1. `apri AAAA-MM` — apre il mese con il piano attivo.
-2. `live AAAA-MM` — stima dei compensi, ripetibile.
-3. `runtime AAAA-MM` — calcolo ufficiale (il periodo passa in «review»).
-4. `chiudi AAAA-MM` — richiede: runtime eseguito, nessun movimento in attesa di pagamento, dati non cambiati dopo il runtime. Le righe vengono bloccate e il periodo non è più modificabile.
-Dopo la chiusura le correzioni (resi) si registrano nel periodo aperto successivo; il sistema calcola gli storni.
+Ognuno vede solo le voci che il suo profilo consente. In alto a sinistra c'è il **Cruscotto**.
 
-## Back-office web (aggiunta 01/10/2026)
-Accesso: `/admin`. Il super_admin si crea con `php artisan lamess:superadmin email` (o dall'installazione guidata); gli altri utenti del back-office li crea il super_admin dalla pagina **Utenti** (password temporanea mostrata una volta sola). `lamess:admin-user` resta per uso da terminale e non crea mai super_admin.
+## Tre livelli di accesso, utenti e log di audit
+- **super_admin** (solo la titolare): vede e modifica tutto. Solo lui ha *Utenti*, *Impostazioni di sistema*, *Log di audit*, *Verifica del log*, *Backup*, *Controllo messa online* e *Visibilità piano precedente*, e può **riaprire un mese chiuso**. Sulle schermate compaiono le azioni **Modifica** ed **Elimina** (per eliminare record con dati collegati si scrive ELIMINA per confermare). Non si crea dal pannello: lo crea l'installazione guidata (o, in sviluppo, `php artisan lamess:superadmin`).
+- **admin** (il cliente): fa solo ciò che il super_admin gli concede. Non vede né può toccare i super_admin: non compaiono in elenchi, ricerche, esportazioni, e un indirizzo diretto risponde 404; nei campi «approvato da» compare «Amministrazione». Non può mai avere utenti, impostazioni di sistema o log.
+- **Incaricati e clienti**: usano solo il portale pubblico, mai il back-office.
 
-**Piano compensi** — elenco versioni (bozza / attivo / archiviato). «Nuova bozza» parte dal piano ufficiale e valida il JSON con il motore. Sulla versione: **Simula impatto** (ricalcola un periodo con questa versione e mostra le differenze per bonus, senza scrivere nulla), **Attiva** (archivia la versione precedente; i periodi già aperti mantengono il loro piano), **Duplica come bozza**. Le versioni attive non si modificano.
+**Creare un admin e limitargli il menu** (solo super_admin): *Sistema → Utenti → Nuovo*. Si inseriscono nome ed email; la password temporanea viene mostrata **una sola volta**; al primo accesso l'admin collega l'app di autenticazione (2FA). Nel modulo:
+- **Permessi**: si parte da un profilo (*Amministratore completo*, *Rete e anagrafiche*, *Finanza e ordini*, *Piano compensi*, *Assistenza*, *Sola lettura (direzione)*) e si spuntano o tolgono i singoli permessi.
+- **Voci di menu visibili**: il permesso decide cosa può fare, qui si sceglie cosa vede. Le voci non spuntate spariscono dal menu e sono bloccate anche se si conosce l'indirizzo. Ci sono anche le caselle per i grafici del Cruscotto.
+- Azioni sulla riga: **Nuova password** (temporanea, chiude le sessioni aperte), **Azzera 2FA** (telefono perso), **Revoca accesso** (toglie ruolo e permessi, l'utente non si cancella).
 
-**Periodi** — «Apri periodo» (AAAA-MM). Nel dettaglio: **Stima (live)** (non definitiva), **Runtime ufficiale** (periodo in «review»), **Chiudi periodo** (blocca le righe; bloccato se ci sono movimenti in attesa di pagamento o se i dati sono cambiati dopo il runtime).
-
-**Movimenti PV** — registrazione di vendite, rettifiche e resi (reso = PV negativo con riferimento al movimento stornato). Un movimento non si modifica: si conferma o annulla se «in attesa di pagamento»; in un periodo chiuso non si tocca più. Una data fuori dal periodo viene rifiutata.
-
-**Consulenti** — iscrizione (sponsor non modificabile dopo), **Sospendi**, **Riattiva**, **Cessa** (motivazione obbligatoria; i diretti passano al primo ascendente attivo). La scheda mostra sponsor attuale e originale e la cronologia degli stati.
-
-Nota: un consulente senza onboarding completo non matura le commissioni indirette (politica D06, default provvisorio). L'onboarding/KYC si gestisce dalle sezioni descritte sotto.
-
-## Onboarding, KYC e canoni (aggiunta 01/10/2026)
-- **Contratti IVD**: elenco predefinito «firmati». **Accetta** (genera tesserino PDF e invia la mail di benvenuto) o **Rifiuta** (il consulente torna FAN; i movimenti dei periodi non chiusi passano allo sponsor). **Lettera firmata** apre il PDF (accessibile solo a chi ha il permesso).
-- **Documenti KYC**: predefinito «da verificare». **Apri**, **Approva**, **Rifiuta** (motivazione visibile al consulente). Quando tutti i documenti obbligatori sono approvati, con IBAN e dati completi, l'onboarding risulta completo.
-- **Canoni annuali**: predefinito «da pagare». **Segna pagato** (bonifico/carta/wallet) rinnova il contratto. Il comando `php artisan lamess:canoni` (schedulato ogni notte alle 03:30) crea i canoni, invia i promemoria e fa scadere i contratti non pagati.
-- **Clienti (FAN)**: elenco in sola lettura.
-
-## Ruoli, 2FA e cruscotto (aggiunta 02/10/2026)
-**Ruoli** (creare utenti: `php artisan lamess:admin-user email --role=NOME`; ricalcolare la matrice: `php artisan lamess:ruoli`):
-
-| Ruolo | Può |
+| Profilo | Può |
 |---|---|
-| super_admin | tutto |
-| admin_network | consulenti (anche crearli/cessarli), contratti IVD, KYC, vede KPI e periodi |
-| admin_finance | canoni, periodi e movimenti PV (anche scrivere), vede KPI e rete |
-| admin_compplan | piano compensi (creare/attivare), vede periodi e rete |
-| support | vede rete e clienti, verifica KYC |
-| board | sola lettura: KPI, rete, periodi, piano |
+| Amministratore completo | tutto tranne il sistema |
+| Rete e anagrafiche | incaricati (anche crearli/cessarli), domande IVD, KYC, conformità; vede KPI e periodi |
+| Finanza e ordini | canoni, periodi e movimenti, ordini, catalogo, liquidazioni e pagamenti, assistenza e contenuti |
+| Piano compensi | piano (creare, chiedere pubblicazione, approvare), confronto qualifiche; vede periodi e rete |
+| Assistenza | ticket e reclami, contenuti, KYC; conformità in lettura |
+| Sola lettura (direzione) | KPI, rete, periodi, piano, ordini, pagamenti |
 
-Le azioni non consentite al tuo ruolo non compaiono. I ruoli `consultant` e `customer` non entrano nel back-office.
+Permessi particolari: `network.restructure` (spostare rami, riassegnare clienti, forzare la qualifica, **Mantieni qualifica**), `kyc.manage`, `plan.approve`, `plan.compare`, `features.manage` (pagina *Funzionalità e viste*). Dopo un aggiornamento che aggiunge permessi va lanciato `php artisan lamess:ruoli`: **da fare in sviluppo** (la prima installazione li crea da sola).
 
-**2FA**: con `ADMIN_2FA_REQUIRED=true` (predefinito) al primo accesso il pannello chiede di collegare un'app di autenticazione (Google Authenticator, Authy…) dalla pagina **Profilo**; vengono mostrati i codici di recupero (da conservare). Ai login successivi serve il codice a 6 cifre.
+**Funzionalità e viste**: accende e spegne schede, viste, link e pulsanti (es. la scheda «Volumi e rank», il pulsante *Mantieni qualifica*) per tutti, per un ruolo o per un singolo utente. Le regole bloccate dal super_admin l'admin non le cambia. «Ripristina» riporta al valore predefinito.
 
-**Cruscotto**: scegli il periodo in alto. Mostra fatturato (CV), PV, compensi maturati e trattenuti, payout ratio (compensi/CV), consulenti attivi, nuovi FAN e consulenti, code di lavoro (contratti da accettare, KYC, canoni) e due grafici (qualifiche, compensi per tipo). I dati di periodo vengono dall'ultimo calcolo: ufficiale se c'è, altrimenti stima live.
+**2FA**: con `ADMIN_2FA_REQUIRED=true` (predefinito) al primo accesso il pannello chiede di collegare un'app di autenticazione dalla pagina **Profilo**; si mostrano i codici di recupero (da conservare). Poi serve il codice a 6 cifre.
 
-## Negozio, ordini e fatture (aggiunta 03/10/2026)
-- **Prodotti**: SKU, prezzo netto, IVA, PV e CV. **PV vuoto = imponibile / 1,23**; **CV vuoto = PV** (doppio se «Promo Rank»). I valori si congelano sull'ordine: cambiare un prodotto non tocca gli ordini già fatti. Un **kit** ha componenti a prezzo e PV zero. «Paesi» vuoto = tutti i paesi abilitati (`lamess.shop_countries`).
-- **Omaggi (bundle)**: «compra N di X → M omaggi di Y», ripetibile a ogni multiplo, con periodo di validità. Gli omaggi hanno PV zero.
-- **Spedizioni**: tariffa per paese (non genera PV).
-- **Ordini**: **Conferma pagamento** (bonifico ricevuto → genera i punti nel mese di oggi e la fattura), **Spedisci** (tracking), **Annulla** (solo se non pagato), **Reso** (scegli righe e quantità, motivazione obbligatoria: emette la nota di credito e registra il movimento PV negativo).
-- **Reso e periodi**: se il periodo del movimento originale è ancora aperto lo storno va lì; se è chiuso va nel mese corrente e il calcolo recupera i compensi (clawback).
-- **Fatture / Note di credito**: elenco con PDF di cortesia e stato di consegna al gestionale (Da inviare / Inviata / Errore). **Reinvia** riprova; un invio automatico orario (`lamess:fatture`) riprova da solo. Un errore del gestionale non blocca mai l'ordine.
-- Numerazione progressiva per anno: `FT/2026/00001`, `NC/2026/00001`, ordini `ORD-2026-00001`.
-- Il periodo del mese si **apre da solo** al primo pagamento se non esiste (parametro `auto_open_period`).
-- Permessi: `orders.view`, `orders.manage`, `catalog.manage` (vedi tabella ruoli: admin_finance gestisce, support/board/admin_network leggono).
+**Log di audit** (solo super_admin): registra accessi, cambi di ruoli e permessi, modifiche a utenti e impostazioni, importazioni, esportazioni, ogni operazione importante (es. `rank.hold`, `rank.hold_removed`, `documents.sent`) e le modifiche dirette. È a sola aggiunta con catena di hash: *Verifica del log* controlla ogni riga e mostra l'«ancora» da annotare ogni tanto.
 
-## Importare il catalogo (aggiunta 04/10/2026)
-Il listino reale (35 prodotti «preferiti» del listino Odoo, prezzi IVA inclusa, PV dalla colonna «PR numerico») è in `database/data/catalogo-odoo.csv`.
-```
-php artisan lamess:importa-prodotti --prova     # solo riepilogo, non scrive
-php artisan lamess:importa-prodotti             # importa o aggiorna (per SKU, nessun duplicato)
-php artisan lamess:importa-prodotti mio-file.csv --netti   # un altro file, con prezzi già al netto IVA
-```
-Formato CSV (separatore `;`, UTF-8): `sku;nome;prezzo_ivato;pv;attivo;note`. Dopo l'importazione ritocca tutto da **Prodotti**.
-Da verificare con il cliente: i prodotti con stesso nome e prezzi diversi (es. «1 BOX COSMETIC COFFEE» a 129,90 / 114,90 / 104,92) sono stati importati ma **disattivati** (resta attivo il prezzo più alto), come i listini «RESELLER» (PV zero, da attivare solo con una regola riservata). Gli omaggi a prezzo zero non si vendono direttamente: si usano nelle regole **Omaggi**.
+**Password dimenticata**: dalla pagina di accesso. Le email partono solo se «Invio email attivo» è acceso nelle Impostazioni di sistema.
 
-## Tre livelli di accesso e log di audit (aggiunta 02/10/2026)
-- **super_admin** (solo il titolare del sistema): pagine *Utenti*, *Impostazioni di sistema*, *Log di audit* e *Verifica del log*. Non è visibile agli altri ruoli: non compare in elenchi, ricerche, esportazioni; un indirizzo diretto risponde 404. Nei campi «approvato da» dei dati di business compare «Amministrazione».
-- **admin** (il cliente): vede e fa solo ciò che il super_admin gli concede, partendo da un modello (es. Finanza, Rete). Non può mai ricevere gestione utenti, impostazioni di sistema o log.
-- **Log di audit**: registra accessi, cambi di ruoli/permessi, modifiche a utenti e impostazioni, importazioni. È a sola aggiunta con catena di hash: *Verifica del log* controlla ogni riga e mostra l'ancora da annotare.
-- **Password dimenticata**: dal sito (`/password-dimenticata`) e dal pannello. Le email partono solo se l'invio è acceso nelle Impostazioni di sistema.
+**Modifica diretta del super_admin**: le pagine di modifica generiche hanno etichette in italiano, menu a tendina ricercabili per le relazioni, menu per stati e tipi, righe prodotto/quantità dove servono, date nel fuso di Roma e suffissi €/%. Ogni salvataggio scrive nel log i valori prima e dopo.
 
+## Il Piano Incaricati (compensi)
+È il piano in uso (motore `kosmos_v1`, presentazioni del 08/10/2026). Cosa cambia rispetto al passato:
+- **I punti (PV) non esistono più.** I compensi si calcolano sull'**importo in euro** (IVA compresa) di ogni acquisto, per la quota V.A.P. (di norma il 66,67%: una Box da 150 € dà una base di 100 €). Il V.A.P. si può fissare prodotto per prodotto (vedi *Prodotti*).
+- **Chi è cliente** lo decide l'admin in *Piano compensi → bozza → Base di calcolo*: «Chi fa almeno 1 ordine nel mese» oppure «Chi fa almeno 1 ordine di un importo minimo» (predefinito 150 € IVA inclusa; con l'importo minimo un ordine in promozione sotto soglia non rende cliente).
+- **Nessuno stato «Attivo»**: non c'è una spesa minima mensile; diretti, indiretti e Bonus di Struttura maturano comunque. Restano esclusi dagli indiretti solo gli incaricati sospesi o cessati.
+- **Qualifiche**: Incaricato, Pearl, Crystal, Sapphire, Ruby, Emerald, Diamond. **La qualifica vale appena raggiunta**: non si aspetta la fine del mese. Il portale la registra col ricalcolo automatico notturno (02:45), quindi può comparire la notte dopo; un reso può farla togliere.
+- **Mantenere la qualifica** (nessuna discesa per mancanza di clienti, la qualifica può sempre salire), in due modi che si sommano:
+  1. **Per singolo incaricato, fino a una data scelta dall'admin** (permesso `network.restructure`): azione **Mantieni qualifica** nella scheda, sulla riga dell'elenco (menu *Azioni*), in massa sulle righe selezionate, oppure **Mantieni qualifiche a tutti** in alto nell'elenco *Incaricati*. Si indica la data (sono protetti i mesi che finiscono entro la data: per proteggere tutto ottobre, 31/10) e un motivo; data vuota = protezione tolta. I cessati sono esclusi. Vale dal prossimo ricalcolo notturno. Ogni cambio è nel log (`rank.hold`, `rank.hold_removed`). La colonna *Qualifica mantenuta fino al* è nascosta di default (si attiva dalle colonne). Funziona solo con il Piano Incaricati attivo.
+  2. **Protezione generale del piano**: in *Piano compensi → bozza → Qualifiche e requisiti*, «Mantieni le qualifiche attuali per … giorni dall'attivazione del piano» (predefinito 90) oppure «fino al» una data fissa; se ci sono entrambi vale la più lontana.
+- **Canone annuale**: 19 € IVA compresa, dal secondo anno (il primo è gratuito). In *Impostazioni di sistema → Canone annuale* si può cambiare l'importo, i giorni di tolleranza e **disattivarlo** («Canone annuale attivo» spento: nessun canone, rinnovi gratuiti).
+- **Ricevute provvigionali e ritenuta d'acconto: preparate ma SPENTE** (`LAMESS_RECEIPTS_ENABLED`, `LAMESS_WITHHOLDING_ENABLED` = false, oppure *Impostazioni → Ricevute e trattenute*) finché non risponde il commercialista. Spente: nessuna ricevuta e il bonifico è pari al lordo. I valori di ritenuta (23% su quota imponibile 78%), INPS e commissione bancaria sono **provvisori**. Per accenderle: *Impostazioni di sistema → Ricevute e trattenute* (super_admin), oppure modificare il `.env` da File Manager (INPS resta spento).
+- **Bonus di Struttura (PearlQ)**: *Compensi → Bonus di Struttura* elenca i bonus (Calcolato / Trattenuto / Confermato / Pagato / Annullato). Il calcolo è settimanale (giorno e ora in *Impostazioni → Bonus di Struttura (settimanale)*, acceso o spento) oppure subito con **Calcola ora**. Sulle righe selezionate: **Conferma**, **Segna come pagati** (riferimento del bonifico), **Annulla** (motivo).
+- **Piano compensi**: nuova bozza con *Nuova bozza* o *Crea bozza «Piano Incaricati»*; sulla versione **Simula impatto** (nulla viene scritto), **Duplica come bozza**. Pubblicare richiede, per default, l'**approvazione a quattro occhi**: chi ha il permesso `plan.manage` preme **Chiedi approvazione** (data di efficacia e motivo); un **secondo** admin con `plan.approve` sceglie **Approva e pubblica** o **Rifiuta** (motivo obbligatorio). Chi ha chiesto non può approvare la propria richiesta, ma può **Ritirare la richiesta**. Il super_admin pubblica direttamente (il pulsante è **Attiva**, o **Rimetti in vigore** per una versione archiviata); lo stesso vale per tutti con l'impostazione dei quattro occhi spenta. Le versioni già attive non si modificano e i periodi già chiusi non cambiano.
+- **Confronto qualifiche** (permesso `plan.compare`): confronta la qualifica del sistema precedente con quella del Piano Incaricati. Sparisce se il piano precedente è nascosto.
 
-## Pagamenti automatici e controllo del cron
-- Dal 15 del mese successivo (parametro `payout_day` del piano) i pagamenti dei mesi chiusi vengono preparati da soli. Resta da fare il bonifico in banca: scarica «Esporta bonifici da fare (CSV)» e, a bonifico fatto, usa «Segna pagato».
-- Il riquadro «Operazioni automatiche» della dashboard deve dire **Attivo**. Se dice «Fermo» o «Mai partito», il cron di cPanel non sta girando: nulla di automatico (canoni, fatture, abbonamenti, pagamenti) parte.
+## Nascondere il piano precedente (a PR/PV)
+*Compensi → Visibilità piano precedente* — **solo super_admin**. Il pulsante **Nascondi il piano precedente** (con conferma) toglie a tutti, amministratori compresi, ogni riferimento al vecchio piano: menu *Movimenti PV* e *Confronto qualifiche*, scheda «Volumi e rank», colonne PV/PR, schede 360, grafici, rete, estratti, esportazioni e testi salvati; gli importi dei vecchi bonus restano nei totali sotto la voce «Compensi del periodo precedente». **I dati non si cancellano e nulla si ricalcola**: sono solo nascosti. Il **log di audit non viene toccato**. **Mostra di nuovo il piano precedente** (stesso punto) ripristina tutto. Lo stesso interruttore è in *Impostazioni di sistema → Piano di marketing*. Predefinito: visibile.
 
-## Chiusura mensile automatica
-In *Impostazioni → Chiusura mensile* scegli: **Spenta**, **Solo calcolo ufficiale** (il mese va in revisione e lo chiudi tu da *Periodi*) oppure **Calcola e chiude da sola**. Parte la notte del giorno 1 alle 01:00. Se ci sono movimenti PV in attesa di pagamento si ferma e riprova ogni notte (lo vedi in dashboard). I mesi più vecchi di 45 giorni, e quelli che hanno davanti un mese ancora aperto, vanno chiusi a mano.
-In locale il cron non c'è: per provare le operazioni automatiche lancia `php artisan schedule:work` in un terminale e lascialo aperto.
+## Rete
+**Incaricati** (*Rete → Incaricati*): elenco con schede per stato (Tutti, Attivi, In attesa, Sospesi, Cessati, Da completare, KYC da verificare), filtri e ricerca. La colonna **Qualifica** mostra solo il nome della pietra (Pearl, Crystal…). Azioni sulla scheda: **Sposta / cambia sponsor** (con anteprima d'impatto, motivo obbligatorio; «Ricalcola i mesi chiusi» solo super_admin), **Riassegna i clienti**, **Forza qualifica**, **Mantieni qualifica**, **Sospendi**, **Riattiva**, **Cessa** (motivo obbligatorio; i diretti passano al primo ascendente attivo), **Aggiungi nota**, **Mostra IBAN**, **Stampa tesserino**, **Certificato di firma**, **Richiedi documenti**, **Invia documenti**. Lo sponsor non si modifica a mano dopo l'iscrizione: solo con *Sposta / cambia sponsor*. Un incaricato senza onboarding completo non matura le commissioni indirette.
 
-## Mesi chiusi prima dei pagamenti nel portale
-I mesi già pagati con altri strumenti (gen–set 2026) non hanno liquidazioni. Per ciascuno apri *Periodi* → il mese → **Segna come storico già pagato**: da quel momento non entrano più in nessun pagamento. Fallo prima del primo «Prepara pagamenti» e, se i dati sono veri, solo per mesi che hai davvero già pagato.
+La scheda ha le schede *Riepilogo* (con **Avanzamento di carriera**: qualifica attuale e prossima, e i **requisiti mancanti per la prossima qualifica col nuovo piano**: clienti personali, Pearl al 1° livello, struttura), *Anagrafica*, *Rete*, *Commissioni*, *Pagamenti*, *Ordini*, *Documenti*, *Audit* (e *Volumi e rank* se il piano precedente è visibile). Nella sezione Rete la tabella **«Incaricati diretti (1° livello)»** mostra per ciascuno **Ordini del mese** e **Importo del mese** (ordini pagati del mese, IVA inclusa); accanto c'è l'elenco dei clienti diretti con gli stessi dati.
 
-## Liquidazioni, pagamenti, statini ed export
-- **Liquidazioni** (menu): una riga per consulente e mese, con maturato, trattenuto e stato (aperta / pagata).
-- **Pagamenti** (menu): *Prepara pagamenti* (a mano, se non vuoi aspettare il 15), *Esporta bonifici da fare (CSV)* (separatore `;`, IBAN, importo e causale), *Segna pagato*, *Annulla* (con motivo: le liquidazioni tornano disponibili).
-- **Scheda del periodo**: *Esporta provvigioni (CSV)*, *Genera liquidazioni* (solo per mesi chiusi senza liquidazioni), *Segna come storico già pagato*, *Riapri il mese* (solo super_admin, con motivo; solo l'ultimo mese chiuso e solo se nessun importo è già pagato).
-- Ogni esportazione è registrata nel log di audit.
-- Lo statino di un consulente si apre anche dall'admin: `/admin-files/statement/AAAA-MM/ID`.
+**Albero della rete**: albero interattivo con ricerca, zoom, apri/chiudi tutto e pannello «cosa manca per il livello successivo». Ogni qualifica ha il **colore della sua pietra** (Pearl, Crystal, Sapphire, Ruby, Emerald, Diamond) e il nome è sempre scritto; i cessati sono nascosti di default.
 
-## File SEPA, avvisi email e dati del venditore
-- **File SEPA**: in Impostazioni → Bonifici SEPA inserisci intestatario e IBAN del conto aziendale. Poi Pagamenti → «Esporta file SEPA (XML)» e carica il file nell'home banking. I pagamenti senza IBAN valido sono saltati e ti vengono elencati. Dopo il bonifico segna comunque ogni pagamento «pagato». La prima volta fai controllare il file alla banca.
-- **Avvisi email**: Impostazioni → Email. «Statino pronto» e «bonifico effettuato» vanno solo ai consulenti, mai ai clienti. Finché «Invio email attivo» è spento non parte nessuna email.
-- **Venditore**: Impostazioni → Venditore. Nel campo «Denominazione» scrivi la ragione sociale se sei una società, altrimenti nome e cognome. La dashboard avvisa finché c'è il testo provvisorio.
+**Elenco per livelli**: gli incaricati in ordine di ramo con rientro per livello (0 = chi scegli come «Parti da», 1 = i suoi diretti…). Filtri: punto di partenza, «Fino al livello», stato. La colonna **«Hanno acquistato»** conta i clienti assegnati all'incaricato con almeno un ordine pagato nel periodo scelto (ogni cliente vale uno anche con più ordini); il periodo si sceglie fra *Mese in corso*, *Mese scorso*, *Ultimi 3 mesi*, *Anno in corso*, *Periodo a scelta…*. Ci si arriva anche dal pulsante *Elenco per livelli* nell'elenco incaricati.
 
-## Abbonamenti
-Menu *Abbonamenti*: elenco con stato, impegno, spedizione gratuita, cicli fatti, prossimo addebito e ultimo errore. Azioni: *Pausa*, *Riprendi*, *Annulla* (con motivo). Impostazioni in *Abbonamenti e spedizione*: spedizione gratuita sì/no, mesi di impegno minimo (12), giorni tra i tentativi, tentativi prima della pausa. Gli abbonamenti partono ogni notte alle 04:00 (`lamess:abbonamenti`).
+**Domande IVD**: elenco predefinito «Da accettare». **Accetta** (genera il tesserino PDF e invia la mail di benvenuto) o **Rifiuta** (l'account torna Cliente; gli acquisti dei suoi clienti nel frattempo restano allo sponsor proposto). **Lettera firmata** apre il PDF e **Certificato di firma** il certificato di completamento (non registra la geolocalizzazione).
 
-## Ordini per conto di altri
-Un consulente attivo può aggiungere al carrello prodotti per i suoi clienti e per i consulenti che ha sponsorizzato direttamente. Un solo ordine, una sola spedizione; i punti vanno a chi riceve (PVF per il consulente del cliente, PVC per il consulente destinatario). Interruttore `lamess.order_for_others`.
+**Tesserino agente**: il PDF ha un **QR** che porta a una pagina pubblica di verifica (*Tesserino valido / non valido*, con nome, codice e scadenza, senza altri dati). L'admin lo stampa da *Stampa tesserino* e lo può inviare all'incaricato.
 
-## Impostazioni di sistema (menu Impostazioni)
-Gruppi: **Email** (interruttore invio), **Rete** (giorni per ri-iscriversi, cookie referral), **Ordini e fatture** (documento per i privati), **Abbonamenti e spedizione** (spedizione gratuita, impegno minimo, tentativi), **Chiusura mensile** (spenta / solo calcolo / calcola e chiude), **Venditore** (ragione sociale, partita IVA, indirizzo, email: compaiono su fatture e statini). Ogni modifica è nel log di audit.
+**Documenti KYC**: predefinito «Da verificare». **Apri**, **Approva**, **Rifiuta** (motivazione visibile all'incaricato). Quando tutti i documenti obbligatori sono approvati, con IBAN e dati completi, l'onboarding risulta completo. **Richiedi documenti** (scheda, riga dell'elenco o azione di massa «Richiedi documenti KYC», permesso `kyc.manage`): scegli i documenti, un messaggio e i giorni per rispondere (predefinito 7); l'incaricato riceve una email e un riquadro nella sua area, e promemoria dopo 3 e 6 giorni. Con `LAMESS_KYC_DRIVER=stripe_identity` c'è anche la **Verifica ora** online (documento + selfie); la foto del tesserino va comunque verificata a mano.
 
-## Il nuovo menu (05/10/2026)
-Le voci sono raccolte in 4 menu a tendina nella barra in alto: **Rete** (consulenti, clienti, albero, contratti, documenti, canoni), **Compensi** (piano, periodi, movimenti PV, liquidazioni, pagamenti), **Vendite** (ordini, abbonamenti, prodotti, regole, spedizioni, fatture, note di credito), **Sistema** (utenti, impostazioni, log, verifica log, riconciliazioni).
+**Invia documenti** (scheda o in massa, permesso `network.manage`): l'admin manda per email lettera firmata, certificato di firma, tesserino, estratti conto e ricevute (allegati fino a 15 MB). Ogni invio è nel log (`documents.sent`).
 
-## Pagamento con carta (Stripe) (aggiunta 05/10/2026)
-- Con `LAMESS_PAYMENT_DRIVER=stripe` il cliente, dopo il checkout, viene mandato alla **pagina sicura di Stripe**. L'ordine resta «in attesa di pagamento» finché Stripe non avvisa il portale (webhook): a quel punto passa a «pagato», nascono i punti e si emette la fattura. Se il cliente chiude la pagina può riprovare dalla pagina dell'ordine con **Paga con carta**.
-- Il portale **non conferma** un ordine se l'importo o la valuta comunicati da Stripe non coincidono con l'ordine (resta in attesa e il caso va controllato a mano, con una riga nel registro del server). Un avviso ripetuto da Stripe non crea pagamenti doppi.
-- Un ordine «in attesa» con carta da molto tempo: verifica in Stripe (Pagamenti) se è stato incassato; se sì, **Ordini → Conferma pagamento** come per il bonifico. Se non risulta incassato, annulla.
-- Abbonamenti: con Stripe i rinnovi automatici non sono ancora attivi (servirebbero le carte salvate). Un abbonamento il cui addebito non riesce va in pausa e il cliente lo riprende con un ordine pagato dalla pagina.
+**Canoni annuali**: predefinito «Da pagare». **Segna pagato** (bonifico/carta/wallet) rinnova la lettera. Ogni notte il portale crea i canoni, invia i promemoria e fa scadere le lettere non pagate.
 
-## Fatture elettroniche (FatturaPA) (aggiunta 05/10/2026)
-- Ogni fattura (**TD01**) e nota di credito (**TD04**) viene trasformata in XML FatturaPA 1.2.2, validato contro lo schema ufficiale. Le **ricevute** (privati, se `private_document = receipt`) non sono fatture elettroniche e non vengono trasmesse.
-- **Vendite → Fatture / Note di credito**: azione **XML** per scaricare il file, **PDF** per la copia di cortesia, **Reinvia** per ritentare la consegna. Colonna di invio: *pendente / inviata / errore* (con il motivo).
-- Driver (`LAMESS_INVOICE_SINK`): `file` scrive l'XML in `storage/app/private/sdi-out`; `mail` fa lo stesso e lo spedisce in allegato a `LAMESS_SDI_MAIL_TO` (serve anche «Invio email attivo»). La trasmissione allo SdI vera e propria la fa chi riceve il file (gestionale, commercialista, PEC): il portale non parla direttamente con lo SdI.
-- Errori tipici in colonna «errore»: dati del venditore incompleti (CAP, comune, provincia, partita IVA), cliente senza codice fiscale né partita IVA, indirizzo del cliente incompleto. Si correggono i dati e si preme **Reinvia**; ogni ora il portale riprova da solo (`lamess:fatture`).
-- Il codice destinatario SdI del cliente è `0000000` se è un privato o se manca; per le aziende vale il codice SDI indicato nel checkout (o la PEC).
+**Clienti (FAN)**: elenco con filtri («Hanno acquistato», assegnazione, incaricato). **Promuovi a incaricato**, **Riassegna** e **Riassegna selezionati** (permesso `network.restructure`, con storico).
 
-## Verifica d'identità online (aggiunta 05/10/2026)
-Con `LAMESS_KYC_DRIVER=stripe_identity` il consulente vede nell'onboarding il pulsante **Verifica ora** (documento + selfie dal telefono). Il documento d'identità risulta approvato quando Stripe conferma; la **foto del tesserino** va comunque caricata e verificata a mano. Se la verifica fallisce (`requires_input`) il consulente può riprovarla o caricare i documenti. In caso di cessione o successione le verifiche precedenti diventano «sostituite». L'esito positivo è nel log di audit.
+**Cessione del codice** (Reg. 9.1) — *Rete → Cessioni del codice*, permessi `fees.manage` e `network.manage`:
+1. L'incaricato la richiede dal suo spazio indicando il cessionario (utente già registrato).
+2. Il **contributo di cessione** (50 €, `LAMESS_TRANSFER_FEE`) si segna con **Fee pagata**.
+3. **Approva / Respingi**. L'approvazione è bloccata se il cedente ha un saldo compensi non pagato (salvo scelta esplicita dell'amministratore) e se il codice è sanzionato o ha casi aperti.
+4. All'approvazione cambia **solo l'intestatario**: codice, sponsor, qualifica e referral restano. IBAN e KYC si azzerano (i vecchi documenti diventano «sostituiti»), la lettera precedente risulta «ceduta» e l'incaricato è **sospeso** finché il cessionario non firma la nuova lettera e questa non è accettata (riattivazione automatica).
 
-## Approvazione a quattro occhi del piano (aggiunta 05/10/2026)
-Per default (`Impostazioni → Piano compensi`, `LAMESS_PLAN_FOUR_EYES`) una nuova versione del piano non si pubblica da sola:
-1. Chi ha il permesso `plan.manage` prepara la bozza e preme **Chiedi approvazione** (data di efficacia e motivo; con i quattro occhi spenti il pulsante si chiama **Attiva**): la bozza passa «in approvazione» e non si può più modificare.
-2. Un **secondo** amministratore con `plan.approve` (profilo «Piano compensi») la esamina con **Simula impatto** e sceglie **Approva e pubblica** oppure **Rifiuta** (motivo obbligatorio: la versione torna bozza).
-3. Chi ha chiesto la pubblicazione **non può approvarla**, nemmeno il super_admin. Può **Ritirare la richiesta** finché non c'è una decisione.
-Tutto è nel log di audit. Spegnere l'impostazione permette la pubblicazione diretta.
+**Successione** (Reg. 9.2) — *Rete → Successioni (decessi)*:
+1. **Segnala un decesso**: lettera «cessata», incaricato sospeso, bonus bloccati.
+2. **Carica documento** ed **Esamina documento** per atti e identità degli eredi.
+3. **Eredi e quote** (somma 100%), poi **Verifica la pratica**.
+4. **Liquida i compensi agli eredi**: i compensi maturati e non pagati si dividono per quota (il resto di centesimi alla quota maggiore).
+5. **Segna un pagamento**: bonifico manuale per ciascun erede (permesso `payouts.manage`).
+6. **Subentro di un erede** (come la cessione, con nuova lettera) oppure **Fai cessare il codice**. Senza decisione entro **180 giorni** (`LAMESS_INHERITANCE_LIMBO_DAYS`) il codice cessa da solo.
 
-## Assistenza: ticket e reclami (aggiunta 05/10/2026)
-Menu **Assistenza → Ticket e reclami** (permessi `support.view` / `support.manage`).
-- Categorie: domanda generale, problema tecnico, **reclamo su estratto conto**, **segnalazione su ricevuta**, segnalazione di comportamento, altro. I consulenti scelgono liberamente solo le prime e le ultime; i reclami nascono dalla pagina dell'estratto o della ricevuta.
-- Azioni: **Prendi in carico**, **Rispondi** (anche come *nota interna*, invisibile al richiedente), **Chiudi**, **Riapri**.
-- **Reclami sugli estratti conto** (Reg. 5.2): ogni estratto si pubblica alla chiusura del mese; il consulente ha **10 giorni** (`dispute_days`) per un reclamo circostanziato. Senza reclamo l'estratto si considera **accettato** (`lamess:estratti`, ogni notte). Per un reclamo usa **Decidi il reclamo** (accolto / respinto, con nota): l'eventuale correzione economica si fa con una **rettifica** nel mese aperto, non toccando il mese chiuso.
-- Dalla scheda di un ticket di tipo «segnalazione di comportamento» **Apri un caso di conformità** (permesso `compliance.manage`).
+## Compensi, periodi e pagamenti
+**Periodi** — **Apri periodo** (AAAA-MM; si apre da solo al primo pagamento se manca). Nel dettaglio: **Stima (live)** (non definitiva), **Runtime ufficiale** (il periodo passa «in revisione»), **Chiudi periodo** (richiede: calcolo ufficiale fatto, nessun movimento in attesa di pagamento, dati non cambiati dopo il calcolo; le righe si bloccano). Dopo la chiusura le correzioni (resi) vanno nel periodo aperto successivo e il sistema calcola gli storni. Un cambio di piano non altera i periodi chiusi (ogni risultato conserva l'impronta dell'input).
 
-## Wallet, prelievi e ricevute (aggiunta 05/10/2026)
-Attivi **solo se il piano in vigore ha il pagamento «su richiesta»** (`payout_mode = on_request`); con il pagamento mensile automatico (default del piano di prelancio) restano inattivi e i consulenti non vedono il wallet.
-- **Wallet** (Compensi → Movimenti wallet): registro dei movimenti; il saldo è sempre la loro somma. Alla chiusura del mese le liquidazioni diventano accrediti; gli storni successivi restano a debito e si compensano con gli accrediti dopo. **Rettifica manuale** (motivo obbligatorio, nel log).
-- **Prelievi su richiesta** (Compensi → Prelievi su richiesta): il consulente richiede un importo (soglia minima del piano, 15 €, e non oltre la quota disponibile). Ciclo: *richiesto → approvato → pagato* (oppure *respinto* con motivo, *annullato* dal consulente finché non è approvato). **Approva** (permesso `payouts.manage`) ricalcola trattenute e saldo e crea il pagamento «da pagare», che segue lo stesso percorso degli altri (CSV, file SEPA, *Segna pagato*). Il bonifico va eseguito entro **5 giorni lavorativi** dalla richiesta. Un mese non si riapre se dal wallet sono già stati pagati prelievi.
-- **Trattenute** (Impostazioni → Ricevute e trattenute, **valori provvisori da validare col commercialista**): ritenuta d'acconto 23% sulla quota imponibile (78%), contributo INPS Gestione Separata solo sulla parte oltre la soglia annua (5.000 €), commissione bancaria sui prelievi (2,50 €). Tutto **spento di default**: con le trattenute spente il bonifico è pari al lordo. I consulenti con **partita IVA** (azione *Regime fiscale* sulla scheda del consulente) non subiscono trattenute e fatturano da sé.
-- **Ricevute provvigionali** (Compensi → Ricevute provvigionali): emesse per conto del consulente a ogni pagamento eseguito, solo se «Ricevute attive». Il consulente ha 10 giorni per segnalare anomalie; il reclamo si decide da Assistenza.
+**Chiusura mensile automatica** — *Impostazioni → Chiusura mensile*:
+- **Chiusura automatica del mese**: *Spenta*, *Solo calcolo ufficiale* (il mese va in revisione e lo chiudi tu; è il predefinito) oppure *Calcola e chiude da sola*.
+- **Giorno** e **ora** del calcolo (ultimo giorno del mese oppure un giorno dall'1 al 28 del mese dopo; ora italiana, controllo ogni ora). Con «ultimo giorno» il calcolo parte prima di mezzanotte e gli acquisti registrati dopo non entrano nel mese.
+- Se ci sono movimenti in attesa di pagamento si ferma e riprova ogni notte (lo vedi nel Cruscotto). I mesi più vecchi di 45 giorni e quelli che hanno davanti un mese ancora aperto si chiudono a mano.
 
-## Novità, materiali ed eventi (aggiunta 05/10/2026)
-Menu **Assistenza** (permesso `content.manage`, che hanno finanza e assistenza).
-- **Novità**: articoli con data di pubblicazione e pubblico (tutti, solo consulenti attivi, solo clienti/FAN).
-- **Materiali scaricabili**: carichi un file e scegli a chi è visibile (tutti, solo consulenti attivi, solo clienti) ed eventualmente la **qualifica minima** per scaricarlo. Nei PDF, JPG e PNG viene impressa una **filigrana col codice del consulente** a ogni scaricamento. Se la filigrana non riesce (es. PDF compresso) il file esce comunque e il **Registro download** lo segnala (`LAMESS_WATERMARK_FAIL_OPEN=false` per bloccare invece il download).
-- **Eventi e corsi**: data, posti, iscrizioni aperte/chiuse. Se i posti finiscono i consulenti vanno in lista d'attesa; quando qualcuno annulla, il primo in lista sale (o con l'azione **Riempi i posti liberi** sull'evento).
-- **QR del referral**: ogni consulente trova il proprio link e il QR in *Area → Referral*.
+**Mesi già pagati con altri strumenti** (gen–set 2026): per ciascuno *Periodi → il mese → Segna come storico già pagato*, prima del primo «Prepara pagamenti» e solo per mesi davvero pagati.
 
-## Conformità, sanzioni e materiali approvati (aggiunta 05/10/2026)
-Menu **Assistenza** (permessi `compliance.view` / `compliance.manage`: lo ha l'amministratore di rete; assistenza e direzione in sola lettura).
-- **Casi di conformità**: aperti a mano o da un ticket di segnalazione. Azioni: **Apri un caso**, istruttoria, **Applica una sanzione** o **Archivia**. Le sanzioni si revocano con **Revoca** (Assistenza → Sanzioni).
-- **Sanzioni**: *richiamo* (solo registrato), *blocco compensi* (blocca i bonus; si ripristina allo scadere o alla revoca), *sospensione* (il consulente passa a «sospeso»), *cessazione* (chiude il codice come per la cessazione normale). Le sanzioni a tempo scadono da sole (`lamess:sanzioni`, ogni notte) e ripristinano lo stato precedente, salvo altre sanzioni ancora attive. Ogni sanzione e revoca è nel log. Un codice sanzionato o con casi aperti **non può essere ceduto**.
-- **Materiali da approvare**: i consulenti propongono i propri materiali promozionali (*Area → Conformità*); l'amministratore **Approva** (assegna il codice `MA-AAAA-nnnn`, da quel momento usabile) o **Non approvare** con motivo; il consulente può ritirarli. I materiali ufficiali del Consorzio si pubblicano già approvati con **Pubblica materiale ufficiale**.
+**Liquidazioni** (una riga per incaricato e mese: maturato, trattenuto, stato aperta/pagata) e **Pagamenti**: *Prepara pagamenti* (a mano, se non vuoi aspettare il 15), *Esporta bonifici da fare (CSV)*, *Esporta file SEPA (XML)*, *Segna pagato*, *Annulla* (con motivo: le liquidazioni tornano disponibili). Un incaricato è pagabile solo con **KYC verificato** e **IBAN** validi e senza blocco bonus; gli altri restano «bloccati» e il saldo si cumula. Sotto i 15 € (pagamento minimo del piano) l'importo si somma al mese dopo; i saldi negativi si riportano.
+- **File SEPA**: prima inserisci in *Impostazioni → Bonifici SEPA* intestatario e IBAN del conto aziendale. I pagamenti senza IBAN valido sono saltati ed elencati. Dopo il bonifico segna comunque ogni pagamento «pagato». La prima volta fai controllare il file alla banca.
+- **Scheda del periodo**: *Esporta provvigioni (CSV)*, *Genera liquidazioni* (solo per mesi chiusi senza liquidazioni), *Segna come storico già pagato*, **Riapri il mese** (solo super_admin, con motivo; solo l'ultimo mese chiuso e solo se nessun importo è già pagato).
+- **Statino** di un incaricato: si apre anche dall'admin; ogni esportazione è nel log.
+- **Avvisi email** (*Impostazioni → Email*): «statino pronto» e «bonifico effettuato» vanno solo agli incaricati, mai ai clienti. Finché «Invio email attivo» è spento non parte nessuna email.
 
-## Cessione del codice e successione (aggiunta 05/10/2026)
-**Cessione** (Reg. 9.1) — menu *Rete → Cessioni del codice*, permessi `fees.manage` (contributo) e `network.manage` (decisione):
-1. Il consulente la richiede da *Area → Cessione* indicando il cessionario (un utente già registrato che possa diventare consulente).
-2. Il **contributo di cessione** (default 50 €, `LAMESS_TRANSFER_FEE`) si segna pagato con **Fee pagata** (chi ha `fees.manage`).
-3. **Approva / Respingi** (`network.manage`). L'approvazione è bloccata se il cedente ha un saldo compensi non pagato, a meno che l'amministratore decida espressamente che segua il codice. Un codice sanzionato o con casi aperti non si cede.
-4. All'approvazione cambia **solo l'intestatario**: codice, sponsor, qualifica e referral restano. Si azzerano IBAN e verifica KYC (i vecchi documenti diventano «sostituiti»), la lettera precedente risulta «ceduta» e il consulente passa a **sospeso** finché il cessionario non firma la nuova lettera e il Consorzio non la accetta (riattivazione automatica).
+**Wallet, prelievi e ricevute** sono attivi **solo se il piano in vigore ha il pagamento «su richiesta»** (`payout_mode = on_request`); con il pagamento mensile automatico (attuale) restano inattivi. *Prelievi su richiesta*: richiesto → approvato → pagato (o respinto/annullato); **Approva** (permesso `payouts.manage`); bonifico entro 5 giorni lavorativi. *Movimenti wallet*: registro dei movimenti, con **Rettifica manuale** (motivo obbligatorio). *Ricevute provvigionali*: vedi sopra (spente).
 
-**Successione** (Reg. 9.2) — menu *Rete → Successioni (decessi)* (stessi permessi della rete e dei pagamenti):
-1. **Segnala un decesso**: la lettera risulta «cessata», il consulente sospeso e i bonus bloccati.
-2. Con **Carica documento** ed **Esamina documento** si raccolgono e verificano i documenti (atti di successione, identità degli eredi).
-3. **Eredi e quote** (la somma deve fare 100%), poi **Verifica la pratica**.
-4. **Liquida i compensi agli eredi**: i compensi maturati e non pagati si dividono tra gli eredi per quota (l'eventuale resto di centesimi va alla quota maggiore). Le liquidazioni risultano «ereditate» e il wallet registra il debito «liquidazione eredi».
-5. **Segna un pagamento**: bonifico manuale per ciascun erede (permesso `payouts.manage`), registrato fuori dal flusso mensile.
-6. Infine **Subentro di un erede** (stessa procedura della cessione, con nuova lettera) oppure **Fai cessare il codice**. Se non si decide entro **180 giorni** (`LAMESS_INHERITANCE_LIMBO_DAYS`) il codice cessa da solo (`lamess:successioni`).
+## Vendite, ordini e fatture
+**Modelli di vendita** (indicazione della titolare, non una funzione del portale): **Inhoreca** vende direttamente ai clienti; la rete è di **Cadeo**, che paga l'Enasarco e fattura a Inhoreca le provvigioni.
 
-## Ruoli e permessi aggiornati (05/10/2026)
-Nuovi permessi: `plan.approve`, `support.view/manage`, `content.manage`, `compliance.view/manage`. Assegnazione dei profili: *Rete e anagrafiche* → conformità (vedere e gestire); *Finanza e ordini* → assistenza e contenuti; *Piano compensi* → può anche approvare; *Assistenza* → assistenza, contenuti, conformità in lettura; *Direzione* → sola lettura. Dopo ogni aggiornamento che aggiunge permessi: `php artisan lamess:ruoli` (la prima installazione li crea da sola).
+**Prezzi**: ovunque (negozio, carrello, ordini, riepiloghi, fatture di cortesia) i prezzi sono **IVA inclusa** e dell'IVA si mostra solo l'aliquota («IVA 22% inclusa»). Nel pannello (*Prodotti*, *Spedizioni*) si scrive il prezzo IVA inclusa e l'**Aliquota IVA**; il netto si calcola da solo. Un prodotto ha anche **V.A.P.** (% del prezzo o importo fisso), «Quanti clienti vale» e «Durata (mesi)», peso (per le spedizioni a fascia di peso) e **% pagabile in KMoney**.
 
-## Operazioni pianificate (cron `schedule:run`) (05/10/2026)
-Orari in Europe/Rome: 00:10 piano programmato che diventa attivo · 00:20 sanzioni a tempo · 00:30 successioni scadute · 01:00 chiusura mensile · 02:15 backup · 03:30 canoni · 04:00 abbonamenti · 05:00 pagamenti · 06:00 estratti accettati per decorrenza dei termini · ogni ora reinvio fatture · ogni minuto segnale di vita del cron.
+**Prodotti e catalogo**:
+- *Prodotti*: scheda con foto, varianti (ogni variante ha il suo prezzo), kit, giacenza, categoria, pagina e testi per Google. I valori si congelano sull'ordine: cambiare un prodotto non tocca gli ordini già fatti. «Paesi» vuoto = tutti i paesi abilitati.
+- *Omaggi (bundle)*: «compra N di X → M omaggi di Y», con periodo di validità. *Sconti*: codice o automatici, percentuale, importo fisso, scaglioni, spedizione gratuita sopra una spesa minima.
+- *Spedizioni*: tariffe per paese e fascia di peso, IVA inclusa (predefinita Italia 9,00 €). Ogni prodotto può avere un costo proprio (vuoto = tariffa generale, 0 = gratis); con più prodotti si paga la voce più alta.
+- *Pagamenti e spedizioni*: metodi di pagamento attivi, istruzioni per il bonifico, abbonamenti. Le chiavi di Stripe e KMoney stanno nel `.env` (non da pannello).
+
+**Come paga il cliente**: **carta** (Stripe), **bonifico** (l'ordine resta in attesa finché confermi l'incasso) o **KMoney** (1 KY = 1 €). Il cliente può pagare in KMoney solo la **% impostata su ogni prodotto** (0, 25, 50, 75 o 100%; predefinito 100%); il resto, con la spedizione, si paga con carta o bonifico (con tutti i prodotti al 100% anche la spedizione è in KMoney). Il conto KMoney si collega dal profilo del cliente. In *Impostazioni → Metodi di pagamento* si accende ogni metodo e si sceglie il «Vantaggio KMoney» mostrato nel checkout.
+
+**Ordini**: stati In attesa di pagamento → Pagato → In preparazione → Spedito → Consegnato (oppure Annullato, Reso parziale, Reso). Azioni: **Conferma pagamento** (bonifico ricevuto: genera la fattura), **In preparazione**, **Spedisci** (corriere e tracking, mail al cliente), **Segna consegnato**, **Annulla** (solo se non pagato), **Reso e rimborso** (righe e quantità, motivazione obbligatoria, nota di credito, giacenza, «Rimborsa anche le spese di spedizione», soldi restituiti sullo stesso metodo), **Approva / Rifiuta reso richiesto** (il cliente può chiedere il reso entro 14 giorni dalla consegna), **Rimborso eseguito** / **Riprova rimborso**, **Aggiungi nota**, e in testata **Nuovo ordine** (per conto di un cliente) ed **Esporta CSV**. Il pulsante **Rimborsa KMoney** compare sugli ordini in attesa in cui il cliente ha già pagato la quota in KMoney ma non la parte in euro: riaccredita la quota e annulla l'ordine. Un ordine in attesa con carta da molto tempo: verifica in Stripe se è stato incassato; se sì **Conferma pagamento**, altrimenti **Annulla**.
+- **Tipo ordine**: gli ordini nati da un abbonamento hanno il badge **Abbonamento** (gli altri **Singolo**); nell'elenco c'è il filtro **«Solo abbonamenti / Solo ordini singoli»**, nel dettaglio la riga «Tipo ordine».
+- **Indirizzi**: ogni utente ha fino a **10 indirizzi di spedizione** e **un solo indirizzo di fatturazione** (nel profilo).
+- Numerazione per anno: `FT/2026/00001`, `NC/2026/00001`, `ORD-2026-00001`.
+
+**Abbonamenti** (*Vendite → Abbonamenti*): l'abbonamento mensile ha **spedizione gratuita**; l'impegno di 12 mesi **non è vincolante**: si interrompe quando si vuole (la colonna «Disdetta anticipata» è solo informativa). Un **ordine singolo** paga la spedizione. Si paga con carta (Stripe: la carta resta salvata e viene addebitata ogni mese) o KMoney. Il cliente può **sospendere** (pausa e ripresa) o **saltare un mese** (fino a 3 mesi in anticipo) dalla sua area; l'admin ha **Pausa**, **Riprendi**, **Annulla** (con motivo). Se l'addebito non riesce si riprova (*Impostazioni → Abbonamenti e spedizione*: giorni tra i tentativi, tentativi prima della pausa) e poi va in pausa. Gli abbonamenti partono ogni notte alle 04:00.
+
+**Ordini per conto di altri**: un incaricato attivo può comprare per i suoi clienti e per gli incaricati diretti; un solo ordine e una sola spedizione, con il vantaggio al destinatario.
+
+**Fatture e note di credito**: elenco con PDF di cortesia, **XML**, e stato di consegna al gestionale (pendente / inviata / errore); **Reinvia** riprova, e ogni ora il portale riprova da solo. Ogni fattura (TD01) e nota di credito (TD04) è un XML FatturaPA 1.2.2 validato; le ricevute per i privati (`private_document = receipt`) non sono fatture elettroniche. Il driver (`LAMESS_INVOICE_SINK`): `file` scrive in `storage/app/private/sdi-out`, `mail` lo spedisce anche a `LAMESS_SDI_MAIL_TO`; la trasmissione allo SdI la fa chi riceve il file. Errori tipici: dati del venditore incompleti (*Impostazioni → Venditore*), cliente senza codice fiscale o partita IVA, indirizzo incompleto. Codice destinatario `0000000` per i privati.
+
+**Cruscotto vendite**: vendite per finestra di tempo (30/90 giorni…, con avanti e indietro).
+
+**Importare il catalogo** (`php artisan lamess:importa-prodotti`, listino in `database/data/catalogo-odoo.csv`): **da fare in sviluppo**. Online si ritocca tutto da *Prodotti*. I prodotti con stesso nome e prezzi diversi sono stati importati disattivati (resta attivo il prezzo più alto).
+
+## Assistenza
+- **Ticket e reclami** (`support.view/manage`): categorie domanda generale, problema tecnico, **reclamo su estratto conto**, **segnalazione su ricevuta**, segnalazione di comportamento, altro. Azioni: **Prendi in carico**, **Rispondi** (anche *nota interna*), **Chiudi**, **Riapri**. Gli estratti si pubblicano alla chiusura del mese; l'incaricato ha **10 giorni** (impostabili) per un reclamo; senza reclamo l'estratto è «accettato». Per decidere usa **Decidi il reclamo** (accolto/respinto): la correzione economica si fa con una **rettifica** nel mese aperto. Da una segnalazione di comportamento si apre un caso con **Apri un caso di conformità**.
+- **Novità** (pubblico: Tutti / Solo incaricati / Solo clienti e FAN), **Materiali scaricabili** (Solo incaricati / Tutti gli utenti registrati, con **qualifica minima** e filigrana col codice dell'incaricato su PDF, JPG, PNG; se la filigrana fallisce il file esce e il *Registro download* lo segnala), **Eventi e corsi** (posti, lista d'attesa, **Riempi i posti liberi**). Permesso `content.manage`. Il link e il QR del referral sono nella pagina «Referral» dell'incaricato.
+- **Casi di conformità**, **Sanzioni** (richiamo, blocco compensi, sospensione, cessazione; **Revoca**; quelle a tempo scadono da sole) e **Materiali da approvare** (**Approva** assegna il codice `MA-AAAA-nnnn`, **Non approvare** con motivo; **Pubblica materiale ufficiale**). Un codice sanzionato o con casi aperti non si cede.
+
+## Impostazioni di sistema (solo super_admin)
+Gruppi: **Sito** (*Sito aperto al pubblico*: spento = pagina «Lamèss apre presto»; gli amministratori collegati vedono comunque il sito per provarlo; **accendere solo quando la titolare decide di aprire**), **Piano di marketing** (nascondi il vecchio piano), **Email** (interruttore invio e avvisi), **Rete** (giorni per ri-iscriversi, cookie referral, incaricato «casa», prima box obbligatoria), **Canone annuale**, **Metodi di pagamento**, **Ordini e fatture**, **Chiusura mensile**, **Bonus di Struttura (settimanale)**, **Piano compensi** (quattro occhi), **Compensi** (giorni per i reclami), **Ricevute e trattenute**, **Wallet e prelievi**, **Abbonamenti e spedizione**, **Bonifici SEPA**, **Venditore** (ragione sociale, P.IVA, indirizzo, regime: compaiono su fatture e statini; la dashboard avvisa finché c'è il testo provvisorio). Il valore del pannello vince sul `.env`; «Motivo» facoltativo finisce nel log. Le chiavi di sicurezza (2FA, driver, chiavi di Stripe e KMoney) restano nel `.env` e il pannello le mostra solo in lettura.
+
+## Cruscotto e controllo del cron
+Il Cruscotto ha il filtro *Periodo* e mostra fatturato (CV), compensi maturati e trattenuti, payout ratio, incaricati attivi, nuovi incaricati e FAN, e le code di lavoro (contratti da accettare, documenti KYC, canoni da incassare), più i grafici (qualifiche, compensi per tipo). Il riquadro **«Operazioni automatiche»** → «Cron del server» deve dire **Attivo**; se dice «Fermo» o «Mai partito» il cron di cPanel non gira e nulla di automatico (canoni, fatture, abbonamenti, pagamenti) parte.
+
+## Aggiornare e gestire il sito online (cPanel, senza terminale)
+Sul sito online si usano solo **cPanel**, **phpMyAdmin** e **File Manager**.
+1. **Prima**: backup (*Sistema → Backup → Scarica* e cPanel → *Backup*).
+2. **Aggiornare il codice**: cPanel → **Git Version Control** → il repository → **Update from Remote**, poi **Deploy HEAD Commit**.
+3. **Svuotare la cache** (sempre dopo il deploy): *File Manager* → cancella i file in `bootstrap/cache` (**tranne `.gitignore`**) e quelli in `storage/framework/views`.
+4. **Migrazioni e ruoli**: se il rilascio cambia il database o aggiunge permessi servono `php artisan migrate` e `php artisan lamess:ruoli`: **da fare in sviluppo** (non esiste un equivalente da phpMyAdmin o File Manager). Il registro aggiornamenti dice se il rilascio le contiene.
+5. **Dopo**: *Sistema → Controllo messa online* e *Verifica del log*; il riquadro «Operazioni automatiche» deve essere «Attivo».
+- **Impostazioni del `.env`** (chiavi Stripe/KMoney, fatture, ricevute): si modificano da File Manager nella cartella dell'applicazione (`lamess_app`).
+- **Cron**: cPanel → *Cron Jobs*, una riga ogni minuto (indicata dall'installazione guidata).
+- **Backup**: automatico ogni notte (ultimi 14); *Sistema → Backup → Scarica* conserva una copia sul tuo computer (solo super_admin).
+- **Sito chiuso**: finché «Sito aperto al pubblico» è spento il portale mostra la pagina di attesa.
+- **Importazioni e riconciliazione Odoo** (`lamess:importa-*`, `lamess:verifica-odoo`): **da fare in sviluppo**; online si consulta *Sistema → Riconciliazione Odoo* (filtri, approvazione singola o in blocco con nota).
+
+## Operazioni pianificate (cron `schedule:run`)
+Orari Europe/Rome: 00:10 piano programmato che diventa attivo · 00:20 sanzioni a tempo · 00:30 successioni scadute · 02:15 backup · 02:45 ricalcolo notturno delle qualifiche · 03:30 canoni · 04:00 abbonamenti · 05:00 pagamenti · 06:00 estratti accettati per decorrenza dei termini · 08:00 promemoria documenti KYC · ogni ora: reinvio fatture, chiusura mensile (agisce solo nel giorno e ora scelti) e Bonus di Struttura (solo nel giorno e ora scelti) · ogni minuto: segnale di vita del cron.
+
+## Da terminale (solo sviluppo)
+Per provare in locale o in emergenza: `php artisan lamess:periodo apri|live|runtime|chiudi|stato AAAA-MM`, `lamess:admin-user email --role=…`, `lamess:superadmin`, `lamess:ruoli`, `lamess:parametri`, `lamess:backup`, `lamess:controlla`, `schedule:work` (le operazioni automatiche in locale). Sul sito online non si usano.

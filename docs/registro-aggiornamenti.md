@@ -229,3 +229,4 @@
 - Test del checkout KMoney allineati al testo attuale («collega il tuo conto KMoney dal profilo»).
 - Gli abbonamenti partono con impegno di 12 mesi, non vincolante: si possono interrompere quando si vuole.
 - Sul sito live non c'è terminale: dopo ogni deploy, per svuotare la cache, cancellare da File Manager i file in `bootstrap/cache` (tranne `.gitignore`) e `storage/framework/views`.
+- **Documentazione aggiornata**: manuali (admin, utente, sviluppatori), guida breve, scheda incaricato, architettura, specifica del motore, parametri, messa online, installazione cPanel, decisioni aperte e README riallineati al Piano Incaricati, alla terminologia «Incaricato», all'IVA inclusa, a KMoney e alla messa online senza terminale. Il dossier `docs/dossier.html` è stato rigenerato con `php artisan lamess:manuale`.

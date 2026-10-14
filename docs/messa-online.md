@@ -1,54 +1,133 @@
-# Messa online: controlli, migrazione e piano di ritorno
+# Messa online: controlli, aggiornamenti e piano di ritorno
 
-## 1. Prima di tutto: il «Controllo messa online»
-In `/admin` → **Sistema → Controllo messa online** (solo super_admin), oppure da terminale `php artisan lamess:controlla`.
+Aggiornato al 14 ottobre 2026. Il portale è su cPanel con database MySQL (`lamess_portale`) e **senza terminale sul sito live**: si lavora solo con cPanel, phpMyAdmin e File Manager. Indirizzo del sito: `https://lamèss.it` (in `APP_URL` si scrive la forma punycode `https://xn--lamss-6ra.it`); risponde anche da `www`.
+
+## 1. Il portale resta chiuso finché non lo apri tu
+Come funziona nel codice:
+- L'interruttore **«Sito aperto al pubblico»** è in **Impostazioni di sistema → Sito**. Predefinito: **spento** (`LAMESS_SITE_OPEN=false`, vedi `.env.cpanel.example`).
+- Da spento, i visitatori vedono la pagina **«Lamèss apre presto»** (risposta 503, `noindex`): nessuno può registrarsi, accedere all'area o ordinare.
+- Restano sempre raggiungibili: il back-office `/admin`, i file riservati agli amministratori, i webhook dei pagamenti (`/webhooks/*`), `/installazione` (solo finché serve) e i file statici (css, js, immagini, font).
+- **Chi è già collegato al back-office vede il sito normalmente**, per poterlo provare. Per vedere cosa vede il pubblico, usa una finestra anonima non collegata.
+- Il valore salvato dal pannello **ha la precedenza sul `.env`**: se in Impostazioni c'è un valore salvato, cambiare `LAMESS_SITE_OPEN` nel `.env` non basta. Lo stato in vigore è la prima riga del «Controllo messa online» («Sito aperto al pubblico»).
+
+**Per aprire**: prima il Controllo messa online senza blocchi (punto 2), poi Impostazioni di sistema → Sito → accendi «Sito aperto al pubblico» e salva (resta nel log di audit). **Per richiudere**: spegni lo stesso interruttore.
+
+Emergenza senza accesso al pannello: in phpMyAdmin, tabella `system_settings`, riga con `key` = `site_open`, `value` = `false` (oppure `true` per aprire); poi cancella da File Manager i file dentro `storage/framework/cache/data`, perché le impostazioni sono tenute in cache.
+
+## 2. Il «Controllo messa online»
+In `/admin` → **Sistema → Controllo messa online** (solo super_admin). Da terminale (solo in sviluppo) c'è anche `php artisan lamess:controlla`.
 Elenca ogni controllo con **OK**, **ATTENZIONE** (da valutare) o **BLOCCO** (da sistemare prima di aprire ai clienti). Si ripete dopo ogni correzione fino a non avere più blocchi.
 
-I blocchi tipici: debug acceso, indirizzo senza https, 2FA non obbligatoria, token di installazione ancora nel `.env`, cron non attivo, pagamento con carta e firma elettronica ancora «di prova», dati del venditore incompleti, catena del log compromessa.
+I blocchi tipici: debug acceso, indirizzo senza https, 2FA non obbligatoria, token di installazione ancora nel `.env`, cron non attivo, pagamento con carta e firma elettronica ancora «di prova» (`fake`), dati del venditore incompleti, catena del log compromessa, cartelle `storage` e `bootstrap/cache` non scrivibili.
 Con i driver reali compaiono controlli in più: chiavi e webhook di Stripe (BLOCCO se manca `STRIPE_SECRET` o `STRIPE_WEBHOOK_SECRET`, ATTENZIONE se la chiave è di prova), verifica d'identità online (ATTENZIONE se è manuale, BLOCCO se attiva senza chiave), invio delle fatture (ATTENZIONE con `fake` o `file`, BLOCCO con `mail` senza destinatario) e completezza dei dati del venditore per la fattura elettronica (partita IVA a 11 cifre, CAP, comune, provincia).
+Altri avvisi: «Ricevute e trattenute fiscali» (ATTENZIONE finché sono spente), «Posta in uscita» (ATTENZIONE finché l'invio email è spento), incaricati attivi senza IBAN, utenti di prova.
+**Il controllo non verifica KMoney**: la configurazione di KMoney (punto 5) va guardata a mano.
 
-## 2. Sequenza consigliata
-1. **Prova generale sul sito di prova** (un sottodominio, es. `prova.tuodominio.it`, stesso procedimento dell'installazione): importazione, calcolo di un mese, confronto con Odoo (`lamess:verifica-odoo`).
-2. **Controllo sicurezza**: Controllo messa online senza blocchi; verifica del log; backup creato e scaricato; prova del ripristino sul sito di prova.
-3. **Finestra di migrazione** (consigliata di sera o nel fine settimana). Avvisare i consulenti.
+## 3. Come si aggiorna il sito (cPanel → Git Version Control)
+Il codice sta nel repository GitHub **privato** `lauruccia/lamess` (branch `main`), collegato a cPanel → **Git Version Control** (percorso `/home/lamess/repositories/lamess2`). Il vecchio repository pubblico `lauruccia/lame` resta con la pagina «in arrivo» e non c'entra con questo sito.
+
+**Procedura per ogni aggiornamento**
+1. **Backup**: Sistema → Backup → Crea, poi scaricalo (e, se ci sono modifiche al database, anche cPanel → Backup).
+2. **Se il rilascio ha migrazioni nuove**: esegui l'SQL in phpMyAdmin (punto 4), meglio *prima* del deploy: aggiungere colonne vuote non rompe il codice vecchio.
+3. cPanel → Git Version Control → *Manage* sul repository → **Update from Remote**, poi **Deploy HEAD Commit**.
+4. **Svuota la cache a mano** (senza terminale): in File Manager cancella i file dentro `bootstrap/cache` (**tranne `.gitignore`**) e quelli dentro `storage/framework/views`. I file in `bootstrap/cache` si ricreano da soli; le viste compilate si rigenerano alla prima visita.
+5. Controlla: `/admin` si apre, riquadro «Operazioni automatiche» = Attivo, Sistema → Controllo messa online e Verifica del log.
+
+**Cosa fa il deploy** (file `.cpanel.yml` nella radice del repository; account `lamess`, PHP 8.3 `/opt/cpanel/ea-php83`):
+- copia l'applicazione in `/home/lamess/lamess_app` (fuori dalla cartella pubblica) con `rsync`, **senza** `.git`, `.env`, `storage`, `vendor`, `tests`, `docs`;
+- crea le cartelle scrivibili di `storage` e `bootstrap/cache` se mancano;
+- installa le librerie con `composer install --no-dev` (usa il composer del server o scarica `composer.phar` nella home): se non riesce, scrive «ATTENZIONE vendor mancante» nel registro del deploy;
+- la prima volta rinomina `public_html/index.html` in `index.html.in-arrivo`;
+- copia `public/` in `/home/lamess/public_html` (senza cancellare nulla: `data/`, `subscribe.php`, `php.ini` e il file di verifica Google restano) e riscrive i percorsi di `index.php` verso `lamess_app`;
+- crea il collegamento `public_html/storage`;
+- se `vendor` e `.env` ci sono, lancia `package:discover` e `optimize:clear`.
+Il deploy **non lancia le migrazioni** né `lamess:ruoli`. Il `.env` **non sta nel repository**: vive in `/home/lamess/lamess_app/.env` e si modifica da File Manager. Non condividerlo e non incollarne il contenuto in chat o email.
+
+Nota: il deploy lancia già `optimize:clear`, ma solo se `vendor` e `.env` esistono e il comando riesce; per questo, finché non è provato che la cache si svuota davvero dopo un deploy, resta la pulizia manuale del punto 4.
+
+## 4. Migrazioni nuove senza terminale
+**Non esiste** un meccanismo automatico: l'installazione guidata esegue `migrate` una volta sola e poi si chiude (`storage/app/installed.lock`); non c'è una pagina di manutenzione che lo rifaccia (vedi OPEN-50 in «Decisioni aperte»). Il deploy non lancia `artisan migrate`. Resta la via manuale:
+
+1. **Quali migrazioni mancano**: in phpMyAdmin apri la tabella `migrations` (colonne `id`, `migration`, `batch`) e confrontala con i file in `/home/lamess/lamess_app/database/migrations` (File Manager). Mancano quelle che hanno un file ma nessuna riga.
+2. **Backup** del database (Sistema → Backup).
+3. Per ogni migrazione mancante, in ordine di nome, apri il file, leggi cosa fa nel metodo `up()` ed **esegui lo stesso SQL** nella scheda *SQL* di phpMyAdmin.
+4. **Registrala** come eseguita, altrimenti il registro delle migrazioni resta indietro.
+
+Esempio reale, `2026_11_04_100000_consultants_rank_hold_until` («Mantieni qualifica»: aggiunge due colonne a `consultants`):
+```sql
+ALTER TABLE consultants
+  ADD COLUMN rank_hold_until DATE NULL,
+  ADD COLUMN rank_hold_reason VARCHAR(500) NULL;
+
+INSERT INTO migrations (migration, batch)
+SELECT '2026_11_04_100000_consultants_rank_hold_until', MAX(batch) + 1 FROM migrations;
+```
+Se il database è sul sito di prova o ha un prefisso alle tabelle, adatta i nomi. Se l'`ALTER` dà «Duplicate column name», la colonna c'è già: registra solo la riga in `migrations`.
+
+Altri casi: le migrazioni che creano tabelle o indici richiedono di tradurre a mano `Schema::create(...)`; se non te la senti, fai fare la traduzione a uno sviluppatore **prima** di pubblicare il rilascio, oppure esegui `php artisan migrate --force` da un terminale temporaneo (anche di un altro hosting con accesso allo stesso database).
+
+**Permessi nuovi** (`lamess:ruoli`): il super_admin ha comunque ogni permesso. I permessi di dettaglio dei ruoli vengono sincronizzati dal codice solo all'installazione, con `lamess:ruoli` e quando si crea un utente admin da Sistema → Utenti. Non è provato cosa succeda dopo un rilascio che ne aggiunge: se un admin non vede una voce nuova, ricontrollalo dopo aver creato un utente admin dal pannello e segnalalo.
+
+## 5. KMoney in produzione
+Variabili nel `.env` del sito (solo i **nomi**: i valori vengono dal pannello KMoney e non vanno scritti in documenti, email, chat o screenshot):
+- `LAMESS_KMONEY_DRIVER=api` (senza, o con altro valore, il driver è `fake`: simulazione di sviluppo, nessun pagamento vero);
+- `KMONEY_BASE_URL`, `KMONEY_CLIENT_ID`, `KMONEY_CLIENT_SECRET`: il client OAuth «kshop-lamess», serve al collegamento dell'account del cliente («Accedi con KMoney»);
+- `KMONEY_SELLER_ACCOUNT`: conto KMoney di Lamèss che incassa;
+- `KMONEY_API_TOKEN`: token del conto venditore per addebiti e rimborsi;
+- `KMONEY_WEBHOOK_SECRET`: firma del webhook; l'endpoint da registrare in KMoney è `https://xn--lamss-6ra.it/webhooks/kmoney` (le chiamate senza firma valida vengono rifiutate);
+- facoltativa `KMONEY_REGISTER_URL` (pagina «Registrati»; vuota = `{KMONEY_BASE_URL}/register`).
+
+Il pagamento con KMoney si abilita solo se sono compilati base URL, client id, client secret e conto venditore.
+**Indirizzi di ritorno OAuth**: l'indirizzo è costruito sul dominio da cui arriva il cliente, quindi vanno registrati nel client KMoney **sia con `www` sia senza**:
+`https://xn--lamss-6ra.it/area/kmoney/ritorno` e `https://www.xn--lamss-6ra.it/area/kmoney/ritorno`.
+Se un token è stato mostrato in uno screenshot o in una chat, va **ruotato** (rigenerato) in KMoney e aggiornato nel `.env`.
+
+## 6. Cosa resta spento di proposito
+- **Ricevute provvigionali e ritenuta d'acconto**: `LAMESS_RECEIPTS_ENABLED=false` e `LAMESS_WITHHOLDING_ENABLED=false` finché non risponde il commercialista (i bonifici sono pari al lordo). INPS resta spenta (`LAMESS_INPS_ENABLED=false`).
+- **Email**: `LAMESS_MAIL_ENABLED=false`. Si accende solo a posta verificata, da Impostazioni → Email → «Invio email attivo».
+- **Sito al pubblico**: chiuso (punto 1).
+
+## 7. Sequenza consigliata
+1. **Prova generale** (sito di prova o, in mancanza, il sito chiuso con l'accesso admin): importazione, calcolo di un mese, confronto con Odoo (`lamess:verifica-odoo`, che richiede un terminale: si fa in sviluppo).
+2. **Controllo sicurezza**: Controllo messa online senza blocchi; verifica del log; backup creato e scaricato; prova del ripristino su un database di prova.
+3. **Finestra di migrazione** (consigliata di sera o nel fine settimana). Avvisare gli incaricati.
 4. **Congelamento di Odoo**: da quel momento non si registrano più ordini né movimenti in Odoo.
-5. **Esportazione finale da Odoo** → importazione nel portale (`lamess:importa-odoo`, `lamess:importa-storico`), poi riconciliazione: i totali devono coincidere con quelli di Odoo (pagina Riconciliazioni).
+5. **Esportazione finale da Odoo** → importazione nel portale (`lamess:importa-odoo`, `lamess:importa-storico`, `lamess:importa-prelievi`: richiedono un terminale, quindi si fanno in sviluppo sul database che poi si carica, oppure da un terminale temporaneo), poi riconciliazione: i totali devono coincidere con quelli di Odoo (pagina Riconciliazioni).
 6. **Mesi già pagati**: segnarli «storico già pagato» (scheda del periodo) prima di preparare qualsiasi pagamento.
 7. **Backup subito dopo l'importazione** (Sistema → Backup → Crea) e scaricarlo.
-8. **Cambio del dominio**: il dominio punta al nuovo sito.
+8. **Apertura**: Impostazioni di sistema → Sito → «Sito aperto al pubblico» (punto 1). Il dominio è già quello definitivo.
 9. **Controlli dopo l'apertura**: accesso admin con 2FA, un ordine di prova, riquadro «Operazioni automatiche» = Attivo, Controllo messa online.
 10. Solo a cose verificate: accendere l'invio email (Impostazioni → Email → «Invio email attivo»).
 
-## 3. Piano di ritorno (se qualcosa non va)
-**Prima dell'apertura** nulla è irreversibile: Odoo resta in funzione e il vecchio dominio non è cambiato. Basta non cambiare il dominio.
+## 8. Piano di ritorno (se qualcosa non va)
+**Prima dell'apertura** nulla è irreversibile: il sito è chiuso al pubblico e Odoo resta in funzione.
 
-**Dopo l'apertura, entro poche ore (nessun ordine vero nel portale)**
-1. Rimettere il dominio sul vecchio sito (cPanel → Domini).
-2. Odoo riprende a lavorare; nulla è stato perso perché i dati nel portale erano una copia.
+**Dopo l'apertura, subito, senza ordini veri**: richiudi il sito (Impostazioni di sistema → Sito, spegni l'interruttore). I visitatori tornano a vedere «Lamèss apre presto»; Odoo riprende a lavorare e nulla è perso perché i dati nel portale erano una copia.
 
 **Dopo l'apertura, con ordini già entrati nel portale**
-1. Non tornare indietro alla cieca: gli ordini nuovi esistono solo nel portale. Si mette il sito in manutenzione (pagina «Manutenzione in corso», `php artisan down` oppure un file `.htaccess` di cortesia).
-2. Si scarica un backup (Sistema → Backup) e lo si conserva.
-3. Si corregge il problema, oppure si ripristina l'ultimo backup buono:
-   cPanel → **phpMyAdmin** → scegli il database → **Importa** → file `lamess-….sql.gz` (si importa anche compresso). L'importazione sostituisce tutte le tabelle e ricrea i trigger di protezione del log.
+1. Non tornare indietro alla cieca: gli ordini nuovi esistono solo nel portale. Richiudi il sito come sopra (il back-office resta raggiungibile).
+2. Scarica un backup (Sistema → Backup) e conservalo.
+3. Correggi il problema, oppure ripristina l'ultimo backup buono: cPanel → **phpMyAdmin** → scegli il database `lamess_portale` → **Importa** → file `lamess-….sql.gz` (si importa anche compresso). L'importazione sostituisce tutte le tabelle e ricrea i trigger di protezione del log.
 4. Dopo il ripristino: Controllo messa online e verifica del log.
 5. Gli ordini entrati dopo il backup vanno riportati a mano o ricostruiti dai pagamenti.
 
-**Aggiornamenti del codice**: si carica il nuovo ZIP sopra il vecchio. Se il nuovo rilascio dà problemi, si ricarica lo ZIP precedente (conservare sempre l'ultimo pacchetto buono) e, se il rilascio aveva migrazioni del database, si ripristina anche il backup fatto prima dell'aggiornamento.
+**Codice che dà problemi dopo un aggiornamento**: su GitHub si annulla il commit difettoso con un commit di ripristino (`git revert`) su `main`, poi in cPanel *Update from Remote* e *Deploy HEAD Commit*, poi si svuota la cache (punto 3.4). Se il rilascio aveva migrazioni, le colonne aggiunte restano (sono compatibili con il codice vecchio); se serve tornare indietro anche sul database, si ripristina il backup fatto prima dell'aggiornamento (perdendo i dati inseriti nel frattempo).
+Alternativa al deploy da Git: il pacchetto ZIP (`php tools/crea-pacchetto-cpanel.php`, vedi «Installazione su cPanel») resta disponibile; conservare sempre l'ultimo pacchetto buono.
 
-## 4. Cosa serve dal cliente prima di aprire (stato al 5 ottobre 2026)
-**Il codice è pronto; mancano credenziali e decisioni.**
-- **Carta (Stripe)**: account del cliente, chiavi `sk_live_…` e segreto del webhook; provare prima con le chiavi di prova e una carta di prova. Poi `LAMESS_PAYMENT_DRIVER=stripe`. Limite noto: gli **abbonamenti** non si rinnovano da soli con Stripe (servono le carte salvate, non ancora realizzate): il primo addebito si fa dall'ordine con il cliente presente.
+## 9. Cosa serve dal cliente prima di aprire (aggiornato al 14 ottobre 2026)
+**Il codice è pronto; mancano credenziali e decisioni.** Lo stato reale delle chiavi sul sito lo dice il Controllo messa online.
+- **Carta (Stripe)**: account del cliente, chiavi `sk_live_…` e segreto del webhook; provare prima con le chiavi di prova e una carta di prova. Poi `LAMESS_PAYMENT_DRIVER=stripe`. Gli **abbonamenti con carta** si rinnovano da soli: dopo il primo pagamento Stripe la carta è salvata e i cicli successivi si addebitano senza il cliente davanti (se la banca chiede una conferma, il ciclo non è pagato e si riprova o va in pausa).
+- **KMoney**: vedi punto 5.
 - **Verifica d'identità online (facoltativa)**: `LAMESS_KYC_DRIVER=stripe_identity`; ha un costo per verifica. Senza, i documenti si controllano a mano.
-- **Fatture elettroniche**: scegliere come trasmetterle. Il portale produce l'XML FatturaPA (validato contro lo schema 1.2.2). Opzioni: `file` (XML in una cartella, da ritirare), `mail` (spedito a una casella: gestionale, commercialista o PEC verso lo SdI). **GestionaleK**: nei documenti non risulta nessuna interfaccia; servono le loro specifiche per un collegamento diretto. Da decidere con il commercialista: privati in fattura o in ricevuta (le ricevute non vanno allo SdI).
+- **Fatture elettroniche**: scegliere come trasmetterle. Il portale produce l'XML FatturaPA (validato contro lo schema 1.2.2). Opzioni: `file` (XML in `storage/app/private/sdi-out`, da ritirare), `mail` (spedito a una casella: gestionale, commercialista o PEC verso lo SdI). **GestionaleK**: nei documenti non risulta nessuna interfaccia; servono le loro specifiche per un collegamento diretto. Da decidere con il commercialista: privati in fattura o in ricevuta (le ricevute non vanno allo SdI).
 - **Dati del venditore**: ragione sociale, partita IVA (11 cifre), indirizzo, CAP, comune, provincia, regime fiscale.
-- **Parametri fiscali** (ritenuta, quota imponibile, INPS, commissione sui prelievi) e **testi** (Lettera IVD, Regolamento): da far validare al commercialista e al Consorzio; ricevute e trattenute restano spente finché non sono validati.
-- **Firma elettronica reale** della lettera d'incarico: oggi è un sistema di prova (OTP finto).
-- **IBAN dei consulenti**: li inseriscono loro dall'area personale.
-- **Prova su MariaDB** delle migrazioni nuove e della suite, sul sito di prova.
+- **Parametri fiscali** (ritenuta, quota imponibile, INPS, commissione sui prelievi) e **testi** (Lettera IVD, Regolamento): da far validare al commercialista e al Consorzio; ricevute e ritenuta restano spente finché non sono validati.
+- **Firma elettronica reale** della lettera d'incarico: finché `LAMESS_SIGNATURE_DRIVER` è `fake` è un sistema di prova (OTP finto) e il Controllo dà BLOCCO.
+- **IBAN degli incaricati**: li inseriscono loro dall'area personale.
+- **Prova su MariaDB/MySQL** delle migrazioni nuove, sul sito di prova.
 
-## 5. Primo giorno dopo l'apertura
-1. Un ordine vero con carta (importo minimo) e verifica che l'ordine passi a «pagato» da solo: significa che il webhook funziona. Se resta «in attesa», controlla l'endpoint e il segreto in Stripe (Sviluppatori → Webhook → consegne).
+## 10. Primo giorno dopo l'apertura
+1. Un ordine vero con carta (importo minimo) e verifica che l'ordine passi a «pagato» da solo: significa che il webhook funziona. Se resta «in attesa», controlla l'endpoint e il segreto in Stripe (Sviluppatori → Webhook → consegne). Stessa verifica con un ordine pagato in KMoney.
 2. Controlla che la fattura sia «inviata» (Vendite → Fatture, colonna dell'invio) e che l'XML si scarichi (azione XML).
-3. Controlla in Assistenza → Ticket che l'area consulente permetta di aprire una richiesta, e che il cron mostri «Attivo».
+3. Controlla in Assistenza → Ticket che l'area incaricato permetta di aprire una richiesta, e che il cron mostri «Attivo».
 4. Dopo la prima chiusura di mese: estratti conto pubblicati (Compensi), ricevute e prelievi se il piano è «su richiesta».

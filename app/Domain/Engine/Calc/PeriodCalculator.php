@@ -213,6 +213,15 @@ final class PeriodCalculator
                 }
                 $stats[$id]->nextRank['personal_clients'] = $clients[$id] ?? 0;
                 $stats[$id]->nextRank['pearl_first_level_now'] = $pearlNow;
+                $curSeq = $career->highest[$id] ?? 0;
+                if ($curSeq > 0 && $plan->hasSeq($curSeq)) {
+                    // Requisiti della qualifica che l'incaricato ha oggi, con l'esito attuale (per la scheda «i miei requisiti»).
+                    [, $cur] = $career->qualification($id, $plan->bySeq($curSeq));
+                    $stats[$id]->nextRank['current'] = array_intersect_key($cur, array_flip([
+                        'rank', 'clients_required', 'clients_counted', 'clients_ok', 'pearl_first_level_required', 'pearl_first_level_counted', 'pearl_first_level_ok',
+                        'structure_required', 'structure_missing', 'structure_ok', 'columns_required', 'column_clients_required', 'columns_counted', 'columns_ok',
+                    ]));
+                }
             }
         }
 

@@ -302,6 +302,10 @@ final class CareerProgress
 
         // Requisiti per la qualifica successiva (e scala di tutte le qualifiche).
         $requirements = $nextDef !== null ? $this->kosmosRequirements($plan, $nextDef, $d) : [];
+        $currentRequirements = [];
+        if (isset($d['current']) && is_array($d['current']) && $rank->sequence > 0) {
+            $currentRequirements = $this->kosmosRequirements($plan, $rank, $d['current']);
+        }
         $missingItems = array_values(array_filter($requirements, static fn ($r) => ! $r['ok'] && ! $r['disabled']));
         if ($nextDef !== null) {
             foreach ($missingItems as $r) {
@@ -357,7 +361,7 @@ final class CareerProgress
             'legacy_hidden' => true, 'gates' => [], 'bonuses' => ['installments' => [], 'awards' => []], 'todo' => $todo,
             'kosmos' => [
                 'period' => $this->periodCode, 'known' => $known, 'clients' => $clients, 'pearl' => $pearl, 'client_rule' => $rule,
-                'tiers' => $tiers, 'levels' => $levels, 'extended' => $extended, 'requirements' => $requirements, 'percent' => $percent,
+                'tiers' => $tiers, 'levels' => $levels, 'extended' => $extended, 'requirements' => $requirements, 'current_requirements' => $currentRequirements, 'percent' => $percent,
                 'maintenance' => $maintenance, 'ladder' => $ladder, 'next_name' => $nextDef?->name,
                 'indirect_status' => $s['indirect'], 'suspended' => preg_match('/sospes|cessat/i', (string) $s['reason']) === 1,
             ],

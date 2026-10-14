@@ -15,6 +15,8 @@
       <span class="kv" title="Persone e clienti in tutto il suo ramo">ramo: {{ $sub[$id]['persons'] - 1 }} {{ $sub[$id]['persons'] - 1 === 1 ? 'persona' : 'persone' }} · {{ $sub[$id]['clients'] - ($s['clients'] ?? 0) }} clienti</span>
       @if($s && $s['pearl_first'] > 0)<span class="kv" title="Diretti con qualifica Pearl o superiore">{{ $s['pearl_first'] }} Pearl diretti</span>@endif
      @endif
+     @if(($custs[$id]['waiting'] ?? 0) > 0)<span class="kv" title="Iscritti che non hanno ancora fatto il primo ordine" style="color:#b0701a">{{ $custs[$id]['waiting'] }} senza ordine</span>@endif
+     @if($s && ! empty($s['next_name']) && ! empty($s['missing']))<span class="kv" title="Cosa manca per la prossima qualifica">verso {{ $s['next_name'] }}: {{ implode(' · ', $s['missing']) }}</span>@endif
      @if(($volume[$id] ?? 0) > 0)<span class="kv" title="Venduto ai suoi clienti nel mese, IVA inclusa">€ {{ \App\Support\Money::eur($volume[$id]) }} nel mese</span>@endif
     @elseif($s && \App\Domain\Plan\LegacyPlan::visible())
      <span class="kv">PVF {{ number_format((float) $s['pvf'], 0, ',', '.') }}</span><span class="kv">PR {{ number_format((float) $s['pr'], 0, ',', '.') }}</span>

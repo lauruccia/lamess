@@ -30,6 +30,7 @@ final class NetworkOverview
 
         $stats = $period === null ? [] : $this->stats($period, array_merge($ids, [$me->id]), $plan);
         $volume = $period === null ? [] : $this->volume($period, array_merge($ids, [$me->id]), $plan);
+        $custs = $this->customers(array_merge($ids, [$me->id]), $plan);
 
         $children = [];
         foreach ($nodes as $n) {
@@ -99,7 +100,24 @@ final class NetworkOverview
             }
         }
 
+        // «Dove agire»: tutte le persone sotto di te, con i loro numeri e cosa manca loro per crescere.
+        $act = [];
+        foreach ($links as $id => $depth) {
+            $id = (int) $id;
+            $st = $stats[$id] ?? null;
+            $cu = $custs[$id] ?? ['registered' => 0, 'buyers' => 0, 'valid' => 0, 'waiting' => 0, 'last_order' => null, 'spent' => 0.0];
+            $act[] = [
+                'id' => $id, 'name' => (string) $nodes[$id]->name, 'code' => (string) $nodes[$id]->code, 'level' => (int) $depth, 'status' => (string) $nodes[$id]->status,
+                'rank' => $st['rank'] ?? null, 'clients' => (int) ($st['clients'] ?? 0), 'pearl_first' => (int) ($st['pearl_first'] ?? 0), 'eur' => (float) ($volume[$id] ?? 0),
+                'next_name' => $st['next_name'] ?? null, 'missing' => $st['missing'] ?? [], 'units' => (int) ($st['units'] ?? 0), 'next_code' => $st['next_code'] ?? null,
+                'direct' => (int) $depth === 1, 'since' => $nodes[$id]->since, 'persons' => max(0, ($sub[$id]['persons'] ?? 1) - 1), 'sub_clients' => max(0, ($sub[$id]['clients'] ?? 0) - (int) ($st['clients'] ?? 0)),
+            ] + $cu;
+        }
+        usort($act, static fn ($a, $b) => [$a['next_name'] === null, $a['units'] === 0 ? 99 : $a['units'], $a['level']] <=> [$b['next_name'] === null, $b['units'] === 0 ? 99 : $b['units'], $b['level']]);
+        $waitingTotal = array_sum(array_column($act, 'waiting'));
+
         return [
+            'custs' => $custs, 'act' => $act, 'waiting_total' => $waitingTotal, 'my_customers' => $custs[(int) $me->id] ?? null,
             'me' => $me, 'period' => $period?->code, 'plan' => $plan, 'nodes' => $nodes, 'children' => $children, 'stats' => $stats, 'volume' => $volume, 'sub' => $sub,
             'levels' => $byLevel, 'columns' => $columns, 'total' => $tot, 'depth' => $links === [] ? 0 : (int) max($links),
             'direct' => count($children[(int) $me->id] ?? []), 'mine' => $stats[(int) $me->id] ?? null, 'mine_eur' => (float) ($volume[(int) $me->id] ?? 0),
@@ -127,7 +145,80 @@ final class NetworkOverview
                 'pearl_first' => isset($next['pearl_first_level_now']) ? (int) $next['pearl_first_level_now'] : (isset($next['pearl_first_level_counted']) ? (int) $next['pearl_first_level_counted'] : 0),
                 'is_pearl' => $pearlSeq !== null && $rank !== null && $rank->sequence >= $pearlSeq,
                 'pvf' => $s->personal_pvf, 'pr' => $s->pr_closing, 'group_pv' => $s->group_pv, 'group_pr' => $s->group_pr_closing,
-            ];
+            ] + $this->nextInfo($plan, $next);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Cosa manca a una persona per la sua prossima qualifica (dal dettaglio salvato dal motore).
+     *
+     * @param  array<string, mixed>  $d
+     * @return array{next_name: ?string, missing: list<string>, units: int}
+     */
+    private function nextInfo(PlanConfig $plan, array $d): array
+    {
+        $code = $d['rank'] ?? null;
+        if ($code === null || ! $plan->hasCode((string) $code)) {
+            return ['next_name' => null, 'missing' => [], 'units' => 0];
+        }
+        $missing = [];
+        $units = 0;
+        if (isset($d['clients_required']) && ! ($d['clients_ok'] ?? true)) {
+            $m = max(0, (int) $d['clients_required'] - (int) ($d['clients_counted'] ?? 0));
+            $missing[] = $m.($m === 1 ? ' cliente' : ' clienti');
+            $units += $m;
+        }
+        if (isset($d['pearl_first_level_required']) && ! ($d['pearl_first_level_ok'] ?? true)) {
+            $m = max(0, (int) $d['pearl_first_level_required'] - (int) ($d['pearl_first_level_counted'] ?? 0));
+            $missing[] = $m.' Pearl diretti';
+            $units += $m;
+        }
+        if (! empty($d['structure_missing'])) {
+            $missing[] = 'linee: '.implode(', ', array_map(static fn ($c) => $plan->hasCode((string) $c) ? $plan->rank((string) $c)->name : (string) $c, (array) $d['structure_missing']));
+            $units += count((array) $d['structure_missing']);
+        }
+        if (isset($d['columns_required']) && ! ($d['columns_ok'] ?? true)) {
+            $m = max(0, (int) $d['columns_required'] - (int) ($d['columns_counted'] ?? 0));
+            $missing[] = $m.($m === 1 ? ' colonna' : ' colonne').' da '.(int) ($d['column_clients_required'] ?? 0).' clienti';
+            $units += $m;
+        }
+
+        return ['next_name' => $plan->rank((string) $code)->name, 'missing' => $missing, 'units' => $units, 'next_code' => (string) $code];
+    }
+
+    /**
+     * Clienti registrati sotto ogni incaricato e come stanno comprando: solo numeri e date, nessun dato personale dei clienti altrui.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, array{registered:int,buyers:int,valid:int,waiting:int,last_order:?string,spent:float}>
+     */
+    private function customers(array $ids, ?PlanConfig $plan): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $orders = DB::table('orders')->where('status', 'paid')
+            ->selectRaw('buyer_user_id, count(*) as n, max(total) as biggest, max(paid_at) as last_paid, sum(total) as spent')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
+        $out = [];
+        foreach (DB::table('customers')->whereIn('assigned_consultant_id', $ids)->get(['assigned_consultant_id', 'user_id']) as $c) {
+            $row = &$out[(int) $c->assigned_consultant_id];
+            $row ??= ['registered' => 0, 'buyers' => 0, 'valid' => 0, 'waiting' => 0, 'last_order' => null, 'spent' => 0.0];
+            $row['registered']++;
+            $o = $orders[$c->user_id] ?? null;
+            if ($o === null) {
+                $row['waiting']++;
+            } else {
+                $row['buyers']++;
+                $row['spent'] += (float) $o->spent;
+                $valid = $plan?->kosmos !== null ? $plan->kosmos->orderQualifies(\Brick\Math\BigDecimal::of((string) $o->biggest)) : true;
+                $row['valid'] += $valid ? 1 : 0;
+                if ($o->last_paid !== null && ($row['last_order'] === null || $o->last_paid > $row['last_order'])) {
+                    $row['last_order'] = (string) $o->last_paid;
+                }
+            }
+            unset($row);
         }
 
         return $out;

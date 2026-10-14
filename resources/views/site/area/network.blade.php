@@ -20,6 +20,7 @@
   <div class="kpi"><small>I miei clienti</small><strong>{{ $mine ? $mine['clients'] : '—' }}</strong><span>{{ $mine ? 'Qualifica '.($mine['rank'] ?? '—') : 'Nessun calcolo ancora' }}@if($progress && ($k['known'] ?? false)) · diretto {{ $n($progress['rank']['direct_pct']) }}%@endif</span></div>
   <div class="kpi"><small>Clienti nel mio ramo</small><strong>{{ $total['clients'] }}</strong><span>Clienti personali di chi è sotto di te</span></div>
   <div class="kpi"><small>Pearl nel ramo</small><strong>{{ $total['pearl'] }}</strong><span>{{ $mine ? $mine['pearl_first'].' al tuo 1° livello' : 'Qualifica Pearl o superiore' }}</span></div>
+  <div class="kpi {{ $waiting_total > 0 ? 'k-warn' : '' }}"><small>Clienti senza primo ordine</small><strong>{{ $waiting_total + ($my_customers['waiting'] ?? 0) }}</strong><span>Iscritti nel tuo ramo che non hanno ancora comprato: sono i primi da contattare</span></div>
   <div class="kpi"><small>Venduto del mese</small><strong>€ {{ $eur($total['eur'] + $mine_eur) }}</strong><span>Ai clienti, IVA inclusa · tuoi € {{ $eur($mine_eur) }}</span></div>
  @elseif(\App\Domain\Plan\LegacyPlan::visible())
   <div class="kpi"><small>PVF personali del mese</small><strong>{{ $mine ? $n($mine['pvf']) : '—' }}</strong><span>{{ $mine ? 'Gruppo '.$n($mine['group_pv']).' PV' : 'Nessun calcolo ancora' }}</span></div>
@@ -36,6 +37,34 @@
    @if($total['persons'] === 0)
     <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'tree'])</span><div><strong>Il tuo ramo è ancora vuoto</strong><p>Condividi il tuo link referral: chi si iscrive con quel link entra nella tua rete. <a href="{{ \App\Domain\Content\ReferralQr::url($me) }}">{{ \App\Domain\Content\ReferralQr::pretty($me) }}</a></p><a class="btn accent" href="/area/referral">Link e QR code</a></div></div></section>
    @else
+    @php
+     $pearlCode = $plan?->kosmos?->pearlRank;
+     $allReq = array_merge($k['requirements'] ?? [], []);
+     $needPearl = collect($allReq)->contains(fn ($r) => $r['key'] === 'pearl' && ! $r['ok'] && ! $r['disabled']);
+    @endphp
+    <section class="panel">
+     <header><h2>Dove agire</h2><span class="muted" style="font-size:13px">Chi è più vicino alla prossima qualifica, in cima</span></header>
+     <div class="panel-body" style="padding-bottom:6px"><input id="act-q" type="search" placeholder="Cerca per nome o codice" style="width:100%;padding:8px 12px;border:1px solid var(--hair);border-radius:10px"></div>
+     <div class="tbl-wrap"><table class="tbl cards" id="act-t">
+      <thead><tr><th>Persona</th><th>Liv.</th><th>Qualifica</th><th class="num">Clienti</th><th>Iscritti</th><th class="num">Il suo ramo</th><th>Prossima qualifica e cosa manca</th><th class="num">Venduto mese</th></tr></thead>
+      <tbody>
+      @foreach($act as $a)
+       <tr data-name="{{ mb_strtolower($a['name'].' '.$a['code']) }}">
+        <td data-l="Persona"><b>{{ $a['name'] }}</b> <span class="muted">{{ $a['code'] }}</span>@if($a['status'] !== 'active')<br><span class="st st-warn">{{ $a['status'] === 'suspended' ? 'sospeso' : 'cessato' }}</span>@endif @if($needPearl && $a['direct'] && $a['next_code'] === $pearlCode && $a['units'] > 0)<br><span class="st st-ok" title="Ti serve un Pearl in più al 1° livello">ti serve Pearl</span>@endif</td>
+        <td data-l="Livello" class="num">{{ $a['level'] }}@if($a['direct']) <span class="muted">diretto</span>@endif</td>
+        <td data-l="Qualifica">{{ $a['rank'] ?? '—' }}</td>
+        <td data-l="Clienti" class="num"><strong>{{ $a['clients'] }}</strong></td>
+        <td data-l="Iscritti">@if($a['registered'] > 0){{ $a['registered'] }} <span class="muted">· {{ $a['valid'] }} validi</span>@if($a['waiting'] > 0)<br><span class="st st-warn">{{ $a['waiting'] }} senza ordine</span>@endif @if($a['last_order'])<br><span class="muted">ultimo ordine {{ \App\Support\Ui::date(\Carbon\Carbon::parse($a['last_order'], 'UTC'), 'd/m') }}</span>@endif @else<span class="muted">nessuno</span>@endif</td>
+        <td data-l="Il suo ramo" class="num">@if($a['persons'] > 0){{ $a['persons'] }} {{ $a['persons'] === 1 ? 'persona' : 'persone' }}<br><span class="muted">{{ $a['sub_clients'] }} clienti</span>@else<span class="muted">—</span>@endif</td>
+        <td data-l="Prossima">@if($a['next_name']){{ $a['next_name'] }}: @if($a['missing']){{ implode(' · ', $a['missing']) }}@else<span class="st st-ok">requisiti soddisfatti</span>@endif @else<span class="muted">qualifica massima</span>@endif</td>
+        <td data-l="Venduto mese" class="num">{{ $a['eur'] > 0 ? '€ '.$eur($a['eur']) : '—' }}</td>
+       </tr>
+      @endforeach
+      </tbody>
+     </table></div>
+     <div class="panel-body muted" style="font-size:13px">«Validi» sono i clienti che hanno fatto un ordine che conta per il piano. Vedi solo numeri: nome e contatti dei clienti degli altri incaricati restano riservati.</div>
+    </section>
+
     <section class="panel">
      <header><h2>Albero della rete</h2><span class="muted" style="font-size:13px">Tocca un nome per aprire o chiudere il ramo</span></header>
      <div class="panel-body">
@@ -114,6 +143,10 @@
  .tree .node{display:inline-flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
 </style>
 <script>
+ (function(){
+  var aq=document.getElementById('act-q');
+  if(aq){aq.addEventListener('input',function(){var t=aq.value.trim().toLowerCase();document.querySelectorAll('#act-t tbody tr').forEach(function(r){r.style.display=(t===''||(r.getAttribute('data-name')||'').indexOf(t)>-1)?'':'none';});});}
+ })();
  (function(){
   var q=document.getElementById('tree-q'); if(!q) return;
   var tree=document.getElementById('tree'), none=document.getElementById('tree-none');

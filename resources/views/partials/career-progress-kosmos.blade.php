@@ -40,6 +40,18 @@
         <ul class="todo">@foreach($p['todo'] as $t)<li>{{ $t }}</li>@endforeach</ul>
     @endif
 
+    @if(! empty($k['current_requirements']))
+        <h4>Requisiti della tua qualifica attuale ({{ $p['rank']['name'] }})</h4>
+        @foreach($k['current_requirements'] as $r)
+            @php($cpct = $r['required'] > 0 ? (int) min(100, floor($r['counted'] / $r['required'] * 100)) : 100)
+            <div class="req">
+                <div class="row"><span><span class="tick {{ ($r['ok'] || $r['disabled']) ? '' : 'no' }}">{{ ($r['ok'] || $r['disabled']) ? '✓' : '•' }}</span>{{ $r['label'] }}@if($r['disabled']) <span class="pill">non richiesto ora</span>@endif</span><span>{{ $r['counted'] }} / {{ $r['required'] }}</span></div>
+                <div class="bar {{ ($r['ok'] || $r['disabled']) ? 'ok' : '' }}"><i style="width:{{ $cpct }}%"></i></div>
+                @if($r['detail'] !== '')<div class="hint">{{ $r['detail'] }}</div>@endif
+            </div>
+        @endforeach
+    @endif
+
     @if($k['next_name'])
         <h4>Requisiti per {{ $k['next_name'] }} · {{ $k['percent'] }}%</h4>
         <div class="bar {{ $k['percent'] >= 100 ? 'ok' : '' }}" role="progressbar" aria-valuenow="{{ $k['percent'] }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $k['percent'] }}%"></i></div>

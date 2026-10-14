@@ -255,3 +255,9 @@
 - **Panoramica**: clienti, diretti Pearl, compensi del mese stimati (`EarningsSummary`) e Bonus di Struttura. **I miei clienti**: primo ordine, ordine più alto, «conta per il piano».
 - **Referral**: il codice mancante (account importati) si genera al primo uso, risolvendo il 404 su `/area/referral` e il link `/r` senza codice; dominio mostrato come lamèss.it (`App\Support\Idn`), copiato in ASCII.
 - Test non eseguiti in questa sessione (PHP assente sul PC): lanciare `php artisan test`, in particolare `LegacyPlanTest`, `AreaPagesTest`, `ContentTest`, `CareerProgressTest`.
+
+## 2026-10-14 — Requisiti attuali e «Dove agire» nell'area incaricato
+- Il motore salva in `next_rank['current']` l'esito dei requisiti della qualifica attuale; `CareerProgress` li espone come `current_requirements` e il pannello li mostra sopra quelli della prossima qualifica.
+- `NetworkOverview`: per ogni persona sotto di te clienti registrati/validi/senza ordine, ultimo ordine, venduto del mese, ramo e cosa manca per la sua prossima qualifica; tabella «Dove agire» con ricerca, ordinata per vicinanza alla qualifica. Dei clienti altrui solo conteggi e date (nessun nome o contatto).
+- Corretto il 500 su `/area`: le righe `@php(...)` in linea nella panoramica venivano unite al `@endphp` successivo; verifica con compilazione Blade di tutte le viste dell'area.
+

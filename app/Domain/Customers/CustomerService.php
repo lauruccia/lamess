@@ -13,12 +13,12 @@ use InvalidArgumentException;
 /** Registrazione gratuita di FAN (privati) e Clienti Azienda (RF-001/002). */
 final class CustomerService
 {
-    public function __construct(private readonly ReferralResolver $resolver) {}
+    public function __construct(private readonly ReferralResolver $resolver, private readonly ReferralInviteService $invites) {}
 
     /**
      * @param  array<string,mixed>  $data  email, password, type (private|company), dati anagrafici
      */
-    public function register(array $data, ?string $link = null, ?string $cookie = null, ?string $formCode = null): Customer
+    public function register(array $data, ?string $link = null, ?string $cookie = null, ?string $formCode = null, ?string $inviteToken = null): Customer
     {
         $type = $data['type'] ?? 'private';
         if (! in_array($type, ['private', 'company'], true)) {
@@ -32,6 +32,11 @@ final class CustomerService
         }
 
         [$consultant, $source] = $this->resolver->resolve($link, $cookie, $formCode);
+        $invite = $this->invites->findForRegistration($inviteToken, $data['email'] ?? null);
+        // chi era stato invitato ma arriva senza referral (né link, né cookie, né codice) va a chi l'ha invitato
+        if ($invite !== null && in_array($source, ['default', 'manual'], true) && $this->resolver->find($invite->consultant->referral_code) !== null) {
+            [$consultant, $source] = [$invite->consultant, 'invite'];
+        }
 
         $profileData = array_intersect_key($data, array_flip([
             'first_name', 'last_name', 'company_name', 'tax_code', 'vat_number', 'sdi_code', 'pec', 'birth_date', 'birth_place',
@@ -43,9 +48,14 @@ final class CustomerService
         ]);
         Profile::create(['user_id' => $user->id, 'type' => $type] + $profileData);
 
-        return Customer::create([
+        $customer = Customer::create([
             'user_id' => $user->id, 'assigned_consultant_id' => $consultant?->id, 'source' => $source, 'registered_at' => now(),
         ]);
+        if ($invite !== null) {
+            $this->invites->markRegistered($invite, $user);
+        }
+
+        return $customer;
     }
 
     /** Il cliente (ri)diventa tale: usato dopo rifiuto della domanda o cessazione (RF-015/023). */

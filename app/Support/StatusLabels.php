@@ -18,6 +18,7 @@ final class StatusLabels
         'paused' => 'In pausa', 'requested' => 'Richiesto', 'published' => 'Pubblicato', 'disputed' => 'Contestato', 'resolved' => 'Deciso', 'credited' => 'Accreditato', 'answered' => 'Risposto', 'info' => 'Informazione', 'warning' => 'Attenzione', 'error' => 'Errore', 'manual' => 'Manuale',
         'referral' => 'Con referral', 'sent' => 'Inviato', 'failed' => 'Non riuscito', 'verified' => 'Verificato', 'unverified' => 'Da verificare',
         'accrued' => 'Maturato', 'held' => 'Trattenuto', 'excluded' => 'Escluso', 'completed' => 'Completato', 'expired' => 'Scaduto',
+        'created' => 'Creato', 'opened' => 'Aperto', 'registered' => 'Registrato', 'invite' => 'Da invito',
     ];
 
     public static function label(mixed $state): mixed

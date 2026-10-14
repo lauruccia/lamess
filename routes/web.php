@@ -5,6 +5,7 @@ use App\Domain\Billing\BillingException;
 use App\Domain\Billing\FatturaPaBuilder;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Onboarding\BadgeService;
+use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Payouts\ExportService;
 use App\Domain\Payouts\PayoutException;
 use App\Domain\Payouts\ReceiptService;
@@ -108,6 +109,8 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/eventi/{event}/annulla', [ContentController::class, 'unregister'])->middleware('throttle:20,1');
     Route::get('/referral', [ContentController::class, 'referral']);
     Route::get('/referral/qr.svg', [ContentController::class, 'referralQr']);
+    Route::post('/referral/inviti', [ContentController::class, 'inviteStore'])->middleware('throttle:20,1');
+    Route::post('/referral/inviti/{invite}/ricorda', [ContentController::class, 'inviteRemind'])->middleware('throttle:20,1');
     Route::get('/wallet', [WalletController::class, 'wallet']);
     Route::post('/wallet/prelievo', [WalletController::class, 'withdraw'])->middleware('throttle:10,1');
     Route::post('/wallet/prelievo/{withdrawal}/annulla', [WalletController::class, 'cancelWithdrawal'])->middleware('throttle:10,1');
@@ -150,7 +153,7 @@ Route::middleware(['auth'])->prefix('admin-files')->group(function () {
     Route::get('/contract/{contract}/certificate', function (IvdContract $contract) {
         abort_unless(auth()->user()->can('network.manage') && $contract->signed_at !== null && $contract->signature_provider !== 'odoo', 403);
 
-        return response(app(\App\Domain\Onboarding\SignatureCertificate::class)->pdf($contract), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="certificato-firma-'.$contract->id.'.pdf"']);
+        return response(app(SignatureCertificate::class)->pdf($contract), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="certificato-firma-'.$contract->id.'.pdf"']);
     });
     Route::get('/badge/{consultant}', function (Consultant $consultant) {
         abort_unless(auth()->user()->can('network.manage'), 403);

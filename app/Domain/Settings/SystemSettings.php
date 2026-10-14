@@ -48,6 +48,8 @@ final class SystemSettings
             'help' => 'Dopo una cessazione, la stessa persona può tornare incaricato solo dopo questi giorni (Reg. 2.10.b: 180).', 'rules' => 'integer|min:0|max:3650'],
         'referral_cookie_days' => ['config' => 'lamess.referral_cookie_days', 'type' => 'int', 'group' => 'Rete', 'label' => 'Durata del cookie referral (giorni)',
             'help' => 'Per quanti giorni il link di un incaricato resta valido nel browser del visitatore.', 'rules' => 'integer|min:1|max:365'],
+        'referral_invites_per_day' => ['config' => 'lamess.referral_invites_per_day', 'type' => 'int', 'group' => 'Rete', 'label' => 'Inviti referral al giorno per incaricato',
+            'help' => 'Quanti inviti personali può creare un incaricato in 24 ore (serve a evitare abusi). 0: nessun limite.', 'rules' => 'integer|min:0|max:1000'],
         'default_consultant_code' => ['config' => 'lamess.default_consultant_code', 'type' => 'string', 'group' => 'Rete', 'label' => 'Codice dell’incaricato «casa»',
             'help' => 'A chi assegnare i clienti che si registrano senza referral. Vuoto: nessuno (OPEN-20).', 'rules' => 'string|max:40', 'nullable' => true],
         'require_first_box_to_apply' => ['config' => 'lamess.require_first_box_to_apply', 'type' => 'bool', 'group' => 'Rete', 'label' => 'Prima box obbligatoria per diventare incaricato',

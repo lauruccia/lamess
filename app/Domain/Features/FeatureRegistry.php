@@ -73,7 +73,7 @@ final class FeatureRegistry
         $lists = [
             'consultants' => ['Incaricati', 'Rete'], 'customers' => ['Clienti', 'Rete'], 'ivd_contracts' => ['Contratti IVD', 'Rete'],
             'kyc_documents' => ['Documenti KYC', 'Rete'], 'annual_fees' => ['Canoni annuali', 'Rete'], 'account_transfers' => ['Cessioni del codice', 'Rete'],
-            'inheritance_cases' => ['Successioni', 'Rete'],
+            'inheritance_cases' => ['Successioni', 'Rete'], 'referral_invites' => ['Inviti referral', 'Rete'],
             'periods' => ['Periodi', 'Compensi'], 'pv_movements' => ['Movimenti PV', 'Compensi'], 'comp_plan_versions' => ['Piano compensi', 'Compensi'],
             'settlements' => ['Liquidazioni', 'Compensi'], 'payouts' => ['Pagamenti', 'Compensi'], 'commission_receipts' => ['Ricevute provvigionali', 'Compensi'],
             'bonus_struttura' => ['Bonus di Struttura', 'Compensi'], 'wallet_transactions' => ['Movimenti wallet', 'Compensi'], 'withdrawal_requests' => ['Prelievi su richiesta', 'Compensi'],

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Customers\CustomerService;
+use App\Domain\Customers\ReferralInviteService;
 use App\Domain\Customers\ReferralResolver;
 use App\Models\Product;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,22 +34,29 @@ class SiteController extends Controller
     ];
 
     /** Home pubblica: presentazione del marchio, con accesso e registrazione (chi è già dentro trova il link alla sua area). */
-    public function home(): \Illuminate\Contracts\View\View
+    public function home(): View
     {
         $featured = Product::onShelf()->with(['category', 'variants'])->orderBy('id')->limit(3)->get();
 
         return view('site.home', ['featured' => $featured]);
     }
 
-    public function referral(string $code, ReferralResolver $resolver): RedirectResponse
+    public function referral(Request $request, string $code, ReferralResolver $resolver, ReferralInviteService $invites): RedirectResponse
     {
         $consultant = $resolver->find($code);
         if ($consultant === null) {
             return redirect('/registrazione');
         }
-        $days = (int) config('lamess.referral_cookie_days');
+        $minutes = (int) config('lamess.referral_cookie_days') * 24 * 60;
+        $response = redirect('/registrazione')->withCookie(Cookie::make((string) config('lamess.referral_cookie_name'), (string) $consultant->referral_code, $minutes));
 
-        return redirect('/registrazione')->withCookie(Cookie::make((string) config('lamess.referral_cookie_name'), (string) $consultant->referral_code, $days * 24 * 60));
+        // link personale di un invito (?i=TOKEN): il click è tracciato e il token resta nel browser fino alla registrazione
+        $invite = $invites->recordOpen($request->query('i'), $consultant, $request->userAgent());
+        if ($invite !== null) {
+            $response->withCookie(Cookie::make((string) config('lamess.referral_invite_cookie_name'), $invite->token, $minutes));
+        }
+
+        return $response;
     }
 
     public function registerForm(Request $request, ReferralResolver $resolver)
@@ -70,7 +79,7 @@ class SiteController extends Controller
         if ($data['type'] === 'company' && blank($data['sdi_code'] ?? null) && blank($data['pec'] ?? null)) {
             return back()->withInput()->withErrors(['sdi_code' => 'Per le aziende serve il codice SDI o la PEC.']);
         }
-        $customer = $customers->register($data, $request->input('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), $data['sponsor_code'] ?? null);
+        $customer = $customers->register($data, $request->input('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), $data['sponsor_code'] ?? null, $request->cookie((string) config('lamess.referral_invite_cookie_name')));
         Auth::login($customer->user);
         $request->session()->regenerate();
 

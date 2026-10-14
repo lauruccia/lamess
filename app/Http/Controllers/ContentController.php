@@ -9,9 +9,12 @@ use App\Domain\Content\ContentException;
 use App\Domain\Content\DownloadService;
 use App\Domain\Content\EventService;
 use App\Domain\Content\ReferralQr;
+use App\Domain\Customers\ReferralInviteException;
+use App\Domain\Customers\ReferralInviteService;
 use App\Models\CorporateEvent;
 use App\Models\Download;
 use App\Models\NewsPost;
+use App\Models\ReferralInvite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -86,12 +89,72 @@ class ContentController extends Controller
         return back()->with('status', 'Iscrizione annullata.');
     }
 
-    public function referral(Request $request)
+    public function referral(Request $request, ReferralInviteService $invites)
     {
         $c = $request->user()->consultant;
         abort_unless($c !== null && $c->status === 'active', 404);
 
-        return view('site.area.referral', ['url' => ReferralQr::url($c), 'pretty' => ReferralQr::pretty($c), 'svg' => ReferralQr::svg($c, 280), 'code' => $c->referral_code]);
+        $invites->expireOverdue($c);
+        $filter = (string) $request->query('stato', 'tutti');
+        $rows = ReferralInvite::query()->where('consultant_id', $c->id)->withFirstPaidAt()
+            ->when($filter === 'attesa', fn ($q) => $q->whereIn('status', ['created', 'sent', 'opened']))
+            ->when($filter === 'registrati', fn ($q) => $q->where('status', 'registered'))
+            ->when($filter === 'scaduti', fn ($q) => $q->whereIn('status', ['expired', 'failed']))
+            ->latest('id')->get();
+
+        return view('site.area.referral', [
+            'url' => ReferralQr::url($c), 'pretty' => ReferralQr::pretty($c), 'svg' => ReferralQr::svg($c, 280), 'code' => $c->referral_code,
+            'rows' => $rows, 'stats' => $invites->stats($c), 'filter' => $filter, 'invites' => $invites,
+        ]);
+    }
+
+    public function inviteStore(Request $request, ReferralInviteService $invites): RedirectResponse
+    {
+        $c = $request->user()->consultant;
+        abort_unless($c !== null && $c->status === 'active', 404);
+        $data = $request->validate([
+            'channel' => 'required|in:email,whatsapp,link',
+            'recipient_name' => 'nullable|string|max:120',
+            'email' => 'required_if:channel,email|nullable|email|max:190',
+            'phone' => ['required_if:channel,whatsapp', 'nullable', 'string', 'max:30', 'regex:/^[0-9+\s().-]{6,30}$/'],
+        ], [
+            'channel.required' => 'Scegli come vuoi invitare la persona.', 'email.required_if' => 'Inserisci l\'email della persona.', 'email.email' => 'L\'email non è valida.',
+            'phone.required_if' => 'Inserisci il numero di telefono per WhatsApp.', 'phone.regex' => 'Il numero di telefono non è valido.',
+        ]);
+        try {
+            $invite = $invites->create($c, $data);
+        } catch (ReferralInviteException $e) {
+            return back()->withInput()->withErrors(['invite' => $e->getMessage()]);
+        }
+        $back = redirect('/area/referral')->with('invite_link', $invites->url($invite));
+        if ($invite->channel === 'whatsapp') {
+            return $back->with('status', 'Invito creato. Apri WhatsApp per mandare il messaggio.')->with('invite_wa', $invites->whatsappUrl($invite));
+        }
+        if ($invite->channel === 'link') {
+            return $back->with('status', 'Invito creato. Copia il link personale e mandalo alla persona.');
+        }
+        if ($invite->status === 'failed' || $invite->failure_reason !== null) {
+            return $back->withErrors(['invite' => 'Invito creato ma l\'email non è partita: '.($invite->failure_reason ?? 'errore di invio').' Puoi mandare tu il link personale.']);
+        }
+
+        return $back->with('status', 'Invito inviato a '.$invite->email.'.');
+    }
+
+    public function inviteRemind(Request $request, ReferralInvite $invite, ReferralInviteService $invites): RedirectResponse
+    {
+        $c = $request->user()->consultant;
+        abort_unless($c !== null && $c->status === 'active' && $invite->consultant_id === $c->id, 404);
+        try {
+            $sent = $invites->remind($invite);
+        } catch (ReferralInviteException $e) {
+            return back()->withErrors(['invite' => $e->getMessage()]);
+        }
+        if (! $sent) {
+            return back()->withErrors(['invite' => 'L\'email non è partita: '.($invite->refresh()->failure_reason ?? 'errore di invio').' Puoi mandare tu il link personale.'])->with('invite_link', $invites->url($invite));
+        }
+        $back = back()->with('status', $invite->channel === 'email' ? 'Promemoria inviato a '.$invite->email.'.' : 'Invito segnato come rimandato.');
+
+        return $invite->channel === 'whatsapp' ? $back->with('invite_wa', $invites->whatsappUrl($invite)) : $back;
     }
 
     public function referralQr(Request $request): Response

@@ -261,3 +261,6 @@
 - `NetworkOverview`: per ogni persona sotto di te clienti registrati/validi/senza ordine, ultimo ordine, venduto del mese, ramo e cosa manca per la sua prossima qualifica; tabella «Dove agire» con ricerca, ordinata per vicinanza alla qualifica. Dei clienti altrui solo conteggi e date (nessun nome o contatto).
 - Corretto il 500 su `/area`: le righe `@php(...)` in linea nella panoramica venivano unite al `@endphp` successivo; verifica con compilazione Blade di tutte le viste dell'area.
 
+
+## 2026-10-14 — Avanzamento anche per chi non è nel calcolo salvato
+- `CareerProgress::forConsultant()`: se l'incaricato non compare nell'ultimo calcolo salvato (entrato dopo il calcolo), si usa un calcolo di prova in memoria (cache 10 min, nessuna scrittura). Il pannello "Il mio avanzamento" non resta più vuoto.

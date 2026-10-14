@@ -11,6 +11,7 @@ use App\Domain\Periods\SnapshotBuilder;
 use App\Models\CalculationRun;
 use App\Models\ConsultantPeriodStat;
 use App\Models\Period;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -30,7 +31,32 @@ final class CareerProgress
     /** @return array<string, mixed>|null */
     public function forConsultant(int $id): ?array
     {
-        return $this->all()[$id] ?? null;
+        return $this->all()[$id] ?? $this->liveFor($id);
+    }
+
+    /**
+     * Chi non è nell'ultimo calcolo salvato (entrato dopo, o calcolo rigenerato prima) vede comunque i suoi requisiti:
+     * si usa un calcolo di prova in memoria, tenuto in cache 10 minuti. Nessuna scrittura sul database.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function liveFor(int $id): ?array
+    {
+        $period = Period::query()->orderByDesc('code')->first();
+        if ($period === null || $this->source !== 'ultimo calcolo') {
+            return null;
+        }
+        $live = Cache::remember('career-live:'.$period->code.':'.($period->official_run_id ?? 0).':'.$period->updated_at?->timestamp, 600, fn () => $this->liveStats($period));
+        if (! isset($live[$id])) {
+            return null;
+        }
+        $awards = DB::table('rank_awards')->where('consultant_id', $id)->get(['id', 'consultant_id', 'rank_code', 'amount', 'status', 'reason'])->all();
+        $installments = DB::table('rank_bonus_installments')->join('rank_awards', 'rank_awards.id', '=', 'rank_bonus_installments.rank_award_id')
+            ->where('rank_awards.consultant_id', $id)->whereIn('rank_bonus_installments.status', ['due', 'held'])->orderBy('due_period')
+            ->get(['rank_awards.consultant_id', 'rank_awards.rank_code', 'rank_bonus_installments.number', 'rank_bonus_installments.of', 'rank_bonus_installments.amount', 'rank_bonus_installments.due_period', 'rank_bonus_installments.status'])->all();
+        $this->source = 'calcolo di prova (non ancora nel calcolo salvato)';
+
+        return $this->build($id, $live[$id], $period->planVersion->plan(), DB::table('consultants')->pluck('name', 'id')->all(), $awards, $installments);
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -92,6 +118,14 @@ final class CareerProgress
             return $out;
         }
         $this->source = 'calcolo di prova (nessun calcolo salvato)';
+
+        return $this->liveStats($period);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function liveStats(Period $period): array
+    {
+        $out = [];
         $result = PeriodCalculator::calculate(SnapshotBuilder::build($period));
         foreach ($result->stats as $id => $s) {
             $out[(int) $id] = [

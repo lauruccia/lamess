@@ -802,3 +802,15 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 [data-km-only][hidden]{display:none!important}
 .co-confirm{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.co-confirm .chk{margin:0 0 10px;font-size:13px;line-height:1.5}.co-confirm .chk input{flex:none;margin-top:3px}.co-confirm .chk span{min-width:0}.co-confirm .secure-note{margin:10px 0 0;text-align:center}
 .totals .km-save+.km-save{margin-top:4px}.totals .km-save-eur{background:#f3efe9}.totals .km-save-eur dt,.totals .km-save-eur dd{color:var(--ink)}.co-name .co-km .co-km-eur{display:block;margin-top:1px;color:var(--ink);font-weight:500}
+
+/* Negozio (14 ottobre 2026): su desktop la barra filtri sta su UNA sola riga.
+   Ricerca elastica, conteggio e controlli a destra senza andare a capo. */
+@media(min-width:1360px){
+ .shop-form .filters{flex-wrap:nowrap;gap:12px}
+ .shop-form .filters .f-search{flex:1 1 180px;min-width:120px;max-width:280px}
+ .shop-form .filters .dd{flex:0 0 auto}
+ .shop-form .filters .count{flex:1 1 auto;min-width:max-content;order:0;text-align:right}
+ .shop-form .filters .tb-right{flex:0 0 auto;flex-wrap:nowrap;margin-left:0}
+}
+/* Fra 1360 e 1560 px le etichette «Ordina» / «Per pagina» spariscono (restano nei select) per far stare tutto. */
+@media(min-width:1181px) and (max-width:1560px){.shop-form .filters .tb-sel{font-size:0;gap:0}.shop-form .filters .tb-sel select{font-size:15px}}

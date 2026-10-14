@@ -172,7 +172,7 @@ final class OrderService
                     'unit_net' => $gift ? '0.00' : (string) $pl->unitNet, 'list_unit_net' => $gift ? null : (string) $pl->listUnitNet, 'vat_rate' => $p->vat_rate,
                     'pv_unit_frozen' => $pvUnit, 'cv_unit_frozen' => $cvUnit, 'is_gift' => $gift,
                     'vap_mode' => $gift ? null : $p->vapSetting()[0] ?? null, 'vap_value' => $gift ? null : $p->vapSetting()[1] ?? null,
-                    'validity_months' => $gift ? null : $p->customerValidityMonths(), 'client_count' => $gift ? null : $p->customerCount(),
+                    'validity_months' => $gift ? null : $p->customerValidityMonths(), 'client_count' => $gift ? null : $p->customerCount(), 'makes_client' => ! $gift && $p->makesClient(),
                     'recipient_user_id' => $it['recipient']->id, 'beneficiary_consultant_id' => $it['beneficiary']?->id, 'pv_kind' => $it['kind'],
                 ]);
                 if (! $gift) {
@@ -642,7 +642,7 @@ final class OrderService
                 $period, $beneficiary, $hasOwn ? $it->pv_kind : $orderKind, (string) Num::of($it->pv_unit_frozen)->multipliedBy($it->qty), $at,
                 cv: (string) Num::of($it->cv_unit_frozen)->multipliedBy($it->qty), status: $status, externalRef: $this->externalRef($order, $it),
                 amount: (string) Num::money(self::grossUnit($it)->multipliedBy($it->qty)),
-                vapAmount: ($vap = $it->vapAmount((int) $it->qty)) === null ? null : (string) $vap, validityMonths: $it->validity_months === null ? null : (int) $it->validity_months, clientCount: $it->client_count === null ? null : (int) $it->client_count,
+                vapAmount: ($vap = $it->vapAmount((int) $it->qty)) === null ? null : (string) $vap, validityMonths: $it->validity_months === null ? null : (int) $it->validity_months, clientCount: $it->client_count === null ? null : (int) $it->client_count, makesClient: (bool) $it->makes_client,
             );
             $m->update(['order_id' => $order->id, 'order_item_id' => $it->id]);
         }

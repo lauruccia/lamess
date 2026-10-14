@@ -121,7 +121,7 @@ class ProductResource extends Resource
         $eur = static fn (string $n): string => number_format((float) $n, 2, ',', '.').' €';
         $clients = max(1, (int) $get('customer_count'));
         $months = max(1, (int) $get('customer_validity_months'));
-        $validity = $clients.($clients === 1 ? ' cliente' : ' clienti').' per '.$months.($months === 1 ? ' mese' : ' mesi').'.';
+        $validity = $clients.($clients === 1 ? ' cliente' : ' clienti').' per '.$months.($months === 1 ? ' mese' : ' mesi').($get('makes_client') ? ', sempre (anche sotto l\'importo minimo).' : ' (se l\'ordine raggiunge l\'importo minimo del piano).');
 
         if (in_array($mode, [Product::VAP_PERCENT, Product::VAP_FIXED], true) && is_numeric($value)) {
             if ($mode === Product::VAP_FIXED) {
@@ -341,6 +341,8 @@ class ProductResource extends Resource
                                 ->prefix(fn (Get $get) => $get('vap_mode') === Product::VAP_FIXED ? '€' : null)->suffix(fn (Get $get) => $get('vap_mode') === Product::VAP_PERCENT ? '%' : null)
                                 ->visible(fn (Get $get) => filled($get('vap_mode')))->required(fn (Get $get) => filled($get('vap_mode')))
                                 ->helperText('Percentuale: sul prezzo IVA inclusa già scontato. Importo fisso: moltiplicato per i pezzi acquistati.'),
+                            Toggle::make('makes_client')->label('Rende cliente a prescindere dall\'importo')->live()->columnSpanFull()
+                                ->helperText('Spento (normale): chi compra diventa cliente solo se il totale dell\'ordine raggiunge l\'importo minimo del piano, qualunque siano i prodotti. Acceso: chi compra questo prodotto è sempre cliente, anche sotto l\'importo minimo.'),
                             TextInput::make('customer_count')->label('Quanti clienti vale')->numeric()->integer()->minValue(1)->maxValue(1000)->placeholder('1')->live(onBlur: true)
                                 ->helperText('Quanti clienti conta per l\'incaricato chi compra questo prodotto (conta una volta per ordine, non per pezzo). Vuoto = 1.'),
                             TextInput::make('customer_validity_months')->label('Durata (mesi)')->numeric()->integer()->minValue(1)->maxValue(120)->placeholder('1')->live(onBlur: true)

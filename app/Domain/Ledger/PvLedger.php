@@ -37,6 +37,7 @@ final class PvLedger
         ?string $vapAmount = null,
         ?int $validityMonths = null,
         ?int $clientCount = null,
+        bool $makesClient = false,
     ): PvMovement {
         if ($period->isClosed()) {
             throw new PeriodStateException("Il periodo {$period->code} è chiuso: registrare il movimento nel periodo aperto (rettifica).");
@@ -56,7 +57,7 @@ final class PvLedger
             'status' => $status, 'event_at' => $at, 'pv' => (string) Num::points($pv),
             'cv' => (string) Num::points($cv ?? $pv), 'amount' => $amount === null ? null : (string) Num::money($amount), 'reverses_movement_id' => $reverses?->id,
             'excluded_from_bonus' => $excluded, 'external_ref' => $externalRef,
-            'vap_amount' => $vapAmount === null ? null : (string) Num::money($vapAmount), 'validity_months' => $validityMonths, 'client_count' => $clientCount,
+            'vap_amount' => $vapAmount === null ? null : (string) Num::money($vapAmount), 'validity_months' => $validityMonths, 'client_count' => $clientCount, 'makes_client' => $makesClient,
         ]);
     }
 }

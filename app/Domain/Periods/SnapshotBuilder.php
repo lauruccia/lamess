@@ -75,7 +75,7 @@ final class SnapshotBuilder
             at: $m->event_at, reversesId: $m->reverses_movement_id, excluded: $m->excluded_from_bonus, customerId: $customerId,
             amountEur: $m->amount === null ? null : Num::of($m->amount), orderId: $m->order_id === null ? null : (string) $m->order_id,
             vapEur: $m->vap_amount === null ? null : Num::of($m->vap_amount), validityMonths: $m->validity_months === null ? null : (int) $m->validity_months,
-            clientCount: $m->client_count === null ? null : (int) $m->client_count,
+            clientCount: $m->client_count === null ? null : (int) $m->client_count, makesClient: $m->makes_client ? true : null,
         );
     }
 
@@ -123,7 +123,7 @@ final class SnapshotBuilder
             ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $period->ends_at)
             ->where(fn ($q) => $q->whereNull('oi.id')->orWhereColumn('oi.qty_refunded', '<', 'oi.qty'))
             ->orderBy('pv_movements.event_at')->orderBy('pv_movements.id')
-            ->selectRaw('pv_movements.consultant_id, pv_movements.kind, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.validity_months, pv_movements.client_count, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
+            ->selectRaw('pv_movements.consultant_id, pv_movements.kind, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.validity_months, pv_movements.client_count, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
             ->get();
         /** @var array<string, array<string, array<int, array{0:BigDecimal,1:DateTimeImmutable,2:int,3:int}>>> $orders */
         $orders = [];
@@ -132,15 +132,15 @@ final class SnapshotBuilder
             $value = Num::money($r->amount !== null ? Num::of((string) $r->amount) : Num::of((string) $r->pv)->multipliedBy($plan->commissionBasePerPv));
             $months = max(1, (int) ($r->validity_months ?? 1));
             $clients = max(1, (int) ($r->client_count ?? 1));
-            [$sum, $at, $maxMonths, $maxClients] = $orders[(string) $r->consultant_id][$key][(int) $r->order_id] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), 1, 1];
-            $orders[(string) $r->consultant_id][$key][(int) $r->order_id] = [$sum->plus($value), $at, max($maxMonths, $months), max($maxClients, $clients)];
+            [$sum, $at, $maxMonths, $maxClients, $byProduct] = $orders[(string) $r->consultant_id][$key][(int) $r->order_id] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), 1, 1, false];
+            $orders[(string) $r->consultant_id][$key][(int) $r->order_id] = [$sum->plus($value), $at, max($maxMonths, $months), max($maxClients, $clients), $byProduct || (bool) $r->makes_client];
         }
         $out = [];
         foreach ($orders as $owner => $customers) {
             foreach ($customers as $customer => $byOrder) {
                 $valid = [];
-                foreach ($byOrder as [$sum, $at, $months, $clients]) {
-                    if ($cfg->orderQualifies($sum)) {
+                foreach ($byOrder as [$sum, $at, $months, $clients, $byProduct]) {
+                    if ($cfg->orderQualifies($sum, $byProduct)) {
                         $valid[] = ['at' => $at, 'months' => $months, 'clients' => $clients];
                     }
                 }
@@ -167,21 +167,21 @@ final class SnapshotBuilder
             ->where('pv_movements.status', 'confirmed')->where('pv_movements.kind', 'pvf')->where('pv_movements.pv', '>', 0)
             ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $period->ends_at)
             ->orderBy('pv_movements.event_at')->orderBy('pv_movements.id')
-            ->selectRaw('pv_movements.consultant_id, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
+            ->selectRaw('pv_movements.consultant_id, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
             ->get();
         $cfg = $plan->kosmos;
         /** @var array<string, array<string, array<int, array{0:BigDecimal,1:DateTimeImmutable}>>> $orders */
         $orders = [];
         foreach ($rows as $r) {
             $value = Num::money($r->amount !== null ? Num::of((string) $r->amount) : Num::of((string) $r->pv)->multipliedBy($plan->commissionBasePerPv));
-            [$sum, $at] = $orders[(string) $r->consultant_id][(string) $r->customer][(int) $r->order_id] ?? [Num::zero(), $r->event_at->toDateTimeImmutable()];
-            $orders[(string) $r->consultant_id][(string) $r->customer][(int) $r->order_id] = [$sum->plus($value), $at];
+            [$sum, $at, $byProduct] = $orders[(string) $r->consultant_id][(string) $r->customer][(int) $r->order_id] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), false];
+            $orders[(string) $r->consultant_id][(string) $r->customer][(int) $r->order_id] = [$sum->plus($value), $at, $byProduct || (bool) $r->makes_client];
         }
         $out = [];
         foreach ($orders as $owner => $customers) {
             foreach ($customers as $customer => $byOrder) {
-                foreach ($byOrder as [$sum, $at]) {
-                    if ($cfg !== null && $cfg->orderQualifies($sum) && (! isset($out[$owner][$customer]) || $at < $out[$owner][$customer])) {
+                foreach ($byOrder as [$sum, $at, $byProduct]) {
+                    if ($cfg !== null && $cfg->orderQualifies($sum, $byProduct) && (! isset($out[$owner][$customer]) || $at < $out[$owner][$customer])) {
                         $out[$owner][$customer] = $at;
                     }
                 }

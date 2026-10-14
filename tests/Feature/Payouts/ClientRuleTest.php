@@ -11,6 +11,8 @@ use App\Domain\Periods\SnapshotBuilder;
 use App\Models\CompPlanVersion;
 use App\Models\Consultant;
 use App\Models\Period;
+use App\Models\PvMovement;
+use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\NetworkDb;
 use Tests\Support\ShopDb;
@@ -86,5 +88,63 @@ final class ClientRuleTest extends TestCase
         $this->assertCount(2, $this->firstPurchases($plan)[(string) $this->sponsor->id], 'due clienti distinti, ciascuno con un ordine da almeno 150 €');
         $stricter = $this->planWith(['client_rule' => 'min_amount', 'client_min_amount' => '155']);
         $this->assertCount(1, $this->firstPurchases($stricter)[(string) $this->sponsor->id], 'con 155 € solo l’ordine da 158,60');
+    }
+
+    public function test_a_total_above_the_minimum_makes_a_client_even_with_only_accessories(): void
+    {
+        $this->setUpPlan();
+        $acc1 = $this->product('A1', '70.00'); // 85,40 €
+        $acc2 = $this->product('A2', '60.00'); // 73,20 € → totale 158,60 €
+        $this->order([$acc1->id => 1, $acc2->id => 1]);
+
+        $this->assertCount(1, $this->firstPurchases($this->planWith(['client_rule' => 'min_amount', 'client_min_amount' => '150']))[(string) $this->sponsor->id]);
+    }
+
+    public function test_a_product_that_makes_a_client_counts_below_the_minimum_amount(): void
+    {
+        $this->setUpPlan();
+        $cheap = $this->product('C1', '40.00', ['makes_client' => true]); // 48,80 €
+        $other = $this->product('C2', '40.00');
+        $this->order([$cheap->id => 1]);
+        $this->order([$other->id => 1]);
+        $plan = $this->planWith(['client_rule' => 'min_amount', 'client_min_amount' => '150']);
+
+        $this->assertCount(1, $this->firstPurchases($plan)[(string) $this->sponsor->id], 'conta solo l’acquisto del prodotto che rende cliente');
+        $this->assertTrue((bool) PvMovement::query()->whereNotNull('order_item_id')->orderBy('id')->first()->makes_client);
+    }
+
+    public function test_the_choice_is_frozen_on_the_order_and_a_later_change_does_not_rewrite_it(): void
+    {
+        $this->setUpPlan();
+        $p = $this->product('F1', '40.00', ['makes_client' => true]);
+        $this->order([$p->id => 1]);
+        $p->update(['makes_client' => false]);
+        $plan = $this->planWith(['client_rule' => 'min_amount', 'client_min_amount' => '150']);
+
+        $this->assertCount(1, $this->firstPurchases($plan)[(string) $this->sponsor->id], 'l’ordine già fatto resta com’era');
+        $this->order([$p->id => 1]);
+        $this->assertCount(1, $this->firstPurchases($plan)[(string) $this->sponsor->id], 'un nuovo ordine a interruttore spento non rende cliente un altro cliente');
+    }
+
+    public function test_the_product_switch_also_reaches_client_counts_and_coverage(): void
+    {
+        $this->setUpPlan();
+        $p = $this->product('K1', '40.00', ['makes_client' => true, 'customer_count' => 3, 'customer_validity_months' => 2]);
+        $this->order([$p->id => 1]);
+        $plan = $this->planWith(['client_rule' => 'min_amount', 'client_min_amount' => '150']);
+        $input = SnapshotBuilder::build($this->period, $plan);
+
+        $segments = array_values($input->customerCoverage[(string) $this->sponsor->id])[0];
+        $this->assertSame(3, $segments[0][2], 'il prodotto vale 3 clienti');
+        $this->assertSame(2, $segments[0][1] - $segments[0][0] + 1, 'copre 2 mesi');
+    }
+
+    public function test_the_engine_rule_has_two_alternative_ways(): void
+    {
+        $cfg = $this->planWith(['client_rule' => 'min_amount', 'client_min_amount' => '150'])->kosmos;
+        $this->assertFalse($cfg->orderQualifies(BigDecimal::of('149.99')));
+        $this->assertTrue($cfg->orderQualifies(BigDecimal::of('150')));
+        $this->assertTrue($cfg->orderQualifies(BigDecimal::of('10'), true), 'prodotto che rende cliente');
+        $this->assertFalse($cfg->orderQualifies(BigDecimal::of('0'), true), 'un ordine stornato del tutto non conta');
     }
 }

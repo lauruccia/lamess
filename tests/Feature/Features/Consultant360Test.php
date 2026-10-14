@@ -12,6 +12,7 @@ use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Resources\Consultants\Pages\ViewConsultant;
 use App\Filament\Resources\KycDocuments\Pages\ListKycDocuments;
 use App\Filament\Resources\PvMovements\Pages\ListPvMovements;
+use App\Filament\Support\RankHoldAction;
 use App\Models\Consultant;
 use App\Models\ConsultantNote;
 use App\Models\Customer;
@@ -105,6 +106,26 @@ final class Consultant360Test extends TestCase
         Livewire::test(ViewConsultant::class, ['record' => $this->b->id])->callAction('holdRank', ['rank_hold_until' => null, 'reason' => 'Fine']);
         $this->assertNull($this->b->refresh()->rank_hold_until);
         $this->assertSame(1, DB::table('audit_logs')->where('action', 'rank.hold_removed')->count());
+    }
+
+    public function test_the_rank_can_be_held_until_revoked_without_a_date(): void
+    {
+        $this->actingAs($this->super);
+        Livewire::test(ViewConsultant::class, ['record' => $this->b->id])
+            ->callAction('holdRank', ['rank_hold_open' => true, 'rank_hold_until' => null, 'reason' => 'Fino a decisione dell\'admin'])->assertNotified();
+        $this->assertSame(RankHoldAction::OPEN_ENDED, $this->b->refresh()->rank_hold_until->format('Y-m-d'));
+        $this->assertSame('fino a revoca', RankHoldAction::label($this->b->rank_hold_until->format('Y-m-d')));
+        $this->assertSame(['rank_hold_until' => null, 'rank_hold_open' => true], RankHoldAction::fill($this->b->rank_hold_until->format('Y-m-d')));
+        $this->assertSame(['rank_hold_until' => '2026-12-31', 'rank_hold_open' => false], RankHoldAction::fill('2026-12-31'));
+
+        // per tutti gli incaricati già registrati, poi la revoca (senza data e senza interruttore)
+        Livewire::test(ListConsultants::class)->callAction('holdRankAll', ['rank_hold_open' => true, 'reason' => 'Tutti']);
+        $this->assertSame(RankHoldAction::OPEN_ENDED, $this->a->refresh()->rank_hold_until->format('Y-m-d'));
+        Livewire::test(ListConsultants::class)->callAction('holdRankAll', ['rank_hold_open' => false, 'rank_hold_until' => null, 'reason' => 'Revoca']);
+        $this->assertNull($this->a->refresh()->rank_hold_until);
+        $this->assertNull($this->b->refresh()->rank_hold_until);
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'rank.hold')->where('subject_id', (string) $this->a->id)->count());
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'rank.hold_removed')->where('subject_id', (string) $this->a->id)->count());
     }
 
     public function test_the_rank_can_be_held_for_the_selected_incaricati_and_for_all_the_registered_ones(): void

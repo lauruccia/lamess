@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\CompPlanVersions;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Plan\PlanConfig;
 use App\Domain\Engine\Policy\PolicySpecs;
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Plan\PlanFormMapper;
 use App\Domain\Plan\PlanVersionService;
 use App\Filament\Concerns\GatedByPermission;
@@ -118,11 +118,11 @@ class CompPlanVersionResource extends Resource
                     TextInput::make('kosmos.vap_share_pct')->label('Quota dell’importo su cui si calcolano i compensi (V.A.P., %)')->required()->helperText('Vale per i prodotti senza un V.A.P. proprio: ogni prodotto può avere il suo (in % o in euro) dalla scheda prodotto.'),
                     Select::make('kosmos.client_rule')->label('Chi è un cliente')->required()->live()
                         ->options(['any_order' => 'Chi fa almeno 1 ordine nel mese', 'min_amount' => 'Chi fa almeno 1 ordine di un importo minimo'])
-                        ->helperText('Vale per scaglioni dei diretti, livelli, qualifiche e Bonus di Struttura.'),
+                        ->helperText('Vale per scaglioni dei diretti, livelli, qualifiche e Bonus di Struttura. Si può far valere un singolo prodotto come cliente a prescindere dall\'importo: interruttore «Rende cliente» nella scheda prodotto.'),
                     TextInput::make('kosmos.client_min_amount')->label('Importo minimo di un ordine (€, IVA inclusa)')->numeric()->minValue(0)
                         ->required(fn (Get $get): bool => $get('kosmos.client_rule') === 'min_amount')
                         ->visible(fn (Get $get): bool => $get('kosmos.client_rule') === 'min_amount')->dehydratedWhenHidden()
-                        ->helperText('Le righe dello stesso ordine si sommano (150 = una Box a listino). Un ordine in promozione sotto questo importo non rende cliente.'),
+                        ->helperText('Le righe dello stesso ordine si sommano (150 = una Box a listino). Conta il totale dell’ordine, qualunque siano i prodotti. Un ordine sotto questo importo non rende cliente, salvo contenga un prodotto con «Rende cliente» acceso.'),
                     TextInput::make('settings.commission_base_per_pv')->label('Euro per punto dei movimenti importati senza importo')->numeric()->minValue(0)->required()
                         ->helperText('Serve solo per i movimenti storici arrivati dal vecchio sistema con i PV e senza importo (1,5 = 100 PV → 150 €).'),
                     $policy('kosmos_own_purchase_as_client')->columnSpanFull()->helperText(null),

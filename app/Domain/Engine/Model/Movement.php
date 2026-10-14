@@ -33,6 +33,7 @@ final readonly class Movement
         public ?BigDecimal $vapEur = null, // V.A.P. in euro deciso dal prodotto (null = quota V.A.P. del piano sull'importo)
         public ?int $validityMonths = null, // mesi di validità del cliente decisi dal prodotto (null = 1)
         public ?int $clientCount = null,    // quanti clienti vale l'acquisto, deciso dal prodotto (null = 1)
+        public ?bool $makesClient = null,   // il prodotto rende cliente a prescindere dall'importo minimo (true) · null = no
     ) {
         $this->orderId = $orderId;
         $this->id = (string) $id;

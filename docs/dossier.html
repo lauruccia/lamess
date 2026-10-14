@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 14/10/2026 08:55</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale dell'incaricato e del cliente</h1>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 14/10/2026 10:31</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale dell'incaricato e del cliente</h1>
 <blockquote>
 <p>Aggiornato il 14/10/2026. Il portale è ancora chiuso al pubblico: si apre quando lo decide il Consorzio.
 Qui trovi come funzionano acquisti, abbonamenti e compensi, e come si usano le pagine dell'area riservata.
@@ -206,7 +206,7 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 <li><strong>Qualifiche</strong>: Incaricato, Pearl, Crystal, Sapphire, Ruby, Emerald, Diamond. <strong>La qualifica vale appena raggiunta</strong>: non si aspetta la fine del mese. Il portale la registra col ricalcolo automatico notturno (02:45), quindi può comparire la notte dopo; un reso può farla togliere.</li>
 <li><strong>Mantenere la qualifica</strong> (nessuna discesa per mancanza di clienti, la qualifica può sempre salire), in due modi che si sommano:
 <ol>
-<li><strong>Per singolo incaricato, fino a una data scelta dall'admin</strong> (permesso <code>network.restructure</code>): azione <strong>Mantieni qualifica</strong> nella scheda, sulla riga dell'elenco (menu <em>Azioni</em>), in massa sulle righe selezionate, oppure <strong>Mantieni qualifiche a tutti</strong> in alto nell'elenco <em>Incaricati</em>. Si indica la data (sono protetti i mesi che finiscono entro la data: per proteggere tutto ottobre, 31/10) e un motivo; data vuota = protezione tolta. I cessati sono esclusi. Vale dal prossimo ricalcolo notturno. Ogni cambio è nel log (<code>rank.hold</code>, <code>rank.hold_removed</code>). La colonna <em>Qualifica mantenuta fino al</em> è nascosta di default (si attiva dalle colonne). Funziona solo con il Piano Incaricati attivo.</li>
+<li><strong>Per singolo incaricato, fino a una data scelta dall'admin</strong> (permesso <code>network.restructure</code>): azione <strong>Mantieni qualifica</strong> nella scheda, sulla riga dell'elenco (menu <em>Azioni</em>), in massa sulle righe selezionate, oppure <strong>Mantieni qualifiche a tutti</strong> in alto nell'elenco <em>Incaricati</em>. Si indica la data (sono protetti i mesi che finiscono entro la data: per proteggere tutto ottobre, 31/10) oppure si accende <strong>Fino a revoca (senza scadenza)</strong>: la qualifica resta finché un admin o il super admin non la toglie (si salva <code>2099-12-31</code>, in elenco compare «fino a revoca»); si aggiunge un motivo; data vuota e interruttore spento = protezione tolta. La protezione riguarda solo la qualifica: i clienti contati con la regola cliente incidono comunque su scaglioni dei diretti e livelli indiretti. I cessati sono esclusi. Vale dal prossimo ricalcolo notturno. Ogni cambio è nel log (<code>rank.hold</code>, <code>rank.hold_removed</code>). La colonna <em>Qualifica mantenuta fino al</em> è nascosta di default (si attiva dalle colonne). Funziona solo con il Piano Incaricati attivo.</li>
 <li><strong>Protezione generale del piano</strong>: in <em>Piano compensi → bozza → Qualifiche e requisiti</em>, «Mantieni le qualifiche attuali per … giorni dall'attivazione del piano» (predefinito 90) oppure «fino al» una data fissa; se ci sono entrambi vale la più lontana.</li>
 </ol>
 </li>
@@ -314,6 +314,13 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 <p>Orari Europe/Rome: 00:10 piano programmato che diventa attivo · 00:20 sanzioni a tempo · 00:30 successioni scadute · 02:15 backup · 02:45 ricalcolo notturno delle qualifiche · 03:30 canoni · 04:00 abbonamenti · 05:00 pagamenti · 06:00 estratti accettati per decorrenza dei termini · 08:00 promemoria documenti KYC · ogni ora: reinvio fatture, chiusura mensile (agisce solo nel giorno e ora scelti) e Bonus di Struttura (solo nel giorno e ora scelti) · ogni minuto: segnale di vita del cron.</p>
 <h2>Da terminale (solo sviluppo)</h2>
 <p>Per provare in locale o in emergenza: <code>php artisan lamess:periodo apri|live|runtime|chiudi|stato AAAA-MM</code>, <code>lamess:admin-user email --role=…</code>, <code>lamess:superadmin</code>, <code>lamess:ruoli</code>, <code>lamess:parametri</code>, <code>lamess:backup</code>, <code>lamess:controlla</code>, <code>schedule:work</code> (le operazioni automatiche in locale). Sul sito online non si usano.</p>
+<h3>Regola cliente: importo minimo e prodotto che rende cliente (14/10/2026)</h3>
+<p>Un ordine rende cliente chi lo fa se <strong>il totale dell'ordine raggiunge l'importo minimo del piano</strong> (qualunque siano i prodotti, anche solo accessori) <strong>oppure</strong> contiene un prodotto con l'interruttore <strong>«Rende cliente a prescindere dall'importo»</strong> (scheda prodotto, sezione «Commissioni e durata»; spento di default). La scelta si congela sull'ordine: cambiarla dopo vale solo per i nuovi ordini.</p>
+<ul>
+<li><strong>Cambiare l'importo minimo</strong> (prezzo del box diverso): Compensi → Piano compensi → nuova versione → «Importo minimo di un ordine»; <code>0</code> con «Chi fa almeno 1 ordine» = basta qualunque ordine. Prima di attivarla usa «Simula impatto»; i mesi già aperti o chiusi restano sul loro piano.</li>
+<li><strong>Un prodotto che deve fare cliente a prescindere dal prezzo</strong>: accendi l'interruttore sulla scheda prodotto.</li>
+<li>La migrazione <code>2026_11_05_100000_product_makes_client</code> aggiunge <code>makes_client</code> a <code>products</code>, <code>order_items</code> e <code>pv_movements</code> (vedi «Migrazioni senza terminale» per l'SQL).</li>
+</ul>
 </section>
 <section id="manuale-sviluppatori"><h1>Manuale per sviluppatori</h1>
 <p>Aggiornato al 14 ottobre 2026 sul codice. Cronologia di ogni passo: <code>registro-aggiornamenti.md</code>. Regole del motore: <code>specifica-motore.md</code>; valori: <code>parametri.md</code>; struttura: <code>architettura.md</code>; installazione e aggiornamento del sito: <code>installazione-cpanel.md</code> e <code>messa-online.md</code>.</p>
@@ -954,7 +961,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 </ol>
 <h2>Azioni utili</h2>
 <ul>
-<li><strong>Mantieni qualifica</strong> (scheda incaricato, menu riga, in massa, «a tutti»): congela la qualifica fino alla data scelta; resta nel log.</li>
+<li><strong>Mantieni qualifica</strong> (scheda incaricato, menu riga, in massa, «a tutti»): congela la qualifica fino alla data scelta oppure «fino a revoca»; resta nel log.</li>
 <li><strong>Rimborsa KMoney</strong> (ordine in attesa con quota KMoney già addebitata) e <strong>Reso e rimborso</strong>.</li>
 <li>Abbonamento: spedizione gratuita, impegno di 12 mesi non vincolante; il cliente può mettere in pausa o saltare un mese, tu hai <strong>Pausa / Riprendi / Annulla</strong>.</li>
 </ul>
@@ -1054,7 +1061,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 </tr>
 <tr>
 <td>9</td>
-<td><strong>Indiretti estesi</strong> oltre il 5° livello per Ruby, Emerald e Diamond (1%): arrivano fino al 5° livello del successivo incaricato con la stessa qualifica (K02: «uguale o superiore» come alternativa)</td>
+<td><strong>Indiretti estesi</strong> oltre il 5° livello per Ruby, Emerald e Diamond (1%): arrivano fino al 5° livello del successivo incaricato con la stessa qualifica (K02: predefinito <strong><code>same_or_higher</code></strong>, decisione di Laura del 14/10/2026: stessa qualifica o più alta; <code>same_rank</code> resta come alternativa)</td>
 <td><code>KosmosCalculator::calculate</code></td>
 </tr>
 <tr>
@@ -2285,7 +2292,7 @@ Il Bonus di Struttura <strong>non entra nel totale mensile</strong>: ha un regis
 <tr>
 <td><code>client_rule</code></td>
 <td><code>min_amount</code></td>
-<td><code>any_order</code> = basta un ordine; <code>min_amount</code> = un ordine di almeno <code>client_min_amount</code> € (IVA inclusa; le righe dello stesso ordine si sommano)</td>
+<td><code>any_order</code> = basta un ordine; <code>min_amount</code> = un ordine di almeno <code>client_min_amount</code> € (IVA inclusa; le righe dello stesso ordine si sommano; conta il <strong>totale dell'ordine</strong>, anche solo accessori). In alternativa un ordine rende cliente se contiene un prodotto con «Rende cliente a prescindere dall'importo» (<code>products.makes_client</code>, spento di default, congelato su riga d'ordine e movimento)</td>
 </tr>
 <tr>
 <td><code>client_min_amount</code></td>
@@ -2332,7 +2339,7 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <tr>
 <td><code>consultants.rank_hold_until</code> e <code>rank_hold_reason</code></td>
 <td>singolo incaricato</td>
-<td>«Mantieni qualifica» fino a una data scelta dall'admin; vuoto = nessuna protezione</td>
+<td>«Mantieni qualifica» fino a una data scelta dall'admin oppure <strong>fino a revoca</strong> (<code>2099-12-31</code>); vuoto = nessuna protezione</td>
 </tr>
 </tbody>
 </table>
@@ -2417,8 +2424,8 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <tr>
 <td>K02</td>
 <td><code>kosmos_extended_stop</code></td>
-<td><code>same_rank</code></td>
-<td>provvisoria</td>
+<td><code>same_or_higher</code></td>
+<td>deciso da Laura (14/10/2026)</td>
 <td><code>same_rank</code> = indiretti estesi fino al 5° livello del successivo con la stessa qualifica; <code>same_or_higher</code> = uguale o superiore</td>
 </tr>
 <tr>
@@ -2824,8 +2831,8 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <tr>
 <td>K02</td>
 <td><code>kosmos_extended_stop</code> — Indirette estese: dove si fermano</td>
-<td><code>same_rank</code></td>
-<td>provisional</td>
+<td><code>same_or_higher</code></td>
+<td>client_decided</td>
 <td><code>same_rank</code> = Al 5° livello del successivo con la stessa qualifica; <code>same_or_higher</code> = Al 5° livello del successivo con qualifica uguale o superiore</td>
 <td>Presentazione «Seconda parte» s.8 («fino al 5° livello del Ruby seguente»)</td>
 </tr>
@@ -3121,6 +3128,14 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <li><strong>Piè di pagina</strong>: anche la versione ridotta riporta «KADEO GROUP – Tutti i diritti riservati» e i dati dell'azienda.</li>
 <li><strong>Area incaricato</strong>: l'albero della rete mostra il colore della pietra di ogni qualifica, con legenda (<code>App\Domain\Career\RankPalette</code>, usata anche dall'albero del back-office).</li>
 <li>Corretto il testo del parametro <code>engine</code> (multilevel_v3 = piano precedente a PR) e il commento di <code>SubscriptionService</code> sull'impegno di 12 mesi non vincolante.</li>
+</ul>
+<h2>2026-10-14 — Regola cliente a due vie, qualifiche «fino a revoca», estese same_or_higher</h2>
+<ul>
+<li><strong>Regola cliente</strong>: un ordine rende cliente se il <strong>totale</strong> raggiunge l'importo minimo del piano (anche solo accessori) <strong>oppure</strong> contiene un prodotto con il nuovo interruttore «Rende cliente a prescindere dall'importo» (scheda prodotto, spento di default: il comportamento di oggi non cambia). Il flag si congela su riga d'ordine e movimento (migrazione <code>2026_11_05_100000_product_makes_client</code>: colonna <code>makes_client</code> booleana, default 0, su <code>products</code>, <code>order_items</code>, <code>pv_movements</code>). Cambiare il minimo = nuova versione del piano; cambiare un prodotto = interruttore. Test: <code>ClientRuleTest</code> (+5), <code>ShopCatalogAdminTest</code>.</li>
+<li><strong>Qualifiche congelate «fino a revoca»</strong>: «Mantieni qualifica» (scheda, riga, massa, «a tutti») ha l'interruttore «Fino a revoca (senza scadenza)»: salva <code>2099-12-31</code>, in elenco «fino a revoca». Riguarda solo la qualifica, non il conteggio dei clienti.</li>
+<li><strong>Indiretti estesi</strong>: <code>kosmos_extended_stop</code> = <code>same_or_higher</code> (stessa qualifica o più alta) predefinito (decisione di Laura) nel codice e in <code>plan-incaricati-2026-10-08.json</code>.</li>
+<li><strong>Piano precedente nascosto</strong>: nuovi test <code>LegacyPlanTest</code> (8) su impostazione, permessi, ambiente e assenza di effetti sui calcoli. Test aggiunti a <code>Consultant360Test</code> e <code>KosmosPlanTest</code>.</li>
+<li>Il Piano Incaricati parte il 1° novembre 2026 (ottobre resta sul piano precedente); Fast Start, Team, Matching e Rank Bonus restano spenti.</li>
 </ul>
 </section>
 </body></html>

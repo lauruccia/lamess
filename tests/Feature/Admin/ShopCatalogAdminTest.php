@@ -57,15 +57,17 @@ final class ShopCatalogAdminTest extends TestCase
         Livewire::test(EditProduct::class, ['record' => $p->getKey()])
             ->assertSee('Commissioni e durata (Piano Incaricati)')
             ->assertSee('Quanti clienti vale')->assertSee('Durata (mesi)')
-            ->assertSee('V.A.P. 60 % di 150,00 € = 90,00 €. Vale 5 clienti per 12 mesi.')
+            ->assertSee('Rende cliente a prescindere dall\'importo')
+            ->assertSee('V.A.P. 60 % di 150,00 € = 90,00 €. Vale 5 clienti per 12 mesi (se l\'ordine raggiunge l\'importo minimo del piano).')
             ->assertFormSet(['vap_mode' => Product::VAP_PERCENT, 'vap_value' => '60.0000', 'customer_count' => 5, 'customer_validity_months' => 12])
-            ->fillForm(['vap_mode' => Product::VAP_FIXED, 'vap_value' => '40', 'customer_count' => 1, 'customer_validity_months' => 3])
+            ->fillForm(['vap_mode' => Product::VAP_FIXED, 'vap_value' => '40', 'customer_count' => 1, 'customer_validity_months' => 3, 'makes_client' => true])
             ->call('save')->assertHasNoFormErrors();
 
         $p->refresh();
         $this->assertSame(Product::VAP_FIXED, $p->vap_mode);
         $this->assertSame([Product::VAP_FIXED, '40.0000'], $p->vapSetting());
         $this->assertSame(3, $p->customerValidityMonths());
+        $this->assertTrue($p->makesClient());
     }
 
     public function test_product_summary_without_vap_follows_the_plan(): void
@@ -74,7 +76,7 @@ final class ShopCatalogAdminTest extends TestCase
         $this->admin();
         $p = $this->product('BOX2', '122.95081967');
 
-        Livewire::test(EditProduct::class, ['record' => $p->getKey()])->assertSee('V.A.P. come da piano')->assertSee('Vale 1 cliente per 1 mese.');
+        Livewire::test(EditProduct::class, ['record' => $p->getKey()])->assertSee('V.A.P. come da piano')->assertSee('Vale 1 cliente per 1 mese (se l\'ordine raggiunge l\'importo minimo del piano).');
     }
 
     public function test_roles_without_catalog_permission_cannot_open_shop_admin(): void

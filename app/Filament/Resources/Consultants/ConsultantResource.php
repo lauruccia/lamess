@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Plan\ActiveStatus;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\Consultants\Pages\CreateConsultant;
-use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Resources\Consultants\Pages\EditConsultant;
+use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Resources\Consultants\Pages\ViewConsultant;
 use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\ConsultantList;
@@ -189,7 +189,7 @@ class ConsultantResource extends Resource
                         'Attivo' => 'success', 'Non attivo' => 'warning', default => 'gray',
                     })
                     ->tooltip(fn (Consultant $r): ?string => filled($r->stat_reason) ? (string) $r->stat_reason : (LegacyPlan::hidden() ? 'Requisiti del mese per maturare le commissioni' : 'Soglia di PR del mese per maturare le commissioni')),
-                TextColumn::make('rank_hold_until')->label('Qualifica mantenuta fino al')->date('d/m/Y')->placeholder('—')->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('rank_hold_until')->label('Qualifica mantenuta fino al')->formatStateUsing(fn ($state): string => RankHoldAction::label($state ? Carbon::parse($state)->format('Y-m-d') : null))->placeholder('—')->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn (Consultant $r): ?string => $r->rank_hold_reason),
                 TextColumn::make('sponsor_name')->label('Sponsor')
                     ->state(fn (Consultant $r): ?string => $r->sponsor_name)->placeholder('— (radice)')
@@ -244,11 +244,11 @@ class ConsultantResource extends Resource
                 SendDocumentsAction::bulk(),
             ])->recordActions([
                 ActionGroup::make([
-                KycRequestAction::forRow(),
-                RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
-                Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
-                    ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))
-                    ->url(fn (Consultant $record): string => url("/admin-files/badge/{$record->id}"), shouldOpenInNewTab: true),
+                    KycRequestAction::forRow(),
+                    RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
+                    Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
+                        ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))
+                        ->url(fn (Consultant $record): string => url("/admin-files/badge/{$record->id}"), shouldOpenInNewTab: true),
                 ])->icon('heroicon-m-ellipsis-vertical')->tooltip('Altre azioni')->label('Azioni'),
             ]);
     }

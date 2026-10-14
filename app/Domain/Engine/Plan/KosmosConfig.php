@@ -100,14 +100,18 @@ final readonly class KosmosConfig
 
     public const CLIENT_MIN_AMOUNT = 'min_amount';
 
-    /** Un ordine di questo importo (€, IVA inclusa) rende cliente? Con «qualunque ordine» basta che l'importo sia positivo. */
-    public function orderQualifies(BigDecimal $orderAmount): bool
+    /**
+     * Un ordine di questo importo (€, IVA inclusa) rende cliente? Due vie alternative:
+     * il totale dell'ordine raggiunge l'importo minimo del piano (con «qualunque ordine» basta che sia positivo),
+     * oppure l'ordine contiene un prodotto con l'interruttore «Rende cliente» (a prescindere dall'importo).
+     */
+    public function orderQualifies(BigDecimal $orderAmount, bool $hasClientProduct = false): bool
     {
         if (! $orderAmount->isPositive()) {
             return false;
         }
 
-        return $this->clientRule === self::CLIENT_ANY_ORDER || $orderAmount->isGreaterThanOrEqualTo($this->clientMinAmount);
+        return $hasClientProduct || $this->clientRule === self::CLIENT_ANY_ORDER || $orderAmount->isGreaterThanOrEqualTo($this->clientMinAmount);
     }
 
     /**

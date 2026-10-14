@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants\Pages;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Access\Actor;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Features\Feature;
@@ -12,6 +11,7 @@ use App\Domain\Network\NetworkException;
 use App\Domain\Network\NetworkService;
 use App\Domain\Network\TreeOperations;
 use App\Domain\Onboarding\BadgeService;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\KycRequestAction;
 use App\Filament\Support\RankHoldAction;
@@ -21,7 +21,6 @@ use App\Models\Consultant;
 use App\Models\ConsultantNote;
 use App\Models\Customer;
 use App\Models\IvdContract;
-use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -175,13 +174,13 @@ class ViewConsultant extends ViewRecord
             Action::make('holdRank')->authorize('network.restructure')->label('Mantieni qualifica')->icon('heroicon-o-shield-check')->color('gray')
                 ->visible(fn () => $this->record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank'))
                 ->modalDescription('La qualifica attuale non si riduce per mancanza di clienti fino alla data scelta (può comunque salire). Lascia la data vuota per togliere la protezione. Viene registrato nel log.')
-                ->fillForm(fn () => ['rank_hold_until' => $this->record->rank_hold_until?->format('Y-m-d'), 'reason' => $this->record->rank_hold_reason])
+                ->fillForm(fn () => RankHoldAction::fill($this->record->rank_hold_until?->format('Y-m-d')) + ['reason' => $this->record->rank_hold_reason])
                 ->schema(RankHoldAction::form())
                 ->action(function (array $data): void {
-                    $until = filled($data['rank_hold_until'] ?? null) ? (string) $data['rank_hold_until'] : null;
+                    $until = RankHoldAction::until($data);
                     RankHoldAction::apply([$this->record], $until, (string) $data['reason']);
                     $this->record->refresh();
-                    Notification::make()->title($until === null ? 'Protezione tolta' : 'Qualifica mantenuta fino al '.CarbonImmutable::parse($until)->format('d/m/Y'))->body('Vale dal prossimo ricalcolo del periodo (automatico ogni notte).')->success()->send();
+                    Notification::make()->title($until === null ? 'Protezione tolta' : 'Qualifica mantenuta '.(RankHoldAction::isOpenEnded($until) ? RankHoldAction::label($until) : 'fino al '.RankHoldAction::label($until)))->body('Vale dal prossimo ricalcolo del periodo (automatico ogni notte).')->success()->send();
                 }),
             Action::make('suspend')->authorize('network.manage')->label('Sospendi')->color('warning')->schema($reason)
                 ->visible(fn () => $this->record->status === 'active' && Feature::enabled('consultant360.action.suspend'))->action(fn (array $data) => $this->change('suspended', $data)),

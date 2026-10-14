@@ -17,7 +17,9 @@
     "move_node_window_days": "7",
     "engine": "kosmos_v1"
   },
-  "policies": {},
+  "policies": {
+    "kosmos_extended_stop": "same_or_higher"
+  },
   "ranks": [
     {
       "code": "CONSULTANT",

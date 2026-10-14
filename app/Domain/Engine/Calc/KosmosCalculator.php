@@ -76,14 +76,14 @@ final class KosmosCalculator
                 continue;
             }
             $order = $m->orderId ?? 'm:'.$m->id;
-            [$sum, $at] = $orders[$m->ownerId][$key][$order] ?? [Num::zero(), $m->at];
-            $orders[$m->ownerId][$key][$order] = [$sum->plus(self::amountOf($plan, $m)), min($at, $m->at)];
+            [$sum, $at, $byProduct] = $orders[$m->ownerId][$key][$order] ?? [Num::zero(), $m->at, false];
+            $orders[$m->ownerId][$key][$order] = [$sum->plus(self::amountOf($plan, $m)), min($at, $m->at), $byProduct || $m->makesClient === true];
         }
         $out = [];
         foreach ($orders as $owner => $customers) {
             foreach ($customers as $customer => $byOrder) {
-                foreach ($byOrder as [$sum, $at]) {
-                    if ($cfg->orderQualifies($sum) && (! isset($out[$owner][$customer]) || $at < $out[$owner][$customer])) {
+                foreach ($byOrder as [$sum, $at, $byProduct]) {
+                    if ($cfg->orderQualifies($sum, $byProduct) && (! isset($out[$owner][$customer]) || $at < $out[$owner][$customer])) {
                         $out[$owner][$customer] = $at;
                     }
                 }
@@ -157,14 +157,14 @@ final class KosmosCalculator
                 continue;
             }
             $order = $m->orderId ?? 'm:'.$m->id;
-            [$sum, $weight] = $orders[$m->ownerId][$key][$order] ?? [Num::zero(), 1];
-            $orders[$m->ownerId][$key][$order] = [$sum->plus(self::amountOf($plan, $m)), max($weight, $m->clientCount ?? 1)];
+            [$sum, $weight, $byProduct] = $orders[$m->ownerId][$key][$order] ?? [Num::zero(), 1, false];
+            $orders[$m->ownerId][$key][$order] = [$sum->plus(self::amountOf($plan, $m)), max($weight, $m->clientCount ?? 1), $byProduct || $m->makesClient === true];
         }
         $out = [];
         foreach ($orders as $owner => $customers) {
             foreach ($customers as $customer => $byOrder) {
-                foreach ($byOrder as [$sum, $weight]) {
-                    if ($cfg->orderQualifies($sum)) {
+                foreach ($byOrder as [$sum, $weight, $byProduct]) {
+                    if ($cfg->orderQualifies($sum, $byProduct)) {
                         $out[$owner][$customer] = max($out[$owner][$customer] ?? 0, $weight);
                     }
                 }

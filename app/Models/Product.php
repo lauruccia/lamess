@@ -28,7 +28,7 @@ class Product extends Model
             'promo_rank_double_cv' => 'boolean', 'is_kit' => 'boolean', 'active' => 'boolean', 'countries' => 'array',
             'compare_at_net' => 'decimal:8', 'images' => 'array', 'featured' => 'boolean', 'allow_backorder' => 'boolean', 'stock_qty' => 'integer',
             'options' => 'array', 'variant_options' => 'array',
-            'vap_value' => 'decimal:4', 'customer_validity_months' => 'integer', 'customer_count' => 'integer',
+            'vap_value' => 'decimal:4', 'customer_validity_months' => 'integer', 'customer_count' => 'integer', 'makes_client' => 'boolean',
         ];
     }
 
@@ -393,6 +393,12 @@ class Product extends Model
         }
 
         return 1;
+    }
+
+    /** Questo prodotto rende cliente chi lo compra a prescindere dall'importo minimo del piano? (la variante eredita dal padre) */
+    public function makesClient(): bool
+    {
+        return (bool) $this->makes_client || (bool) $this->parent?->makes_client;
     }
 
     public function sellableIn(string $country): bool

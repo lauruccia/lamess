@@ -90,7 +90,7 @@ Il Bonus di Struttura **non entra nel totale mensile**: ha un registro suo (stat
 
 | Chiave (`kosmos.`) | Valore nel file | Significato |
 |---|---|---|
-| `client_rule` | `min_amount` | `any_order` = basta un ordine; `min_amount` = un ordine di almeno `client_min_amount` € (IVA inclusa; le righe dello stesso ordine si sommano) |
+| `client_rule` | `min_amount` | `any_order` = basta un ordine; `min_amount` = un ordine di almeno `client_min_amount` € (IVA inclusa; le righe dello stesso ordine si sommano; conta il **totale dell'ordine**, anche solo accessori). In alternativa un ordine rende cliente se contiene un prodotto con «Rende cliente a prescindere dall'importo» (`products.makes_client`, spento di default, congelato su riga d'ordine e movimento) |
 | `client_min_amount` | 150 | importo minimo (€, IVA inclusa). Con `min_amount` un ordine in promozione sotto l'importo (es. Box a 129,90 €) non rende cliente |
 | `vap_share_pct` | 66,66666 | quota dell'importo (IVA inclusa, già scontato) che diventa V.A.P. quando il prodotto non ne ha uno proprio (150 € → 100 €) |
 
@@ -111,7 +111,7 @@ Con la politica K05 = `clients` (predefinita) ogni mese si paga la qualifica pi�
 |---|---|---|
 | `kosmos.rank_grace_days` | piano | giorni dall'efficacia della versione (`effective_from`, altrimenti giorno di attivazione) in cui nessuno scende; ogni mese iniziato nella finestra è protetto per intero. Predefinito 90; vuoto o 0 = nessuna protezione a giorni |
 | `kosmos.rank_grace_until` | piano | data fissa (AAAA-MM-GG) fino a cui nessuno scende; vuoto = nessuna |
-| `consultants.rank_hold_until` e `rank_hold_reason` | singolo incaricato | «Mantieni qualifica» fino a una data scelta dall'admin; vuoto = nessuna protezione |
+| `consultants.rank_hold_until` e `rank_hold_reason` | singolo incaricato | «Mantieni qualifica» fino a una data scelta dall'admin oppure **fino a revoca** (`2099-12-31`); vuoto = nessuna protezione |
 
 - Se ci sono sia i giorni sia la data fissa vale la **più lontana**. Sono protetti i mesi che **finiscono** entro la data (per proteggere tutto ottobre: 31/10).
 - «Mantieni qualifica» si imposta dalla scheda incaricato, dal menu riga, in massa o su tutti i registrati non cessati. Richiede il permesso `network.restructure` (non è in nessun ruolo di dettaglio come `admin_network`: lo concede il super_admin a un admin, utente per utente, oppure col profilo «completo»; il super_admin lo ha sempre) e la funzionalità `consultant360.action.hold_rank`. Ogni modifica scrive nel log di audit `rank.hold` o `rank.hold_removed`. Vale dal prossimo ricalcolo (notturno).
@@ -139,7 +139,7 @@ Le politiche D01–D12 del piano precedente stanno nella sezione 11. Quelle del 
 | Decisione | Politica | Predefinito | Stato | Opzioni |
 |---|---|---|---|---|
 | K01 | `kosmos_client_count` | `period_buyers` | provvisoria | `period_buyers` = clienti con un acquisto valido nel mese (compresi i mesi di validità dei prodotti già acquistati); `cumulative_buyers` = clienti che hanno acquistato almeno una volta fino a fine mese |
-| K02 | `kosmos_extended_stop` | `same_rank` | provvisoria | `same_rank` = indiretti estesi fino al 5° livello del successivo con la stessa qualifica; `same_or_higher` = uguale o superiore |
+| K02 | `kosmos_extended_stop` | `same_or_higher` | deciso da Laura (14/10/2026) | `same_rank` = indiretti estesi fino al 5° livello del successivo con la stessa qualifica; `same_or_higher` = uguale o superiore |
 | K03 | (nessuna politica) | | | la sigla K03 compare solo nelle spiegazioni delle righe del Bonus di Struttura |
 | K04 | `kosmos_own_purchase_as_client` | `on` | deciso dal cliente | `on` = l'acquisto dell'incaricato conta come cliente di sé stesso e genera compensi; `off` = gli acquisti personali non generano compensi |
 | K05 | `kosmos_rank_maintenance` | `clients` | provvisoria | `clients` = si paga la qualifica più alta per cui i clienti bastano; `none` = la qualifica raggiunta resta |
@@ -219,7 +219,7 @@ Si cambiano dal pannello (Impostazioni di sistema, che ha la precedenza sul `.en
 | D08 | `fsb_missed_step` — Step mancato | `independent` | provisional | `independent` = Gli step successivi restano validi; `blocks_following` = Blocca i successivi | Guida FSB p.4–7 (OPEN-07) |
 | D09 | `fsb_step10_deadline` — Step 10: termine per i tre incaricati | `own_window` | provisional | `own_window` = Step 9 nella loro finestra (210 giorni), nessuna scadenza per lo sponsor (PMK 070726 p.35) | Guida FSB p.7 vs PMK p.35 (OPEN-08) |
 | K01 | `kosmos_client_count` — Come si contano i clienti personali (scaglioni, livelli, qualifiche) | `period_buyers` | provisional | `period_buyers` = Clienti distinti con un acquisto confermato nel mese; `cumulative_buyers` = Clienti distinti che hanno acquistato almeno una volta fino a fine mese | Presentazione «Seconda parte» s.6–7: non dice se il conteggio è mensile o cumulativo |
-| K02 | `kosmos_extended_stop` — Indirette estese: dove si fermano | `same_rank` | provisional | `same_rank` = Al 5° livello del successivo con la stessa qualifica; `same_or_higher` = Al 5° livello del successivo con qualifica uguale o superiore | Presentazione «Seconda parte» s.8 («fino al 5° livello del Ruby seguente») |
+| K02 | `kosmos_extended_stop` — Indirette estese: dove si fermano | `same_or_higher` | client_decided | `same_rank` = Al 5° livello del successivo con la stessa qualifica; `same_or_higher` = Al 5° livello del successivo con qualifica uguale o superiore | Presentazione «Seconda parte» s.8 («fino al 5° livello del Ruby seguente») |
 | K04 | `kosmos_own_purchase_as_client` — Gli acquisti dell’incaricato valgono come acquisto di un suo cliente | `on` | client_decided | `on` = Sì: l’incaricato è cliente di sé stesso (conta come cliente per sé stesso e genera compensi); lo sponsor matura come per un cliente di un suo incaricato diretto; `off` = No: gli acquisti personali non generano compensi | Laura 08/10/2026: 5 clienti + acquisto proprio mensile = 6 clienti; deve poterlo disabilitare admin/superadmin |
 | K05 | `kosmos_rank_maintenance` — Mantenimento della qualifica | `clients` | provisional | `clients` = Ogni mese si paga la qualifica più alta per cui i clienti personali sono sufficienti; `none` = Nessun mantenimento: la qualifica raggiunta resta | Laura 08/10/2026: «mantenere i 6 clienti e quindi la qualifica» |
 | D11 | `refund_after_close` — Reso dopo la chiusura del periodo | `clawback_next_open` | provisional | `clawback_next_open` = Storno nel primo periodo aperto; `no_clawback` = Nessun recupero | M1 §1 (refund) (OPEN-26) |

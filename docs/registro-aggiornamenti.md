@@ -234,3 +234,10 @@
 - **Piè di pagina**: anche la versione ridotta riporta «KADEO GROUP – Tutti i diritti riservati» e i dati dell'azienda.
 - **Area incaricato**: l'albero della rete mostra il colore della pietra di ogni qualifica, con legenda (`App\Domain\Career\RankPalette`, usata anche dall'albero del back-office).
 - Corretto il testo del parametro `engine` (multilevel_v3 = piano precedente a PR) e il commento di `SubscriptionService` sull'impegno di 12 mesi non vincolante.
+
+## 2026-10-14 — Regola cliente a due vie, qualifiche «fino a revoca», estese same_or_higher
+- **Regola cliente**: un ordine rende cliente se il **totale** raggiunge l'importo minimo del piano (anche solo accessori) **oppure** contiene un prodotto con il nuovo interruttore «Rende cliente a prescindere dall'importo» (scheda prodotto, spento di default: il comportamento di oggi non cambia). Il flag si congela su riga d'ordine e movimento (migrazione `2026_11_05_100000_product_makes_client`: colonna `makes_client` booleana, default 0, su `products`, `order_items`, `pv_movements`). Cambiare il minimo = nuova versione del piano; cambiare un prodotto = interruttore. Test: `ClientRuleTest` (+5), `ShopCatalogAdminTest`.
+- **Qualifiche congelate «fino a revoca»**: «Mantieni qualifica» (scheda, riga, massa, «a tutti») ha l'interruttore «Fino a revoca (senza scadenza)»: salva `2099-12-31`, in elenco «fino a revoca». Riguarda solo la qualifica, non il conteggio dei clienti.
+- **Indiretti estesi**: `kosmos_extended_stop` = `same_or_higher` (stessa qualifica o più alta) predefinito (decisione di Laura) nel codice e in `plan-incaricati-2026-10-08.json`.
+- **Piano precedente nascosto**: nuovi test `LegacyPlanTest` (8) su impostazione, permessi, ambiente e assenza di effetti sui calcoli. Test aggiunti a `Consultant360Test` e `KosmosPlanTest`.
+- Il Piano Incaricati parte il 1° novembre 2026 (ottobre resta sul piano precedente); Fast Start, Team, Matching e Rank Bonus restano spenti.

@@ -31,7 +31,7 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 5. Compensi sul **Piano Incaricati**: niente PV, la qualifica vale appena raggiunta (aggiornata ogni notte). Ricevute provvigionali e ritenuta d'acconto sono **spente** fino alla risposta del commercialista.
 
 ## Azioni utili
-- **Mantieni qualifica** (scheda incaricato, menu riga, in massa, «a tutti»): congela la qualifica fino alla data scelta; resta nel log.
+- **Mantieni qualifica** (scheda incaricato, menu riga, in massa, «a tutti»): congela la qualifica fino alla data scelta oppure «fino a revoca»; resta nel log.
 - **Rimborsa KMoney** (ordine in attesa con quota KMoney già addebitata) e **Reso e rimborso**.
 - Abbonamento: spedizione gratuita, impegno di 12 mesi non vincolante; il cliente può mettere in pausa o saltare un mese, tu hai **Pausa / Riprendi / Annulla**.
 

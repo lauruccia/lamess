@@ -162,6 +162,32 @@ final class KosmosPlanTest extends EngineTestCase
         $this->assertSame('1.00', $ext['R2'] ?? null);
     }
 
+    public function test_extended_indirect_stops_by_default_at_the_next_same_or_higher_rank(): void
+    {
+        $build = function (array $policies): Scenario {
+            $s = $this->scenario($policies);
+            $s->consultant('R', null, rank: 'RUBY');
+            $s->consultant('n1', 'R');
+            $s->consultant('E', 'n1', rank: 'EMERALD');
+            $prev = 'E';
+            foreach (range(1, 6) as $i) {
+                $s->consultant("m{$i}", $prev);
+                $prev = "m{$i}";
+            }
+            $this->buy($s, 'm6', 'x');
+
+            return $s;
+        };
+
+        $this->assertSame('same_or_higher', $this->scenario()->plan->policies->get('kosmos_extended_stop'), 'predefinito deciso da Laura il 14/10/2026');
+        $default = $this->totals($build([])->run(), 'indirect_ext');
+        $this->assertArrayNotHasKey('R', $default, 'Un Emerald è più alto di un Ruby: il venditore al 6° livello dell\'Emerald spetta a lui');
+        $this->assertSame('1.00', $default['E'] ?? null);
+
+        $sameRank = $this->totals($build(['kosmos_extended_stop' => 'same_rank'])->run(), 'indirect_ext');
+        $this->assertSame('1.00', $sameRank['R'] ?? null, 'Con «stessa qualifica» il Ruby continua oltre l\'Emerald');
+    }
+
     public function test_personal_purchases_generate_nothing_when_the_option_is_off(): void
     {
         $s = $this->scenario(['kosmos_own_purchase_as_client' => 'off']);
@@ -494,6 +520,12 @@ final class KosmosPlanTest extends EngineTestCase
         $this->assertSame(['C' => 'CRYSTAL'], $this->paidRanks($plan, '2027-03-31'));
         $this->assertSame(['C' => 'PEARL'], $this->paidRanks($plan, '2026-10-30'), 'il mese finisce dopo la data: non protetto');
         $this->assertSame(['C' => 'PEARL'], $this->paidRanks($plan, '2026-09-30'), 'data già passata');
+    }
+
+    public function test_the_rank_can_be_kept_until_revoked(): void
+    {
+        $plan = $this->planWithKosmos([], ['kosmos_rank_maintenance' => 'clients']);
+        $this->assertSame(['C' => 'CRYSTAL'], $this->paidRanks($plan, '2099-12-31'), 'fino a revoca: qualifica sempre mantenuta');
     }
 
     public function test_ranks_are_kept_for_the_days_chosen_by_the_admin_counted_from_the_activation_of_the_plan(): void

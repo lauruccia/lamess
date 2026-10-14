@@ -185,12 +185,12 @@ final class PolicySpecs
             ],
             'kosmos_extended_stop' => [
                 'decision' => 'K02', 'label' => 'Indirette estese: dove si fermano',
-                'default' => 'same_rank',
+                'default' => 'same_or_higher',
                 'options' => [
                     'same_rank' => 'Al 5° livello del successivo con la stessa qualifica',
                     'same_or_higher' => 'Al 5° livello del successivo con qualifica uguale o superiore',
                 ],
-                'default_status' => self::PROVISIONAL, 'source' => 'Presentazione «Seconda parte» s.8 («fino al 5° livello del Ruby seguente»)',
+                'default_status' => self::CLIENT_DECIDED, 'source' => 'Presentazione «Seconda parte» s.8 («fino al 5° livello del Ruby seguente»); Laura 14/10/2026: stessa qualifica o più alta',
             ],
             'kosmos_own_purchase_as_client' => [
                 'decision' => 'K04', 'label' => 'Gli acquisti dell’incaricato valgono come acquisto di un suo cliente',

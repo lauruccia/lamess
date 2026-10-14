@@ -6,11 +6,11 @@ namespace App\Filament\Support;
 
 use App\Models\CalculationRun;
 use App\Models\ComplianceCase;
+use App\Models\CompPlanVersion;
 use App\Models\Consultant;
 use App\Models\CorporateEvent;
 use App\Models\CreditNote;
 use App\Models\Customer;
-use App\Models\CompPlanVersion;
 use App\Models\Discount;
 use App\Models\Download;
 use App\Models\InheritanceCase;
@@ -75,7 +75,7 @@ final class GenericFormVocabulary
         'kmoney_rest_method' => 'Metodo per il resto (KMoney)', 'shipping_refunded_net' => 'Spedizione rimborsata (netto)', 'subscription_id' => 'Abbonamento',
         'qty' => 'Quantità', 'qty_refunded' => 'Quantità rimborsata', 'unit_net' => 'Prezzo unitario (netto)', 'sku' => 'Codice prodotto (SKU)',
         'pv' => 'PV', 'cv' => 'CV', 'pvf' => 'PVF', 'pvc' => 'PVC', 'pct' => 'Percentuale', 'level' => 'Livello', 'depth' => 'Profondità',
-        'pv_kind' => 'Tipo di PV', 'vap_mode' => 'Modalità VAP', 'vap_value' => 'Valore VAP', 'vap_amount' => 'Importo VAP', 'validity_months' => 'Validità (mesi)', 'client_count' => 'Numero clienti',
+        'pv_kind' => 'Tipo di PV', 'vap_mode' => 'Modalità VAP', 'vap_value' => 'Valore VAP', 'vap_amount' => 'Importo VAP', 'validity_months' => 'Validità (mesi)', 'client_count' => 'Numero clienti', 'makes_client' => 'Rende cliente',
         'sink_status' => 'Stato invio', 'sink_ref' => 'Riferimento invio', 'sink_error' => 'Errore di invio', 'buyer' => 'Dati dell\'acquirente',
         'provider' => 'Fornitore', 'provider_ref' => 'Riferimento del fornitore', 'external_ref' => 'Riferimento esterno', 'reference' => 'Riferimento',
         'withholding' => 'Ritenuta', 'withholding_amount' => 'Ritenuta d\'acconto', 'inps_amount' => 'Contributo INPS', 'gross_amount' => 'Importo lordo', 'taxable_base' => 'Base imponibile',
@@ -100,7 +100,7 @@ final class GenericFormVocabulary
         'amount_net' => 'Importo (netto)', 'min_weight_g' => 'Peso minimo (g)', 'max_weight_g' => 'Peso massimo (g)', 'weight_g' => 'Peso (g)',
         'gross_pr' => 'PR lordi', 'due_by' => 'Da pagare entro il', 'approved_at' => 'Approvato il', 'rejection_reason' => 'Motivo del rifiuto', 'requested_by' => 'Richiesto da',
         'types' => 'Documenti richiesti', 'last_reminder_at' => 'Ultimo promemoria il', 'reminders_sent' => 'Promemoria inviati', 'fulfilled_at' => 'Completato il',
-        'canceled_at' => 'Annullato il', 'reverses_movement_id' => 'Movimento stornato', 'excluded_from_bonus' => 'Escluso dai bonus', 
+        'canceled_at' => 'Annullato il', 'reverses_movement_id' => 'Movimento stornato', 'excluded_from_bonus' => 'Escluso dai bonus',
         'template_version' => 'Versione del modello', 'signature_provider' => 'Servizio di firma', 'signature_ref' => 'Riferimento della firma', 'signed_at' => 'Firmato il',
         'evidence' => 'Prove della firma', 'pdf_path' => 'File PDF', 'expires_at' => 'Scade il', 'term_index' => 'Numero del rinnovo', 'accepted_by' => 'Accettato da',
         'rejected_at' => 'Rifiutato il', 'rejection_reasons' => 'Motivi del rifiuto', 'odoo' => 'Dati da Odoo', 'portal' => 'Dati dal portale', 'subject_ref' => 'Riferimento',

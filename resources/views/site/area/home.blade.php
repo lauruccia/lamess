@@ -10,6 +10,8 @@
     $eur = fn ($v) => \App\Support\Money::eur($v);
     $first = $user->profile?->type === 'company' ? $user->profile->company_name : ($user->profile?->first_name ?: $user->name);
     $lastOrder = $d['orders']['recent']->first();
+    $kk = $progress['kosmos'] ?? null;
+    $nt = $kk ? collect($kk['tiers'])->firstWhere('reached', false) : null;
     $walletOn = $c && $c->status === 'active' && \App\Domain\Wallet\WithdrawalService::enabled();
 @endphp
 
@@ -50,7 +52,6 @@
 
 {{-- Numeri --}}
 <div class="kpis">
- @php($kk = $progress['kosmos'] ?? null)
  @if($c && ($month ?? null))
   @if(\App\Domain\Plan\LegacyPlan::visible() && ! $kk)
   <div class="kpi"><small>PVF di {{ $month['period'] }}</small><strong>{{ $n($month['pvf']) }}</strong><span>Personali {{ $n($month['pvc']) }} · gruppo {{ $n($month['group_pv']) }}</span></div>
@@ -59,7 +60,6 @@
   <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? ucfirst(strtolower($month['rank'])) : '—' }}</strong>@if($kk)<span>{{ $kk['known'] ? 'Compenso diretto '.$n($progress['rank']['direct_pct']).'%' : 'Calcolo in arrivo' }}@if($kk['next_name']) · prossima {{ $kk['next_name'] }} al {{ $kk['percent'] }}%@endif</span>@elseif(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
  @endif
  @if($c && $kk)
-  @php($nt = collect($kk['tiers'])->firstWhere('reached', false))
   <a class="kpi" href="/area/clienti"><small>Clienti personali</small><strong>{{ $kk['known'] ? $kk['clients'] : '—' }}</strong><span>@if($kk['known'] && $nt)Ne mancano {{ $nt['missing'] }} per il {{ $n($nt['pct']) }}% diretto @elseif($kk['known'])Scaglione massimo raggiunto @else In attesa del calcolo @endif</span></a>
   <a class="kpi" href="/area/rete"><small>Diretti Pearl</small><strong>{{ $kk['pearl'] ?? '—' }}</strong><span>Incaricati del tuo 1° livello con qualifica Pearl o superiore</span></a>
   @if($earn)

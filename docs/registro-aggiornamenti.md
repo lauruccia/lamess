@@ -264,3 +264,20 @@
 
 ## 2026-10-14 — Avanzamento anche per chi non è nel calcolo salvato
 - `CareerProgress::forConsultant()`: se l'incaricato non compare nell'ultimo calcolo salvato (entrato dopo il calcolo), si usa un calcolo di prova in memoria (cache 10 min, nessuna scrittura). Il pannello "Il mio avanzamento" non resta più vuoto.
+
+## 2026-10-14 — Qualifiche congelate «fino a revoca», estese same_or_higher, test del piano precedente nascosto, manuali
+- **Qualifiche congelate**: la protezione della qualifica ora ha l'opzione «Fino a revoca (senza scadenza)» (salva `2099-12-31`) nella scheda, nell'azione di riga, di massa e in «Mantieni qualifiche a tutti». L'elenco mostra «fino a revoca». La qualifica resta finché l'admin o il super admin la toglie. Il congelamento riguarda **solo la qualifica**: i clienti contati con la regola dei 150 € incidono comunque su scaglioni dei diretti e livelli degli indiretti.
+- **Indirette estese**: la regola `same_or_higher` (stessa qualifica o più alta) è il default in `PolicySpecs` (K02, decisa da Laura) e nel JSON `plan-incaricati-2026-10-08.json`; il piano attivo nel database già la usa.
+- **Piano precedente nascosto**: nuovi test `tests/Feature/Plan/LegacyPlanTest.php` (8) sul pulsante/impostazione che nasconde il piano a PR (menu, schede, permessi, ambiente, nessun effetto sui calcoli).
+- **Altri test**: `Consultant360Test` (qualifica fino a revoca), `KosmosPlanTest` (estese di default, qualifica mantenuta). I due test che erano rossi sono verdi.
+- **Manuali aggiornati**: utente, amministratore, guida breve, specifica del motore, architettura, sviluppatori, decisioni aperte (K01–K08), scheda incaricato, messa online, installazione cPanel, parametri (sezione Incaricati generata) e dossier.
+- **Date**: il Piano Incaricati parte il 1° novembre 2026 (ottobre resta sul piano precedente); lo storico Odoo serve solo come dato dei mesi precedenti. Fast Start, Team, Matching e Rank Bonus restano spenti.
+- Suite completa: restano 4 rossi non legati al piano (lavori su shop/KMoney/form del 13/10). Nessun commit.
+- **Regola cliente a due vie** (14/10/2026): un ordine rende cliente se il **totale** raggiunge l'importo minimo del piano (qualunque siano i prodotti, anche solo accessori) **oppure** contiene un prodotto con il nuovo interruttore «Rende cliente a prescindere dall'importo» (scheda prodotto, spento di default, quindi il comportamento di oggi non cambia). Il flag si congela sull'ordine e sul movimento (migrazione `2026_11_05_100000_product_makes_client`). Cambiare il minimo = nuova versione del piano; cambiare un prodotto = interruttore. Test in `ClientRuleTest` e `ShopCatalogAdminTest`; manuali e parametri aggiornati.
+
+## 2026-10-14 (sera) — Mantenimento qualifiche solo per chi viene dal vecchio piano
+- **Decisione di Laura**: la data di mantenimento del piano (`rank_grace_until` / `rank_grace_days`) vale solo per gli incaricati importati dal vecchio sistema, cioè con `consultants.previous_rank_code` valorizzato (lo riempie «Congela qualifiche attuali come precedenti»). I nuovi incaricati possono essere promossi ma, se i clienti calano, la qualifica scende.
+- Il mantenimento per il singolo incaricato (`rank_hold_until`, anche «fino a revoca») resta valido per tutti.
+- Il motore prende la data più lontana tra `rank_grace_until` e i giorni dall'attivazione: per far valere il 31/12/2026 svuotare `rank_grace_days`.
+- Il Piano Incaricati è attivo dal 09/10/2026 (versione 5); il periodo 2026-10 resta legato alla versione precedente finché non lo si sposta (vedi procedura).
+- Tecnico: `Node::$previousRank` (fuori dall'hash se vuoto), `SnapshotBuilder`, `PeriodCalculator`, `CareerProgress::isLegacy()`; test `test_the_plan_wide_date_protects_only_those_coming_from_the_previous_system`.

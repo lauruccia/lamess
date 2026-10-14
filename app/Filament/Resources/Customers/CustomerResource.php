@@ -11,6 +11,7 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Support\ConsultantFilter;
+use App\Filament\Support\PasswordResetAction;
 use App\Models\Consultant;
 use App\Models\Customer;
 use App\Models\Order;
@@ -142,9 +143,11 @@ class CustomerResource extends Resource
                     ->visible(fn (Customer $record) => $record->user?->profile?->type !== 'company' && ! Consultant::where('user_id', $record->user_id)->where('status', '!=', 'terminated')->exists())
                     ->modalDescription('Il cliente entra subito nell\'albero come incaricato attivo, con codice e link referral nuovi. Lettera d\'incarico e KYC si completano dopo.')
                     ->schema(self::promoteForm())->action(fn (Customer $record, array $data) => self::promote($record, $data)),
+                PasswordResetAction::forRow()->iconButton()->tooltip('Invia reset password'),
                 Action::make('reassign')->label('Riassegna')->iconButton()->tooltip('Riassegna')->icon('heroicon-o-arrows-right-left')->authorize('network.restructure')
                     ->schema(self::reassignForm())->action(fn (Customer $record, array $data) => self::reassign([$record], $data)),
             ])->toolbarActions([
+                PasswordResetAction::bulk(),
                 BulkAction::make('reassignBulk')->label('Riassegna selezionati')->icon('heroicon-o-arrows-right-left')->authorize('network.restructure')
                     ->schema(self::reassignForm())->deselectRecordsAfterCompletion()->action(fn (Collection $records, array $data) => self::reassign($records, $data)),
             ]);

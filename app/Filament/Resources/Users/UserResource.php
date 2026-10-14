@@ -11,6 +11,7 @@ use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Support\PasswordResetAction;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -132,6 +133,8 @@ class UserResource extends Resource
             SelectFilter::make('role')->label('Ruolo')->options([
                 Roles::SUPER_ADMIN => 'Super admin', Roles::ADMIN => 'Admin', 'consultant' => 'Incaricato', 'customer' => 'Cliente',
             ])->query(fn (Builder $query, array $data) => filled($data['value'] ?? null) ? $query->whereHas('roles', fn ($r) => $r->where('name', $data['value'])) : $query),
+        ])->toolbarActions([
+            PasswordResetAction::bulk(),
         ])->recordActions([
             EditAction::make()->iconButton()->tooltip('Modifica'),
             Action::make('resetPassword')->label('Nuova password')->iconButton()->tooltip('Nuova password')->icon('heroicon-o-key')->color('gray')
@@ -141,6 +144,7 @@ class UserResource extends Resource
                     $password = app(UserAdministration::class)->resetPassword($record);
                     Notification::make()->title('Password temporanea')->body($password)->persistent()->success()->send();
                 }),
+            PasswordResetAction::forRow()->iconButton()->tooltip('Invia link di reset'),
             Action::make('resetTwoFactor')->label('Azzera 2FA')->iconButton()->tooltip('Azzera 2FA')->icon('heroicon-o-device-phone-mobile')->color('gray')
                 ->visible(fn (User $r) => ! $r->isSuperAdmin() && filled($r->app_authentication_secret))
                 ->requiresConfirmation()->modalDescription('Da usare se l\'utente ha perso il telefono: al prossimo accesso dovrà collegare di nuovo l\'app.')

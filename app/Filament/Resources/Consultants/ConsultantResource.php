@@ -19,6 +19,7 @@ use App\Filament\Resources\Consultants\Pages\ViewConsultant;
 use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\ConsultantList;
 use App\Filament\Support\KycRequestAction;
+use App\Filament\Support\PasswordResetAction;
 use App\Filament\Support\RankHoldAction;
 use App\Filament\Support\SendDocumentsAction;
 use App\Models\Consultant;
@@ -247,9 +248,11 @@ class ConsultantResource extends Resource
                 KycRequestAction::bulk(),
                 RankHoldAction::bulk()->visible(fn (): bool => Feature::enabled('consultant360.action.hold_rank')),
                 SendDocumentsAction::bulk(),
+                PasswordResetAction::bulk(),
             ])->recordActions([
                 ActionGroup::make([
                     KycRequestAction::forRow(),
+                    PasswordResetAction::forRow(),
                     RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
                     Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
                         ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))

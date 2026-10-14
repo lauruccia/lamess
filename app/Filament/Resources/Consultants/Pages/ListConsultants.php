@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants\Pages;
 
+use App\Domain\Access\PasswordResetLinks;
 use App\Domain\Features\Feature;
 use App\Filament\Pages\Base\SuperadminListRecords;
 use App\Filament\Pages\ConsultantLevelsPage;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\ConsultantList;
+use App\Filament\Support\PasswordResetAction;
 use App\Filament\Support\RankHoldAction;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -27,6 +29,7 @@ class ListConsultants extends SuperadminListRecords
             Action::make('levels')->label('Elenco per livelli')->icon('heroicon-o-bars-3-bottom-left')->color('gray')
                 ->visible(fn (): bool => ConsultantLevelsPage::canAccess())->url(fn (): string => ConsultantLevelsPage::getUrl()),
             RankHoldAction::all()->visible(fn (): bool => Feature::enabled('consultant360.action.hold_rank')),
+            PasswordResetAction::all(PasswordResetLinks::AUDIENCE_CONSULTANTS),
             CreateAction::make()->label('Nuovo incaricato'),
         ];
     }

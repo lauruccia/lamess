@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Shop;
 
 use App\Models\KMoneyLink;
+use App\Models\Order;
+use App\Models\Subscription;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\ShopDb;
@@ -124,5 +126,72 @@ final class KMoneyMandateFlowTest extends TestCase
 
         Http::assertNothingSent();
         $this->assertNull($link->refresh()->mandate_uuid);
+    }
+
+    private function checkoutForm(array $over = []): array
+    {
+        return $over + $this->billing() + ['payment_method' => 'kmoney', 'privacy' => '1', 'subscribe' => 'none'];
+    }
+
+    public function test_checkout_with_kmoney_and_no_linked_account_creates_no_order_and_shows_the_connect_and_register_links(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $res = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm());
+
+        $res->assertSessionHasErrors('order');
+        $res->assertSessionHas('kmoney_unlinked.connect', url('/area/kmoney/collega'));
+        $res->assertSessionHas('kmoney_unlinked.register', 'https://kmoney.it/register');
+        $this->assertSame(0, Order::count(), 'l\'ordine non si crea e non resta in sospeso');
+
+        $this->actingAs($user)->from('/area/checkout')->withSession(['cart' => [$p->id => 1]])->followingRedirects()->post('/area/checkout', $this->checkoutForm())
+            ->assertSee('Per pagare con KMoney')
+            ->assertSee('collega il tuo conto')
+            ->assertSee('clicca qui')
+            ->assertSee(url('/area/kmoney/collega'), false)
+            ->assertSee('https://kmoney.it/register', false);
+    }
+
+    public function test_a_linked_account_without_the_payment_mandate_cannot_confirm_the_order_either(): void
+    {
+        [$user] = $this->linkedWithoutMandate();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm())
+            ->assertSessionHasErrors('order')->assertSessionHas('kmoney_unlinked');
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_the_monthly_subscription_with_kmoney_is_blocked_too_when_the_account_is_not_linked(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm(['subscribe' => 'monthly']))
+            ->assertSessionHasErrors('order')->assertSessionHas('kmoney_unlinked');
+        $this->assertSame(0, Order::count());
+        $this->assertSame(0, Subscription::count());
+    }
+
+    public function test_with_the_account_linked_and_authorized_the_kmoney_order_is_registered_as_before(): void
+    {
+        [$user, $link] = $this->linkedWithoutMandate();
+        $link->update(['mandate_uuid' => 'M-1']);
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm())
+            ->assertSessionHasNoErrors();
+        $this->assertSame(1, Order::where('payment_method', 'kmoney')->where('status', 'pending_payment')->count());
+    }
+
+    public function test_paying_with_card_does_not_require_a_kmoney_account(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm(['payment_method' => 'transfer']))
+            ->assertSessionHasNoErrors();
+        $this->assertSame(1, Order::count());
     }
 }

@@ -20,6 +20,7 @@ use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\BundleRule;
 use App\Models\CreditNote;
 use App\Models\Discount;
+use App\Models\KMoneyLink;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -521,7 +522,7 @@ class ShopController extends Controller
 
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => (string) (config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register'), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r)]);
+        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r)]);
     }
 
     /**
@@ -541,6 +542,18 @@ class ShopController extends Controller
         Profile::updateOrCreate(['user_id' => $r->user()->id], $fields);
     }
 
+    /** Con il driver reale: il cliente non ha ancora collegato il conto KMoney (o non ha concesso il mandato di pagamento). */
+    private function kmoneyNotLinked(Request $r): bool
+    {
+        return app(KMoneyProvider::class) instanceof KMoneyApiProvider
+            && ! KMoneyLink::where('user_id', $r->user()->id)->whereNotNull('mandate_uuid')->exists();
+    }
+
+    private function kmoneyRegisterUrl(): string
+    {
+        return (string) (config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register');
+    }
+
     public function checkout(Request $r, OrderService $orders, SubscriptionService $subs)
     {
         $d = $r->validate([
@@ -555,6 +568,12 @@ class ShopController extends Controller
         }
         if ($d['payment_method'] === 'kmoney' && ! $orders->kmoneyEnabled()) {
             return back()->withInput()->withErrors(['order' => 'Il pagamento con KMoney non è disponibile al momento: scegli un altro metodo.']);
+        }
+        // KMoney senza conto collegato (con mandato): l'ordine non si crea e non resta in sospeso; il cliente riceve l'avviso con i link per collegare o aprire il conto.
+        if ($d['payment_method'] === 'kmoney' && $this->kmoneyNotLinked($r)) {
+            return back()->withInput()
+                ->withErrors(['order' => 'Per pagare con KMoney collega il tuo conto.'])
+                ->with('kmoney_unlinked', ['connect' => url('/area/kmoney/collega'), 'register' => $this->kmoneyRegisterUrl()]);
         }
         if ($subscribe !== 'none' && ! in_array($d['payment_method'], ['card', 'kmoney'], true)) {
             return back()->withInput()->withErrors(['order' => 'L\'abbonamento si paga con carta o con KMoney: scegli uno dei due.']);

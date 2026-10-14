@@ -4,7 +4,11 @@
 @section('header', 'minimal')
 @section('content')
 <header class="page-head"><h1>Checkout</h1>@include('site.shop._steps', ['current' => 2])</header>
+@if(session('kmoney_unlinked'))
+<div class="warn" role="alert">Per pagare con KMoney <a href="{{ session('kmoney_unlinked.connect') }}"><b>collega il tuo conto</b></a>. Se non sei registrato, <a href="{{ session('kmoney_unlinked.register') }}" target="_blank" rel="noopener"><b>clicca qui</b></a> per aprire un conto KMoney.</div>
+@else
 @error('order')<div class="warn">{{ $message }}</div>@enderror
+@endif
 @if(! empty($pendingOrder))<div class="warn">Hai un ordine in attesa di pagamento ({{ $pendingOrder->number }}): <a href="/area/ordini/{{ $pendingOrder->id }}">completa il pagamento</a>. Se invece riordini da qui, quell'ordine in sospeso viene annullato.</div>@endif
 <div class="cart-grid checkout">
  <form method="post" action="/area/checkout" class="co-form" id="checkout-form">@csrf

@@ -200,6 +200,25 @@ final class IncaricatiSimulationTest extends TestCase
         $this->assertGreaterThan(0, $virtual[0]['extra']);
     }
 
+    public function test_earnings_explanation_says_where_the_difference_comes_from(): void
+    {
+        [$p, $v, $fra, $lau] = $this->network();
+
+        $res = $this->simulate($p, $v, [
+            ['type' => 'clients', 'target' => $lau->id, 'count' => 3],
+            ['type' => 'clients', 'target' => $fra->id, 'count' => 1],
+        ]);
+
+        $tree = array_column($res['tree'], null, 'id');
+        $own = implode("\n", $tree[(string) $lau->id]['explain']);
+        $this->assertStringContainsString('Compensi diretti', $own);
+        $this->assertStringContainsString('ai propri clienti', $own);
+        $this->assertStringContainsString('3 vendite', $own);
+        $up = implode("\n", $tree[(string) $fra->id]['explain']);
+        $this->assertStringContainsString('Compensi indiretti livello 1', $up);
+        $this->assertStringContainsString('requisiti del livello', $up);
+    }
+
     public function test_only_super_admin_and_admins_with_the_permission_can_open_the_page(): void
     {
         Roles::sync();

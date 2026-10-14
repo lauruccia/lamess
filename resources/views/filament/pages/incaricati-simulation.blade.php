@@ -27,6 +27,9 @@
         .sim .tr .tg { width:1.3rem; padding:0; text-align:center; border:0; background:none; }
         .sim .tr .dot { width:.75rem; height:.75rem; border-radius:50%; border:1px solid var(--s-line); flex:none; }
         .sim .tr .acts { margin-left:auto; display:flex; gap:.25rem; } .sim .tr .acts button { font-size:.72rem; padding:.1rem .45rem; font-weight:500; }
+        .sim .tip { position:relative; cursor:help; border-bottom:1px dotted currentColor; outline:none; }
+        .sim .tip .tipbox { display:none; position:absolute; left:0; top:calc(100% + .3rem); z-index:50; width:min(32rem,82vw); background:var(--s-card); color:var(--s-ink); border:1px solid var(--s-line); border-radius:.6rem; padding:.6rem .8rem; box-shadow:0 8px 24px rgba(0,0,0,.2); font-weight:400; font-size:.8rem; line-height:1.45; white-space:normal; text-align:left; }
+        .sim .tip:hover .tipbox, .sim .tip:focus .tipbox { display:block; } .sim .tip .tipbox ul { margin:.3rem 0 0 1rem; padding:0; list-style:disc; } .sim .tip .tipbox li { margin:.2rem 0; }
         .sim .chip { display:inline-block; font-size:.7rem; font-weight:700; padding:.05rem .45rem; border-radius:99px; border:1px solid currentColor; margin-left:.35rem; vertical-align:1px; }
     </style>
 
@@ -152,7 +155,10 @@
                                         @else{{ $t['rank_after'] }}@endif
                                     </span>
                                     <span class="muted">· clienti @if($t['clients_before'] !== null && $t['clients_before'] !== $t['clients_after']){{ $t['clients_before'] }} → <strong>{{ $t['clients_after'] }}</strong>@else{{ $t['clients_after'] }}@endif</span>
-                                    @if((float) $t['earned_diff'] != 0)<span class="{{ $cls($t['earned_diff']) }}">{{ $signed($t['earned_diff']) }} €</span>@endif
+                                    @if((float) $t['earned_diff'] != 0)<span class="tip {{ $cls($t['earned_diff']) }}" tabindex="0">{{ $signed($t['earned_diff']) }} €
+                                        <span class="tipbox" role="tooltip">
+                                            @if($t['explain'])<strong>{{ $t['explain'][0] }}</strong><ul>@foreach(array_slice($t['explain'], 1) as $line)<li>{{ $line }}</li>@endforeach</ul>@else Variazione dei compensi del mese rispetto allo stato reale.@endif
+                                        </span></span>@endif
                                     @if($t['tag'] === 'new')<span class="chip newc">nuovo{{ $t['extra'] > 0 ? ' · +'.$t['extra'].' agenti sotto' : '' }}</span>@endif
                                     @if($t['tag'] === 'moved')<span class="chip" style="color:var(--s-move)">spostato{{ $t['moved_from'] ? ' da '.$t['moved_from'] : '' }}</span>@endif
                                     @if($t['target'] && $t['tag'] !== 'moved')<span class="chip">scelto</span>@endif
@@ -201,7 +207,7 @@
                                     <td>@if($r['clients_before'] !== $r['clients_after']){{ $r['clients_before'] }} → <strong>{{ $r['clients_after'] }}</strong>@else{{ $r['clients_after'] }}@endif</td>
                                     <td>@if($r['pearl_before'] !== $r['pearl_after']){{ $r['pearl_before'] }} → <strong>{{ $r['pearl_after'] }}</strong>@else{{ $r['pearl_after'] }}@endif</td>
                                     <td>@if($r['next_after'] === null)<span class="muted">qualifica massima</span>@else<strong>{{ $r['next_after'] }}</strong>: {{ $r['missing_after'] !== '' ? 'mancano '.$r['missing_after'] : 'requisiti soddisfatti' }}@endif</td>
-                                    <td>{{ $eur($r['earned_before']) }} → {{ $eur($r['earned_after']) }} € <span class="{{ $cls($r['earned_diff']) }}">({{ $signed($r['earned_diff']) }})</span></td>
+                                    <td title="{{ implode(' · ', $r['explain']) }}" style="cursor:help">{{ $eur($r['earned_before']) }} → {{ $eur($r['earned_after']) }} € <span class="{{ $cls($r['earned_diff']) }}">({{ $signed($r['earned_diff']) }})</span></td>
                                 </tr>
                             @endforeach
                         </table></div>

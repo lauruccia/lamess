@@ -10,6 +10,7 @@ use App\Domain\Engine\Calc\KosmosCalculator;
 use App\Domain\Engine\Calc\NetworkException;
 use App\Domain\Engine\Calc\PeriodCalculator;
 use App\Domain\Engine\Calc\Tree;
+use App\Domain\Engine\Model\Line;
 use App\Domain\Engine\Model\Movement;
 use App\Domain\Engine\Model\Node;
 use App\Domain\Engine\Model\PeriodInput;
@@ -361,6 +362,7 @@ final class IncaricatiSimulator
         $seq = static fn (string $code): int => $plan->hasCode($code) ? $plan->rank($code)->sequence : -1;
         $name = static fn (string $code): string => $plan->hasCode($code) ? $plan->rank($code)->name : $code;
         $labels = $this->labels($d, array_keys($a));
+        $explain = $this->explainEarnings($before, $after, $labels, $plan->kosmos->structureClients);
 
         $rows = [];
         foreach ($b as $id => $was) {
@@ -378,7 +380,7 @@ final class IncaricatiSimulator
                 'clients_before' => $was['clients'], 'clients_after' => $now['clients'],
                 'pearl_before' => $was['pearl'], 'pearl_after' => $now['pearl'],
                 'next_after' => $now['next'] === null ? null : $name($now['next']), 'missing_after' => $now['missing'],
-                'earned_before' => (string) $was['earned'], 'earned_after' => (string) $now['earned'], 'earned_diff' => (string) $now['earned']->minus($was['earned']),
+                'explain' => $explain[$id] ?? [], 'earned_before' => (string) $was['earned'], 'earned_after' => (string) $now['earned'], 'earned_diff' => (string) $now['earned']->minus($was['earned']),
             ];
         }
         usort($rows, static fn (array $x, array $y) => [$y['dir'], $y['target'] ? 1 : 0, $x['label']] <=> [$x['dir'], $x['target'] ? 1 : 0, $y['label']]);
@@ -431,9 +433,102 @@ final class IncaricatiSimulator
                 'total_before' => (string) $beforeTotal, 'total_after' => (string) $afterTotal, 'total_diff' => (string) $afterTotal->minus($beforeTotal),
             ],
             'rows' => $rows, 'agents' => $agents, 'totals' => $totals,
-            'tree' => $this->treeRows($d, $scenIn, $a, $b, $labels, $name, $seq),
+            'tree' => $this->treeRows($d, $scenIn, $a, $b, $labels, $name, $seq, $explain),
             'warnings' => $warnings,
         ];
+    }
+
+    /**
+     * Spiega, per ogni incaricato, da dove nasce la differenza di compensi: le righe nuove o cambiate tra prima e dopo,
+     * raggruppate per tipo, livello e vendita di origine, con base, aliquota e requisiti usati dal motore.
+     *
+     * @param  array<string, string>  $labels
+     * @return array<string, list<string>> id incaricato => righe di spiegazione (la prima è il riepilogo)
+     */
+    private function explainEarnings(PeriodResult $before, PeriodResult $after, array $labels, int $structureClients): array
+    {
+        $index = static function (PeriodResult $r): array {
+            $out = [];
+            foreach ($r->lines as $l) {
+                if (in_array($l->status, ['accrued', 'held'], true)) {
+                    $out[$l->beneficiaryId][$l->key] = $l;
+                }
+            }
+
+            return $out;
+        };
+        $b = $index($before);
+        $a = $index($after);
+        $eur = static fn (BigDecimal|string $v): string => number_format((float) (string) $v, 2, ',', '.');
+        $pct = static fn (?BigDecimal $r): string => $r === null ? '—' : rtrim(rtrim(Num::pctLabel($r), '0'), '.').'%';
+        $names = ['direct' => 'Compensi diretti', 'indirect' => 'Compensi indiretti', 'indirect_ext' => 'Indiretti estesi', 'structure' => 'Bonus di Struttura'];
+
+        $out = [];
+        foreach (array_unique(array_merge(array_keys($a), array_keys($b))) as $id) {
+            $id = (string) $id;
+            $groups = [];
+            $keys = array_unique(array_merge(array_keys($a[$id] ?? []), array_keys($b[$id] ?? [])));
+            $total = Num::zero();
+            foreach ($keys as $key) {
+                $new = $a[$id][$key] ?? null;
+                $old = $b[$id][$key] ?? null;
+                $diff = ($new?->amount ?? Num::zero())->minus($old?->amount ?? Num::zero());
+                if ($diff->isZero()) {
+                    continue;
+                }
+                $ref = $new ?? $old;
+                $total = $total->plus($diff);
+                $g = $ref->bonus.'|'.($ref->level ?? 0).'|'.($ref->sourcePartnerId ?? '').'|'.($old?->rate === null ? '' : $pct($old->rate)).'|'.($new?->rate === null ? '' : $pct($new->rate));
+                $groups[$g]['ref'] = $ref;
+                $groups[$g]['new'] = $new;
+                $groups[$g]['old'] = $old;
+                $groups[$g]['n'] = ($groups[$g]['n'] ?? 0) + 1;
+                $groups[$g]['diff'] = ($groups[$g]['diff'] ?? Num::zero())->plus($diff);
+            }
+            if ($groups === []) {
+                continue;
+            }
+            $lines = [];
+            foreach ($groups as $g) {
+                /** @var Line $ref */
+                $ref = $g['ref'];
+                $source = $labels[$ref->sourcePartnerId ?? ''] ?? ($ref->sourcePartnerId ?? '');
+                $sales = $g['n'] === 1 ? '1 vendita' : $g['n'].' vendite';
+                $ex = $ref->explanation;
+                if ($ref->bonus === 'structure') {
+                    $lines[] = "Bonus di Struttura {$eur($g['diff'])} €: {$source} porta {$structureClients} clienti entro la finestra dall'attivazione (PearlQ); all'upline spetta la differenza tra i bonus delle qualifiche ({$ex['formula']}).";
+
+                    continue;
+                }
+                $title = $names[$ref->bonus] ?? $ref->bonus;
+                if ($ref->bonus !== 'direct') {
+                    $title .= ' livello '.($ref->level ?? '?');
+                }
+                $text = "{$title}: ".($g['diff']->isPositive() ? '+' : '').$eur($g['diff'])." € — {$sales}";
+                $text .= $ref->bonus === 'direct' && $ref->sourcePartnerId === $id ? ' ai propri clienti' : " di {$source}";
+                $text .= ", base V.A.P. {$eur($ref->base)} € × ".$pct($g['new']?->rate ?? $ref->rate);
+                if ($g['old'] !== null && $g['new'] !== null && $g['old']->rate !== null && ! $g['old']->rate->isEqualTo($g['new']->rate)) {
+                    $text .= ' (aliquota prima '.$pct($g['old']->rate).': è salito lo scaglione)';
+                } elseif ($g['old'] === null) {
+                    $text .= ' (nuovo: prima non maturava)';
+                }
+                if ($ref->bonus === 'direct' && isset($ex['clients'])) {
+                    $text .= "; clienti personali {$ex['clients']}";
+                } elseif (isset($ex['clients'], $ex['min_clients'])) {
+                    $text .= "; requisiti del livello: clienti {$ex['clients']}/{$ex['min_clients']}, Pearl 1° liv. {$ex['pearl_first_level']}/{$ex['min_pearl']}";
+                }
+                $lines[] = $text.'.';
+            }
+            if (count($lines) > 8) {
+                $more = count($lines) - 8;
+                $lines = array_slice($lines, 0, 8);
+                $lines[] = "… e altre {$more} voci.";
+            }
+            $sum = static fn (array $lines): BigDecimal => array_reduce($lines, static fn (BigDecimal $c, $l) => $c->plus($l->amount), Num::zero());
+            $out[$id] = array_merge(["Compensi del mese: prima {$eur($sum($b[$id] ?? []))} € → dopo {$eur($sum($a[$id] ?? []))} €. Da dove nasce la differenza:"], $lines);
+        }
+
+        return $out;
     }
 
     /**
@@ -478,7 +573,7 @@ final class IncaricatiSimulator
      * @param  array<string, string>  $labels
      * @return list<array<string, mixed>>
      */
-    private function treeRows(SimulationDraft $d, PeriodInput $scenIn, array $a, array $b, array $labels, callable $name, callable $seq): array
+    private function treeRows(SimulationDraft $d, PeriodInput $scenIn, array $a, array $b, array $labels, callable $name, callable $seq, array $explain = []): array
     {
         $tree = new Tree($scenIn->nodes);
         $plan = $scenIn->plan;
@@ -491,7 +586,7 @@ final class IncaricatiSimulator
         $color = static fn (?string $code): ?string => $code === null ? null : RankPalette::color($code, $plan->hasCode($code) ? $plan->rank($code)->sequence : 0);
 
         $rows = [];
-        $walk = function (string $id, int $depth, ?string $parent) use (&$walk, &$rows, $tree, $d, $a, $b, $labels, $name, $seq, $sub, $color): void {
+        $walk = function (string $id, int $depth, ?string $parent) use (&$walk, &$rows, $tree, $d, $a, $b, $labels, $name, $seq, $sub, $color, $explain): void {
             $virtual = $d->isVirtual($id);
             if ($virtual && $d->virtual[$id]['top'] !== $id) {
                 return;
@@ -517,7 +612,7 @@ final class IncaricatiSimulator
                 'color_before' => $color($was['achieved'] ?? null), 'color_after' => $color($now['achieved'] ?? null),
                 'clients_before' => $was['clients'] ?? null, 'clients_after' => $now['clients'] ?? 0,
                 'earned_diff' => $earnedDiff === null ? '0' : (string) $earnedDiff, 'extra' => $virtual ? ($sub[$id] ?? 0) : 0,
-                'sub_changes' => 0,
+                'explain' => $explain[$id] ?? [], 'sub_changes' => 0,
             ];
             foreach ($tree->childrenOf($id) as $child) {
                 $walk($child, $depth + 1, $id);

@@ -202,6 +202,18 @@ final class PeriodCalculator
                 [, $detail] = $career->qualification($id, $plan->bySeq($nxt));
                 $stats[$id]->nextRank = $detail;
             }
+            if ($plan->kosmos !== null) {
+                // Dati dell'area incaricato (piano Incaricati): clienti personali e Pearl al 1° livello, anche a qualifica massima.
+                $pearlSeq = $plan->rank($plan->kosmos->pearlRank)->sequence;
+                $pearlNow = 0;
+                foreach ($tree->childrenOf($id) as $c) {
+                    if ($tree->isMember($c) && ($career->highest[$c] ?? 0) >= $pearlSeq) {
+                        $pearlNow++;
+                    }
+                }
+                $stats[$id]->nextRank['personal_clients'] = $clients[$id] ?? 0;
+                $stats[$id]->nextRank['pearl_first_level_now'] = $pearlNow;
+            }
         }
 
         $keys = array_map(static fn (Line $l) => $l->key, $lines);

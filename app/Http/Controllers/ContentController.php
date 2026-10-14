@@ -89,15 +89,16 @@ class ContentController extends Controller
     public function referral(Request $request)
     {
         $c = $request->user()->consultant;
-        abort_unless($c !== null && $c->status === 'active' && $c->referral_code, 404);
+        abort_unless($c !== null && $c->status === 'active', 404);
 
-        return view('site.area.referral', ['url' => ReferralQr::url($c), 'svg' => ReferralQr::svg($c, 280), 'code' => $c->referral_code]);
+        return view('site.area.referral', ['url' => ReferralQr::url($c), 'pretty' => ReferralQr::pretty($c), 'svg' => ReferralQr::svg($c, 280), 'code' => $c->referral_code]);
     }
 
     public function referralQr(Request $request): Response
     {
         $c = $request->user()->consultant;
-        abort_unless($c !== null && $c->status === 'active' && $c->referral_code, 404);
+        abort_unless($c !== null && $c->status === 'active', 404);
+        $c->ensureReferralCode();
         $h = ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'private, max-age=300'];
         if ($request->boolean('scarica')) {
             $h['Content-Disposition'] = 'attachment; filename="qr-referral-'.$c->referral_code.'.svg"';

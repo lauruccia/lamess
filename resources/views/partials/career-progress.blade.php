@@ -1,10 +1,12 @@
 @if(empty($p))
 <p style="opacity:.7">Nessun dato di carriera: l’incaricato non è ancora nel calcolo del periodo.</p>
+@elseif(! empty($p['kosmos']))
+@include('partials.career-progress-kosmos', ['p' => $p])
 @else
 @php
     $n = fn ($v) => number_format((float) $v, fmod((float) $v, 1.0) === 0.0 ? 0 : 2, ',', '.');
     $next = $p['next'];
-    $leg = ! ($p['legacy_hidden'] ?? false);
+    $leg = \App\Domain\Plan\LegacyPlan::visible();
 @endphp
 <style>
     .cp { font-size:.92rem; line-height:1.45; }
@@ -41,9 +43,6 @@
         <div class="cp-row"><span>Mancano</span><span>{{ $n($p['pr']['missing']) }} PR</span></div>
         <div class="cp-row"><span>PR personali</span><span>{{ $n($p['pr']['personal']) }}</span></div>
         @endif
-        @foreach($p['requirements'] ?? [] as $r)
-        <div class="cp-row"><span>{{ $r['label'] }}</span><span>{{ $r['counted'] }} / {{ $r['required'] }}@if($r['ok']) ✓@endif</span></div>
-        @endforeach
         <div class="cp-row"><span>Struttura</span><span>
             @if($p['structure']['required'] === []) nessun requisito
             @elseif($p['structure']['ok']) soddisfatta

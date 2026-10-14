@@ -7,7 +7,7 @@
  <section class="panel accent">
   <header><h2>Il tuo link</h2><span class="st st-ok">Codice {{ $code }}</span></header>
   <div class="panel-body">
-   <div class="copy"><input type="text" id="ref-url" readonly value="{{ $url }}" aria-label="Link referral"><button type="button" class="btn" id="ref-copy">Copia</button></div>
+   <div class="copy"><input type="text" id="ref-url" readonly value="{{ $pretty }}" data-link="{{ $url }}" aria-label="Link referral"><button type="button" class="btn" id="ref-copy">Copia</button></div>
    <div class="pg-actions" style="margin-top:14px">
     <a class="btn ghost" href="https://wa.me/?text={{ rawurlencode('Registrati su Lamèss da qui: '.$url) }}" target="_blank" rel="noopener">Condividi su WhatsApp</a>
     <a class="btn ghost" href="mailto:?subject={{ rawurlencode('Il tuo account Lamèss') }}&body={{ rawurlencode('Registrati da questo link: '.$url) }}">Invia per email</a>
@@ -35,7 +35,7 @@
   if (!b || !i) { return; }
   b.addEventListener('click', function () {
     var done = function () { b.textContent = 'Copiato'; setTimeout(function () { b.textContent = 'Copia'; }, 1800); };
-    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(i.value).then(done, function () { i.select(); }); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(i.getAttribute('data-link') || i.value).then(done, function () { i.select(); }); }
     else { i.select(); try { document.execCommand('copy'); done(); } catch (e) {} }
   });
 })();

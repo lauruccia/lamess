@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Domain\Career\RankPalette;
 use App\Domain\Customers\ReferralResolver;
 use App\Domain\Customers\ShippingAddressBook;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
 use App\Domain\Onboarding\IvdService;
 use App\Domain\Onboarding\KycService;
+use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
-use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Orders\FakeKMoneyProvider;
 use App\Domain\Orders\KMoneyApiProvider;
 use App\Domain\Orders\KMoneyProvider;
@@ -54,7 +53,13 @@ class AreaController extends Controller
     {
         $user = $request->user()->load('profile', 'customer.consultant', 'consultant');
 
-        return view('site.area.home', ['user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null]);
+        $live = $user->consultant !== null && $user->consultant->status !== 'terminated' ? $user->consultant : null;
+
+        return view('site.area.home', [
+            'user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
+            'progress' => $live ? app(\App\Domain\Career\CareerProgress::class)->forConsultant($live->id) : null,
+            'earn' => $live ? app(\App\Domain\Career\EarningsSummary::class)->for($live->id) : null,
+        ]);
     }
 
     /**
@@ -101,28 +106,14 @@ class AreaController extends Controller
         return $out;
     }
 
-    /** Il proprio ramo, in sola lettura: tutti i discendenti dello sponsor, ad albero. */
+    /** Il proprio ramo, in sola lettura: albero, totali per livello e per colonna, requisiti per la qualifica successiva. */
     public function network(Request $request)
     {
         $me = $this->activeConsultant($request);
-        $links = DB::table('network_paths')->where('ancestor_id', $me->id)->where('depth', '>', 0)->pluck('depth', 'descendant_id')->all();
-        $nodes = Consultant::query()->whereIn('id', array_keys($links))->get(['id', 'code', 'name', 'sponsor_id', 'status', 'since'])->keyBy('id');
-        $stats = $this->latestStats(array_keys($links));
-        $children = [];
-        foreach ($nodes as $n) {
-            $children[$n->sponsor_id][] = $n->id;
-        }
-        foreach ($children as &$list) {
-            usort($list, fn ($a, $b) => strcmp($nodes[$a]->name, $nodes[$b]->name));
-        }
-        unset($list);
+        $data = app(\App\Domain\Career\NetworkOverview::class)->for($me);
+        $progress = app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id);
 
-        return view('site.area.network', [
-            'me' => $me, 'nodes' => $nodes, 'children' => $children, 'stats' => $stats, 'total' => count($links),
-            'direct' => count($children[$me->id] ?? []), 'mine' => $this->latestStats([$me->id])[$me->id] ?? null,
-            'period' => collect($stats)->first()['period'] ?? null,
-            'levels' => $links === [] ? 0 : max($links), 'ranks' => RankPalette::forPlan(),
-        ]);
+        return view('site.area.network', $data + ['progress' => $progress, 'kosmos' => $data['plan']?->kosmos !== null]);
     }
 
     /** I clienti assegnati all’incaricato. */
@@ -131,9 +122,12 @@ class AreaController extends Controller
         $me = $this->activeConsultant($request);
         $rows = Customer::query()->where('assigned_consultant_id', $me->id)->with('user.profile')->orderByDesc('registered_at')->get();
         $orders = DB::table('orders')->whereIn('buyer_user_id', $rows->pluck('user_id'))->where('status', 'paid')
-            ->selectRaw('buyer_user_id, count(*) as n, max(paid_at) as last_paid, sum(total) as spent')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
+            ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
+        $period = Period::query()->orderByDesc('code')->first();
+        $kosmos = $period?->planVersion->plan()->kosmos;
+        $progress = $kosmos !== null ? app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id) : null;
 
-        return view('site.area.customers', ['rows' => $rows, 'orders' => $orders]);
+        return view('site.area.customers', ['rows' => $rows, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress]);
     }
 
     private function activeConsultant(Request $request): Consultant

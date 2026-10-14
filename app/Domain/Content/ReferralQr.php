@@ -15,14 +15,18 @@ final class ReferralQr
 {
     public static function url(Consultant $c): string
     {
-        return url('/r/'.$c->referral_code);
+        return url('/r/'.$c->ensureReferralCode());
+    }
+
+    /** Come lo si legge a video: dominio con gli accenti (lamèss.it). */
+    public static function pretty(Consultant $c): string
+    {
+        return \App\Support\Idn::pretty(self::url($c));
     }
 
     public static function svg(Consultant $c, int $size = 320): string
     {
-        if (! $c->referral_code) {
-            throw new ContentException('L’incaricato non ha un codice referral.');
-        }
+        $c->ensureReferralCode();
 
         return (new Writer(new ImageRenderer(new RendererStyle($size, 2), new SvgImageBackEnd)))->writeString(self::url($c));
     }

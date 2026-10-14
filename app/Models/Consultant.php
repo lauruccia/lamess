@@ -52,4 +52,17 @@ class Consultant extends Model
     {
         return ['since' => 'immutable_datetime', 'network_since' => 'immutable_datetime', 'terminated_at' => 'immutable_datetime', 'onboarding_complete' => 'boolean', 'bonus_hold' => 'boolean', 'onboarding_completed_at' => 'immutable_datetime', 'badge_valid_until' => 'immutable_date', 'rank_hold_until' => 'immutable_date'];
     }
+
+    /** Il codice referral c'è sempre: se manca (account importati o creati dal pannello) lo si genera al primo uso. */
+    public function ensureReferralCode(): string
+    {
+        if (blank($this->referral_code)) {
+            do {
+                $code = strtoupper(\Illuminate\Support\Str::random(8));
+            } while (static::query()->where('referral_code', $code)->exists());
+            $this->forceFill(['referral_code' => $code])->save();
+        }
+
+        return (string) $this->referral_code;
+    }
 }

@@ -50,12 +50,24 @@
 
 {{-- Numeri --}}
 <div class="kpis">
+ @php($kk = $progress['kosmos'] ?? null)
  @if($c && ($month ?? null))
-  @if(\App\Domain\Plan\LegacyPlan::visible())
+  @if(\App\Domain\Plan\LegacyPlan::visible() && ! $kk)
   <div class="kpi"><small>PVF di {{ $month['period'] }}</small><strong>{{ $n($month['pvf']) }}</strong><span>Personali {{ $n($month['pvc']) }} · gruppo {{ $n($month['group_pv']) }}</span></div>
   <div class="kpi"><small>PR del mese</small><strong>{{ $n($month['pr']) }}</strong><span>Gruppo {{ $n($month['group_pr']) }} PR</span></div>
   @endif
-  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? ucfirst(strtolower($month['rank'])) : '—' }}</strong>@if(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
+  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? ucfirst(strtolower($month['rank'])) : '—' }}</strong>@if($kk)<span>{{ $kk['known'] ? 'Compenso diretto '.$n($progress['rank']['direct_pct']).'%' : 'Calcolo in arrivo' }}@if($kk['next_name']) · prossima {{ $kk['next_name'] }} al {{ $kk['percent'] }}%@endif</span>@elseif(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
+ @endif
+ @if($c && $kk)
+  @php($nt = collect($kk['tiers'])->firstWhere('reached', false))
+  <a class="kpi" href="/area/clienti"><small>Clienti personali</small><strong>{{ $kk['known'] ? $kk['clients'] : '—' }}</strong><span>@if($kk['known'] && $nt)Ne mancano {{ $nt['missing'] }} per il {{ $n($nt['pct']) }}% diretto @elseif($kk['known'])Scaglione massimo raggiunto @else In attesa del calcolo @endif</span></a>
+  <a class="kpi" href="/area/rete"><small>Diretti Pearl</small><strong>{{ $kk['pearl'] ?? '—' }}</strong><span>Incaricati del tuo 1° livello con qualifica Pearl o superiore</span></a>
+  @if($earn)
+   <a class="kpi" href="/area/statini"><small>Compensi {{ $earn['period'] }} (stima)</small><strong>€ {{ $eur($earn['accrued']) }}</strong><span>@if($earn['held'] != 0)€ {{ $eur($earn['held']) }} trattenuti · @endif{{ $earn['closed'] ? 'Mese chiuso' : 'Mese in corso: non definitivo' }}</span></a>
+   @if($earn['structure']['count'] > 0)
+    <a class="kpi" href="/area/statini"><small>Bonus di Struttura</small><strong>€ {{ $eur($earn['structure']['calculated'] + $earn['structure']['confirmed'] + $earn['structure']['paid']) }}</strong><span>Pagati € {{ $eur($earn['structure']['paid']) }} · confermati € {{ $eur($earn['structure']['confirmed']) }} · in calcolo € {{ $eur($earn['structure']['calculated']) }}</span></a>
+   @endif
+  @endif
  @endif
  @if($c)
   <a class="kpi" href="/area/rete"><small>La mia rete</small><strong>{{ $x['network'] }}</strong><span>{{ $x['direct'] }} {{ $x['direct'] === 1 ? 'diretta' : 'dirette' }} · {{ $x['clients'] }} {{ $x['clients'] === 1 ? 'cliente' : 'clienti' }}</span></a>
@@ -147,7 +159,7 @@
    <section class="panel accent">
     <header><h2>Il tuo link referral</h2></header>
     <div class="panel-body">
-     <div class="copy"><input type="text" id="ref-url" readonly value="{{ url('/r/'.$c->referral_code) }}" aria-label="Link referral"><button type="button" class="btn" id="ref-copy">Copia</button></div>
+     <div class="copy"><input type="text" id="ref-url" readonly value="{{ \App\Domain\Content\ReferralQr::pretty($c) }}" data-link="{{ \App\Domain\Content\ReferralQr::url($c) }}" aria-label="Link referral"><button type="button" class="btn" id="ref-copy">Copia</button></div>
      <p class="muted" style="margin:10px 0 12px">Chi si registra da questo link diventa tuo cliente.</p>
      <div class="pg-actions"><a class="btn ghost" href="/area/referral">QR code</a><a class="btn ghost" href="/area/clienti">I miei clienti</a></div>
     </div>
@@ -223,7 +235,7 @@
   if (!b || !i) { return; }
   b.addEventListener('click', function () {
     var done = function () { b.textContent = 'Copiato'; setTimeout(function () { b.textContent = 'Copia'; }, 1800); };
-    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(i.value).then(done, function () { i.select(); }); }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(i.getAttribute('data-link') || i.value).then(done, function () { i.select(); }); }
     else { i.select(); try { document.execCommand('copy'); done(); } catch (e) {} }
   });
 })();

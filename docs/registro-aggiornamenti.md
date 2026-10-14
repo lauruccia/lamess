@@ -248,3 +248,10 @@
 - Aggiunta al repository la notifica `ResetPasswordIt` (usata da `User` ma mancante su GitHub: il «password dimenticata» online andava in errore).
 - Test: `AdminPasswordResetLinksTest` (11). Documentazione aggiornata: manuale admin, guida breve, manuale utente, manuale sviluppatori, dossier.
 - Nota: `ConsultantListTest::test_no_per_row_queries` fallisce già prima di questa modifica (soglia di 60 query, ne fa ~120).
+
+## 2026-10-14 — Area incaricato allineata al Piano Incaricati
+- **Il mio ramo**: albero con ricerca e dati per persona (clienti, ramo, diretti Pearl, venduto del mese), tabelle per colonna (barra verso la soglia) e per livello, pannello «Verso la qualifica successiva». `NetworkOverview` raccoglie i dati; nessun recapito, solo nome, codice, qualifica, stato e numeri aggregati.
+- **Avanzamento** (`CareerProgress::buildKosmos`, partial `career-progress-kosmos`, usato anche nella scheda admin): requisiti con raggiunto/richiesto, scaglioni diretti, livelli indiretti, mantenimento e scala qualifiche. Il motore salva in `next_rank` anche `personal_clients` e `pearl_first_level_now` (rifare il calcolo del mese per averli per tutti).
+- **Panoramica**: clienti, diretti Pearl, compensi del mese stimati (`EarningsSummary`) e Bonus di Struttura. **I miei clienti**: primo ordine, ordine più alto, «conta per il piano».
+- **Referral**: il codice mancante (account importati) si genera al primo uso, risolvendo il 404 su `/area/referral` e il link `/r` senza codice; dominio mostrato come lamèss.it (`App\Support\Idn`), copiato in ASCII.
+- Test non eseguiti in questa sessione (PHP assente sul PC): lanciare `php artisan test`, in particolare `LegacyPlanTest`, `AreaPagesTest`, `ContentTest`, `CareerProgressTest`.

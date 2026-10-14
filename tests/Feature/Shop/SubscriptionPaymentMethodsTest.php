@@ -523,7 +523,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->assertStringNotContainsString('Addebito automatico', $html);
         $this->assertStringContainsString('Da pagare in KMoney', $html);
         $this->assertStringNotContainsString('Risparmia fino al', $html);
-        $this->assertStringContainsString('Se sei già registrato, paga con il tuo conto KMoney.', $html);
+        $this->assertStringContainsString('<a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>', $html);
         $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Apri un conto KMoney</a>', $html);
         $this->assertStringNotContainsString('Ti chiederemo di collegare', $html);
 
@@ -531,7 +531,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('Da pagare in KMoney');
     }
 
-    public function test_kmoney_prompt_links_to_login_and_register_with_the_real_provider(): void
+    public function test_kmoney_prompt_links_to_profile_and_register_with_the_real_provider(): void
     {
         config(['lamess.kmoney_driver' => 'api', 'lamess.kmoney' => ['base_url' => 'https://kmoney.test', 'client_id' => 'c', 'client_secret' => 's', 'seller_account' => 'KYB1', 'register_url' => null]]);
         $this->app->bind(KMoneyProvider::class, fn () => new KMoneyApiProvider);
@@ -541,7 +541,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $p = $this->product('A', '150.00', ['kmoney_percent' => 100]);
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
 
-        $this->assertStringContainsString('<a href="/area/kmoney/collega">accedi e paga</a>', $html);
+        $this->assertStringContainsString('<a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>', $html);
         $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Apri un conto KMoney</a>', $html);
     }
 }

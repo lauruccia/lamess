@@ -30,7 +30,7 @@
  @elseif($order->payment_method === 'kmoney')
   @php($kmPaid = $order->payments->contains(fn ($p) => $p->method === 'kmoney' && $p->status === 'paid'))
   @if(! $kmPaid)
-   <div class="note"><div><strong>Conferma il pagamento con KMoney</strong>Finché non confermi non addebitiamo nulla. Quando confermi, addebitiamo {{ $eur($order->kmoney_amount) }} KY dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
+   <div class="note"><div><strong>Conferma il pagamento con KMoney</strong>Quando confermi, addebitiamo {{ $eur($order->kmoney_amount) }} KY dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
     <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Conferma e paga {{ $eur($order->kmoney_amount) }} KY</button></form></div>
   @elseif($order->kmoney_rest_method === null && (float) $order->restDue() > 0)
    @php($restMethods = app(\App\Domain\Orders\OrderService::class)->enabledMethods())

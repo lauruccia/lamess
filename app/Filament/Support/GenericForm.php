@@ -15,6 +15,7 @@ use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Component;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -51,7 +52,7 @@ final class GenericForm
 
     /**
      * @param  list<string>  $exclude  colonne da non mostrare
-     * @return list<\Filament\Schemas\Components\Component>
+     * @return list<Component>
      */
     public static function fields(Model $model, array $exclude = []): array
     {
@@ -91,7 +92,7 @@ final class GenericForm
                 GenericFormVocabulary::isSuggestible($name) => TextInput::make($name)->maxLength(self::length((string) $col['type']))->datalist(self::knownValues($table, $name)),
                 default => TextInput::make($name)->maxLength(self::length((string) $col['type'])),
             };
-            $fields[] = $field->label(GenericFormVocabulary::label($name))->required($required && ! $isBool);
+            $fields[] = $field->label(GenericFormVocabulary::label($name))->required($required && ! $isBool && ! isset(self::SHAPES[$table.'.'.$name]));
         }
 
         return $fields;
@@ -281,14 +282,14 @@ final class GenericForm
         } else {
             $field = Repeater::make($name)->addActionLabel('Aggiungi un destinatario')->schema([
                 self::relationSelect('user_id', GenericFormVocabulary::relation('user_id', new User, true))->label('Destinatario')->required(),
-                Repeater::make('lines')->label('Prodotti')->schema(self::quantityFields())->columns(2)->columnSpanFull()->defaultItems(0)->addActionLabel('Aggiungi un prodotto')->minItems(1),
+                Repeater::make('lines')->label('Prodotti')->schema(self::quantityFields())->columns(2)->columnSpanFull()->defaultItems(0)->minItems(1)->addActionLabel('Aggiungi un prodotto'),
             ]);
         }
 
-        return $field->columns(2)->columnSpanFull()->defaultItems(0)->minItems($required ? 1 : 0);
+        return $field->columns(2)->columnSpanFull()->defaultItems(0)->minItems(0);
     }
 
-    /** @return list<\Filament\Schemas\Components\Component> */
+    /** @return list<Component> */
     private static function quantityFields(): array
     {
         return [

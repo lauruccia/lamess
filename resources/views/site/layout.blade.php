@@ -74,6 +74,7 @@
     ['/area/eventi', 'Eventi', fn ($p) => str_starts_with($p, 'area/eventi')],
     $isConsultant ? ['/area/conformita', 'Conformità', fn ($p) => str_starts_with($p, 'area/conformita')] : null,
     $isConsultant ? ['/area/referral', 'Referral', fn ($p) => str_starts_with($p, 'area/referral')] : null,
+    $isConsultant ? ['/piano-compensi', 'Il piano compensi', fn ($p) => false] : null,
     ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza')],
     ['/area/profilo', 'I miei dati', fn ($p) => str_starts_with($p, 'area/profilo')],
   ]))
@@ -107,7 +108,7 @@
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 @if($isAuth || $minimalHeader)
-<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; <a href="/negozio">Negozio</a>@auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a>
+<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; <a href="/negozio">Negozio</a>@auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a> · <a href="/piano-compensi">Il piano compensi</a>
  @php($co = config('lamess.company'))
  <br><small>© {{ date('Y') }} {{ $co['brand_owner'] }} – Tutti i diritti riservati. {{ $co['name'] }} - {{ $co['address'] }} - P.IVA {{ $co['vat'] }} ● PEC: <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> ● Designed by <a href="https://gruppokosmos.it" target="_blank" rel="noopener">Gruppo Kosmos</a></small>
 </footer>

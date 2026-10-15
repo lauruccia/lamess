@@ -10,7 +10,7 @@ Nel prodotto (schermate, email, manuali) si dice **Incaricato/Incaricati**; nel 
 |---|---|
 | Incaricato | modello `App\Models\Consultant`, tabella `consultants`, colonne `consultant_id`, `sponsor_id`; ruolo del portale `consultant`; `App\Domain\Consultants\Consultant360` (scheda 360), `ConsultantResource`, `ConsultantList`, `ConsultantLevelsPage` |
 | Qualifica d'ingresso «Incaricato» | codice `CONSULTANT` (nome mostrato «Incaricato»); le altre: `PEARL`, `CRYSTAL`, `SAPPHIRE`, `RUBY`, `EMERALD`, `DIAMOND` (il nome è solo la pietra) |
-| Piano Incaricati | motore `kosmos_v1`: `KosmosConfig`, `KosmosCalculator`, sezione `kosmos` del JSON del piano; politiche K01–K05 |
+| Piano Incaricati | motore `kosmos_v1`: `KosmosConfig`, `KosmosCalculator`, sezione `kosmos` del JSON del piano; politiche K01–K06 |
 | Piano precedente (nascondibile) | motore `multilevel_v3` (a PR/PV); si nasconde con `App\Domain\Plan\LegacyPlan` |
 | Codice incaricato | `consultants.code`, prefisso `lamess.consultant_code_prefix` |
 | Permessi | `area.azione` (`network.view`, `network.restructure`, `plan.manage`…): la sigla non cambia con la terminologia |
@@ -22,7 +22,7 @@ Nel prodotto (schermate, email, manuali) si dice **Incaricato/Incaricati**; nel 
 ```
 App\Domain\Engine         puro PHP, nessuna dipendenza da Laravel/DB
   Support/   Num (BigDecimal), PeriodKey (mese solare Europe/Rome), Canonical (hash input)
-  Policy/    PolicySpecs (registro D01–D12 e K01–K05), Policies (valori validati)
+  Policy/    PolicySpecs (registro D01–D12 e K01–K06), Policies (valori validati)
   Plan/      PlanConfig, RankDef, StructureReq, FsbStepDef, KosmosConfig (piano Incaricati), PlanLoader
   Model/     Node, Movement, PriorState, PeriodInput → Line, PartnerStat, PeriodResult (+ AchievedRank, RankAwardResult…)
   Calc/      Tree, CareerState, BonusContext, PeriodCalculator (orchestratore), ImpactReport (simulazioni)

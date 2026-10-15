@@ -15,7 +15,7 @@ table{width:100%;border-collapse:collapse}td{padding:3px 6px;vertical-align:top}
 <tr><td class="l">Codice attività</td><td>{{ $consultant->code }}</td></tr>
 <tr><td class="l">Sponsor</td><td>{{ $sponsor ? $sponsor->name.' ['.$sponsor->code.']' : '—' }}</td></tr>
 </table></div>
-<p>Con la sottoscrizione della presente lettera l'Incaricato accetta l'incarico di vendita diretta a domicilio ai sensi dell'art. 19 D.Lgs. 114/1998 e L. 173/2005, alle condizioni del <strong>Regolamento «Principi generali»</strong> e del <strong>Piano Compensi</strong> allegati e vigenti alla data di firma.</p>
+<p>Con la sottoscrizione della presente lettera l'Incaricato accetta l'incarico di vendita diretta a domicilio ai sensi dell'art. 19 D.Lgs. 114/1998 e L. 173/2005, alle condizioni del <strong>Regolamento «Principi generali»</strong> e del <strong>Piano Compensi</strong> allegati e vigenti alla data di firma. Il Piano Compensi in vigore{{ ($planVersion = \App\Models\CompPlanVersion::inForce()) ? ' («'.$planVersion->name.'»)' : '' }} è sempre consultabile all'indirizzo <strong>{{ url('/piano-compensi') }}</strong>.</p>
 <p><strong>Durata.</strong> L'incarico dura un anno dalla data di firma e si rinnova tacitamente.@if(config('lamess.annual_fee_enabled', true)) Il primo anno non prevede canone; dal secondo anno è dovuto un canone amministrativo annuale di {{ number_format((float) $feeAmount, 2, ',', '.') }} € (IVA compresa). In caso di mancato pagamento alla scadenza la lettera si risolve automaticamente.@else Non è previsto alcun canone annuale.@endif</p>
 <p><strong>Accettazione.</strong> Il Consorzio può accettare o rifiutare la domanda senza obbligo di motivazione.</p>
 <div class="box"><strong>Firma elettronica</strong><br>

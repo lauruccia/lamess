@@ -51,6 +51,7 @@ Route::post('/carrello/codice/rimuovi', [ShopController::class, 'removeCode']);
 Route::get('/privacy', [LegalController::class, 'show'])->defaults('page', 'privacy');
 Route::get('/termini', [LegalController::class, 'show'])->defaults('page', 'termini');
 Route::get('/politiche-di-reso', [LegalController::class, 'show'])->defaults('page', 'politiche-di-reso');
+Route::get('/piano-compensi', [LegalController::class, 'show'])->defaults('page', 'piano-compensi');
 Route::redirect('/terms', '/termini', 301);
 Route::get('/r/{code}', [SiteController::class, 'referral'])->name('referral');
 Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware('throttle:30,1');

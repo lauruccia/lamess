@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Career;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Engine\Calc\PeriodCalculator;
+use App\Domain\Engine\Plan\KosmosConfig;
 use App\Domain\Engine\Plan\PlanConfig;
+use App\Domain\Engine\Plan\RankDef;
 use App\Domain\Periods\SnapshotBuilder;
+use App\Domain\Plan\LegacyPlan;
 use App\Models\CalculationRun;
 use App\Models\ConsultantPeriodStat;
 use App\Models\Period;
@@ -371,7 +373,15 @@ final class CareerProgress
 
         // Mantenimento della qualifica in corso.
         $maintenance = null;
-        if ($plan->policies->is('kosmos_rank_maintenance', 'clients') && $rank->requires('clients') && $rank->minClients > 0) {
+        if ($plan->policies->is('kosmos_rank_maintenance', 'requirements') && $currentRequirements !== [] && $known) {
+            $protectedUntil = $this->isLegacy($id) ? $cfg->rankGraceEnd() : null;
+            foreach ($currentRequirements as $r) {
+                if (! $r['ok'] && ! $r['disabled']) {
+                    $todo[] = $r['todo'].' (requisito da mantenere, altrimenti retrocedi)'.($protectedUntil ? ' Fino al '.date('d/m/Y', (int) strtotime($protectedUntil)).' la qualifica è comunque protetta.' : '');
+                }
+            }
+        }
+        if (in_array($plan->policies->get('kosmos_rank_maintenance'), ['clients', 'requirements'], true) && $rank->requires('clients') && $rank->minClients > 0) {
             $maintenance = [
                 'rank' => $rank->name, 'required' => $rank->minClients, 'counted' => $c, 'ok' => $known && $c >= $rank->minClients,
                 'protected_until' => $this->isLegacy($id) ? $cfg->rankGraceEnd() : null,
@@ -393,7 +403,7 @@ final class CareerProgress
             ];
         }
 
-        $rule = $cfg->clientRule === \App\Domain\Engine\Plan\KosmosConfig::CLIENT_ANY_ORDER ? 'chi fa almeno un ordine' : 'chi fa almeno un ordine da € '.self::n((float) (string) $cfg->clientMinAmount).' (IVA inclusa)';
+        $rule = $cfg->clientRule === KosmosConfig::CLIENT_ANY_ORDER ? 'chi fa almeno un ordine' : 'chi fa almeno un ordine da € '.self::n((float) (string) $cfg->clientMinAmount).' (IVA inclusa)';
 
         return [
             'consultant_id' => $id, 'rank' => ['code' => $rank->code, 'name' => $rank->name, 'sequence' => $rank->sequence, 'direct_pct' => $current !== null ? $tiers[$current]['pct'] : 0.0],
@@ -419,7 +429,7 @@ final class CareerProgress
      * @param  array<string, mixed>  $d  dettaglio salvato dal motore
      * @return list<array{key:string,label:string,required:int,counted:int,ok:bool,disabled:bool,detail:string,todo:string}>
      */
-    private function kosmosRequirements(PlanConfig $plan, \App\Domain\Engine\Plan\RankDef $next, array $d): array
+    private function kosmosRequirements(PlanConfig $plan, RankDef $next, array $d): array
     {
         $out = [];
         if ($next->minClients > 0) {
@@ -458,7 +468,7 @@ final class CareerProgress
     }
 
     /** @return list<string> */
-    private function rankRequirementTexts(PlanConfig $plan, \App\Domain\Engine\Plan\RankDef $r): array
+    private function rankRequirementTexts(PlanConfig $plan, RankDef $r): array
     {
         $t = [];
         if ($r->minClients > 0 && $r->requires('clients')) {

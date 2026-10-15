@@ -238,6 +238,7 @@ final class KosmosCalculator
             return [];
         }
         $lines = [];
+        $compress = $ctx->plan->policies->is('kosmos_compression', 'skip');
         $pearlSeq = $ctx->plan->rank($cfg->pearlRank)->sequence;
         $pearlFirst = [];
         foreach ($ctx->tree->nodes as $id => $_) {
@@ -290,13 +291,21 @@ final class KosmosCalculator
             foreach ($ctx->tree->ancestors($o) as $u) {
                 $path[] = $u;
             }
+            $paid = 0;
             foreach ($path as $i => $u) {
-                $level = $i + 1;
+                $level = $compress ? $paid + 1 : $i + 1;
                 $levelDef = $cfg->level($level);
                 if ($levelDef !== null) {
                     $rateL = $levelDef['rate'];
                     $ok = ($clients[$u] ?? 0) >= $levelDef['min_clients'] && $pearlFirst[$u] >= $levelDef['min_pearl'];
                     [$st, $why] = $ctx->indirectStatus($u);
+                    if ($compress) {
+                        // Compressione: chi non rispetta i requisiti (o non può maturare) è saltato e il livello passa al primo sopra di lui che li rispetta.
+                        if (! $ok || $st === 'excluded') {
+                            continue;
+                        }
+                        $paid++;
+                    }
                     if (! $ok) {
                         [$st, $why] = ['excluded', "requisiti_livello_{$level}: clienti ".($clients[$u] ?? 0).'/'.$levelDef['min_clients'].", Pearl 1° liv. {$pearlFirst[$u]}/{$levelDef['min_pearl']}"];
                     }
@@ -313,6 +322,7 @@ final class KosmosCalculator
 
                     continue;
                 }
+                $level = $i + 1;
                 $extRate = $cfg->extendedRates[$ctx->rankCode($u)] ?? null;
                 if ($extRate === null || ! $extRate->isPositive()) {
                     continue;

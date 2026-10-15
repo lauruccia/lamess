@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Career\CareerProgress;
+use App\Domain\Career\EarningsSummary;
+use App\Domain\Career\NetworkOverview;
+use App\Domain\Career\NetworkTree;
 use App\Domain\Customers\ReferralResolver;
 use App\Domain\Customers\ShippingAddressBook;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
 use App\Domain\Onboarding\IvdService;
 use App\Domain\Onboarding\KycService;
-use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
+use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Orders\FakeKMoneyProvider;
 use App\Domain\Orders\KMoneyApiProvider;
 use App\Domain\Orders\KMoneyProvider;
@@ -34,6 +38,8 @@ use App\Models\Profile;
 use App\Models\Settlement;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use Brick\Math\BigDecimal;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,8 +64,8 @@ class AreaController extends Controller
         return view('site.area.home', [
             'user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
             // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
-            'progress' => $live ? $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($live->id)) : null,
-            'earn' => $live ? $this->safely(static fn () => app(\App\Domain\Career\EarningsSummary::class)->for($live->id)) : null,
+            'progress' => $live ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($live->id)) : null,
+            'earn' => $live ? $this->safely(static fn () => app(EarningsSummary::class)->for($live->id)) : null,
         ]);
     }
 
@@ -122,10 +128,10 @@ class AreaController extends Controller
     public function network(Request $request)
     {
         $me = $this->activeConsultant($request);
-        $data = app(\App\Domain\Career\NetworkOverview::class)->for($me);
-        $careers = app(\App\Domain\Career\CareerProgress::class);
+        $data = app(NetworkOverview::class)->for($me);
+        $careers = app(CareerProgress::class);
         $progress = $this->safely(static fn () => $careers->forConsultant($me->id));
-        $tree = $data['total']['persons'] > 0 ? $this->safely(static fn () => app(\App\Domain\Career\NetworkTree::class)->for($data, $careers->all())) : null;
+        $tree = $data['total']['persons'] > 0 ? $this->safely(static fn () => app(NetworkTree::class)->for($data, $careers->all())) : null;
 
         return view('site.area.network', $data + ['progress' => $progress, 'tree' => $tree, 'kosmos' => $data['plan']?->kosmos !== null]);
     }
@@ -135,23 +141,56 @@ class AreaController extends Controller
     {
         $me = $this->activeConsultant($request);
         abort_unless($id === (int) $me->id || DB::table('network_paths')->where('ancestor_id', $me->id)->where('descendant_id', $id)->where('depth', '>', 0)->exists(), 404);
-        $p = $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($id));
+        $p = $this->safely(static fn () => app(CareerProgress::class)->forConsultant($id));
 
-        return response()->json(app(\App\Domain\Career\NetworkTree::class)->detail($p));
+        return response()->json(app(NetworkTree::class)->detail($p));
     }
+
+    /** Filtri dell'elenco clienti dell'incaricato (chiave in query => etichetta). */
+    public const CUSTOMER_FILTERS = [
+        'senza-ordini' => 'Senza ordini', 'contano' => 'Contano per il piano', 'non-contano' => 'Ordine sotto il minimo',
+        'mese' => 'Hanno ordinato questo mese', 'fermi' => 'Fermi da oltre 30 giorni',
+    ];
 
     /** I clienti assegnati all’incaricato. */
     public function customers(Request $request)
     {
         $me = $this->activeConsultant($request);
-        $rows = Customer::query()->where('assigned_consultant_id', $me->id)->with('user.profile')->orderByDesc('registered_at')->get();
+        $all = Customer::query()->where('assigned_consultant_id', $me->id)->with('user.profile')->orderByDesc('registered_at')->get();
+        $rows = $all;
         $orders = DB::table('orders')->whereIn('buyer_user_id', $rows->pluck('user_id'))->where('status', 'paid')
             ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
         $period = Period::query()->orderByDesc('code')->first();
         $kosmos = $period?->planVersion->plan()->kosmos;
-        $progress = $kosmos !== null ? $this->safely(static fn () => app(\App\Domain\Career\CareerProgress::class)->forConsultant($me->id)) : null;
+        $progress = $kosmos !== null ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($me->id)) : null;
 
-        return view('site.area.customers', ['rows' => $rows, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress]);
+        $search = trim((string) $request->query('q', ''));
+        $state = (string) $request->query('stato', '');
+        if ($search !== '') {
+            $needle = mb_strtolower($search);
+            $rows = $rows->filter(fn ($r) => str_contains(mb_strtolower(trim(($r->user?->profile?->fullName() ?: (string) $r->user?->name).' '.$r->user?->email.' '.$r->user?->profile?->phone)), $needle));
+        }
+        if (array_key_exists($state, self::CUSTOMER_FILTERS)) {
+            $monthStart = now('UTC')->startOfMonth();
+            $rows = $rows->filter(function ($r) use ($orders, $kosmos, $state, $monthStart) {
+                $o = $orders[$r->user_id] ?? null;
+                $valid = $kosmos !== null && $o !== null && $kosmos->orderQualifies(BigDecimal::of((string) $o->biggest));
+
+                return match ($state) {
+                    'senza-ordini' => $o === null,
+                    'contano' => $valid,
+                    'non-contano' => $o !== null && ! $valid,
+                    'mese' => $o !== null && Carbon::parse($o->last_paid, 'UTC')->gte($monthStart),
+                    'fermi' => $o !== null && Carbon::parse($o->last_paid, 'UTC')->lt(now('UTC')->subDays(30)),
+                    default => true,
+                };
+            });
+        }
+
+        return view('site.area.customers', [
+            'rows' => $rows->values(), 'all' => $all, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress,
+            'search' => $search, 'state' => array_key_exists($state, self::CUSTOMER_FILTERS) ? $state : '', 'filters' => self::CUSTOMER_FILTERS,
+        ]);
     }
 
     private function activeConsultant(Request $request): Consultant

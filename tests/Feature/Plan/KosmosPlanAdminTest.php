@@ -70,7 +70,7 @@ final class KosmosPlanAdminTest extends TestCase
         $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
         $draft = CompPlanVersion::createFromArray('Incaricati', $this->data());
         $this->assertSame('min_amount', PlanConfig::fromArray($draft->data)->kosmos->clientRule);
-        $this->assertNull(PlanConfig::fromArray($draft->data)->kosmos->rankGraceUntil);
+        $this->assertSame('2026-12-31', PlanConfig::fromArray($draft->data)->kosmos->rankGraceUntil, 'predefinito: protezione fino al 31/12/2026');
 
         $form = PlanFormMapper::toForm($draft->data);
         $form['kosmos']['client_rule'] = 'any_order';
@@ -101,10 +101,10 @@ final class KosmosPlanAdminTest extends TestCase
     {
         $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
         $draft = CompPlanVersion::createFromArray('Incaricati', $this->data());
-        $this->assertSame(90, PlanConfig::fromArray($draft->data)->kosmos->rankGraceDays);
+        $this->assertNull(PlanConfig::fromArray($draft->data)->kosmos->rankGraceDays, 'predefinito: nessuna protezione a giorni');
 
         $form = PlanFormMapper::toForm($draft->data);
-        $this->assertSame('90', $form['kosmos']['rank_grace_days']);
+        $this->assertEmpty($form['kosmos']['rank_grace_days']);
         $form['kosmos']['rank_grace_days'] = '45';
         Livewire::test(EditCompPlanVersion::class, ['record' => $draft->getKey()])
             ->fillForm($form + ['reason' => 'Mantenimento 45 giorni'])->call('save')->assertHasNoFormErrors();

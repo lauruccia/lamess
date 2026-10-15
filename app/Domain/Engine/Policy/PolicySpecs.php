@@ -192,6 +192,15 @@ final class PolicySpecs
                 ],
                 'default_status' => self::CLIENT_DECIDED, 'source' => 'Presentazione «Seconda parte» s.8 («fino al 5° livello del Ruby seguente»); Laura 14/10/2026: stessa qualifica o più alta',
             ],
+            'kosmos_compression' => [
+                'decision' => 'K06', 'label' => 'Compressione della linea negli indiretti',
+                'default' => 'skip',
+                'options' => [
+                    'skip' => 'Salta e scala: chi non rispetta i requisiti (o non può maturare) è saltato; i livelli si contano solo tra chi li rispetta e nessuno incassa due volte sulla stessa vendita',
+                    'none' => 'Nessuna compressione: il livello è la distanza genealogica; chi non rispetta i requisiti perde il livello e non sale nessuno',
+                ],
+                'default_status' => self::CLIENT_DECIDED, 'source' => 'Laura 15/10/2026: la linea si comprime e paga il primo che rispetta i requisiti',
+            ],
             'kosmos_own_purchase_as_client' => [
                 'decision' => 'K04', 'label' => 'Gli acquisti dell’incaricato valgono come acquisto di un suo cliente',
                 'default' => 'on',
@@ -200,9 +209,9 @@ final class PolicySpecs
             ],
             'kosmos_rank_maintenance' => [
                 'decision' => 'K05', 'label' => 'Mantenimento della qualifica',
-                'default' => 'clients',
-                'options' => ['clients' => 'Ogni mese si paga la qualifica più alta per cui i clienti personali sono sufficienti', 'none' => 'Nessun mantenimento: la qualifica raggiunta resta'],
-                'default_status' => self::PROVISIONAL, 'source' => 'Laura 08/10/2026: «mantenere i 6 clienti e quindi la qualifica»',
+                'default' => 'requirements',
+                'options' => ['requirements' => 'Ogni mese si paga la qualifica più alta di cui l’incaricato rispetta ancora tutti i requisiti (clienti, Pearl, colonne, altri incaricati/colonne)', 'clients' => 'Ogni mese si paga la qualifica più alta per cui i clienti personali sono sufficienti', 'none' => 'Nessun mantenimento: la qualifica raggiunta resta'],
+                'default_status' => self::CLIENT_DECIDED, 'source' => 'Laura 08/10/2026: «mantenere i 6 clienti e quindi la qualifica»; Laura 15/10/2026: retrocede se non rispetta almeno un requisito della qualifica attuale',
             ],
             // D11 Rettifiche
             'refund_after_close' => [

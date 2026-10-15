@@ -8,6 +8,7 @@ use App\Domain\Career\RankPalette;
 use App\Domain\Network\NetworkService;
 use App\Models\Consultant;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -118,6 +119,28 @@ final class AreaPagesTest extends TestCase
             Customer::create(['user_id' => $u->id, 'assigned_consultant_id' => $owner->id, 'source' => 'referral', 'registered_at' => now()]);
         }
         $this->actingAs($this->withUser($a))->get('/area/clienti')->assertOk()->assertSee('Mia Cliente')->assertDontSee('Altrui Cliente');
+    }
+
+    public function test_customers_list_can_be_searched_and_filtered(): void
+    {
+        $a = $this->consultant('A');
+        $with = User::factory()->create(['name' => 'Ordina Spesso', 'email' => 'ordina@example.test']);
+        $without = User::factory()->create(['name' => 'Mai Ordinato', 'email' => 'mai@example.test']);
+        foreach ([$with, $without] as $u) {
+            Profile::create(['user_id' => $u->id, 'type' => 'private', 'first_name' => explode(' ', $u->name)[0], 'last_name' => explode(' ', $u->name)[1]]);
+            Customer::create(['user_id' => $u->id, 'assigned_consultant_id' => $a->id, 'source' => 'referral', 'registered_at' => now()]);
+        }
+        Order::create([
+            'number' => 'ORD-FILTER-1', 'buyer_user_id' => $with->id, 'buyer_type' => 'customer', 'status' => 'paid', 'payment_method' => 'card',
+            'subtotal_net' => '163.93', 'vat_total' => '36.07', 'total' => '200.00', 'paid_at' => now(), 'billing' => [],
+        ]);
+        $this->actingAs($this->withUser($a));
+
+        $this->get('/area/clienti')->assertOk()->assertSee('Ordina Spesso')->assertSee('Mai Ordinato');
+        $this->get('/area/clienti?stato=senza-ordini')->assertOk()->assertSee('Mai Ordinato')->assertDontSee('Ordina Spesso');
+        $this->get('/area/clienti?stato=mese')->assertOk()->assertSee('Ordina Spesso')->assertDontSee('Mai Ordinato');
+        $this->get('/area/clienti?q=mai%40')->assertOk()->assertSee('Mai Ordinato')->assertDontSee('Ordina Spesso');
+        $this->get('/area/clienti?stato=inesistente')->assertOk()->assertSee('Ordina Spesso')->assertSee('Mai Ordinato');
     }
 
     public function test_profile_can_be_updated_and_password_changed(): void

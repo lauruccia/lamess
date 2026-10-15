@@ -118,14 +118,21 @@ final class PeriodCalculator
         $actPts = $hasActiveStatus ? Activity::points($plan, $movements, $closedReversals) : [];
         $active = [];
         $eff = [];
+        $protected = [];
+        foreach ($tree->nodes as $id => $node) {
+            $eff[(string) $id] = $career->effectiveSeq($node, $period);
+            $protected[(string) $id] = ($node->previousRank !== null && $plan->kosmos?->ranksProtectedIn($period->end())) || $node->rankHeldIn($period->end());
+        }
+        if ($plan->kosmos !== null && $plan->policies->is('kosmos_rank_maintenance', 'requirements')) {
+            $eff = RankMaintenance::apply($plan, $tree, $eff, $clients, $protected);
+        }
         foreach ($tree->nodes as $id => $node) {
             $id = (string) $id;
             [$ok, $reason, $first] = $hasActiveStatus
                 ? Activity::evaluate($plan, $period, $node, $actPts[$id] ?? Num::zero(), $prior)
                 : self::withoutActiveStatus($node);
             $active[$id] = $ok;
-            $eff[$id] = $career->effectiveSeq($node, $period);
-            if ($plan->kosmos !== null && $plan->policies->is('kosmos_rank_maintenance', 'clients') && ! ($node->previousRank !== null && $plan->kosmos->ranksProtectedIn($period->end())) && ! $node->rankHeldIn($period->end())) {
+            if ($plan->kosmos !== null && $plan->policies->is('kosmos_rank_maintenance', 'clients') && ! $protected[$id]) {
                 while ($eff[$id] > 0 && $plan->bySeq($eff[$id])->requires('clients') && ($clients[$id] ?? 0) < $plan->bySeq($eff[$id])->minClients) {
                     $eff[$id]--;
                 }

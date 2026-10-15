@@ -81,7 +81,7 @@ final class LamessParametri extends Command
         $out .= '| Indiretti | '.implode(' · ', array_map(fn ($l) => "L{$l['level']} ".$this->pct($l['rate'])."% ({$l['min_clients']} clienti, {$l['min_pearl']} Pearl)", $k->indirectLevels))." |\n";
         $out .= '| Indiretti estesi | '.implode(' · ', array_map(fn ($r, $v) => "{$r} ".$this->pct($v).'%', array_keys($k->extendedRates), $k->extendedRates))." — stop al {$k->extendedStopLevels}° livello |\n";
         $out .= "| Bonus di Struttura | {$k->structureClients} clienti entro {$k->structureWindowDays} giorni; importi per qualifica nel piano |\n";
-        $out .= "\nPolitiche del piano: vedi le righe K01–K05 della tabella precedente.\n";
+        $out .= "\nPolitiche del piano: vedi le righe K01–K06 della tabella precedente.\n";
 
         return $out;
     }

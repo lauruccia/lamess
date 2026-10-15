@@ -76,7 +76,7 @@
      <header><h2>4 · Conferma</h2></header>
      <div class="panel-body">
       <p style="margin-top:0">IBAN e documenti li inserisci dopo la firma, nell'onboarding: servono per ricevere i pagamenti.</p>
-      <label class="chk"><input type="checkbox" name="accept" value="1" @checked(old('accept'))> Dichiaro di aver letto il Regolamento e il Piano Compensi e di voler sottoscrivere la Lettera di Incarico.</label>
+      <label class="chk"><input type="checkbox" name="accept" value="1" @checked(old('accept'))> Dichiaro di aver letto il Regolamento e <a href="/piano-compensi" target="_blank" rel="noopener">Il piano compensi</a> e di voler sottoscrivere la Lettera di Incarico.</label>
       @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
       <div class="form-actions"><button class="accent">Continua alla firma</button></div>
      </div>

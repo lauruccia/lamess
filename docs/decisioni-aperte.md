@@ -102,7 +102,11 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 |---|---|---|
 | Piano Incaricati: punti e attività | niente PV: compensi e clienti si calcolano sugli **euro** IVA inclusa; nessuno stato ATTIVO e nessuna spesa mensile minima | 08/10 |
 | Chi è cliente | lo decide l'admin: `any_order` oppure `min_amount`; predefinito un ordine da 150 € IVA inclusa | 08/10 |
-| Mantenimento delle qualifiche | finestra di `rank_grace_days` (90) dall'attivazione del piano, data fissa `rank_grace_until`, e «Mantieni qualifica» per singolo incaricato (`rank_hold_until`) | 08/10, 12/10, 13/10 |
+| Mantenimento delle qualifiche | protezione fino al 31/12/2026 (`rank_grace_until`, giorni vuoti) per chi viene dal vecchio piano, e «Mantieni qualifica» per singolo incaricato (`rank_hold_until`, admin con `network.restructure`); a fine protezione tutti si ricalcolano e retrocede chi non rispetta almeno un requisito (K05 `requirements`) | 08/10, 12/10, 13/10, 15/10 |
+| Compressione degli indiretti | chi non rispetta i requisiti è saltato, i livelli si contano tra chi li rispetta, nessun doppio pagamento (K06 `skip`) | 15/10 |
+| Acquisto proprio | vale come cliente personale e paga gli indiretti agli incaricati sopra | 15/10 |
+| Bonus di Struttura | calcolo settimanale, conferma e pagamento manuali; poi conferma automatica, pagamento sempre manuale. Resi non considerati per ora | 15/10 |
+| Clienti che contano | 3 clienti che acquistano ogni mese oppure 3 clienti con un prodotto da 12 mesi; Box e confezioni con «Rende cliente» | 15/10 |
 | Spedizione | tariffe per paese e fascia di peso, costo proprio per prodotto, tariffa Italia di 9,00 € IVA inclusa creata dall'installazione | 09/10 |
 | Reso | rimborso facoltativo della spedizione; reso richiedibile dal cliente entro 14 giorni dalla consegna (OPEN-33 chiusa) | 09/10 |
 | Metodi di pagamento | carta (Stripe), bonifico, KMoney; il vantaggio KMoney mostrato al checkout si regola in Impostazioni di sistema → Metodi di pagamento | 09-13/10 |

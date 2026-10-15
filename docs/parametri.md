@@ -105,11 +105,11 @@ I valori sono congelati sulla riga d'ordine (`order_items.vap_mode/vap_value/val
 
 ## 7. Mantenimento della qualifica
 
-Con la politica K05 = `clients` (predefinita) ogni mese si paga la qualifica più alta per cui i clienti personali bastano. Due protezioni evitano il ribasso per mancanza di clienti (la qualifica può sempre salire):
+Con la politica K05 = `requirements` (predefinita dal 15/10/2026) ogni mese si paga la qualifica più alta di cui l'incaricato rispetta ancora tutti i requisiti (clienti personali, Pearl al 1° livello, struttura, colonne); con `clients` contano solo i clienti. Due protezioni evitano il ribasso per mancanza di clienti (la qualifica può sempre salire):
 
 | Parametro | Dove | Significato |
 |---|---|---|
-| `kosmos.rank_grace_days` | piano | giorni dall'efficacia della versione (`effective_from`, altrimenti giorno di attivazione) in cui nessuno scende; ogni mese iniziato nella finestra è protetto per intero. Predefinito 90; vuoto o 0 = nessuna protezione a giorni |
+| `kosmos.rank_grace_days` | piano | giorni dall'efficacia della versione (`effective_from`, altrimenti giorno di attivazione) in cui nessuno scende; ogni mese iniziato nella finestra è protetto per intero. Predefinito vuoto (la protezione è la data fissa 31/12/2026); vuoto o 0 = nessuna protezione a giorni |
 | `kosmos.rank_grace_until` | piano | data fissa (AAAA-MM-GG) fino a cui nessuno scende; vuoto = nessuna |
 | `consultants.rank_hold_until` e `rank_hold_reason` | singolo incaricato | «Mantieni qualifica» fino a una data scelta dall'admin oppure **fino a revoca** (`2099-12-31`); vuoto = nessuna protezione |
 
@@ -132,7 +132,7 @@ Nel Piano Incaricati il motore usa solo queste chiavi; le altre (`activity_thres
 | `scn_threshold` | 5000 | soglia SCN (€), significato da chiarire: oggi è solo un valore salvato |
 | `move_node_window_days` | 7 | finestra per spostare un incaricato nell'albero (giorni), significato da chiarire: oggi è solo un valore salvato |
 
-## 9. Politiche del Piano Incaricati (K01–K05)
+## 9. Politiche del Piano Incaricati (K01–K06)
 
 Le politiche D01–D12 del piano precedente stanno nella sezione 11. Quelle del Piano Incaricati sono (valori predefiniti):
 
@@ -142,7 +142,8 @@ Le politiche D01–D12 del piano precedente stanno nella sezione 11. Quelle del 
 | K02 | `kosmos_extended_stop` | `same_or_higher` | deciso da Laura (14/10/2026) | `same_rank` = indiretti estesi fino al 5° livello del successivo con la stessa qualifica; `same_or_higher` = uguale o superiore |
 | K03 | (nessuna politica) | | | la sigla K03 compare solo nelle spiegazioni delle righe del Bonus di Struttura |
 | K04 | `kosmos_own_purchase_as_client` | `on` | deciso dal cliente | `on` = l'acquisto dell'incaricato conta come cliente di sé stesso e genera compensi; `off` = gli acquisti personali non generano compensi |
-| K05 | `kosmos_rank_maintenance` | `clients` | provvisoria | `clients` = si paga la qualifica più alta per cui i clienti bastano; `none` = la qualifica raggiunta resta |
+| K05 | `kosmos_rank_maintenance` — Mantenimento della qualifica | `requirements` | client_decided | `requirements` = si paga la qualifica più alta di cui si rispettano ancora tutti i requisiti; `clients` = solo i clienti personali; `none` = nessun mantenimento | Laura 15/10/2026: retrocede se non rispetta almeno un requisito |
+| K06 | `kosmos_compression` — Compressione della linea negli indiretti | `skip` | client_decided | `skip` = chi non rispetta i requisiti è saltato e i livelli si contano solo tra chi li rispetta; `none` = livello genealogico | Laura 15/10/2026 |
 
 Nel Piano Incaricati valgono anche D06 (`onboarding_incomplete_indirect`) e D11 (`refund_after_close`, storno nel primo periodo aperto): vedi la sezione 11.
 

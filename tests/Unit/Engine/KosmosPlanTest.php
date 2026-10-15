@@ -28,14 +28,15 @@ final class KosmosPlanTest extends EngineTestCase
     }
 
     /** @return array<string, string> beneficiario => totale per tipo di bonus */
-    private function totals(PeriodResult $r, string $bonus): array
+    private function totals(PeriodResult $r, string $bonus, ?string $source = null): array
     {
         $out = [];
         foreach ($r->lines as $l) {
-            if ($l->bonus === $bonus && $l->status !== 'excluded') {
-                $out[$l->beneficiaryId] = (string) Num::money(($out[$l->beneficiaryId] ?? Num::zero())->plus($l->amount));
+            if ($l->bonus === $bonus && $l->status !== 'excluded' && ($source === null || $l->sourcePartnerId === $source)) {
+                $out[$l->beneficiaryId] = Num::money(($out[$l->beneficiaryId] ?? Num::zero())->plus($l->amount));
             }
         }
+        $out = array_map(static fn ($v) => (string) $v, $out);
         ksort($out, SORT_STRING);
 
         return $out;
@@ -91,19 +92,21 @@ final class KosmosPlanTest extends EngineTestCase
         $s->consultant('S', 'T', rank: 'PEARL');
         $s->consultant('A', 'S');
         $this->buy($s, 'A', 'x1');
+        $this->buy($s, 'S', 's1');
         $this->buy($s, 'T', 't1');
         $this->buy($s, 'T', 't2');
         $r = $s->run();
-        $this->assertSame('4.00', $this->totals($r, 'indirect')['T'] ?? null, 'Livello 2: 4% di 100');
+        $this->assertSame('4.00', $this->totals($r, 'indirect', 'A')['T'] ?? null, 'Livello 2: 4% di 100');
 
         $s = $this->scenario();
         $s->consultant('T');
         $s->consultant('S', 'T');
         $s->consultant('A', 'S');
         $this->buy($s, 'A', 'x1');
+        $this->buy($s, 'S', 's1');
         $this->buy($s, 'T', 't1');
         $this->buy($s, 'T', 't2');
-        $this->assertArrayNotHasKey('T', $this->totals($s->run(), 'indirect'), 'Senza Pearl al 1° livello il livello 2 non matura');
+        $this->assertArrayNotHasKey('T', $this->totals($s->run(), 'indirect', 'A'), 'Senza Pearl al 1° livello il livello 2 non matura');
     }
 
     public function test_structure_bonus_is_a_differential_by_rank(): void
@@ -133,7 +136,7 @@ final class KosmosPlanTest extends EngineTestCase
 
     public function test_extended_indirect_goes_below_level_five_and_stops_at_the_next_ruby(): void
     {
-        $s = $this->scenario();
+        $s = $this->scenario(['kosmos_compression' => 'none']);
         $s->consultant('R', null, rank: 'RUBY');
         $prev = 'R';
         foreach (range(1, 7) as $i) {
@@ -146,7 +149,7 @@ final class KosmosPlanTest extends EngineTestCase
         $this->assertSame(['R' => '1.00'], $this->totals($r, 'indirect_ext'));
 
         // un secondo Ruby a 6 livelli sopra chi vende: dal Ruby seguente in poi non vale più
-        $s = $this->scenario();
+        $s = $this->scenario(['kosmos_compression' => 'none']);
         $s->consultant('R', null, rank: 'RUBY');
         $s->consultant('n1', 'R');
         $s->consultant('R2', 'n1', rank: 'RUBY');
@@ -165,7 +168,7 @@ final class KosmosPlanTest extends EngineTestCase
     public function test_extended_indirect_stops_by_default_at_the_next_same_or_higher_rank(): void
     {
         $build = function (array $policies): Scenario {
-            $s = $this->scenario($policies);
+            $s = $this->scenario($policies + ['kosmos_compression' => 'none']);
             $s->consultant('R', null, rank: 'RUBY');
             $s->consultant('n1', 'R');
             $s->consultant('E', 'n1', rank: 'EMERALD');
@@ -186,6 +189,110 @@ final class KosmosPlanTest extends EngineTestCase
 
         $sameRank = $this->totals($build(['kosmos_extended_stop' => 'same_rank'])->run(), 'indirect_ext');
         $this->assertSame('1.00', $sameRank['R'] ?? null, 'Con «stessa qualifica» il Ruby continua oltre l\'Emerald');
+    }
+
+    public function test_the_line_compresses_and_pays_the_first_who_meets_the_requirements(): void
+    {
+        // T > S > A: S non ha clienti e viene saltato; T (1 cliente) diventa il 1° livello e prende l'8%, una sola volta.
+        $s = $this->scenario();
+        $s->consultant('T');
+        $s->consultant('S', 'T');
+        $s->consultant('A', 'S');
+        $this->buy($s, 'A', 'x1');
+        $this->buy($s, 'T', 't1');
+        $this->assertSame(['T' => '8.00'], $this->totals($s->run(), 'indirect'));
+
+        // senza compressione T è al 2° livello (4%) e non ha i requisiti: nulla
+        $s = $this->scenario(['kosmos_compression' => 'none']);
+        $s->consultant('T');
+        $s->consultant('S', 'T');
+        $s->consultant('A', 'S');
+        $this->buy($s, 'A', 'x1');
+        $this->buy($s, 'T', 't1');
+        $this->assertSame([], $this->totals($s->run(), 'indirect'));
+    }
+
+    public function test_compression_counts_levels_only_among_those_who_qualify(): void
+    {
+        // Top > A (Pearl) > B > V: B non ha clienti ed è saltato. A è il 1° livello (8%), Top il 2° (4%: 2 clienti e A Pearl al 1° livello).
+        $s = $this->scenario();
+        $s->consultant('Top');
+        $s->consultant('A', 'Top', rank: 'PEARL');
+        $s->consultant('B', 'A');
+        $s->consultant('V', 'B');
+        $this->buy($s, 'V', 'x');
+        foreach (['1', '2'] as $n) {
+            $this->buy($s, 'A', "a{$n}");
+            $this->buy($s, 'Top', "t{$n}");
+        }
+        $onV = [];
+        foreach ($s->run()->lines as $l) {
+            if ($l->bonus === 'indirect' && $l->sourcePartnerId === 'V' && $l->status !== 'excluded') {
+                $onV[$l->beneficiaryId] = (string) $l->amount;
+            }
+        }
+        $this->assertSame(['A' => '8.00', 'Top' => '4.00'], $onV, 'B è saltato; nessuno incassa due volte sulla stessa vendita');
+    }
+
+    public function test_the_rank_is_lost_when_any_requirement_of_the_current_rank_is_missing(): void
+    {
+        $maintain = ['kosmos_rank_maintenance' => 'requirements'];
+        $paid = function (callable $setup) use ($maintain): string {
+            $s = $this->scenario(plan: $this->planWithKosmos([], $maintain));
+            $setup($s);
+
+            return $s->run()->stats['C']->effectiveRank;
+        };
+        $clients = function (Scenario $s, string $id, int $n): void {
+            foreach (range(1, $n) as $i) {
+                $this->buy($s, $id, "{$id}-{$i}");
+            }
+        };
+        $crystal = function (Scenario $s, int $ownClients, int $pearls) use ($clients): void {
+            $s->consultant('C', null, rank: 'CRYSTAL');
+            $clients($s, 'C', $ownClients);
+            foreach (range(1, $pearls) as $i) {
+                $s->consultant("P{$i}", 'C', rank: 'PEARL');
+                $clients($s, "P{$i}", 3);
+            }
+        };
+
+        $this->assertSame('CRYSTAL', $paid(fn (Scenario $s) => $crystal($s, 6, 2)), 'tutti i requisiti rispettati');
+        $this->assertSame('PEARL', $paid(fn (Scenario $s) => $crystal($s, 5, 2)), 'manca un cliente personale');
+        $this->assertSame('PEARL', $paid(fn (Scenario $s) => $crystal($s, 6, 1)), 'manca un Pearl al 1° livello');
+        // il Pearl del 1° livello che retrocede (perde i suoi 3 clienti) fa scendere anche chi sta sopra
+        $this->assertSame('PEARL', $paid(function (Scenario $s) use ($clients) {
+            $s->consultant('C', null, rank: 'CRYSTAL');
+            $clients($s, 'C', 6);
+            $s->consultant('P1', 'C', rank: 'PEARL');
+            $clients($s, 'P1', 3);
+            $s->consultant('P2', 'C', rank: 'PEARL');
+            $clients($s, 'P2', 2);
+        }), 'P2 scende a Incaricato per mancanza di clienti, quindi a C resta un solo Pearl');
+    }
+
+    public function test_the_rank_is_lost_when_the_columns_or_the_other_incaricati_are_missing(): void
+    {
+        $paid = function (array $crystal): string {
+            $s = $this->scenario(plan: $this->planWithCrystal(array_replace(['min_clients' => 0, 'min_pearl_first_level' => 0], $crystal)));
+            $s->consultant('C', null, rank: 'CRYSTAL');
+            foreach (['x', 'y', 'z'] as $i) {
+                $this->buy($s, 'C', "C{$i}");
+            }
+            foreach (['P1', 'P2'] as $p) {
+                $s->consultant($p, 'C', rank: 'PEARL');
+                foreach (['a', 'b', 'c'] as $i) {
+                    $this->buy($s, $p, "{$p}{$i}");
+                }
+            }
+
+            return $s->run()->stats['C']->effectiveRank;
+        };
+
+        $this->assertSame('CRYSTAL', $paid(['min_columns' => 2, 'min_column_clients' => 3]), 'due colonne da 3 clienti presenti');
+        $this->assertSame('PEARL', $paid(['min_columns' => 2, 'min_column_clients' => 4]), 'le colonne non arrivano a 4 clienti: retrocede');
+        $this->assertSame('CRYSTAL', $paid(['structure' => [['rank' => 'PEARL', 'count' => 2]]]), 'due incaricati Pearl su linee diverse');
+        $this->assertSame('PEARL', $paid(['structure' => [['rank' => 'PEARL', 'count' => 3]]]), 'manca un terzo incaricato Pearl: retrocede');
     }
 
     public function test_personal_purchases_generate_nothing_when_the_option_is_off(): void
@@ -401,7 +508,7 @@ final class KosmosPlanTest extends EngineTestCase
     {
         $data = json_decode((string) file_get_contents(dirname(__DIR__, 3).'/config/lamess/'.PlanLoader::INCARICATI_FILE), true);
         $data['policies'] = array_replace(Scenario::NEUTRAL_ACTIVITY, ['kosmos_rank_maintenance' => 'none'], $policies);
-        $data['kosmos'] = array_replace($data['kosmos'], $kosmos);
+        $data['kosmos'] = array_replace($data['kosmos'], ['rank_grace_days' => null, 'rank_grace_until' => null], $kosmos);
         $data['settings'] = array_replace($data['settings'], $settings);
 
         return PlanConfig::fromArray($data);
@@ -560,8 +667,8 @@ final class KosmosPlanTest extends EngineTestCase
     public function test_the_published_plan_version_gives_the_engine_its_activation_day(): void
     {
         $data = json_decode((string) file_get_contents(dirname(__DIR__, 3).'/config/lamess/'.PlanLoader::INCARICATI_FILE), true);
-        $this->assertSame(90, PlanConfig::fromArray($data)->kosmos->rankGraceDays, 'predefinito: 90 giorni');
-        $this->assertNull(PlanConfig::fromArray($data)->kosmos->rankGraceEnd(), 'senza attivazione non c\'è una data da proteggere');
+        $this->assertNull(PlanConfig::fromArray($data)->kosmos->rankGraceDays, 'predefinito: nessuna protezione a giorni');
+        $this->assertSame('2026-12-31', PlanConfig::fromArray($data)->kosmos->rankGraceEnd(), 'predefinito: protezione fino al 31/12/2026');
     }
 
     public function test_client_rule_and_grace_date_are_validated(): void

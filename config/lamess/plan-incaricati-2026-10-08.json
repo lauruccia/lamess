@@ -18,7 +18,9 @@
     "engine": "kosmos_v1"
   },
   "policies": {
-    "kosmos_extended_stop": "same_or_higher"
+    "kosmos_extended_stop": "same_or_higher",
+    "kosmos_compression": "skip",
+    "kosmos_rank_maintenance": "requirements"
   },
   "ranks": [
     {
@@ -243,7 +245,7 @@
     "source": "Presentazioni Lamèss Incaricati (s.3–9) e Seconda parte (s.4–9); valori confermati da Laura 08/10/2026. Diamond è l'ultima qualifica.",
     "client_rule": "min_amount",
     "client_min_amount": "150",
-    "rank_grace_until": null,
-    "rank_grace_days": 90
+    "rank_grace_until": "2026-12-31",
+    "rank_grace_days": null
   }
 }

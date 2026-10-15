@@ -96,26 +96,41 @@ final class ShopCatalogAdminTest extends TestCase
         $cat = ProductCategory::create(['name' => 'Viso']);
 
         Livewire::test(CreateProduct::class)->fillForm([
-            'sku' => 'CR1', 'name' => 'Crema Viso Notte', 'net_price' => '131.06557377', 'vat_rate' => '22', 'active' => true,
+            'sku' => 'CR1', 'name' => 'Crema Viso Notte', 'vat_rate' => '22', 'active' => true,
             'category_id' => $cat->id, 'track_stock' => true, 'stock_qty' => 12, 'images' => [UploadedFile::fake()->image('a.jpg', 600, 600)],
-        ])->call('create')->assertHasNoFormErrors();
+        ])->set('data.gross_price', '159.90')->call('create')->assertHasNoFormErrors();
 
         $p = Product::where('sku', 'CR1')->firstOrFail();
         $this->assertSame('crema-viso-notte', $p->slug);
         $this->assertSame('159.90', $p->grossPrice());
+        $this->assertSame('131.06557377', (string) $p->net_price);
         $this->assertSame(12, $p->stock_qty);
         $this->assertCount(1, $p->imagePaths());
         Storage::disk('local')->assertExists($p->imagePaths()[0]);
     }
 
-    public function test_net_price_field_fills_the_gross_price_shown_to_the_customer(): void
+    public function test_gross_price_field_fills_the_hidden_net_price(): void
     {
         $this->plan();
         $this->admin();
 
-        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'G1', 'name' => 'Da netto', 'vat_rate' => '22'])
-            ->set('data.net_price', '131.07')->assertSet('data.gross_price', '159.91')
-            ->set('data.vat_rate', '10')->assertSet('data.gross_price', '144.18');
+        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'G1', 'name' => 'Da lordo', 'vat_rate' => '22'])
+            ->set('data.gross_price', '1500')->assertSet('data.net_price', '1229.50819672')
+            ->set('data.vat_rate', '10')->assertSet('data.net_price', '1363.63636364');
+    }
+
+    public function test_compare_and_shipping_are_entered_gross_and_saved_net(): void
+    {
+        $this->plan();
+        $this->admin();
+
+        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'G2', 'name' => 'Lordo', 'vat_rate' => '22'])
+            ->set('data.gross_price', '100')->set('data.compare_at_gross', '122')->set('data.shipping_gross', '12.20')
+            ->call('create')->assertHasNoFormErrors();
+        $p = Product::where('sku', 'G2')->firstOrFail();
+        $this->assertSame('100.00', $p->net_price !== null ? number_format((float) (string) $p->net_price * 1.22, 2, '.', '') : null);
+        $this->assertSame('122.00', $p->compareAtGross());
+        $this->assertSame('10.00', number_format((float) (string) $p->shipping_net, 2, '.', ''));
     }
 
     public function test_untracked_stock_is_saved_as_null_and_compare_price_must_be_higher(): void
@@ -123,9 +138,11 @@ final class ShopCatalogAdminTest extends TestCase
         $this->plan();
         $this->admin();
 
-        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'S1', 'name' => 'Senza stock', 'net_price' => '100', 'vat_rate' => '22', 'track_stock' => false, 'stock_qty' => 5, 'compare_at_net' => '80'])
-            ->call('create')->assertHasFormErrors(['compare_at_net']);
-        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'S1', 'name' => 'Senza stock', 'net_price' => '100', 'vat_rate' => '22', 'track_stock' => false, 'stock_qty' => 5, 'compare_at_net' => '150'])
+        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'S1', 'name' => 'Senza stock', 'vat_rate' => '22', 'track_stock' => false, 'stock_qty' => 5])
+            ->set('data.gross_price', '122')->set('data.compare_at_gross', '97.6')
+            ->call('create')->assertHasFormErrors(['compare_at_gross']);
+        Livewire::test(CreateProduct::class)->fillForm(['sku' => 'S1', 'name' => 'Senza stock', 'vat_rate' => '22', 'track_stock' => false, 'stock_qty' => 5])
+            ->set('data.gross_price', '122')->set('data.compare_at_gross', '183')
             ->call('create')->assertHasNoFormErrors();
         $p = Product::where('sku', 'S1')->firstOrFail();
         $this->assertNull($p->stock_qty);

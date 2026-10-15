@@ -184,7 +184,6 @@ body.fi-body, .fi-body { font-family: var(--lm-font-text); background: var(--lm-
 .lm-product-form .fi-sc-tabs > .fi-tabs { width: 100%; }
 .lm-product-form .fi-sc-tabs > .fi-tabs .fi-tabs-item { flex: 1 1 0; justify-content: center; }
 .lm-product-form .fi-sc-tabs > .fi-sc-tabs-tab { padding: 1.25rem; }
-.lm-product-form .lm-stock-row { align-items: start; padding-top: .5rem; border-top: 1px solid rgb(187 180 175 / .3); }
 .lm-product-side { display: grid; gap: 1.25rem; }
 @media (min-width: 1280px) { .lm-product-side { position: sticky; top: 5.5rem; } }
 

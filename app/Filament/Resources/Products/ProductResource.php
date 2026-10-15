@@ -292,50 +292,39 @@ class ProductResource extends Resource
                             ->disk('local')->directory('shop/products')->visibility('private')->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): string => self::storeOptimized($file))
                             ->getUploadedFileUsing(fn (FileUpload $component, string $file, string|array|null $names): ?array => self::previewFile($component, $file, $names))->panelLayout('grid'),
                     ]),
-                    Section::make('Prezzo e disponibilità')->icon('heroicon-o-currency-euro')->columns(['default' => 1, 'md' => 2, '2xl' => 4])->schema([
-                        TextInput::make('net_price')->label('Prezzo IVA esclusa')->prefix('€')->numeric()->minValue(0)->required(fn (Get $get) => blank($get('variants')))->default(0)->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : 0)
-                            ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('gross_price', self::grossFromNet($state, $get('vat_rate'))))
-                            ->helperText(fn (Get $get) => filled($get('variants')) ? 'Con le varianti ogni variante ha il suo prezzo: questo valore si aggiorna da solo al più basso.' : 'Inserisci il prezzo senza IVA: il cliente vede sempre il prezzo IVA inclusa.'),
-                        TextInput::make('vat_rate')->label('Aliquota IVA')->suffix('%')->numeric()->required()->default(22)->datalist(['22', '10', '5', '4', '0'])->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state): void {
-                                $set('gross_price', self::grossFromNet($get('net_price'), $state));
-                                $set('compare_at_gross', filled($get('compare_at_net')) ? self::grossFromNet($get('compare_at_net'), $state) : null);
-                            }),
-                        TextInput::make('gross_price')->label('Prezzo al pubblico (IVA incl., calcolato)')->prefix('€')->numeric()->readOnly()->dehydrated(false)
-                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record ? self::grossFromNet($record->net_price, $record->vat_rate) : null))
-                            ->helperText('È il prezzo che vede il cliente, con l\'aliquota indicata.'),
-                        TextInput::make('compare_at_net')->label('Prezzo di listino barrato (IVA esclusa)')->prefix('€')->numeric()->minValue(0)->gt('net_price')->nullable()->live(onBlur: true)
-                            ->validationMessages(['gt' => 'Il listino barrato deve essere più alto del prezzo.'])
-                            ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('compare_at_gross', filled($state) ? self::grossFromNet($state, $get('vat_rate')) : null))
-                            ->helperText('Facoltativo: se è più alto del prezzo, nel negozio compare barrato con il risparmio.'),
-                        TextInput::make('compare_at_gross')->label('Listino barrato (IVA incl., calcolato)')->prefix('€')->numeric()->readOnly()->dehydrated(false)
-                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->compare_at_net !== null ? self::grossFromNet($record->compare_at_net, $record->vat_rate) : null)),
-                        TextInput::make('shipping_net')->label('Costo di spedizione del prodotto (IVA esclusa)')->prefix('€')->numeric()->minValue(0)->live(onBlur: true)
-                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
-                            ->afterStateUpdated(fn (Set $set, $state) => $set('shipping_gross', filled($state) ? self::grossFromNet($state, config('lamess.default_vat_rate')) : null))
-                            ->helperText('Vuoto: vale la tariffa generale (Vendite → Spedizioni). 0: spedizione gratuita per questo prodotto. Con più prodotti nel carrello si paga la voce più alta.'),
-                        TextInput::make('shipping_gross')->label('Spedizione del prodotto (IVA incl., calcolata)')->prefix('€')->numeric()->readOnly()->dehydrated(false)
-                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->shipping_net !== null ? self::grossFromNet($record->shipping_net, config('lamess.default_vat_rate')) : null)),
-                        TextInput::make('weight_g')->label('Peso (g)')->numeric()->integer()->minValue(0)->nullable()->helperText('Serve per le tariffe di spedizione a fascia di peso.'),
-                        Grid::make(['default' => 1, 'md' => 3])->columnSpanFull()->extraAttributes(['class' => 'lm-stock-row'])->schema([
-                            Toggle::make('track_stock')->label('Tieni traccia della giacenza')->dehydrated(false)->live()->inline(false)
-                                ->afterStateHydrated(fn (Toggle $c, ?Model $record) => $c->state($record?->stock_qty !== null))
-                                ->helperText('Spento: il prodotto è sempre disponibile.'),
-                            TextInput::make('stock_qty')->label('Pezzi disponibili')->numeric()->integer()->visible(fn (Get $get) => (bool) $get('track_stock'))
-                                ->required(fn (Get $get) => (bool) $get('track_stock'))->dehydrateStateUsing(fn ($state, Get $get) => $get('track_stock') ? (int) $state : null)
-                                ->dehydratedWhenHidden(),
-                            Toggle::make('allow_backorder')->label('Vendi anche a giacenza esaurita')->visible(fn (Get $get) => (bool) $get('track_stock'))->inline(false),
+                    Section::make('Prezzo')->icon('heroicon-o-currency-euro')->description('Inserisci i prezzi IVA inclusa, come li vede il cliente: l\'importo IVA esclusa si calcola e si salva da solo.')
+                        ->columns(['default' => 1, 'md' => 3])->extraAttributes(['class' => 'lm-price-section'])->schema([
+                            TextInput::make('gross_price')->label('Prezzo IVA inclusa')->prefix('€')->numeric()->minValue(0)->required(fn (Get $get) => blank($get('variants')))->live(onBlur: true)->dehydrated(false)
+                                ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record ? self::grossFromNet($record->net_price, $record->vat_rate) : null))
+                                ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('net_price', self::netFromGross($state, $get('vat_rate'))))
+                                ->helperText(fn (Get $get) => filled($get('variants')) ? 'Con le varianti ogni variante ha il suo prezzo: questo si aggiorna da solo al più basso.' : 'È il prezzo che vede il cliente.'),
+                            TextInput::make('vat_rate')->label('Aliquota IVA')->suffix('%')->numeric()->required()->default(22)->datalist(['22', '10', '5', '4', '0'])->live(onBlur: true)
+                                ->afterStateUpdated(function (Get $get, Set $set, $state): void {
+                                    $set('net_price', self::netFromGross($get('gross_price'), $state));
+                                    $set('compare_at_net', filled($get('compare_at_gross')) ? self::netFromGross($get('compare_at_gross'), $state) : null);
+                                })
+                                ->helperText('Il prezzo IVA esclusa si calcola da solo.'),
+                            TextInput::make('compare_at_gross')->label('Listino barrato IVA inclusa')->prefix('€')->numeric()->minValue(0)->gt('gross_price')->nullable()->live(onBlur: true)->dehydrated(false)
+                                ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->compare_at_net !== null ? self::grossFromNet($record->compare_at_net, $record->vat_rate) : null))
+                                ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('compare_at_net', filled($state) ? self::netFromGross($state, $get('vat_rate')) : null))
+                                ->validationMessages(['gt' => 'Il listino barrato deve essere più alto del prezzo.'])
+                                ->helperText('Facoltativo: nel negozio compare barrato, con il risparmio.'),
+                            // Importi IVA esclusa: non si vedono, si ricavano dai prezzi IVA inclusa e restano quelli salvati e usati da ordini e fatture.
+                            Hidden::make('net_price')->default(0)->dehydrateStateUsing(fn ($state) => filled($state) ? $state : 0),
+                            Hidden::make('compare_at_net')->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
                         ]),
-                    ]),
                     Section::make('Commissioni e durata (Piano Incaricati)')->icon('heroicon-o-star')
                         ->description('Esempio: Box da 150 € con V.A.P. 100 € → i compensi si calcolano su 100 €. Un prodotto da 5 box può valere 5 clienti, uno da 10 box può valere 1 cliente per 12 mesi.')
                         ->columns(['default' => 1, 'md' => 3])->schema([
-                            Select::make('vap_mode')->label('V.A.P. (importo su cui si calcolano le commissioni)')->native(false)->live()
+                            Select::make('vap_mode')->label('V.A.P.')->native(false)->live()
                                 ->options([Product::VAP_PERCENT => 'Percentuale del prezzo (IVA incl.)', Product::VAP_FIXED => 'Importo fisso per pezzo'])
                                 ->placeholder('Come da piano (quota unica)')
                                 ->afterStateUpdated(fn (Set $set, $state) => filled($state) ? null : $set('vap_value', null))
-                                ->helperText('Vuoto = vale la quota V.A.P. impostata nel piano compensi.'),
+                                ->helperText('Importo su cui si calcolano le commissioni. Vuoto = quota del piano compensi.'),
+                            TextInput::make('customer_count')->label('Quanti clienti vale')->numeric()->integer()->minValue(1)->maxValue(1000)->placeholder('1')->live(onBlur: true)
+                                ->helperText('Clienti che conta per l\'incaricato chi compra questo prodotto (una volta per ordine, non per pezzo). Vuoto = 1.'),
+                            TextInput::make('customer_validity_months')->label('Durata (mesi)')->numeric()->integer()->minValue(1)->maxValue(120)->placeholder('1')->live(onBlur: true)
+                                ->helperText('Mesi di validità come cliente, poi scade. Vuoto = 1. Se riordina prima della scadenza, i mesi si sommano.'),
                             TextInput::make('vap_value')->label(fn (Get $get) => $get('vap_mode') === Product::VAP_FIXED ? 'V.A.P. in euro per pezzo' : 'V.A.P. in % del prezzo')
                                 ->numeric()->minValue(0)->maxValue(fn (Get $get) => $get('vap_mode') === Product::VAP_PERCENT ? 100 : null)->live(onBlur: true)
                                 ->prefix(fn (Get $get) => $get('vap_mode') === Product::VAP_FIXED ? '€' : null)->suffix(fn (Get $get) => $get('vap_mode') === Product::VAP_PERCENT ? '%' : null)
@@ -343,10 +332,6 @@ class ProductResource extends Resource
                                 ->helperText('Percentuale: sul prezzo IVA inclusa già scontato. Importo fisso: moltiplicato per i pezzi acquistati.'),
                             Toggle::make('makes_client')->label('Rende cliente a prescindere dall\'importo')->live()->columnSpanFull()
                                 ->helperText('Spento (normale): chi compra diventa cliente solo se il totale dell\'ordine raggiunge l\'importo minimo del piano, qualunque siano i prodotti. Acceso: chi compra questo prodotto è sempre cliente, anche sotto l\'importo minimo.'),
-                            TextInput::make('customer_count')->label('Quanti clienti vale')->numeric()->integer()->minValue(1)->maxValue(1000)->placeholder('1')->live(onBlur: true)
-                                ->helperText('Quanti clienti conta per l\'incaricato chi compra questo prodotto (conta una volta per ordine, non per pezzo). Vuoto = 1.'),
-                            TextInput::make('customer_validity_months')->label('Durata (mesi)')->numeric()->integer()->minValue(1)->maxValue(120)->placeholder('1')->live(onBlur: true)
-                                ->helperText('Per quanti mesi vale come cliente, poi scade. Vuoto = 1 mese. Se il cliente riordina prima della scadenza, i mesi si sommano dalla scadenza.'),
                             Text::make(fn (Get $get): string => self::commissionSummary($get))->color('gray')->columnSpanFull(),
                         ]),
                     // ───────── Impostazioni facoltative, ordinate per tab: si aprono solo quando servono ─────────
@@ -457,6 +442,23 @@ class ProductResource extends Resource
                         Select::make('kmoney_percent')->label('% pagabile in KMoney')->default(100)->native(false)->selectablePlaceholder(false)
                             ->options([0 => 'Non accettato (solo carta/bonifico)', 25 => '25% in KMoney', 50 => '50% in KMoney', 75 => '75% in KMoney', 100 => '100% in KMoney'])
                             ->helperText('Quota del prezzo che il cliente può pagare col saldo KMoney. Le varianti usano la % del prodotto principale.'),
+                    ]),
+                    Section::make('Spedizione')->icon('heroicon-o-truck')->schema([
+                        TextInput::make('shipping_gross')->label('Spedizione del prodotto (IVA incl.)')->prefix('€')->numeric()->minValue(0)->live(onBlur: true)->dehydrated(false)
+                            ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->shipping_net !== null ? self::grossFromNet($record->shipping_net, config('lamess.default_vat_rate')) : null))
+                            ->afterStateUpdated(fn (Set $set, $state) => $set('shipping_net', filled($state) ? self::netFromGross($state, config('lamess.default_vat_rate')) : null))
+                            ->helperText('Vuoto: vale la tariffa generale (Vendite → Spedizioni). 0: spedizione gratuita. Con più prodotti nel carrello si paga la voce più alta.'),
+                        Hidden::make('shipping_net')->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                        TextInput::make('weight_g')->label('Peso (g)')->numeric()->integer()->minValue(0)->nullable()->suffix('g')->helperText('Serve per le tariffe di spedizione a fascia di peso.'),
+                    ]),
+                    Section::make('Giacenza')->icon('heroicon-o-archive-box')->schema([
+                        Toggle::make('track_stock')->label('Tieni traccia della giacenza')->dehydrated(false)->live()
+                            ->afterStateHydrated(fn (Toggle $c, ?Model $record) => $c->state($record?->stock_qty !== null))
+                            ->helperText('Spento: il prodotto è sempre disponibile.'),
+                        TextInput::make('stock_qty')->label('Pezzi disponibili')->numeric()->integer()->visible(fn (Get $get) => (bool) $get('track_stock'))
+                            ->required(fn (Get $get) => (bool) $get('track_stock'))->dehydrateStateUsing(fn ($state, Get $get) => $get('track_stock') ? (int) $state : null)
+                            ->dehydratedWhenHidden(),
+                        Toggle::make('allow_backorder')->label('Vendi anche a giacenza esaurita')->visible(fn (Get $get) => (bool) $get('track_stock')),
                     ]),
                     Section::make('Catalogo')->icon('heroicon-o-folder')->schema([
                         Select::make('category_id')->label('Categoria')->options(fn () => ProductCategory::treeOptions())->searchable()->preload()

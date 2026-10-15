@@ -68,6 +68,8 @@ $res   = PeriodCalculator::calculate($input);            // PeriodResult
 $res->lines;        // righe con bonus, beneficiario, importo, base, aliquota, spiegazione
 $res->inputHash;    // hash canonico dello snapshot
 ImpactReport::compare($base, $alt);                      // simulazione "cosa cambia se…"
+IncaricatiSimulator::run($period, $plan, $changes);        // «cosa succede se» sulla rete (pagina Simulazione incaricati), sola lettura
+IncaricatiSimulator::currentTree($period, $plan);          // albero reale del periodo con requisiti mancanti (stesse righe del risultato, nessuna modifica)
 ```
 Il motore non tocca il database: `SnapshotBuilder::build($period)` costruisce `Node`, `Movement` e `PriorState` dal database (per il Piano Incaricati anche i clienti e i mesi di validità). Un `Node` porta `rankHoldUntil` (data di «Mantieni qualifica») e il piano porta `kosmos.activation_date`.
 

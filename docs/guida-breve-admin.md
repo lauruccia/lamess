@@ -11,7 +11,7 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 
 ## Il menu in alto
 - **Rete**: Incaricati, Albero della rete, Elenco per livelli, Domande IVD, Documenti KYC, Canoni annuali, Clienti (FAN).
-- **Compensi**: Piano compensi, Periodi, Liquidazioni, Pagamenti, Bonus di Struttura.
+- **Compensi**: Piano compensi, Periodi, Liquidazioni, Pagamenti, Bonus di Struttura, Simulazione incaricati (prova «cosa succede se» su rete e qualifiche, senza scrivere nulla: all'apertura vedi la rete di oggi come albero o come elenco per livelli, con cosa manca a ciascuno per salire).
 - **Vendite**: Ordini, Abbonamenti, Prodotti, Sconti, Spedizioni, Fatture, Note di credito.
 - **Assistenza**: Ticket e reclami, Novità, Materiali, Eventi, Casi di conformità, Sanzioni.
 - **Sistema** (solo titolare): Utenti, Impostazioni di sistema, Log di audit, Backup, Controllo messa online.

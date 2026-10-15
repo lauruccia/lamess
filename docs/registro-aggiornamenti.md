@@ -301,3 +301,4 @@
 - I pulsanti «+ clienti», «+ agenti», «sposta» sono attivi fin da subito; dopo la simulazione l'albero diventa quello «dopo» con le stesse informazioni.
 - `IncaricatiSimulator::currentTree()` (sola lettura, nessuna scrittura nel database); albero di base in cache per 2 minuti.
 - Albero della simulazione con due viste, come nelle pagine «Albero rete» ed «Elenco incaricati per livelli»: **Vista albero** (grafico con zoom e trascinamento, riquadri a colori della pietra, evidenziati quelli che cambiano, clic per dettagli e azioni) ed **Elenco per livelli** (tabella con livello, qualifica prima → dopo, diretti, clienti, requisiti mancanti, compensi e pulsanti). La vista scelta resta ricordata nel browser.
+- Riepilogo della simulazione: tooltip su «Qualifiche che salgono/scendono» (chi, prima → dopo) e su «Compensi del mese» (suddivisione per tipo e incaricati con la variazione maggiore), con i codici di chi sale/scende sotto il numero.

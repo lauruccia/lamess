@@ -126,15 +126,49 @@
             @if($error)<div class="err" role="alert">{{ $error }}</div>@endif
 
             @if($result)
-                @php $s = $result['summary']; @endphp
+                @php
+                    $s = $result['summary'];
+                    $ups = array_values(array_filter($result['rows'], static fn (array $r) => $r['dir'] > 0));
+                    $downs = array_values(array_filter($result['rows'], static fn (array $r) => $r['dir'] < 0));
+                    $earners = array_values(array_filter($result['rows'], static fn (array $r) => (float) $r['earned_diff'] != 0));
+                    usort($earners, static fn (array $x, array $y) => abs((float) $y['earned_diff']) <=> abs((float) $x['earned_diff']));
+                    $moreEarners = max(0, count($earners) - 10);
+                    $earners = array_slice($earners, 0, 10);
+                @endphp
                 <div class="box">
                     <h3>Risultato per il periodo {{ $result['period'] }}</h3>
                     <div class="kpis">
                         <div class="kpi"><span class="muted">Modifiche simulate</span><b>{{ $s['clients'] }} clienti · {{ $s['orders'] }} ordini</b><span class="muted">{{ $s['virtual_agents'] }} agenti simulati · {{ $s['moves'] }} spostamenti</span></div>
-                        <div class="kpi"><span class="muted">Qualifiche che salgono</span><b class="{{ $s['rank_up'] ? 'up' : '' }}">{{ $s['rank_up'] }}</b></div>
-                        <div class="kpi"><span class="muted">Qualifiche che scendono</span><b class="{{ $s['rank_down'] ? 'down' : '' }}">{{ $s['rank_down'] }}</b></div>
-                        <div class="kpi"><span class="muted">Compensi del mese</span><b>{{ $eur($s['total_before']) }} € → {{ $eur($s['total_after']) }} €</b><span class="{{ $cls($s['total_diff']) }}">{{ $signed($s['total_diff']) }} €</span></div>
+                        <div class="kpi"><span class="muted">Qualifiche che salgono</span>
+                            <b class="tip {{ $s['rank_up'] ? 'up' : '' }}" tabindex="0">{{ $s['rank_up'] }}
+                                <span class="tipbox" role="tooltip">
+                                    @if($ups)<strong>Chi sale di qualifica</strong><ul>@foreach($ups as $r)<li>{{ $r['label'] }}: {{ $r['rank_before'] }} → <span class="up">{{ $r['rank_after'] }} ▲</span>@if($r['clients_before'] !== $r['clients_after']) (clienti {{ $r['clients_before'] }} → {{ $r['clients_after'] }})@endif</li>@endforeach</ul>@else Nessun incaricato sale di qualifica.@endif
+                                </span>
+                            </b>
+                            <span class="muted">@if($ups){{ implode(', ', array_map(static fn (array $r) => explode(' — ', $r['label'])[0], array_slice($ups, 0, 4))) }}{{ count($ups) > 4 ? ' e altri '.(count($ups) - 4) : '' }}@else nessuno @endif</span></div>
+                        <div class="kpi"><span class="muted">Qualifiche che scendono</span>
+                            <b class="tip {{ $s['rank_down'] ? 'down' : '' }}" tabindex="0">{{ $s['rank_down'] }}
+                                <span class="tipbox" role="tooltip">
+                                    @if($downs)<strong>Chi scende di qualifica</strong><ul>@foreach($downs as $r)<li>{{ $r['label'] }}: {{ $r['rank_before'] }} → <span class="down">{{ $r['rank_after'] }} ▼</span>@if($r['clients_before'] !== $r['clients_after']) (clienti {{ $r['clients_before'] }} → {{ $r['clients_after'] }})@endif</li>@endforeach</ul>@else Nessun incaricato scende di qualifica.@endif
+                                </span>
+                            </b>
+                            <span class="muted">@if($downs){{ implode(', ', array_map(static fn (array $r) => explode(' — ', $r['label'])[0], array_slice($downs, 0, 4))) }}{{ count($downs) > 4 ? ' e altri '.(count($downs) - 4) : '' }}@else nessuno @endif</span></div>
+                        <div class="kpi"><span class="muted">Compensi del mese</span>
+                            <b class="tip" tabindex="0" style="display:inline-block">{{ $eur($s['total_before']) }} € → {{ $eur($s['total_after']) }} €
+                                <span class="tipbox" role="tooltip" style="left:auto;right:0">
+                                    <strong>Come sono suddivisi i compensi del mese</strong>
+                                    @if($result['totals'])
+                                        <ul>@foreach($result['totals'] as $t)<li>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}: {{ $eur($t['before']) }} € → {{ $eur($t['after']) }} € (<span class="{{ $cls($t['diff']) }}">{{ $signed($t['diff']) }} €</span>)</li>@endforeach</ul>
+                                    @endif
+                                    @if($earners)
+                                        <strong style="display:block;margin-top:.5rem">A chi cambiano (variazione maggiore)</strong>
+                                        <ul>@foreach($earners as $r)<li>{{ $r['label'] }}: {{ $eur($r['earned_before']) }} € → {{ $eur($r['earned_after']) }} € (<span class="{{ $cls($r['earned_diff']) }}">{{ $signed($r['earned_diff']) }} €</span>)</li>@endforeach @if($moreEarners)<li>… e altri {{ $moreEarners }}</li>@endif</ul>
+                                    @endif
+                                </span>
+                            </b>
+                            <span class="{{ $cls($s['total_diff']) }}">{{ $signed($s['total_diff']) }} €</span></div>
                     </div>
+                    <p class="muted" style="margin:.5rem 0 0">Passa il mouse (o tocca) sui numeri per vedere chi sale o scende di qualifica e come si suddividono i compensi, per tipo e per incaricato.</p>
                 </div>
 
                 @foreach($result['warnings'] as $w)<div class="warn" role="status">{{ $w }}</div>@endforeach

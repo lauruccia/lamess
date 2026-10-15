@@ -31,7 +31,7 @@ final class ConsultantAccess
      *
      * @throws NetworkException
      */
-    public function grant(Consultant $consultant, string $email, bool $sendInvite = true): User
+    public function grant(Consultant $consultant, string $email, bool $sendInvite = true, array $profile = []): User
     {
         $email = mb_strtolower(trim($email));
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
@@ -44,7 +44,7 @@ final class ConsultantAccess
             throw new NetworkException("L'incaricato {$consultant->code} è cessato: non si crea un accesso.");
         }
 
-        $user = DB::transaction(function () use ($consultant, $email): User {
+        $user = DB::transaction(function () use ($consultant, $email, $profile): User {
             $existing = User::withoutGlobalScopes()->where('email', $email)->first();
             if ($existing !== null) {
                 if ($existing->isBackoffice()) {
@@ -54,9 +54,10 @@ final class ConsultantAccess
                     throw new NetworkException('Questa email è già collegata a un altro incaricato.');
                 }
                 $user = $existing;
+                $this->fillProfile($user, $consultant, $profile);
             } else {
                 $user = User::create(['name' => $consultant->name, 'email' => $email, 'password' => Str::random(40)]);
-                $this->createProfile($user, $consultant);
+                $this->createProfile($user, $consultant, $profile);
             }
 
             $consultant->update(['user_id' => $user->id, 'referral_code' => $consultant->referral_code ?? $this->newReferralCode()]);
@@ -95,14 +96,40 @@ final class ConsultantAccess
         return true;
     }
 
-    private function createProfile(User $user, Consultant $consultant): void
+    /** Campi del profilo che l'admin può compilare alla creazione (oltre a nome e codice fiscale). */
+    private const PROFILE_FIELDS = ['birth_date', 'birth_place', 'address', 'city', 'zip', 'province', 'country_code', 'phone', 'pec'];
+
+    /** @param array<string,mixed> $data */
+    private function createProfile(User $user, Consultant $consultant, array $data = []): void
     {
         $parts = preg_split('/\s+/', trim($consultant->name)) ?: [];
-        $first = array_shift($parts);
+        $first = filled($data['first_name'] ?? null) ? $data['first_name'] : array_shift($parts);
+        $last = filled($data['last_name'] ?? null) ? $data['last_name'] : ($parts === [] ? null : implode(' ', $parts));
+        $extra = array_filter(array_intersect_key($data, array_flip(self::PROFILE_FIELDS)), fn ($v): bool => filled($v));
         Profile::create([
-            'user_id' => $user->id, 'type' => 'private', 'first_name' => $first, 'last_name' => $parts === [] ? null : implode(' ', $parts),
+            'user_id' => $user->id, 'type' => 'private', 'first_name' => $first, 'last_name' => $last,
             'tax_code' => $consultant->person_key !== null && $consultant->person_key !== '' ? mb_strtoupper($consultant->person_key) : null,
-        ]);
+        ] + $extra);
+    }
+
+    /** Utente già registrato (es. cliente): si completano solo i dati ancora vuoti, senza sovrascrivere quelli scelti da lui. @param array<string,mixed> $data */
+    private function fillProfile(User $user, Consultant $consultant, array $data): void
+    {
+        $profile = Profile::where('user_id', $user->id)->first();
+        if ($profile === null) {
+            $this->createProfile($user, $consultant, $data);
+
+            return;
+        }
+        $fill = [];
+        foreach (array_intersect_key($data, array_flip(self::PROFILE_FIELDS)) as $key => $value) {
+            if (filled($value) && blank($profile->{$key})) {
+                $fill[$key] = $value;
+            }
+        }
+        if ($fill !== []) {
+            $profile->update($fill);
+        }
     }
 
     private function newReferralCode(): string

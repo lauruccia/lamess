@@ -288,3 +288,9 @@
 - Tecnico: `Domain/Career/NetworkTree` (dati e dettaglio), vista `site/area/_tree.blade.php`, script `public/js/lamess-tree.js` (nessuna libreria, nessun build). Se i dati dell'albero non si possono costruire resta il vecchio elenco ad albero.
 - Test: `AreaPagesTest` (dati dell'albero con radice l'incaricato e senza punti; scheda di dettaglio solo per il proprio ramo). Nessun commit.
 
+## 2026-10-15 — Scheda incaricato completa (admin e iscrizione da referral)
+- **Admin, Rete → Incaricati → Nuovo**: modulo a sezioni (Iscrizione, Anagrafica, Residenza e contatti, IBAN facoltativo). Nome e cognome separati, data e luogo di nascita (solo maggiorenni), residenza, nazione, telefono, PEC, IBAN e intestatario facoltativi. Sponsor facoltativo. I dati personali si salvano nel profilo dell'utente, quindi l'email è obbligatoria se si compilano anagrafica o contatti; se l'utente esiste già si completano solo i campi vuoti.
+- **Iscrizione da referral (`/area/diventa-incaricato`)**: vista a quattro sezioni (sponsor, anagrafica, residenza e contatti, conferma) con nazione e PEC; chi arriva da link, cookie o invito ha lo sponsor **bloccato** (il valore inviato nel form viene ignorato); IBAN e documenti restano nell'onboarding dopo la firma.
+- Nessuna migrazione. Non salvati perché non esistono nel profilo: profilo fiscale, tipo autofattura, posizione fiscale, lingua (presenti nei dati Odoo).
+- Tecnico: `ConsultantAccess::grant()` riceve i dati del profilo; `AreaController::lockedSponsor()`.
+- Test: `ConsultantAccessTest` (profilo completo con sponsor assente e IBAN, email obbligatoria con dati personali, minorenni e IBAN non validi) e `SitePagesTest` (sponsor del link non modificabile).

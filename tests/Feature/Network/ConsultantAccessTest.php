@@ -50,7 +50,7 @@ final class ConsultantAccessTest extends TestCase
         $this->openPeriod('2026-10');
 
         Livewire::test(CreateConsultant::class)
-            ->fillForm(['name' => 'Linda Gean', 'person_key' => 'gnelnd80a41h501x', 'email' => ' Linda@Example.com ', 'since' => '2026-10-14 08:00:00'])
+            ->fillForm(['first_name' => 'Linda', 'last_name' => 'Gean', 'person_key' => 'gnelnd80a41h501x', 'email' => ' Linda@Example.com ', 'since' => '2026-10-14 08:00:00'])
             ->call('create')->assertHasNoFormErrors();
 
         $c = Consultant::where('name', 'Linda Gean')->firstOrFail();
@@ -70,11 +70,49 @@ final class ConsultantAccessTest extends TestCase
         $this->openPeriod('2026-10');
         $before = User::count();
 
-        Livewire::test(CreateConsultant::class)->fillForm(['name' => 'Senza Email', 'since' => '2026-10-14 08:00:00'])->call('create')->assertHasNoFormErrors();
+        Livewire::test(CreateConsultant::class)->fillForm(['first_name' => 'Senza', 'last_name' => 'Email', 'since' => '2026-10-14 08:00:00'])->call('create')->assertHasNoFormErrors();
 
         $this->assertNull(Consultant::where('name', 'Senza Email')->firstOrFail()->user_id);
         $this->assertSame($before, User::count());
         Notification::assertNothingSent();
+    }
+
+    public function test_creating_with_full_personal_data_saves_the_profile_and_sponsor_is_optional(): void
+    {
+        Notification::fake();
+        $this->actingAs($this->admin());
+        $this->openPeriod('2026-10');
+
+        Livewire::test(CreateConsultant::class)
+            ->fillForm([
+                'first_name' => 'Maria Rosa', 'last_name' => 'De Luca', 'person_key' => 'dlcmrs86c52h224x', 'birth_date' => '1986-03-12', 'birth_place' => 'Reggio Calabria',
+                'address' => 'Via Marina 12', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC', 'country_code' => 'IT', 'phone' => '+39 347 000 0000',
+                'email' => 'maria@example.com', 'iban' => 'IT60 X054 2811 1010 0000 0123 456', 'since' => '2026-10-14 08:00:00',
+            ])->call('create')->assertHasNoFormErrors();
+
+        $c = Consultant::where('name', 'Maria Rosa De Luca')->firstOrFail();
+        $this->assertNull($c->sponsor_id);
+        $p = User::where('email', 'maria@example.com')->firstOrFail()->profile;
+        $this->assertSame(['Maria Rosa', 'De Luca', 'DLCMRS86C52H224X', 'Via Marina 12', '89100', 'RC'], [$p->first_name, $p->last_name, $p->tax_code, $p->address, $p->zip, $p->province]);
+        $this->assertSame('1986-03-12', $p->birth_date->format('Y-m-d'));
+        $this->assertSame('+39 347 000 0000', $p->phone);
+        $this->assertSame(['IT60X0542811101000000123456', 'Maria Rosa De Luca'], [$c->iban, $c->iban_holder]);
+    }
+
+    public function test_personal_data_without_email_is_refused_and_minors_are_refused(): void
+    {
+        $this->actingAs($this->admin());
+        $this->openPeriod('2026-10');
+
+        Livewire::test(CreateConsultant::class)
+            ->fillForm(['first_name' => 'Anna', 'last_name' => 'Bianchi', 'city' => 'Roma', 'since' => '2026-10-14 08:00:00'])
+            ->call('create')->assertHasFormErrors(['email']);
+        Livewire::test(CreateConsultant::class)
+            ->fillForm(['first_name' => 'Anna', 'last_name' => 'Bianchi', 'birth_date' => now()->subYears(16)->toDateString(), 'email' => 'anna@example.com', 'since' => '2026-10-14 08:00:00'])
+            ->call('create')->assertHasFormErrors(['birth_date']);
+        Livewire::test(CreateConsultant::class)
+            ->fillForm(['first_name' => 'Anna', 'last_name' => 'Bianchi', 'iban' => 'IT00', 'since' => '2026-10-14 08:00:00'])
+            ->call('create')->assertHasFormErrors(['iban']);
     }
 
     public function test_the_invited_user_can_choose_a_password_and_log_in(): void

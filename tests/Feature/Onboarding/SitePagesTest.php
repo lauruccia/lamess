@@ -58,6 +58,19 @@ final class SitePagesTest extends TestCase
         $this->post('/accedi', ['email' => 'anna@example.test', 'password' => 'una-password-lunga'])->assertRedirect('/area');
     }
 
+    public function test_sponsor_from_the_referral_link_cannot_be_changed_when_applying(): void
+    {
+        Storage::fake();
+        $s = $this->activeSponsor();
+        $this->withUnencryptedCookie('lm_ref', $s->referral_code)->post('/registrazione', $this->regData())->assertRedirect('/area');
+
+        $this->get('/area/diventa-incaricato')->assertOk()->assertSee('Il tuo sponsor')->assertSee($s->code)->assertDontSee('name="sponsor_code"', false);
+        $form = ['sponsor_code' => 'ALTRO99', 'tax_code' => 'BNCNNA85C41H501Z', 'birth_date' => '1985-03-01', 'birth_place' => 'Roma', 'address' => 'Via Po 2', 'city' => 'Roma', 'zip' => '00100', 'country_code' => 'IT', 'pec' => 'anna@pec.it', 'accept' => '1'];
+        $this->post('/area/diventa-incaricato', $form)->assertRedirect('/area/diventa-incaricato');
+
+        $this->assertSame($s->id, IvdContract::firstOrFail()->sponsor_id);
+    }
+
     public function test_area_requires_login(): void
     {
         $this->get('/area')->assertRedirect('/accedi');

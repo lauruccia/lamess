@@ -8,6 +8,8 @@ use App\Domain\Network\ConsultantAccess;
 use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Network\NetworkException;
 use App\Domain\Network\NetworkService;
+use App\Domain\Onboarding\OnboardingException;
+use App\Domain\Onboarding\OnboardingService;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\ConsultantAccessAction;
 use App\Models\Consultant;
@@ -24,9 +26,11 @@ class CreateConsultant extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        $name = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')) ?: (string) ($data['name'] ?? '');
+
         try {
             $consultant = app(NetworkService::class)->enroll(
-                ['code' => auth()->user()?->isSuperAdmin() === true && filled($data['code'] ?? null) ? $data['code'] : app(ConsultantCodeGenerator::class)->next(), 'name' => $data['name'], 'person_key' => $data['person_key'] ?? null],
+                ['code' => auth()->user()?->isSuperAdmin() === true && filled($data['code'] ?? null) ? $data['code'] : app(ConsultantCodeGenerator::class)->next(), 'name' => $name, 'person_key' => $data['person_key'] ?? null],
                 ! empty($data['sponsor_id']) ? Consultant::findOrFail($data['sponsor_id']) : null,
                 new DateTimeImmutable((string) $data['since'], new DateTimeZone('UTC')),
             );
@@ -35,10 +39,18 @@ class CreateConsultant extends CreateRecord
             throw new Halt;
         }
 
+        if (filled($data['iban'] ?? null)) {
+            try {
+                app(OnboardingService::class)->saveBankDetails($consultant, (string) $data['iban'], filled($data['iban_holder'] ?? null) ? (string) $data['iban_holder'] : $name);
+            } catch (OnboardingException $e) {
+                Notification::make()->title('Incaricato creato, ma IBAN non salvato')->body($e->getMessage().' Lo può inserire l\'incaricato dall\'onboarding.')->warning()->persistent()->send();
+            }
+        }
+
         if (filled($data['email'] ?? null)) {
             try {
                 $access = app(ConsultantAccess::class);
-                $access->grant($consultant, (string) $data['email']);
+                $access->grant($consultant, (string) $data['email'], true, array_intersect_key($data, array_flip(['first_name', 'last_name', 'birth_date', 'birth_place', 'address', 'city', 'zip', 'province', 'country_code', 'phone', 'pec'])));
                 ConsultantAccessAction::notifyOutcome((string) $data['email'], $access->inviteSent);
             } catch (NetworkException $e) {
                 Notification::make()->title('Incaricato creato, ma accesso non creato')->body($e->getMessage().' Puoi crearlo dalla scheda con «Crea accesso».')->warning()->persistent()->send();

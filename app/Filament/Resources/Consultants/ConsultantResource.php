@@ -9,6 +9,7 @@ use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
 use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Onboarding\BadgeService;
+use App\Domain\Onboarding\Iban;
 use App\Domain\Plan\ActiveStatus;
 use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\GatedByPermission;
@@ -84,22 +85,59 @@ class ConsultantResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
+        $adult = now()->subYears((int) config('lamess.adult_age'))->toDateString();
+        $personal = ['birth_date', 'birth_place', 'address', 'city', 'zip', 'province', 'phone', 'pec'];
+
         return $schema->components([
-            TextInput::make('code')->label('Codice attività')->required()->unique('consultants', 'code')
-                ->default(fn (): string => app(ConsultantCodeGenerator::class)->next())
-                ->disabled(fn (): bool => auth()->user()?->isSuperAdmin() !== true)->dehydrated()
-                ->helperText('Assegnato in automatico; lo modifica solo il super admin.'),
-            TextInput::make('name')->label('Nome e cognome')->required(),
-            TextInput::make('person_key')->label('Codice fiscale')->helperText('Serve a riconoscere la stessa persona (re-iscrizione dopo 180 giorni).'),
-            Select::make('sponsor_id')->label('Sponsor')->searchable()
-                ->getSearchResultsUsing(fn (string $search) => Consultant::where('status', 'active')->where(fn ($w) => $w->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))->limit(30)->pluck('name', 'id'))
-                ->getOptionLabelUsing(fn ($value) => Consultant::find($value)?->name)
-                ->helperText('Non modificabile dopo l\'iscrizione.'),
-            TextInput::make('email')->label('Email di accesso (facoltativa)')->email()->trim()->visibleOn('create')
-                ->helperText('Se la compili, crea l’accesso al portale e, se l’invio email è attivo, manda all’incaricato il link per scegliere la password. Puoi anche farlo dopo dalla scheda.'),
-            DateTimePicker::make('since')->label('Firma Lettera IVD (ora italiana)')->timezone('Europe/Rome')->required()->default(now())->seconds(false),
+            Section::make('Iscrizione')->description('Codice, sponsor e data della lettera. Lo sponsor è facoltativo e non si cambia dopo l\'iscrizione.')->columns(2)->schema([
+                TextInput::make('code')->label('Codice attività')->required()->unique('consultants', 'code')
+                    ->default(fn (): string => app(ConsultantCodeGenerator::class)->next())
+                    ->disabled(fn (): bool => auth()->user()?->isSuperAdmin() !== true)->dehydrated()
+                    ->helperText('Assegnato in automatico; lo modifica solo il super admin.'),
+                Select::make('sponsor_id')->label('Sponsor (facoltativo)')->searchable()
+                    ->getSearchResultsUsing(fn (string $search) => Consultant::where('status', 'active')->where(fn ($w) => $w->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))->limit(30)->pluck('name', 'id'))
+                    ->getOptionLabelUsing(fn ($value) => Consultant::find($value)?->name)
+                    ->helperText('Cerca per nome o codice. Se resta vuoto l\'incaricato entra senza sponsor. Non modificabile dopo l\'iscrizione.'),
+                DateTimePicker::make('since')->label('Firma Lettera IVD (ora italiana)')->timezone('Europe/Rome')->required()->default(now())->seconds(false),
+            ]),
+            Section::make('Anagrafica')->description('Solo persone fisiche maggiorenni.')->columns(2)->schema([
+                TextInput::make('first_name')->label('Nome')->required()->visibleOn('create'),
+                TextInput::make('last_name')->label('Cognome')->required()->visibleOn('create'),
+                TextInput::make('name')->label('Nome e cognome')->required()->visibleOn('edit')->columnSpanFull(),
+                DatePicker::make('birth_date')->label('Data di nascita')->maxDate($adult)->visibleOn('create'),
+                TextInput::make('birth_place')->label('Luogo di nascita')->visibleOn('create'),
+                TextInput::make('person_key')->label('Codice fiscale')->trim()->maxLength(20)
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? mb_strtoupper(trim((string) $state)) : null)
+                    ->helperText('Serve a riconoscere la stessa persona (re-iscrizione dopo 180 giorni).')->columnSpanFull(),
+            ]),
+            Section::make('Residenza e contatti')->description('Per la lettera d\'incarico. IBAN e documenti si completano dopo, dall\'onboarding dell\'incaricato.')->columns(2)->visibleOn('create')->schema([
+                TextInput::make('address')->label('Indirizzo di residenza')->columnSpanFull(),
+                TextInput::make('city')->label('Città'),
+                TextInput::make('zip')->label('CAP')->maxLength(10),
+                TextInput::make('province')->label('Provincia')->maxLength(3),
+                Select::make('country_code')->label('Nazione')->default('IT')->searchable()->options(self::COUNTRIES),
+                TextInput::make('phone')->label('Telefono')->tel(),
+                TextInput::make('pec')->label('PEC')->email()->trim(),
+                TextInput::make('email')->label('Email di accesso')->email()->trim()->requiredWith($personal)->columnSpanFull()
+                    ->helperText('Crea l\'accesso al portale e manda il link per scegliere la password (se l\'invio email è attivo). Obbligatoria se inserisci anagrafica o contatti, perché i dati si salvano nel profilo dell\'utente.'),
+            ]),
+            Section::make('Pagamento delle provvigioni (facoltativo)')->description('Se lo conosci, inseriscilo ora; altrimenti l\'incaricato lo scrive nell\'onboarding. Senza IBAN intestato le provvigioni restano trattenute.')->columns(2)->visibleOn('create')->schema([
+                TextInput::make('iban')->label('IBAN')->trim()->maxLength(40)
+                    ->rules([fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                        if (filled($value) && ! Iban::isValid((string) $value)) {
+                            $fail('IBAN non valido.');
+                        }
+                    }]),
+                TextInput::make('iban_holder')->label('Intestatario')->helperText('Se vuoto, si usa nome e cognome.'),
+            ]),
         ]);
     }
+
+    /** Nazioni proposte nel modulo (codice ISO a 2 lettere). */
+    private const COUNTRIES = [
+        'IT' => 'Italia', 'ES' => 'Spagna', 'DE' => 'Germania', 'NL' => 'Olanda', 'FR' => 'Francia', 'IE' => 'Irlanda',
+        'PT' => 'Portogallo', 'AT' => 'Austria', 'BE' => 'Belgio', 'CH' => 'Svizzera', 'GB' => 'Regno Unito', 'PA' => 'Panama',
+    ];
 
     /**
      * Scheda 360°: dati chiave in alto, pulsanti-contatore che aprono le liste filtrate, tab per ogni area e storico

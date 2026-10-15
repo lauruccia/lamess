@@ -325,17 +325,30 @@ class AreaController extends Controller
             'user' => $request->user()->load('profile', 'customer.consultant'), 'contract' => $contract, 'awaiting' => $open,
             'hint' => $open ? session('signature_hint') : null,
             'needsBox' => ! $ivd->hasPaidFirstBox($request->user()),
+            'lockedSponsor' => $this->lockedSponsor($request->user()),
         ]);
+    }
+
+    /** Sponsor scelto dal link referral, dal cookie o da un invito: chi si registra così non lo può cambiare. */
+    private function lockedSponsor(User $user): ?Consultant
+    {
+        $customer = $user->customer;
+
+        return $customer !== null && in_array($customer->source, ['referral', 'cookie', 'invite'], true) ? $customer->consultant : null;
     }
 
     public function apply(Request $request, IvdService $ivd, ReferralResolver $resolver): RedirectResponse
     {
         $data = $request->validate([
             'tax_code' => 'required', 'birth_date' => 'required|date', 'birth_place' => 'required', 'address' => 'required',
-            'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'phone' => 'nullable', 'sponsor_code' => 'nullable', 'accept' => 'accepted',
+            'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country_code' => 'nullable|size:2', 'phone' => 'nullable', 'pec' => 'nullable|email', 'sponsor_code' => 'nullable', 'accept' => 'accepted',
         ], SiteController::MESSAGES);
-        $sponsor = filled($data['sponsor_code'] ?? null) ? $resolver->find($data['sponsor_code']) : null;
-        if (filled($data['sponsor_code'] ?? null) && $sponsor === null) {
+        $locked = $this->lockedSponsor($request->user());
+        if ($locked !== null) {
+            $data['sponsor_code'] = null; // lo sponsor del link referral non si cambia
+        }
+        $sponsor = $locked ?? (filled($data['sponsor_code'] ?? null) ? $resolver->find($data['sponsor_code']) : null);
+        if ($locked === null && filled($data['sponsor_code'] ?? null) && $sponsor === null) {
             return back()->withInput()->withErrors(['sponsor_code' => 'Sponsor non trovato o non abilitato a sponsorizzare.']);
         }
         try {

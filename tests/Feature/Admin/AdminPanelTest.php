@@ -131,7 +131,7 @@ final class AdminPanelTest extends TestCase
         $x = $this->consultant('X', $s);
         $k = $this->consultant('K', $x);
 
-        Livewire::test(CreateConsultant::class)->fillForm(['code' => 'N1', 'name' => 'Nuovo', 'since' => '2026-10-02 08:00:00'])->call('create')->assertHasNoFormErrors();
+        Livewire::test(CreateConsultant::class)->fillForm(['code' => 'N1', 'first_name' => 'Nuovo', 'last_name' => 'Incaricato', 'since' => '2026-10-02 08:00:00'])->call('create')->assertHasNoFormErrors();
         $this->assertTrue(Consultant::where('code', 'N1')->exists());
 
         Livewire::test(ViewConsultant::class, ['record' => $x->getKey()])->callAction('terminate', ['reason' => 'dimissioni']);

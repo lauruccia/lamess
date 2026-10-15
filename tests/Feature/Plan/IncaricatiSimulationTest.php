@@ -232,6 +232,18 @@ final class IncaricatiSimulationTest extends TestCase
         }
     }
 
+    public function test_total_difference_is_split_between_simulated_agents_and_real_incaricati(): void
+    {
+        [$p, $v, , $lau] = $this->network();
+
+        $res = $this->simulate($p, $v, [['type' => 'agents', 'target' => $lau->id, 'count' => 1, 'rank' => 'PEARL']]);
+
+        $s = $res['summary'];
+        $this->assertSame(1, $s['virtual_agents']);
+        $this->assertGreaterThan(0, (float) $s['total_virtual']);
+        $this->assertEqualsWithDelta((float) $s['total_diff'], (float) $s['total_virtual'] + (float) $s['total_real_diff'], 0.01);
+    }
+
     public function test_current_tree_shows_the_real_network_with_what_is_missing_for_the_next_rank(): void
     {
         [$p, $v, $fra, $lau] = $this->network();

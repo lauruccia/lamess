@@ -166,7 +166,8 @@
                                     @endif
                                 </span>
                             </b>
-                            <span class="{{ $cls($s['total_diff']) }}">{{ $signed($s['total_diff']) }} €</span></div>
+                            <span class="{{ $cls($s['total_diff']) }}">{{ $signed($s['total_diff']) }} €</span>
+                            @if($s['virtual_agents'] > 0)<div class="muted" style="font-size:.78rem">di cui agenti simulati <strong>{{ $signed($s['total_virtual']) }} €</strong> · incaricati reali <strong class="{{ $cls($s['total_real_diff']) }}">{{ $signed($s['total_real_diff']) }} €</strong></div>@endif</div>
                     </div>
                     <p class="muted" style="margin:.5rem 0 0">Passa il mouse (o tocca) sui numeri per vedere chi sale o scende di qualifica e a chi cambiano le provvigioni.</p>
 
@@ -179,7 +180,7 @@
                         ];
                     @endphp
                     <h3 style="margin:1rem 0 .3rem">Che cosa sono queste provvigioni e come maturano</h3>
-                    <p class="muted" style="margin:0 0 .5rem">Sono le provvigioni <strong>lorde</strong> che il Piano Incaricati riconosce agli incaricati per le vendite del mese (compresi gli importi eventualmente trattenuti). Non sono il fatturato né i bonifici: ritenute e trattenute non sono considerate. Maturano sul V.A.P. degli ordini pagati dei clienti, tranne il Bonus di Struttura che è un importo fisso.</p>
+                    <p class="muted" style="margin:0 0 .5rem">Sono le provvigioni <strong>lorde</strong> che il Piano Incaricati riconosce agli incaricati per le vendite del mese (compresi gli importi eventualmente trattenuti). Non sono il fatturato né i bonifici: ritenute e trattenute non sono considerate. Maturano sul V.A.P. degli ordini pagati dei clienti, tranne il Bonus di Struttura che è un importo fisso. <strong>Il totale comprende anche le provvigioni degli agenti simulati</strong> (e dei loro clienti), non solo quelle dell'incaricato a cui hai aggiunto clienti: qui sotto trovi la quota degli agenti simulati separata da quella degli incaricati reali.</p>
                     <div class="scroll"><table>
                         <tr><th>Tipo</th><th>Chi le riceve</th><th>Come maturano</th><th>Prima</th><th>Dopo</th><th>Differenza</th></tr>
                         @foreach($result['totals'] as $t)
@@ -190,6 +191,10 @@
                                 <td>{{ $eur($t['before']) }} €</td><td>{{ $eur($t['after']) }} €</td><td class="{{ $cls($t['diff']) }}">{{ $signed($t['diff']) }} €</td>
                             </tr>
                         @endforeach
+                        @if($s['virtual_agents'] > 0)
+                            <tr><td colspan="3" class="muted">di cui agenti simulati (nuovi, con i loro clienti)</td><td class="muted">0,00 €</td><td class="muted">{{ $eur($s['total_virtual']) }} €</td><td class="muted">{{ $signed($s['total_virtual']) }} €</td></tr>
+                            <tr><td colspan="3" class="muted">di cui incaricati reali (differenza)</td><td class="muted" colspan="2"></td><td class="{{ $cls($s['total_real_diff']) }}">{{ $signed($s['total_real_diff']) }} €</td></tr>
+                        @endif
                         <tr><td colspan="3"><strong>Totale provvigioni del mese</strong></td><td><strong>{{ $eur($s['total_before']) }} €</strong></td><td><strong>{{ $eur($s['total_after']) }} €</strong></td><td class="{{ $cls($s['total_diff']) }}"><strong>{{ $signed($s['total_diff']) }} €</strong></td></tr>
                     </table></div>
                     <p class="muted" style="margin:.4rem 0 0">Per sapere <em>a chi</em> cambiano e da quali vendite nascono, passa il mouse sulla cifra nella colonna «Compensi del mese» della tabella «Cosa cambia per gli incaricati reali», o sulla variazione accanto a ogni incaricato nella rete.</p>

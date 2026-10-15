@@ -445,6 +445,10 @@ final class IncaricatiSimulator
         }
         $beforeTotal = $before->total();
         $afterTotal = $after->total();
+        $virtualEarned = Num::zero();
+        foreach (array_keys($d->virtual) as $virtualId) {
+            $virtualEarned = $virtualEarned->plus($after->earned((string) $virtualId));
+        }
 
         $warnings = array_values(array_unique($d->warnings));
         foreach ($agents as $ag) {
@@ -460,6 +464,7 @@ final class IncaricatiSimulator
                 'rank_up' => count(array_filter($rows, static fn (array $r) => $r['dir'] > 0)),
                 'rank_down' => count(array_filter($rows, static fn (array $r) => $r['dir'] < 0)),
                 'total_before' => (string) $beforeTotal, 'total_after' => (string) $afterTotal, 'total_diff' => (string) $afterTotal->minus($beforeTotal),
+                'total_virtual' => (string) $virtualEarned, 'total_real_diff' => (string) $afterTotal->minus($beforeTotal)->minus($virtualEarned),
             ],
             'rows' => $rows, 'agents' => $agents, 'totals' => $totals,
             'tree' => $this->treeRows($d, $scenIn, $a, $b, $labels, $name, $seq, $explain),

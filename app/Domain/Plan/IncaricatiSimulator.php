@@ -467,9 +467,107 @@ final class IncaricatiSimulator
                 'total_virtual' => (string) $virtualEarned, 'total_real_diff' => (string) $afterTotal->minus($beforeTotal)->minus($virtualEarned),
             ],
             'rows' => $rows, 'agents' => $agents, 'totals' => $totals,
+            'breakdown' => $this->breakdown($before, $after, $scenIn, $a, $labels, $name, $d),
             'tree' => $this->treeRows($d, $scenIn, $a, $b, $labels, $name, $seq, $explain),
             'warnings' => $warnings,
         ];
+    }
+
+    /**
+     * Dettaglio delle provvigioni per tipo: per ogni incaricato (reale o simulato) quanto matura, prima e dopo, e da dove nasce
+     * (vendite dei suoi clienti o dei clienti di chi sta sotto, livello, base V.A.P., aliquota, requisiti). Una riga per gruppo
+     * livello + incaricato di origine; i soli incaricati con importi diversi da zero.
+     *
+     * @param  array<string, array<string, mixed>>  $a
+     * @param  array<string, string>  $labels
+     * @return array<string, array{rows:list<array<string, mixed>>, more:int}>
+     */
+    private function breakdown(PeriodResult $before, PeriodResult $after, PeriodInput $scenIn, array $a, array $labels, callable $name, SimulationDraft $d): array
+    {
+        $orders = [];
+        foreach ($scenIn->movements as $m) {
+            $orders[$m->id] = $m->amountEur;
+        }
+        $index = static function (PeriodResult $r): array {
+            $out = [];
+            foreach ($r->lines as $l) {
+                if (in_array($l->status, ['accrued', 'held'], true)) {
+                    $out[$l->bonus][$l->beneficiaryId][$l->key] = $l;
+                }
+            }
+
+            return $out;
+        };
+        $b = $index($before);
+        $n = $index($after);
+        $pct = static fn (?BigDecimal $r): ?string => $r === null ? null : rtrim(rtrim(Num::pctLabel($r), '0'), '.').'%';
+        $sum = static fn (array $lines): BigDecimal => array_reduce($lines, static fn (BigDecimal $c, Line $l) => $c->plus($l->amount), Num::zero());
+        $cap = 60;
+
+        $result = [];
+        foreach (['direct', 'indirect', 'indirect_ext', 'structure'] as $bonus) {
+            $people = array_unique(array_merge(array_keys($n[$bonus] ?? []), array_keys($b[$bonus] ?? [])));
+            $rows = [];
+            foreach ($people as $id) {
+                $id = (string) $id;
+                $newLines = $n[$bonus][$id] ?? [];
+                $oldLines = $b[$bonus][$id] ?? [];
+                $totalAfter = $sum($newLines);
+                $totalBefore = $sum($oldLines);
+                if ($totalAfter->isZero() && $totalBefore->isZero()) {
+                    continue;
+                }
+                $groups = [];
+                foreach (array_unique(array_merge(array_keys($newLines), array_keys($oldLines))) as $key) {
+                    $new = $newLines[$key] ?? null;
+                    $old = $oldLines[$key] ?? null;
+                    $ref = $new ?? $old;
+                    $g = ($ref->level ?? 0).'|'.($ref->sourcePartnerId ?? '');
+                    $groups[$g]['level'] = $ref->level;
+                    $groups[$g]['source'] = (string) ($ref->sourcePartnerId ?? '');
+                    $groups[$g]['sales'] = ($groups[$g]['sales'] ?? 0) + ($new !== null ? 1 : 0);
+                    $groups[$g]['orders'] = ($groups[$g]['orders'] ?? Num::zero())->plus($new !== null && $ref->sourceMovementId !== null ? ($orders[$ref->sourceMovementId] ?? Num::zero()) : Num::zero());
+                    $groups[$g]['base'] = ($groups[$g]['base'] ?? Num::zero())->plus($new?->base ?? Num::zero());
+                    $groups[$g]['after'] = ($groups[$g]['after'] ?? Num::zero())->plus($new?->amount ?? Num::zero());
+                    $groups[$g]['before'] = ($groups[$g]['before'] ?? Num::zero())->plus($old?->amount ?? Num::zero());
+                    $groups[$g]['rate_after'] ??= $pct($new?->rate);
+                    $groups[$g]['rate_before'] ??= $pct($old?->rate);
+                    $groups[$g]['held'] = ($groups[$g]['held'] ?? false) || ($new?->status === 'held');
+                    if ($new !== null && ! isset($groups[$g]['detail'])) {
+                        $ex = $new->explanation;
+                        $groups[$g]['detail'] = match (true) {
+                            $bonus === 'structure' => (string) ($ex['formula'] ?? ''),
+                            isset($ex['min_clients']) => "requisiti del livello: clienti {$ex['clients']}/{$ex['min_clients']}, Pearl 1° liv. {$ex['pearl_first_level']}/{$ex['min_pearl']}",
+                            isset($ex['clients']) => "clienti personali {$ex['clients']}",
+                            default => '',
+                        };
+                    }
+                }
+                $lines = [];
+                foreach ($groups as $g) {
+                    $own = $g['source'] === $id;
+                    $lines[] = [
+                        'level' => $g['level'], 'own' => $own, 'source' => $own ? 'i suoi clienti' : ($labels[$g['source']] ?? $g['source']),
+                        'sales' => $g['sales'], 'orders' => (string) $g['orders'], 'base' => (string) $g['base'],
+                        'rate' => $g['rate_after'] ?? $g['rate_before'], 'rate_before' => $g['rate_before'] !== $g['rate_after'] ? $g['rate_before'] : null,
+                        'after' => (string) $g['after'], 'before' => (string) $g['before'], 'diff' => (string) $g['after']->minus($g['before']),
+                        'held' => $g['held'], 'detail' => $g['detail'] ?? '',
+                    ];
+                }
+                usort($lines, static fn (array $x, array $y) => [$x['level'] ?? 0, $x['source']] <=> [$y['level'] ?? 0, $y['source']]);
+                $stat = $a[$id] ?? null;
+                $rows[] = [
+                    'id' => $id, 'label' => $labels[$id] ?? $id, 'virtual' => $d->isVirtual($id),
+                    'rank' => $stat === null ? null : $name($stat['achieved']), 'clients' => $stat['clients'] ?? null,
+                    'before' => (string) $totalBefore, 'after' => (string) $totalAfter, 'diff' => (string) $totalAfter->minus($totalBefore),
+                    'lines' => $lines,
+                ];
+            }
+            usort($rows, static fn (array $x, array $y) => [abs((float) $y['diff']), $x['label']] <=> [abs((float) $x['diff']), $y['label']]);
+            $result[$bonus] = ['rows' => array_slice($rows, 0, $cap), 'more' => max(0, count($rows) - $cap)];
+        }
+
+        return $result;
     }
 
     /**

@@ -244,6 +244,24 @@ final class IncaricatiSimulationTest extends TestCase
         $this->assertEqualsWithDelta((float) $s['total_diff'], (float) $s['total_virtual'] + (float) $s['total_real_diff'], 0.01);
     }
 
+    public function test_breakdown_lists_who_earns_each_commission_type_and_from_which_sales(): void
+    {
+        [$p, $v, $fra, $lau] = $this->network();
+
+        $res = $this->simulate($p, $v, [['type' => 'clients', 'target' => $lau->id, 'count' => 3]]);
+
+        $direct = $res['breakdown']['direct']['rows'];
+        $row = collect($direct)->firstWhere('id', (string) $lau->id);
+        $this->assertNotNull($row, 'Laura matura compensi diretti con i nuovi clienti');
+        $this->assertGreaterThan(0, (float) $row['diff']);
+        $this->assertSame('i suoi clienti', $row['lines'][0]['source']);
+        $this->assertSame(3, $row['lines'][0]['sales']);
+        $this->assertEqualsWithDelta((float) $row['after'], array_sum(array_map(static fn (array $l) => (float) $l['after'], $row['lines'])), 0.01);
+        $indirect = collect($res['breakdown']['indirect']['rows'])->firstWhere('id', (string) $fra->id);
+        $this->assertNotNull($indirect, 'Francesco matura indiretti sui clienti di Laura');
+        $this->assertSame(1, $indirect['lines'][0]['level']);
+    }
+
     public function test_current_tree_shows_the_real_network_with_what_is_missing_for_the_next_rank(): void
     {
         [$p, $v, $fra, $lau] = $this->network();

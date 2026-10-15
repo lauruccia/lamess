@@ -181,14 +181,48 @@
                     @endphp
                     <h3 style="margin:1rem 0 .3rem">Che cosa sono queste provvigioni e come maturano</h3>
                     <p class="muted" style="margin:0 0 .5rem">Sono le provvigioni <strong>lorde</strong> che il Piano Incaricati riconosce agli incaricati per le vendite del mese (compresi gli importi eventualmente trattenuti). Non sono il fatturato né i bonifici: ritenute e trattenute non sono considerate. Maturano sul V.A.P. degli ordini pagati dei clienti, tranne il Bonus di Struttura che è un importo fisso. <strong>Il totale comprende anche le provvigioni degli agenti simulati</strong> (e dei loro clienti), non solo quelle dell'incaricato a cui hai aggiunto clienti: qui sotto trovi la quota degli agenti simulati separata da quella degli incaricati reali.</p>
-                    <div class="scroll"><table>
+                    <div class="scroll" x-data="{ open: null }"><table>
                         <tr><th>Tipo</th><th>Chi le riceve</th><th>Come maturano</th><th>Prima</th><th>Dopo</th><th>Differenza</th></tr>
                         @foreach($result['totals'] as $t)
-                            <tr>
-                                <td><strong>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}</strong></td>
+                            @php $bd = $result['breakdown'][$t['bonus']] ?? ['rows' => [], 'more' => 0]; @endphp
+                            <tr style="cursor:pointer" @click="open = open === '{{ $t['bonus'] }}' ? null : '{{ $t['bonus'] }}'" @keydown.enter="open = open === '{{ $t['bonus'] }}' ? null : '{{ $t['bonus'] }}'" tabindex="0" role="button" :aria-expanded="open === '{{ $t['bonus'] }}'" title="Clicca per vedere chi le matura e da quali vendite">
+                                <td><span x-text="open === '{{ $t['bonus'] }}' ? '▾' : '▸'">▸</span> <strong>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}</strong><div class="muted" style="font-size:.74rem">{{ count($bd['rows']) + $bd['more'] }} {{ count($bd['rows']) + $bd['more'] === 1 ? 'incaricato' : 'incaricati' }} · clicca per il dettaglio</div></td>
                                 <td>{{ $bonusInfo[$t['bonus']][1] ?? '—' }}</td>
                                 <td class="muted">{{ $bonusInfo[$t['bonus']][2] ?? '' }}</td>
                                 <td>{{ $eur($t['before']) }} €</td><td>{{ $eur($t['after']) }} €</td><td class="{{ $cls($t['diff']) }}">{{ $signed($t['diff']) }} €</td>
+                            </tr>
+                            <tr x-show="open === '{{ $t['bonus'] }}'" x-cloak>
+                                <td colspan="6" style="background:var(--s-cream)">
+                                    <div class="muted" style="margin-bottom:.4rem">Chi matura <strong>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}</strong> (dal maggiore al minore per variazione). Apri un incaricato per vedere da quali vendite nascono gli importi.</div>
+                                    @foreach($bd['rows'] as $person)
+                                        <details style="border-top:1px solid var(--s-line);padding:.3rem 0" @if($loop->first) open @endif>
+                                            <summary style="cursor:pointer">
+                                                <strong>{{ $person['label'] }}</strong>
+                                                @if($person['virtual'])<span class="chip newc">simulato</span>@endif
+                                                @if($person['rank'])<span class="muted"> · {{ $person['rank'] }}</span>@endif
+                                                @if($person['clients'] !== null)<span class="muted"> · clienti {{ $person['clients'] }}</span>@endif
+                                                — {{ $eur($person['before']) }} € → <strong>{{ $eur($person['after']) }} €</strong> <span class="{{ $cls($person['diff']) }}">({{ $signed($person['diff']) }} €)</span>
+                                            </summary>
+                                            <div class="scroll"><table style="margin:.3rem 0 .5rem">
+                                                <tr><th>Da</th><th>Livello</th><th>Vendite</th><th>Ordini</th><th>Base V.A.P.</th><th>Aliquota</th><th>Matura</th><th>Prima</th><th>Note</th></tr>
+                                                @foreach($person['lines'] as $ln)
+                                                    <tr>
+                                                        <td>{{ $t['bonus'] === 'structure' ? 'Bonus per '.$ln['source'] : ($ln['own'] ? 'Vendite ai suoi clienti' : 'Vendite dei clienti di '.$ln['source']) }}</td>
+                                                        <td>{{ $ln['level'] !== null ? $ln['level'] : '—' }}</td>
+                                                        <td>{{ $ln['sales'] }}</td>
+                                                        <td>{{ $t['bonus'] === 'structure' ? '—' : $eur($ln['orders']).' €' }}</td>
+                                                        <td>{{ $t['bonus'] === 'structure' ? '—' : $eur($ln['base']).' €' }}</td>
+                                                        <td>{{ $ln['rate'] ?? '—' }}@if($ln['rate_before'])<div class="muted">prima {{ $ln['rate_before'] }}</div>@endif</td>
+                                                        <td><strong>{{ $eur($ln['after']) }} €</strong> <span class="{{ $cls($ln['diff']) }}">({{ $signed($ln['diff']) }})</span></td>
+                                                        <td>{{ $eur($ln['before']) }} €</td>
+                                                        <td class="muted">{{ $ln['detail'] }}@if($ln['held']) · trattenuto @endif</td>
+                                                    </tr>
+                                                @endforeach
+                                            </table></div>
+                                        </details>
+                                    @endforeach
+                                    @if($bd['more'] > 0)<div class="muted">… e altri {{ $bd['more'] }} incaricati con importi minori.</div>@endif
+                                </td>
                             </tr>
                         @endforeach
                         @if($s['virtual_agents'] > 0)
@@ -197,7 +231,7 @@
                         @endif
                         <tr><td colspan="3"><strong>Totale provvigioni del mese</strong></td><td><strong>{{ $eur($s['total_before']) }} €</strong></td><td><strong>{{ $eur($s['total_after']) }} €</strong></td><td class="{{ $cls($s['total_diff']) }}"><strong>{{ $signed($s['total_diff']) }} €</strong></td></tr>
                     </table></div>
-                    <p class="muted" style="margin:.4rem 0 0">Per sapere <em>a chi</em> cambiano e da quali vendite nascono, passa il mouse sulla cifra nella colonna «Compensi del mese» della tabella «Cosa cambia per gli incaricati reali», o sulla variazione accanto a ogni incaricato nella rete.</p>
+                    <p class="muted" style="margin:.4rem 0 0"><strong>Clicca su una riga della tabella</strong> (Compensi diretti, indiretti…) per vedere chi matura quegli importi, con qualifica, clienti e da quali vendite nascono (livello, base V.A.P., aliquota, requisiti). Anche la variazione accanto a ogni incaricato nella rete ha il suo tooltip.</p>
                 </div>
 
                 @foreach($result['warnings'] as $w)<div class="warn" role="status">{{ $w }}</div>@endforeach

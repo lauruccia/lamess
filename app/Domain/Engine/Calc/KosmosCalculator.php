@@ -181,9 +181,12 @@ final class KosmosCalculator
     }
 
     /**
-     * Tratti di validità di un cliente: ogni ordine copre i suoi mesi a partire dal mese dell'ordine; se l'ordine arriva
-     * mentre la validità è ancora in corso, i suoi mesi partono dalla scadenza attuale (si sommano).
-     * Ogni tratto porta quanti clienti vale il prodotto che lo ha generato.
+     * Tratti di validità di un cliente. Il cliente vale nel mese dell'acquisto (contato a parte); gli N mesi del prodotto
+     * partono dal mese successivo e finiscono con l'ultimo giorno dell'N-esimo mese. Esempio: ordine del 15/10/2026 da
+     * 1 mese → 1/11–30/11/2026; da 2 mesi → fino al 31/12/2026; da 12 mesi → fino al 31/10/2027.
+     * Se l'ordine arriva mentre la validità è ancora in corso, i suoi mesi partono dalla scadenza attuale (si sommano);
+     * se è già scaduta, partono dal mese successivo al nuovo ordine. Ogni tratto porta quanti clienti vale il prodotto
+     * che lo ha generato.
      *
      * @param  list<array{at: DateTimeImmutable, months: int, clients?: int}>  $orders
      * @return list<array{0:int,1:int,2:int}> tratti [primo mese, ultimo mese, clienti]
@@ -195,11 +198,10 @@ final class KosmosCalculator
         $end = null;
         foreach ($orders as $o) {
             $idx = self::monthIndex($o['at']);
-            $start = ($end !== null && $idx <= $end) ? $end + 1 : $idx;
+            $start = ($end !== null && $idx <= $end) ? $end + 1 : $idx + 1;
             $end = $start + max(1, $o['months']) - 1;
             $out[] = [$start, $end, max(1, $o['clients'] ?? 1)];
         }
-
         return $out;
     }
 

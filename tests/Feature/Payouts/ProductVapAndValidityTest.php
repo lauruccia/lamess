@@ -127,7 +127,7 @@ final class ProductVapAndValidityTest extends TestCase
         $customer = array_key_first($intervals);
         [$first, $last, $clients] = $intervals[$customer][0];
         $this->assertSame(1, $clients);
-        $this->assertSame(11, $last - $first, '12 mesi dal mese dell’ordine');
+        $this->assertSame(11, $last - $first, '12 mesi dal mese successivo all’ordine');
     }
 
     public function test_coverage_segments_add_up_from_the_expiry_and_split_after_a_gap(): void
@@ -135,11 +135,11 @@ final class ProductVapAndValidityTest extends TestCase
         $d = static fn (string $s) => new \DateTimeImmutable($s);
         $jan = KosmosCalculator::monthIndex($d('2026-01-10'));
 
-        $this->assertSame([[$jan, $jan + 2, 1]], KosmosCalculator::coverageIntervals([['at' => $d('2026-01-10'), 'months' => 3]]));
-        $this->assertSame([[$jan, $jan + 2, 1], [$jan + 3, $jan + 4, 5]], KosmosCalculator::coverageIntervals([
+        $this->assertSame([[$jan + 1, $jan + 3, 1]], KosmosCalculator::coverageIntervals([['at' => $d('2026-01-10'), 'months' => 3]]));
+        $this->assertSame([[$jan + 1, $jan + 3, 1], [$jan + 4, $jan + 5, 5]], KosmosCalculator::coverageIntervals([
             ['at' => $d('2026-01-10'), 'months' => 3], ['at' => $d('2026-03-05'), 'months' => 2, 'clients' => 5], // ancora valido a marzo: i 2 mesi partono dalla scadenza
         ]));
-        $this->assertSame([[$jan, $jan, 1], [$jan + 5, $jan + 5, 1]], KosmosCalculator::coverageIntervals([
+        $this->assertSame([[$jan + 1, $jan + 1, 1], [$jan + 6, $jan + 6, 1]], KosmosCalculator::coverageIntervals([
             ['at' => $d('2026-01-10'), 'months' => 1], ['at' => $d('2026-06-02'), 'months' => 1], // scaduto: riparte dal nuovo ordine
         ]));
     }

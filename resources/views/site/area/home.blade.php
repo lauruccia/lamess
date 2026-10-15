@@ -51,13 +51,13 @@
 @endif
 
 {{-- Numeri --}}
-<div class="kpis">
+<div class="kpis{{ $c ? ' kpis-row' : '' }}">
  @if($c && ($month ?? null))
   @if(\App\Domain\Plan\LegacyPlan::visible() && ! $kk)
   <div class="kpi"><small>PVF di {{ $month['period'] }}</small><strong>{{ $n($month['pvf']) }}</strong><span>Personali {{ $n($month['pvc']) }} · gruppo {{ $n($month['group_pv']) }}</span></div>
   <div class="kpi"><small>PR del mese</small><strong>{{ $n($month['pr']) }}</strong><span>Gruppo {{ $n($month['group_pr']) }} PR</span></div>
   @endif
-  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? ucfirst(strtolower($month['rank'])) : '—' }}</strong>@if($kk)<span>{{ $kk['known'] ? 'Compenso diretto '.$n($progress['rank']['direct_pct']).'%' : 'Calcolo in arrivo' }}@if($kk['next_name']) · prossima {{ $kk['next_name'] }} al {{ $kk['percent'] }}%@endif</span>@elseif(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
+  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? (strtolower($month['rank']) === 'consultant' ? 'Incaricato' : ucfirst(strtolower($month['rank']))) : '—' }}</strong>@if($kk)<span>{{ $kk['known'] ? 'Compenso diretto '.$n($progress['rank']['direct_pct']).'%' : 'Calcolo in arrivo' }}@if($kk['next_name']) · prossima {{ $kk['next_name'] }} al {{ $kk['percent'] }}%@endif</span>@elseif(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
  @endif
  @if($c && $kk)
   <a class="kpi" href="/area/clienti"><small>Clienti personali</small><strong>{{ $kk['known'] ? $kk['clients'] : '—' }}</strong><span>@if($kk['known'] && $nt)Ne mancano {{ $nt['missing'] }} per il {{ $n($nt['pct']) }}% diretto @elseif($kk['known'])Scaglione massimo raggiunto @else In attesa del calcolo @endif</span></a>
@@ -77,7 +77,9 @@
  @unless($c)
   <a class="kpi" href="/area/ordini"><small>Totale acquistato</small><strong>€ {{ $eur($d['orders']['spent']) }}</strong><span>Ordini pagati, IVA inclusa</span></a>
  @endunless
+ @unless($c)
  <a class="kpi {{ $d['subs']['failed'] ? 'k-warn' : '' }}" href="/area/abbonamenti"><small>Abbonamenti</small><strong>{{ $d['subs']['active'] }}</strong><span>{{ $d['subs']['next'] ? 'Prossimo addebito '.\App\Support\Ui::date($d['subs']['next'], 'd/m').' ('.\App\Support\Ui::inDays($d['subs']['next']).')' : 'Nessuno attivo' }}</span></a>
+ @endunless
  @unless($c)
   <a class="kpi" href="/area/assistenza"><small>Assistenza</small><strong>{{ $d['tickets']['open'] + $d['tickets']['answered'] }}</strong><span>{{ ($d['tickets']['open'] + $d['tickets']['answered']) ? 'richieste aperte' : 'Nessuna richiesta aperta' }}</span></a>
  @endunless

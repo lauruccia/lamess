@@ -423,6 +423,16 @@
                 esc(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); },
                 num(v) { const n = Number(v); return (n > 0 ? '+' : '') + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
                 el(n, a, p) { const e = document.createElementNS(NS, n); for (const x in a) e.setAttribute(x, a[x]); p.appendChild(e); return e; },
+                fitText(el, keep = '') {
+                    const max = W - 52 - 10;
+                    if (el.getComputedTextLength() <= max) { return; }
+                    let head = el.textContent.slice(0, el.textContent.length - keep.length);
+                    while (head.length > 1) {
+                        head = head.slice(0, -1);
+                        el.textContent = head.trimEnd() + '…' + keep;
+                        if (el.getComputedTextLength() <= max) { break; }
+                    }
+                },
                 ini(n) { return (n.replace(/[^\p{L} ]/gu, '').trim().split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase()) || '?'; },
                 split(label) { const i = label.indexOf(' — '); return i < 0 ? [null, label] : [label.slice(0, i), label.slice(i + 3)]; },
                 selSummary() {
@@ -462,15 +472,19 @@
                         this.el('rect', { x: 0, y: 0, width: 6, height: H, rx: 3, fill: col }, gr);
                         this.el('circle', { cx: 28, cy: H / 2, r: 16, fill: col }, gr);
                         this.el('text', { x: 28, y: H / 2 + 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#fff' }, gr).textContent = this.ini(nm);
-                        let name = nm; if (name.length > 22) name = name.slice(0, 21) + '…';
-                        this.el('text', { x: 52, y: 17, 'font-size': 12, 'font-weight': 700, fill: 'var(--s-ink)' }, gr).textContent = name;
+                        const nameEl = this.el('text', { x: 52, y: 17, 'font-size': 12, 'font-weight': 700, fill: 'var(--s-ink)' }, gr);
+                        nameEl.textContent = nm;
+                        this.fitText(nameEl);
                         const rankChanged = d.rank_before && d.rank_before !== d.rank_after;
                         const t2 = this.el('text', { x: 52, y: 32, 'font-size': 10.5, 'font-weight': 600, fill: rankChanged ? (d.dir >= 0 ? 'var(--s-up)' : 'var(--s-down)') : 'var(--s-muted)' }, gr);
                         t2.textContent = (rankChanged ? d.rank_before + ' → ' + d.rank_after + (d.dir > 0 ? ' ▲' : ' ▼') : (d.rank_after || '—')) + (code ? ' · ' + code : '');
+                        this.fitText(t2, code ? ' · ' + code : '');
                         const clients = (d.clients_before !== null && d.clients_before !== d.clients_after) ? d.clients_before + '→' + d.clients_after : d.clients_after;
                         const diff = Number(d.earned_diff) !== 0 ? ' · ' + this.num(d.earned_diff) + ' €' : '';
-                        this.el('text', { x: 52, y: 46, 'font-size': 10.5, fill: 'var(--s-muted)' }, gr).textContent = 'clienti ' + clients + diff;
-                        if (d.next_rank) { let m = 'per ' + d.next_rank + ': ' + (d.missing ? d.missing : 'ok'); if (m.length > 34) m = m.slice(0, 33) + '…'; this.el('text', { x: 52, y: 59, 'font-size': 9.5, fill: 'var(--s-muted)' }, gr).textContent = m; }
+                        const clientsEl = this.el('text', { x: 52, y: 46, 'font-size': 10.5, fill: 'var(--s-muted)' }, gr);
+                        clientsEl.textContent = 'clienti ' + clients + diff;
+                        this.fitText(clientsEl);
+                        if (d.next_rank) { let m = 'per ' + d.next_rank + ': ' + (d.missing ? d.missing : 'ok'); const nextEl = this.el('text', { x: 52, y: 59, 'font-size': 9.5, fill: 'var(--s-muted)' }, gr); nextEl.textContent = m; this.fitText(nextEl); }
                         const tt = this.el('title', {}, gr); tt.textContent = d.label + (d.next_rank ? ' — per ' + d.next_rank + ': ' + (d.missing ? 'mancano ' + d.missing : 'requisiti soddisfatti') : '');
                         if (d.tag === 'new') { this.el('text', { x: W - 8, y: 14, 'text-anchor': 'end', 'font-size': 9.5, 'font-weight': 700, fill: 'var(--s-new)' }, gr).textContent = 'nuovo'; }
                         if (d.tag === 'moved') { this.el('text', { x: W - 8, y: 14, 'text-anchor': 'end', 'font-size': 9.5, 'font-weight': 700, fill: 'var(--s-move)' }, gr).textContent = 'spostato'; }

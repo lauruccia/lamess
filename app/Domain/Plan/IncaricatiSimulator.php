@@ -74,6 +74,35 @@ final class IncaricatiSimulator
         return $this->report($period, $plan, $base, $scenario, $before, $after, $draft);
     }
 
+    /**
+     * Albero reale del periodo, così com'è oggi (nessuna modifica): serve a vedere dove intervenire prima di simulare.
+     * Stesse righe dell'albero del risultato, con qualifica, clienti, compensi e requisiti mancanti per la successiva.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function currentTree(Period $period, PlanConfig $plan, bool $cumulativeClients = true): array
+    {
+        if ($plan->kosmos === null) {
+            return [];
+        }
+        if ($cumulativeClients) {
+            $plan = $plan->withPolicies(['kosmos_client_count' => 'cumulative_buyers']);
+        }
+        $base = SnapshotBuilder::build($period, $plan, freshCareer: true);
+        try {
+            $result = PeriodCalculator::calculate($base);
+        } catch (NetworkException) {
+            return [];
+        }
+        $draft = new SimulationDraft($base, true);
+        $snap = $this->snapshot($base, $result);
+        $seq = static fn (string $code): int => $plan->hasCode($code) ? $plan->rank($code)->sequence : -1;
+        $name = static fn (string $code): string => $plan->hasCode($code) ? $plan->rank($code)->name : $code;
+        $labels = $this->labels($draft, array_keys($snap));
+
+        return $this->treeRows($draft, $base, $snap, $snap, $labels, $name, $seq);
+    }
+
     // ------------------------------------------------------------------ modifiche
 
     /** @param array<string, mixed> $c */
@@ -613,6 +642,7 @@ final class IncaricatiSimulator
                 'clients_before' => $was['clients'] ?? null, 'clients_after' => $now['clients'] ?? 0,
                 'earned_diff' => $earnedDiff === null ? '0' : (string) $earnedDiff, 'extra' => $virtual ? ($sub[$id] ?? 0) : 0,
                 'explain' => $explain[$id] ?? [], 'sub_changes' => 0,
+                'next_rank' => ($now === null || $now['next'] === null) ? null : $name($now['next']), 'missing' => $now['missing'] ?? '',
             ];
             foreach ($tree->childrenOf($id) as $child) {
                 $walk($child, $depth + 1, $id);

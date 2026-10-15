@@ -294,3 +294,10 @@
 - Nessuna migrazione. Non salvati perché non esistono nel profilo: profilo fiscale, tipo autofattura, posizione fiscale, lingua (presenti nei dati Odoo).
 - Tecnico: `ConsultantAccess::grant()` riceve i dati del profilo; `AreaController::lockedSponsor()`.
 - Test: `ConsultantAccessTest` (profilo completo con sponsor assente e IBAN, email obbligatoria con dati personali, minorenni e IBAN non validi) e `SitePagesTest` (sponsor del link non modificabile).
+
+
+## 2026-10-15 — Simulazione incaricati: albero subito visibile
+- La pagina «Simulazione incaricati» mostra l'albero reale del periodo già all'apertura (prima di simulare), con qualifica a colori, clienti e, per ogni incaricato, cosa manca per la qualifica successiva: indica dove intervenire.
+- I pulsanti «+ clienti», «+ agenti», «sposta» sono attivi fin da subito; dopo la simulazione l'albero diventa quello «dopo» con le stesse informazioni.
+- `IncaricatiSimulator::currentTree()` (sola lettura, nessuna scrittura nel database); albero di base in cache per 2 minuti.
+

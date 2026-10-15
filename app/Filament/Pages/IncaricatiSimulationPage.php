@@ -11,6 +11,7 @@ use App\Domain\Plan\RankComparison;
 use App\Models\Consultant;
 use App\Models\Period;
 use BackedEnum;
+use Illuminate\Support\Facades\Cache;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use InvalidArgumentException;
@@ -165,6 +166,22 @@ class IncaricatiSimulationPage extends Page
             ->mapWithKeys(static fn (Consultant $c) => [$c->id => "{$c->code} — {$c->name}"])->all();
     }
 
+    /**
+     * Albero reale del periodo prima di qualsiasi modifica. Breve cache: si ricalcola a ogni cambio di periodo, conteggio o piano.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function baselineTree(mixed $version, mixed $plan): array
+    {
+        $period = $this->periodCode ? Period::where('code', $this->periodCode)->first() : null;
+        if ($version === null || $period === null || ! $plan instanceof PlanConfig) {
+            return [];
+        }
+        $key = 'sim-incaricati-tree:'.implode(':', [$period->code, $this->clientCount, $version->getKey(), $version->updated_at?->timestamp]);
+
+        return Cache::remember($key, 120, fn (): array => app(IncaricatiSimulator::class)->currentTree($period, $plan, $this->clientCount !== 'period'));
+    }
+
     /** @return array<string, mixed> */
     protected function getViewData(): array
     {
@@ -172,6 +189,7 @@ class IncaricatiSimulationPage extends Page
         $plan = $version?->plan();
 
         return [
+            'baseTree' => $this->result === null ? $this->baselineTree($version, $plan) : [],
             'periods' => Period::query()->orderByDesc('code')->pluck('code')->all(),
             'version' => $version,
             'options' => $version ? array_values($this->consultantOptions()) : [],

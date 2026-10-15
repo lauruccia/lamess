@@ -95,7 +95,7 @@
                         <button type="button" wire:click="removeChange({{ $i }})" aria-label="Togli la modifica {{ $i + 1 }}">✕</button>
                     </div>
                 @empty
-                    <p class="muted" style="margin:.2rem 0">Scegli un'azione qui sopra, oppure usa i pulsanti accanto a ogni incaricato nell'albero dopo la prima simulazione.</p>
+                    <p class="muted" style="margin:.2rem 0">Scegli un'azione qui sopra, oppure usa i pulsanti accanto a ogni incaricato nell'albero qui sotto.</p>
                 @endforelse
                 <div class="bar" style="margin-top:.7rem">
                     <button type="button" class="pri" wire:click="simulate" wire:loading.attr="disabled" wire:target="simulate,addChangeFor">Simula</button>
@@ -120,29 +120,37 @@
                 </div>
 
                 @foreach($result['warnings'] as $w)<div class="warn" role="status">{{ $w }}</div>@endforeach
+            @endif
 
-                @if($result['tree'])
+            @php $treeRows = $result['tree'] ?? $baseTree; @endphp
+                @if($treeRows)
                     @php
                         $parents = [];
                         $hasKids = [];
-                        foreach ($result['tree'] as $t) { $parents[$t['id']] = $t['parent']; if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; } }
+                        foreach ($treeRows as $t) { $parents[$t['id']] = $t['parent']; if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; } }
                     @endphp
-                    <div class="box" wire:key="tree-{{ md5(json_encode($result['tree'])) }}"
+                    <div class="box" wire:key="tree-{{ md5(json_encode($treeRows)) }}"
                          x-data="{ closed: {}, only: false, parents: @js($parents), kids: @js(array_keys($hasKids)),
                                    hidden(id) { for (let p = this.parents[id]; p; p = this.parents[p]) { if (this.closed[p]) { return true; } } return false; },
                                    show(id, changed, sub) { return ! this.hidden(id) && (! this.only || changed || sub > 0); },
                                    closeAll() { this.kids.forEach(k => this.closed[k] = true); }, openAll() { this.closed = {}; } }">
                         <div class="bar" style="justify-content:space-between">
-                            <h3 style="margin:0">Tutta la rete dopo la simulazione</h3>
+                            <h3 style="margin:0">{{ $result ? 'Tutta la rete dopo la simulazione' : 'La rete oggi — periodo '.$periodCode }}</h3>
                             <div class="bar">
-                                <label><input type="checkbox" x-model="only"> solo i rami con cambiamenti</label>
+                                @if($result)<label><input type="checkbox" x-model="only"> solo i rami con cambiamenti</label>@endif
                                 <button type="button" @click="openAll()">Apri tutto</button>
                                 <button type="button" @click="closeAll()">Chiudi tutto</button>
                             </div>
                         </div>
-                        <p class="muted" style="margin:.3rem 0 .6rem">Ogni incaricato mostra la qualifica <em>prima → dopo</em> (il colore è quello della pietra), i clienti personali e la variazione dei compensi del mese. Le righe evidenziate sono quelle che cambiano. Usa i pulsanti a destra di ogni incaricato per aggiungere clienti, agenti o spostarlo.</p>
+                        <p class="muted" style="margin:.3rem 0 .6rem">
+                            @if($result)
+                                Ogni incaricato mostra la qualifica <em>prima → dopo</em> (il colore è quello della pietra), i clienti personali e la variazione dei compensi del mese. Le righe evidenziate sono quelle che cambiano. Dopo ogni incaricato trovi cosa gli manca per la qualifica successiva. Usa i pulsanti a destra per aggiungere clienti, agenti o spostarlo.
+                            @else
+                                Questo è lo stato reale del periodo, senza nessuna modifica. Ogni incaricato mostra qualifica (colore della pietra), clienti personali e cosa gli manca per la qualifica successiva: è lì che conviene intervenire. Premi <strong>+ clienti</strong>, <strong>+ agenti</strong> o <strong>sposta</strong> accanto all'incaricato scelto e il risultato compare subito qui sotto.
+                            @endif
+                        </p>
                         <div class="tr">
-                            @foreach($result['tree'] as $t)
+                            @foreach($treeRows as $t)
                                 <div class="node {{ $t['changed'] ? 'chg' : '' }}" x-show="show({{ \Illuminate\Support\Js::from($t['id']) }}, {{ $t['changed'] ? 'true' : 'false' }}, {{ $t['sub_changes'] }})" style="padding-left:{{ $t['depth'] * 1.3 }}rem">
                                     @if(isset($hasKids[$t['id']]))
                                         <button type="button" class="tg" @click="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] = ! closed[{{ \Illuminate\Support\Js::from($t['id']) }}]" x-text="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '▸' : '▾'" aria-label="Apri o chiudi il ramo"></button>
@@ -155,6 +163,7 @@
                                         @else{{ $t['rank_after'] }}@endif
                                     </span>
                                     <span class="muted">· clienti @if($t['clients_before'] !== null && $t['clients_before'] !== $t['clients_after']){{ $t['clients_before'] }} → <strong>{{ $t['clients_after'] }}</strong>@else{{ $t['clients_after'] }}@endif</span>
+                                    @if($t['next_rank'])<span class="muted">· per <strong>{{ $t['next_rank'] }}</strong>: {{ $t['missing'] !== '' ? 'mancano '.$t['missing'] : 'requisiti soddisfatti' }}</span>@endif
                                     @if((float) $t['earned_diff'] != 0)<span class="tip {{ $cls($t['earned_diff']) }}" tabindex="0">{{ $signed($t['earned_diff']) }} €
                                         <span class="tipbox" role="tooltip">
                                             @if($t['explain'])<strong>{{ $t['explain'][0] }}</strong><ul>@foreach(array_slice($t['explain'], 1) as $line)<li>{{ $line }}</li>@endforeach</ul>@else Variazione dei compensi del mese rispetto allo stato reale.@endif
@@ -175,6 +184,9 @@
                         </div>
                     </div>
                 @endif
+
+            @if($result)
+
 
 
                 @if($result['agents'])

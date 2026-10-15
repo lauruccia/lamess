@@ -232,6 +232,36 @@ final class IncaricatiSimulationTest extends TestCase
         }
     }
 
+    public function test_current_tree_shows_the_real_network_with_what_is_missing_for_the_next_rank(): void
+    {
+        [$p, $v, $fra, $lau] = $this->network();
+        $counts = fn () => [PvMovement::count(), CommissionLine::count(), RankAchievement::count()];
+        $before = $counts();
+
+        $rows = app(IncaricatiSimulator::class)->currentTree($p, $v->plan());
+
+        $tree = array_column($rows, null, 'id');
+        $this->assertSame((string) $fra->id, $tree[(string) $lau->id]['parent']);
+        $this->assertSame('Incaricato', $tree[(string) $lau->id]['rank_after']);
+        $this->assertFalse($tree[(string) $lau->id]['changed'], 'Senza modifiche nessuna riga risulta cambiata');
+        $this->assertSame('Pearl', $tree[(string) $lau->id]['next_rank']);
+        $this->assertStringContainsString('clienti', $tree[(string) $lau->id]['missing']);
+        $this->assertSame($before, $counts());
+    }
+
+    public function test_page_shows_the_tree_before_the_first_simulation(): void
+    {
+        [, , $fra, $lau] = $this->network();
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+
+        Livewire::test(IncaricatiSimulationPage::class)
+            ->assertSee('La rete oggi')
+            ->assertSee('LAU — Incaricato LAU')
+            ->assertSee('+ clienti')
+            ->call('addChangeFor', 'clients', 'LAU — Incaricato LAU')
+            ->assertSee('Tutta la rete dopo la simulazione');
+    }
+
     public function test_page_runs_the_simulation_from_the_form_and_shows_the_difference(): void
     {
         [, , $fra, $lau] = $this->network();

@@ -86,17 +86,24 @@
                     <button type="button" wire:click="addChange('clients')">+ Aggiungi clienti</button>
                     <button type="button" wire:click="addChange('orders')">+ Aggiungi ordini</button>
                     <button type="button" wire:click="addChange('agents')">+ Aggiungi agenti (numero e livello)</button>
+                    <button type="button" wire:click="addChange('columns')">+ Aggiungi colonne (da {{ $columnClients }} clienti)</button>
                     <button type="button" wire:click="addChange('move')">+ Sposta nell'albero</button>
                 </div>
                 <datalist id="sim-incaricati">@foreach($options as $o)<option value="{{ $o }}"></option>@endforeach</datalist>
                 @forelse($changes as $i => $c)
                     <div class="row" wire:key="change-{{ $i }}">
                         <span class="n">{{ $i + 1 }}</span>
-                        <strong>{{ ['clients' => 'Aggiungi clienti', 'orders' => 'Aggiungi ordini', 'agents' => 'Aggiungi agenti', 'move' => 'Sposta nell\'albero'][$c['type']] ?? $c['type'] }}</strong>
+                        <strong>{{ ['clients' => 'Aggiungi clienti', 'orders' => 'Aggiungi ordini', 'agents' => 'Aggiungi agenti', 'columns' => 'Aggiungi colonne', 'move' => 'Sposta nell\'albero'][$c['type']] ?? $c['type'] }}</strong>
                         @if($c['type'] === 'move')
                             <input class="target" list="sim-incaricati" wire:model="changes.{{ $i }}.target" placeholder="Incaricato da spostare (codice o nome)" aria-label="Incaricato da spostare">
                             <span>sotto lo sponsor</span>
                             <input class="target" list="sim-incaricati" wire:model="changes.{{ $i }}.sponsor" placeholder="Nuovo sponsor (codice o nome)" aria-label="Nuovo sponsor">
+                        @elseif($c['type'] === 'columns')
+                            <input class="num" type="number" min="1" max="10" wire:model="changes.{{ $i }}.count" aria-label="Numero di colonne">
+                            <span>colonne, ciascuna con almeno</span>
+                            <input class="num" type="number" min="1" max="500" wire:model="changes.{{ $i }}.clients" placeholder="{{ $columnClients }}" aria-label="Clienti per colonna">
+                            <span>clienti, sotto</span>
+                            <input class="target" list="sim-incaricati" wire:model="changes.{{ $i }}.target" placeholder="Incaricato (codice o nome)" aria-label="Incaricato">
                         @else
                             <input class="num" type="number" min="1" max="{{ $c['type'] === 'agents' ? 20 : 500 }}" wire:model="changes.{{ $i }}.count" aria-label="Quantità">
                             @if($c['type'] === 'agents')
@@ -120,7 +127,7 @@
                     <button type="button" wire:click="resetSimulation">Azzera tutto</button>
                     <span class="muted" wire:loading wire:target="simulate,addChangeFor">Calcolo in corso…</span>
                 </div>
-                <p class="muted" style="margin:.5rem 0 0">«Aggiungi agenti» crea agenti virtuali del livello scelto con tutto ciò che serve per raggiungerlo (clienti, Pearl e linee richieste dal piano). «Aggiungi ordini» usa i clienti che l'incaricato ha già, senza aumentarne il numero. Le modifiche si applicano nell'ordine in cui le scrivi.</p>
+                <p class="muted" style="margin:.5rem 0 0">«Aggiungi agenti» crea agenti virtuali del livello scelto con tutto ciò che serve per raggiungerlo (clienti, Pearl e linee richieste dal piano). «Aggiungi colonne» crea altrettante linee dirette sotto l'incaricato, ciascuna con un agente Pearl e almeno i clienti indicati ({{ $columnClients }} se lasci vuoto, il minimo di colonna del piano): servono per le qualifiche che richiedono colonne. «Aggiungi ordini» usa i clienti che l'incaricato ha già, senza aumentarne il numero. Le modifiche si applicano nell'ordine in cui le scrivi.</p>
             </div>
 
             @if($error)<div class="err" role="alert">{{ $error }}</div>@endif
@@ -297,6 +304,7 @@
                                 <div class="bar" style="margin-top:.5rem" x-show="! sel.virtual">
                                     <button type="button" @click="$wire.addChangeFor('clients', sel.label)">+ clienti</button>
                                     <button type="button" @click="$wire.addChangeFor('agents', sel.label)">+ agenti</button>
+                                    <button type="button" @click="$wire.addChangeFor('columns', sel.label)" title="Aggiungi 3 colonne da {{ $columnClients }} clienti">+ colonne</button>
                                     <button type="button" @click="$wire.addChangeFor('move', sel.label)">sposta</button>
                                     <span class="muted">«sposta» aggiunge la modifica nel modulo in alto: indica lì il nuovo sponsor.</span>
                                 </div>
@@ -338,6 +346,7 @@
                                             <span class="acts" style="display:flex;gap:.25rem;justify-content:flex-end">
                                                 <button type="button" wire:click="addChangeFor('clients', {{ $js($t['label']) }})" title="Aggiungi clienti a questo incaricato">+ clienti</button>
                                                 <button type="button" wire:click="addChangeFor('agents', {{ $js($t['label']) }})" title="Aggiungi agenti sotto questo incaricato">+ agenti</button>
+                                                <button type="button" wire:click="addChangeFor('columns', {{ $js($t['label']) }})" title="Aggiungi 3 colonne da {{ $columnClients }} clienti sotto questo incaricato">+ colonne</button>
                                                 <button type="button" wire:click="addChangeFor('move', {{ $js($t['label']) }})" title="Sposta questo incaricato sotto un altro sponsor">sposta</button>
                                             </span>
                                         @endunless

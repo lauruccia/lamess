@@ -45,7 +45,7 @@ class IncaricatiSimulationPage extends Page
     /** Gli agenti simulati entrano in rete nel mese (generano il Bonus di Struttura se portano 3 clienti entro 30 giorni). */
     public bool $newAgents = true;
 
-    /** @var list<array{type:string,target:string,count:string,amount:string,rank:string,sponsor:string}> */
+    /** @var list<array{type:string,target:string,count:string,amount:string,rank:string,sponsor:string,clients?:string}> */
     public array $changes = [];
 
     /** @var array<string, mixed>|null */
@@ -64,10 +64,10 @@ class IncaricatiSimulationPage extends Page
         $this->changes = [];
     }
 
-    /** @return array{type:string,target:string,count:string,amount:string,rank:string,sponsor:string} */
+    /** @return array{type:string,target:string,count:string,amount:string,rank:string,sponsor:string,clients:string} */
     private static function blank(string $type): array
     {
-        return ['type' => $type, 'target' => '', 'count' => '1', 'amount' => '', 'rank' => 'PEARL', 'sponsor' => ''];
+        return ['type' => $type, 'target' => '', 'count' => $type === 'columns' ? '3' : '1', 'amount' => '', 'rank' => 'PEARL', 'sponsor' => '', 'clients' => ''];
     }
 
     public function addChange(string $type = 'clients'): void
@@ -126,7 +126,7 @@ class IncaricatiSimulationPage extends Page
         $out = [];
         foreach ($this->changes as $i => $c) {
             $n = $i + 1;
-            $row = ['type' => $c['type'], 'target' => $this->resolve($byLabel, $c['target'], $n), 'count' => $c['count'], 'amount' => $c['amount'], 'rank' => $c['rank']];
+            $row = ['type' => $c['type'], 'target' => $this->resolve($byLabel, $c['target'], $n), 'count' => $c['count'], 'amount' => $c['amount'], 'rank' => $c['rank'], 'clients' => $c['clients'] ?? ''];
             if ($c['type'] === 'move') {
                 $row['sponsor'] = $this->resolve($byLabel, $c['sponsor'], $n, 'il nuovo sponsor');
             }
@@ -195,6 +195,7 @@ class IncaricatiSimulationPage extends Page
             'options' => $version ? array_values($this->consultantOptions()) : [],
             'ranks' => $plan instanceof PlanConfig ? array_map(static fn ($r) => ['code' => $r->code, 'name' => $r->name], $plan->ranks) : [],
             'minAmount' => $plan?->kosmos?->clientMinAmount,
+            'columnClients' => $plan instanceof PlanConfig ? IncaricatiSimulator::defaultColumnClients($plan) : 90,
         ];
     }
 }

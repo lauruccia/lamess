@@ -323,4 +323,54 @@ final class IncaricatiSimulationTest extends TestCase
         $this->assertSame(0, PvMovement::count());
         $this->assertSame(0, RankAchievement::count());
     }
+
+    public function test_columns_create_pearl_lines_with_at_least_ninety_clients_each(): void
+    {
+        [$p, $v, $fra] = $this->network();
+        $this->assertSame(90, IncaricatiSimulator::defaultColumnClients($v->plan()));
+
+        $res = $this->simulate($p, $v, [['type' => 'columns', 'target' => $fra->id, 'count' => 3, 'clients' => '']]);
+
+        $this->assertSame(3, $res['summary']['virtual_agents']);
+        $this->assertCount(3, $res['agents']);
+        foreach ($res['agents'] as $agent) {
+            $this->assertTrue($agent['ok']);
+            $this->assertGreaterThanOrEqual(90, $agent['sub_clients']);
+        }
+
+        $custom = $this->simulate($p, $v, [['type' => 'columns', 'target' => $fra->id, 'count' => 2, 'clients' => '120']]);
+        foreach ($custom['agents'] as $agent) {
+            $this->assertGreaterThanOrEqual(120, $agent['sub_clients']);
+        }
+    }
+
+    public function test_columns_reject_invalid_numbers(): void
+    {
+        [$p, $v, $fra] = $this->network();
+
+        foreach ([['count' => 0, 'clients' => ''], ['count' => 11, 'clients' => ''], ['count' => 3, 'clients' => '501']] as $bad) {
+            try {
+                $this->simulate($p, $v, [['type' => 'columns', 'target' => $fra->id] + $bad]);
+                $this->fail('La modifica non valida doveva essere rifiutata.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('Modifica 1', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_page_offers_the_columns_change_with_ninety_clients_by_default(): void
+    {
+        [, , $fra] = $this->network();
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+
+        Livewire::test(IncaricatiSimulationPage::class)
+            ->assertSee('Aggiungi colonne (da 90 clienti)')
+            ->call('addChange', 'columns')
+            ->assertSet('changes.0.count', '3')
+            ->assertSee('colonne, ciascuna con almeno')
+            ->set('changes.0.target', 'FRA — Incaricato FRA')
+            ->call('simulate')
+            ->assertSet('error', null)
+            ->assertSee('Risultato per il periodo');
+    }
 }

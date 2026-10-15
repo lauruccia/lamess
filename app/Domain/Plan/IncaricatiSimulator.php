@@ -36,7 +36,7 @@ use InvalidArgumentException;
  */
 final class IncaricatiSimulator
 {
-    public const TYPES = ['clients', 'orders', 'agents', 'move'];
+    public const TYPES = ['clients', 'orders', 'agents', 'columns', 'move'];
 
     private const MAX_NEW_MOVEMENTS = 20000;
 
@@ -147,6 +147,12 @@ final class IncaricatiSimulator
             return;
         }
 
+        if ($type === 'columns') {
+            $this->addColumns($d, $target, $n, $c);
+
+            return;
+        }
+
         $count = $this->count($c['count'] ?? 1, 1, 500, $n);
         $amount = $this->amount($d, $c['amount'] ?? null, $n);
         if (! $d->base->plan->kosmos->orderQualifies($amount) && $type === 'clients') {
@@ -179,10 +185,10 @@ final class IncaricatiSimulator
         return $id;
     }
 
-    private function count(mixed $v, int $min, int $max, int $n): int
+    private function count(mixed $v, int $min, int $max, int $n, string $what = 'la quantità'): int
     {
         if (! is_numeric($v) || (int) $v != $v || (int) $v < $min || (int) $v > $max) {
-            throw new InvalidArgumentException("Modifica {$n}: la quantità deve essere un numero intero tra {$min} e {$max}.");
+            throw new InvalidArgumentException("Modifica {$n}: {$what} deve essere un numero intero tra {$min} e {$max}.");
         }
 
         return (int) $v;
@@ -219,6 +225,45 @@ final class IncaricatiSimulator
         sort($ids, SORT_STRING);
 
         return $ids;
+    }
+
+    /** Clienti per colonna proposti di default: il massimo richiesto dalle qualifiche del piano (90 nel piano Incaricati). */
+    public static function defaultColumnClients(PlanConfig $plan): int
+    {
+        $max = 0;
+        foreach ($plan->ranks as $r) {
+            if ($r->requires('columns') && $r->minColumns > 0) {
+                $max = max($max, $r->minColumnClients);
+            }
+        }
+
+        return $max > 0 ? $max : 90;
+    }
+
+    /**
+     * «Aggiungi colonne»: ogni colonna è una linea diretta sotto l'incaricato, con un agente virtuale Pearl in cima e tanti
+     * clienti nel suo ramo quanti richiesti (di default il minimo di colonna del piano, 90). Servono per la qualifica con le colonne.
+     *
+     * @param  array<string, mixed>  $c
+     */
+    private function addColumns(SimulationDraft $d, string $owner, int $n, array $c): void
+    {
+        $count = $this->count($c['count'] ?? 1, 1, 10, $n, 'il numero di colonne');
+        $given = $c['clients'] ?? null;
+        $perColumn = $this->count(
+            $given === null || trim((string) $given) === '' ? self::defaultColumnClients($d->base->plan) : $given,
+            1, 500, $n, 'il numero di clienti per colonna',
+        );
+        $amount = $this->amount($d, null, $n);
+        $pearlCode = $d->base->plan->kosmos->pearlRank;
+        for ($i = 0; $i < $count; $i++) {
+            [$headId, $total] = $this->buildAgent($d, $pearlCode, $owner);
+            if ($total < $perColumn) {
+                $this->addClients($d, $headId, $perColumn - $total, $amount);
+            } elseif ($total > $perColumn) {
+                $d->warnings[] = "Modifica {$n}: ogni colonna ha comunque {$total} clienti, il minimo per avere un agente Pearl in cima.";
+            }
+        }
     }
 
     private function addClients(SimulationDraft $d, string $owner, int $count, BigDecimal $amount): void

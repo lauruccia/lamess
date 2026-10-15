@@ -30,6 +30,24 @@
         .sim .tip { position:relative; cursor:help; border-bottom:1px dotted currentColor; outline:none; }
         .sim .tip .tipbox { display:none; position:absolute; left:0; top:calc(100% + .3rem); z-index:50; width:min(32rem,82vw); background:var(--s-card); color:var(--s-ink); border:1px solid var(--s-line); border-radius:.6rem; padding:.6rem .8rem; box-shadow:0 8px 24px rgba(0,0,0,.2); font-weight:400; font-size:.8rem; line-height:1.45; white-space:normal; text-align:left; }
         .sim .tip:hover .tipbox, .sim .tip:focus .tipbox { display:block; } .sim .tip .tipbox ul { margin:.3rem 0 0 1rem; padding:0; list-style:disc; } .sim .tip .tipbox li { margin:.2rem 0; }
+        .sim .cv { position:relative; background:var(--s-cream); border:1px solid var(--s-line); border-radius:.75rem; overflow:hidden; cursor:grab; touch-action:none; height:68vh; min-height:26rem; background-image:radial-gradient(var(--s-line) .6px, transparent .6px); background-size:22px 22px; }
+        .sim .cv.drag { cursor:grabbing; } .sim .cv svg { width:100%; height:100%; display:block; }
+        .sim .zoom { position:absolute; left:.6rem; top:.6rem; display:flex; gap:.25rem; align-items:center; background:var(--s-card); border:1px solid var(--s-line); border-radius:.6rem; padding:.2rem; z-index:5; flex-wrap:wrap; }
+        .sim .zoom span { min-width:2.6rem; text-align:center; color:var(--s-muted); font-weight:600; font-size:.8rem; }
+        .sim .hint { position:absolute; right:.8rem; top:.8rem; color:var(--s-muted); font-size:.75rem; z-index:5; }
+        .sim .leg { display:flex; flex-wrap:wrap; gap:.3rem 1.2rem; justify-content:center; font-size:.8rem; margin-top:.5rem; } .sim .leg i { display:inline-block; width:.7rem; height:.7rem; border-radius:.2rem; margin-right:.35rem; vertical-align:-1px; }
+        .sim .detail { margin-top:.6rem; border:1px solid var(--s-acc); background:color-mix(in srgb, var(--s-acc) 7%, var(--s-card)); border-radius:.7rem; padding:.7rem .9rem; font-size:.86rem; }
+        .sim .nd { cursor:pointer; } .sim .nd rect.b { stroke-width:1.5; filter:drop-shadow(0 1px 2px rgba(0,0,0,.14)); } .sim .nd.chg rect.b { stroke:var(--s-acc) !important; stroke-width:3; } .sim .nd.sel rect.b { stroke:var(--s-ink) !important; stroke-width:3.5; }
+        .sim .nd text { font-family:inherit; pointer-events:none; } .sim .tg2 { cursor:pointer; } .sim .e { fill:none; stroke:var(--s-line); stroke-width:1.4; }
+        .sim .lv-table th { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; } .sim .lv-table td { vertical-align:middle; padding:.35rem .6rem; } .sim .lv-table .num { text-align:right; }
+        .sim .lv-table tr.chg td { background:color-mix(in srgb, var(--s-acc) 9%, transparent); } .sim .lv-row-0 td { background:color-mix(in srgb, var(--s-acc) 6%, transparent); }
+        .sim .lv-name { display:flex; align-items:center; flex-wrap:wrap; min-height:1.5rem; gap:.1rem 0; }
+        .sim .lv-guide { flex:none; display:inline-block; width:1.5rem; height:1.5rem; border-left:1px dashed var(--s-line); } .sim .lv-guide:first-child { border-left:0; }
+        .sim .lv-elbow { flex:none; display:inline-block; width:.9rem; height:.8rem; margin-right:.4rem; border-left:1px solid var(--s-line); border-bottom:1px solid var(--s-line); transform:translateY(-.3rem); }
+        .sim .lv-tg { flex:none; width:1.4rem; height:1.4rem; margin-right:.4rem; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:.35rem; font-size:.8rem; line-height:1; } .sim .lv-tg-sp { flex:none; display:inline-block; width:1.4rem; margin-right:.4rem; }
+        .sim .lv-code { margin-left:.5rem; font-size:.75rem; color:var(--s-muted); }
+        .sim .lv-level { display:inline-block; min-width:1.7rem; text-align:center; padding:.05rem .4rem; border-radius:.4rem; background:color-mix(in srgb, var(--s-line) 35%, transparent); font-size:.75rem; font-weight:700; }
+        .sim [x-cloak] { display:none !important; }
         .sim .chip { display:inline-block; font-size:.7rem; font-weight:700; padding:.05rem .45rem; border-radius:99px; border:1px solid currentColor; margin-left:.35rem; vertical-align:1px; }
     </style>
 
@@ -123,75 +141,117 @@
             @endif
 
             @php $treeRows = $result['tree'] ?? $baseTree; @endphp
-                @if($treeRows)
-                    @php
-                        $parents = [];
-                        $hasKids = [];
-                        $labelOf = [];
-                        foreach ($treeRows as $t) { $labelOf[$t['id']] = $t['label']; $parents[$t['id']] = $t['parent']; if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; } }
-                    @endphp
-                    <div class="box" wire:key="tree-{{ md5(json_encode($treeRows)) }}"
-                         x-data="{ closed: {}, only: false, parents: @js($parents), labels: @js($labelOf), kids: @js(array_keys($hasKids)),
-                                   view: (() => { try { return localStorage.getItem('simTreeView') === 'list' ? 'list' : 'tree'; } catch (e) { return 'tree'; } })(),
-                                   setView(v) { this.view = v; try { localStorage.setItem('simTreeView', v); } catch (e) {} },
-                                   hidden(id) { if (this.view === 'list') { return false; } for (let p = this.parents[id]; p; p = this.parents[p]) { if (this.closed[p]) { return true; } } return false; },
-                                   show(id, changed, sub) { return ! this.hidden(id) && (! this.only || changed || (this.view === 'tree' && sub > 0)); },
-                                   closeAll() { this.kids.forEach(k => this.closed[k] = true); }, openAll() { this.closed = {}; } }">
-                        <div class="bar" style="justify-content:space-between">
-                            <h3 style="margin:0">{{ $result ? 'Tutta la rete dopo la simulazione' : 'La rete oggi — periodo '.$periodCode }}</h3>
-                            <div class="bar">
-                                @if($result)<label><input type="checkbox" x-model="only"> solo i rami con cambiamenti</label>@endif
-                                <span role="group" aria-label="Tipo di vista" style="display:inline-flex">
-                                    <button type="button" :class="view === 'tree' ? 'pri' : ''" style="border-radius:.5rem 0 0 .5rem" @click="setView('tree')" :aria-pressed="view === 'tree'">Vista albero</button>
-                                    <button type="button" :class="view === 'list' ? 'pri' : ''" style="border-radius:0 .5rem .5rem 0;margin-left:-1px" @click="setView('list')" :aria-pressed="view === 'list'">Vista elenco</button>
-                                </span>
-                                <button type="button" x-show="view === 'tree'" @click="openAll()">Apri tutto</button>
-                                <button type="button" x-show="view === 'tree'" @click="closeAll()">Chiudi tutto</button>
-                            </div>
-                        </div>
-                        <p class="muted" style="margin:.3rem 0 .6rem">
-                            @if($result)
-                                Ogni incaricato mostra la qualifica <em>prima → dopo</em> (il colore è quello della pietra), i clienti personali e la variazione dei compensi del mese. Le righe evidenziate sono quelle che cambiano. Dopo ogni incaricato trovi cosa gli manca per la qualifica successiva. Usa i pulsanti a destra per aggiungere clienti, agenti o spostarlo.
-                            @else
-                                Questo è lo stato reale del periodo, senza nessuna modifica. Con i pulsanti in alto puoi passare dalla vista albero (a rami apribili) alla vista elenco (tutti in fila, con lo sponsor accanto al nome). Ogni incaricato mostra qualifica (colore della pietra), clienti personali e cosa gli manca per la qualifica successiva: è lì che conviene intervenire. Premi <strong>+ clienti</strong>, <strong>+ agenti</strong> o <strong>sposta</strong> accanto all'incaricato scelto e il risultato compare subito qui sotto.
-                            @endif
-                        </p>
-                        <div class="tr">
-                            @foreach($treeRows as $t)
-                                <div class="node {{ $t['changed'] ? 'chg' : '' }}" x-show="show({{ \Illuminate\Support\Js::from($t['id']) }}, {{ $t['changed'] ? 'true' : 'false' }}, {{ $t['sub_changes'] }})" x-bind:style="view === 'tree' ? 'padding-left:{{ $t['depth'] * 1.3 }}rem' : ''">
-                                    @if(isset($hasKids[$t['id']]))
-                                        <button type="button" class="tg" @click="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] = ! closed[{{ \Illuminate\Support\Js::from($t['id']) }}]" x-text="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '▸' : '▾'" x-show="view === 'tree'" aria-label="Apri o chiudi il ramo"></button>
-                                    @else<span class="tg" x-show="view === 'tree'"></span>@endif
-                                    <span class="dot" style="background:{{ $t['color_after'] }}"></span>
-                                    <span class="nm" style="{{ $t['changed'] || $t['target'] ? 'font-weight:700' : '' }}">{{ $t['label'] }}</span>
-                                    <span class="muted" x-show="view === 'list'" x-text="parents[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '(sotto ' + labels[parents[{{ \Illuminate\Support\Js::from($t['id']) }}]] + ')' : '(in cima alla rete)'"></span>
-                                    <span class="rk">
-                                        @if($t['rank_before'] !== null && $t['rank_before'] !== $t['rank_after'])
-                                            <span class="muted">{{ $t['rank_before'] }}</span> → <span class="{{ $t['dir'] >= 0 ? 'up' : 'down' }}">{{ $t['rank_after'] }} {{ $t['dir'] > 0 ? '▲' : '▼' }}</span>
-                                        @else{{ $t['rank_after'] }}@endif
-                                    </span>
-                                    <span class="muted">· clienti @if($t['clients_before'] !== null && $t['clients_before'] !== $t['clients_after']){{ $t['clients_before'] }} → <strong>{{ $t['clients_after'] }}</strong>@else{{ $t['clients_after'] }}@endif</span>
-                                    @if($t['next_rank'])<span class="muted">· per <strong>{{ $t['next_rank'] }}</strong>: {{ $t['missing'] !== '' ? 'mancano '.$t['missing'] : 'requisiti soddisfatti' }}</span>@endif
-                                    @if((float) $t['earned_diff'] != 0)<span class="tip {{ $cls($t['earned_diff']) }}" tabindex="0">{{ $signed($t['earned_diff']) }} €
-                                        <span class="tipbox" role="tooltip">
-                                            @if($t['explain'])<strong>{{ $t['explain'][0] }}</strong><ul>@foreach(array_slice($t['explain'], 1) as $line)<li>{{ $line }}</li>@endforeach</ul>@else Variazione dei compensi del mese rispetto allo stato reale.@endif
-                                        </span></span>@endif
-                                    @if($t['tag'] === 'new')<span class="chip newc">nuovo{{ $t['extra'] > 0 ? ' · +'.$t['extra'].' agenti sotto' : '' }}</span>@endif
-                                    @if($t['tag'] === 'moved')<span class="chip" style="color:var(--s-move)">spostato{{ $t['moved_from'] ? ' da '.$t['moved_from'] : '' }}</span>@endif
-                                    @if($t['target'] && $t['tag'] !== 'moved')<span class="chip">scelto</span>@endif
-                                    <span x-show="view === 'tree' && closed[{{ \Illuminate\Support\Js::from($t['id']) }}] && {{ $t['sub_changes'] }} > 0" class="chip" style="color:var(--s-acc)">{{ $t['sub_changes'] }} cambiamenti sotto</span>
-                                    @unless($t['virtual'])
-                                        <span class="acts">
-                                            <button type="button" wire:click="addChangeFor('clients', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Aggiungi clienti a questo incaricato">+ clienti</button>
-                                            <button type="button" wire:click="addChangeFor('agents', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Aggiungi agenti sotto questo incaricato">+ agenti</button>
-                                            <button type="button" wire:click="addChangeFor('move', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Sposta questo incaricato sotto un altro sponsor">sposta</button>
-                                        </span>
-                                    @endunless
-                                </div>
-                            @endforeach
+            @if($treeRows)
+                @php
+                    $parents = [];
+                    $hasKids = [];
+                    $directs = [];
+                    foreach ($treeRows as $t) {
+                        $parents[$t['id']] = $t['parent'];
+                        if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; $directs[$t['parent']] = ($directs[$t['parent']] ?? 0) + 1; }
+                    }
+                    $js = static fn ($v) => \Illuminate\Support\Js::from($v);
+                @endphp
+                <div class="box" wire:key="tree-{{ md5(json_encode($treeRows)) }}"
+                     x-data="{ closed: {}, only: false, parents: @js($parents), kids: @js(array_keys($hasKids)),
+                               view: (() => { try { return localStorage.getItem('simTreeView2') === 'levels' ? 'levels' : 'tree'; } catch (e) { return 'tree'; } })(),
+                               setView(v) { this.view = v; try { localStorage.setItem('simTreeView2', v); } catch (e) {} $dispatch('simview', v); },
+                               hidden(id) { for (let p = this.parents[id]; p; p = this.parents[p]) { if (this.closed[p]) { return true; } } return false; },
+                               show(id, changed, sub) { return ! this.hidden(id) && (! this.only || changed || sub > 0); },
+                               closeAll() { this.kids.forEach(k => this.closed[k] = true); }, openAll() { this.closed = {}; } }">
+                    <div class="bar" style="justify-content:space-between">
+                        <h3 style="margin:0">{{ $result ? 'Tutta la rete dopo la simulazione' : 'La rete oggi — periodo '.$periodCode }}</h3>
+                        <div class="bar">
+                            <span role="group" aria-label="Tipo di vista" style="display:inline-flex">
+                                <button type="button" :class="view === 'tree' ? 'pri' : ''" style="border-radius:.5rem 0 0 .5rem" @click="setView('tree')" :aria-pressed="view === 'tree'">Vista albero</button>
+                                <button type="button" :class="view === 'levels' ? 'pri' : ''" style="border-radius:0 .5rem .5rem 0;margin-left:-1px" @click="setView('levels')" :aria-pressed="view === 'levels'">Elenco per livelli</button>
+                            </span>
+                            @if($result)<label><input type="checkbox" x-model="only"> solo i rami con cambiamenti</label>@endif
+                            <span class="bar" x-show="view === 'levels'">
+                                <button type="button" @click="openAll()">Apri tutto</button>
+                                <button type="button" @click="closeAll()">Chiudi tutto</button>
+                            </span>
                         </div>
                     </div>
-                @endif
+                    <p class="muted" style="margin:.3rem 0 .6rem">
+                        @if($result)
+                            Ogni incaricato mostra la qualifica <em>prima → dopo</em> (il colore è quello della pietra), i clienti personali e la variazione dei compensi del mese; i riquadri evidenziati sono quelli che cambiano. Clicca un incaricato per vedere cosa gli manca per la qualifica successiva e aggiungere clienti, agenti o spostarlo.
+                        @else
+                            Stato reale del periodo, senza modifiche. <strong>Vista albero</strong>: il grafico della rete (trascina per spostarti, rotella per zoomare, clic su un incaricato per i dettagli). <strong>Elenco per livelli</strong>: la tabella con livello, diretti e clienti. In entrambe vedi cosa manca a ognuno per la qualifica successiva, cioè dove intervenire, e puoi aggiungere clienti, agenti o spostare l'incaricato: il risultato compare subito.
+                        @endif
+                    </p>
+
+                    {{-- Vista albero: grafico --}}
+                    <div x-show="view === 'tree'" x-data="simChart(@js($treeRows))" x-on:simview.window="onView($event.detail)" wire:ignore>
+                        <div class="cv" x-ref="cv">
+                            <div class="zoom"><button type="button" @click="zoom(.8)" aria-label="Riduci">−</button><span x-text="Math.round(k*100)+'%'"></span><button type="button" @click="zoom(1.25)" aria-label="Ingrandisci">+</button><button type="button" @click="fit()">Adatta</button><button type="button" @click="levels(3)">Livelli 1–3</button><button type="button" @click="expandAll()">Espandi tutto</button></div>
+                            <div class="hint">Trascina per spostarti · rotella per zoomare</div>
+                            <svg x-ref="svg" role="img" aria-label="Albero della rete"><g x-ref="g"></g></svg>
+                        </div>
+                        <div class="leg" x-html="legend"></div>
+                        <template x-if="sel">
+                            <div class="detail">
+                                <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start">
+                                    <div><strong x-text="sel.label"></strong><div class="muted" x-text="selSummary()"></div></div>
+                                    <button type="button" @click="sel = null; draw()" aria-label="Chiudi il riquadro">✕</button>
+                                </div>
+                                <div class="muted" style="margin-top:.35rem" x-show="sel.next_rank"><span>Per <strong x-text="sel.next_rank"></strong>: </span><span x-text="sel.missing ? 'mancano ' + sel.missing : 'requisiti soddisfatti'"></span></div>
+                                <div class="muted" x-show="sel.explain && sel.explain.length" style="margin-top:.35rem"><strong x-text="sel.explain[0]"></strong><ul style="margin:.2rem 0 0 1rem;list-style:disc"><template x-for="line in (sel.explain || []).slice(1)"><li x-text="line"></li></template></ul></div>
+                                <div class="bar" style="margin-top:.5rem" x-show="! sel.virtual">
+                                    <button type="button" @click="$wire.addChangeFor('clients', sel.label)">+ clienti</button>
+                                    <button type="button" @click="$wire.addChangeFor('agents', sel.label)">+ agenti</button>
+                                    <button type="button" @click="$wire.addChangeFor('move', sel.label)">sposta</button>
+                                    <span class="muted">«sposta» aggiunge la modifica nel modulo in alto: indica lì il nuovo sponsor.</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    {{-- Elenco per livelli: tabella come «Elenco incaricati per livelli» --}}
+                    <div class="scroll" x-show="view === 'levels'" x-cloak>
+                        <table class="lv-table">
+                            <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th class="num">Diretti</th><th class="num">Clienti</th><th>Per la successiva</th><th class="num">Compensi del mese</th><th></th></tr></thead>
+                            <tbody>
+                            @foreach($treeRows as $t)
+                                @php [$code, $nm] = str_contains($t['label'], ' — ') ? explode(' — ', $t['label'], 2) : [null, $t['label']]; @endphp
+                                <tr class="{{ $t['depth'] === 0 ? 'lv-row-0' : '' }} {{ $t['changed'] ? 'chg' : '' }}" x-show="show({{ $js($t['id']) }}, {{ $t['changed'] ? 'true' : 'false' }}, {{ $t['sub_changes'] }})">
+                                    <td>
+                                        <div class="lv-name">
+                                            @for($i = 1; $i < $t['depth']; $i++)<span class="lv-guide" aria-hidden="true"></span>@endfor
+                                            @if($t['depth'] > 0)<span class="lv-elbow" aria-hidden="true"></span>@endif
+                                            @if(isset($hasKids[$t['id']]))
+                                                <button type="button" class="lv-tg" @click="closed[{{ $js($t['id']) }}] = ! closed[{{ $js($t['id']) }}]" x-text="closed[{{ $js($t['id']) }}] ? '+' : '−'" aria-label="Apri o chiudi i diretti di {{ $nm }}">−</button>
+                                            @else<span class="lv-tg-sp" aria-hidden="true"></span>@endif
+                                            <span class="dot" style="background:{{ $t['color_after'] }}"></span>
+                                            <strong style="margin-left:.35rem">{{ $nm }}</strong>@if($code)<span class="lv-code">{{ $code }}</span>@endif
+                                            @if($t['tag'] === 'new')<span class="chip newc">nuovo</span>@endif
+                                            @if($t['tag'] === 'moved')<span class="chip" style="color:var(--s-move)">spostato{{ $t['moved_from'] ? ' da '.$t['moved_from'] : '' }}</span>@endif
+                                            @if($t['target'] && $t['tag'] !== 'moved')<span class="chip">scelto</span>@endif
+                                            <span x-show="closed[{{ $js($t['id']) }}] && {{ $t['sub_changes'] }} > 0" class="chip" style="color:var(--s-acc)">{{ $t['sub_changes'] }} cambiamenti sotto</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="lv-level">{{ $t['depth'] }}</span></td>
+                                    <td>@if($t['rank_before'] !== null && $t['rank_before'] !== $t['rank_after'])<span class="muted">{{ $t['rank_before'] }}</span> → <span class="{{ $t['dir'] >= 0 ? 'up' : 'down' }}">{{ $t['rank_after'] }} {{ $t['dir'] > 0 ? '▲' : '▼' }}</span>@else{{ $t['rank_after'] ?? '—' }}@endif</td>
+                                    <td class="num">{{ $directs[$t['id']] ?? 0 }}</td>
+                                    <td class="num">@if($t['clients_before'] !== null && $t['clients_before'] !== $t['clients_after']){{ $t['clients_before'] }} → <strong>{{ $t['clients_after'] }}</strong>@else{{ $t['clients_after'] }}@endif</td>
+                                    <td class="muted">@if($t['next_rank'])<strong>{{ $t['next_rank'] }}</strong>: {{ $t['missing'] !== '' ? 'mancano '.$t['missing'] : 'requisiti soddisfatti' }}@else — @endif</td>
+                                    <td class="num {{ (float) $t['earned_diff'] != 0 ? $cls($t['earned_diff']) : '' }}" @if($t['explain']) title="{{ implode(' · ', $t['explain']) }}" style="cursor:help" @endif>{{ (float) $t['earned_diff'] != 0 ? $signed($t['earned_diff']).' €' : '—' }}</td>
+                                    <td>
+                                        @unless($t['virtual'])
+                                            <span class="acts" style="display:flex;gap:.25rem;justify-content:flex-end">
+                                                <button type="button" wire:click="addChangeFor('clients', {{ $js($t['label']) }})" title="Aggiungi clienti a questo incaricato">+ clienti</button>
+                                                <button type="button" wire:click="addChangeFor('agents', {{ $js($t['label']) }})" title="Aggiungi agenti sotto questo incaricato">+ agenti</button>
+                                                <button type="button" wire:click="addChangeFor('move', {{ $js($t['label']) }})" title="Sposta questo incaricato sotto un altro sponsor">sposta</button>
+                                            </span>
+                                        @endunless
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
 
             @if($result)
 
@@ -251,4 +311,114 @@
             @endif
         @endif
     </div>
+
+    <script>
+        function simChart(rows) {
+            const NS = 'http://www.w3.org/2000/svg', W = 214, H = 66, GX = 22, GY = 62;
+            return {
+                rows, by: {}, kids: {}, open: {}, sel: null, k: 1, tx: 0, ty: 0, legend: '', ready: false,
+                init() {
+                    this.rows.forEach(n => { this.by[n.id] = n; this.kids[n.id] = []; });
+                    this.rows.forEach(n => { if (n.parent !== null && this.kids[n.parent]) { this.kids[n.parent].push(n.id); } });
+                    const seen = {};
+                    this.rows.forEach(n => { if (n.rank_after && n.color_after && !seen[n.rank_after]) { seen[n.rank_after] = n.color_after; } });
+                    this.legend = Object.keys(seen).map(r => '<span><i style="background:' + seen[r] + '"><\/i>' + this.esc(r) + '<\/span>').join('')
+                        + '<span><i style="background:var(--s-acc)"><\/i>Evidenziato = cambia con la simulazione<\/span>';
+                    const cv = this.$refs.cv;
+                    cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); this.zoom(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+                    let dr = null;
+                    cv.addEventListener('pointerdown', e => { dr = { x: e.clientX, y: e.clientY, tx: this.tx, ty: this.ty }; cv.classList.add('drag'); });
+                    addEventListener('pointermove', e => { if (dr) { this.tx = dr.tx + e.clientX - dr.x; this.ty = dr.ty + e.clientY - dr.y; this.tf(); } });
+                    addEventListener('pointerup', () => { dr = null; cv.classList.remove('drag'); });
+                    this.expandAll(false);
+                    if (cv.offsetParent !== null) { this.$nextTick(() => this.fit()); }
+                },
+                onView(v) { if (v === 'tree') { this.$nextTick(() => this.fit()); } },
+                esc(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); },
+                num(v) { const n = Number(v); return (n > 0 ? '+' : '') + n.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
+                el(n, a, p) { const e = document.createElementNS(NS, n); for (const x in a) e.setAttribute(x, a[x]); p.appendChild(e); return e; },
+                ini(n) { return (n.replace(/[^\p{L} ]/gu, '').trim().split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase()) || '?'; },
+                split(label) { const i = label.indexOf(' — '); return i < 0 ? [null, label] : [label.slice(0, i), label.slice(i + 3)]; },
+                selSummary() {
+                    const n = this.sel, r = (n.rank_before && n.rank_before !== n.rank_after) ? n.rank_before + ' → ' + n.rank_after : (n.rank_after || '—');
+                    const c = (n.clients_before !== null && n.clients_before !== n.clients_after) ? n.clients_before + ' → ' + n.clients_after : n.clients_after;
+                    return 'Qualifica ' + r + ' · clienti ' + c + ' · diretti ' + (this.kids[n.id] || []).length + (Number(n.earned_diff) !== 0 ? ' · compensi ' + this.num(n.earned_diff) + ' €' : '');
+                },
+                layout() {
+                    const pos = {}; let x = 0; const self = this;
+                    const roots = this.rows.filter(n => n.parent === null).map(n => n.id);
+                    (function w(id, d) {
+                        const c = self.open[id] ? self.kids[id] : [];
+                        if (!c.length) { pos[id] = { x: x, y: d }; x += W + GX; return; }
+                        c.forEach(i => w(i, d + 1));
+                        pos[id] = { x: (pos[c[0]].x + pos[c[c.length - 1]].x) / 2, y: d };
+                    })(roots[0], 0);
+                    roots.slice(1).forEach(r => (function w(id, d) {
+                        const c = self.open[id] ? self.kids[id] : [];
+                        if (!c.length) { pos[id] = { x: x, y: d }; x += W + GX; return; }
+                        c.forEach(i => w(i, d + 1));
+                        pos[id] = { x: (pos[c[0]].x + pos[c[c.length - 1]].x) / 2, y: d };
+                    })(r, 0));
+                    return pos;
+                },
+                draw() {
+                    const g = this.$refs.g; g.innerHTML = '';
+                    const pos = this.layout(), eg = this.el('g', {}, g), ng = this.el('g', {}, g);
+                    for (const id in pos) {
+                        const d = this.by[id], P = pos[id];
+                        if (this.open[id]) this.kids[id].forEach(c => {
+                            const q = pos[c], x1 = P.x + W / 2, y1 = P.y * (H + GY) + H, x2 = q.x + W / 2, y2 = q.y * (H + GY), m = (y1 + y2) / 2;
+                            this.el('path', { class: 'e', d: `M${x1},${y1}V${m}H${x2}V${y2}` }, eg);
+                        });
+                        const col = d.color_after || '#B9B1A5', [code, nm] = this.split(d.label);
+                        const gr = this.el('g', { class: 'nd' + (d.changed ? ' chg' : '') + (this.sel && this.sel.id === d.id ? ' sel' : ''), transform: `translate(${P.x},${P.y * (H + GY)})` }, ng);
+                        this.el('rect', { class: 'b', width: W, height: H, rx: 10, fill: 'var(--s-card)', stroke: col, 'stroke-dasharray': d.virtual ? '5 3' : '' }, gr);
+                        this.el('rect', { x: 0, y: 0, width: 6, height: H, rx: 3, fill: col }, gr);
+                        this.el('circle', { cx: 28, cy: H / 2, r: 16, fill: col }, gr);
+                        this.el('text', { x: 28, y: H / 2 + 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#fff' }, gr).textContent = this.ini(nm);
+                        let name = nm; if (name.length > 22) name = name.slice(0, 21) + '…';
+                        this.el('text', { x: 52, y: 17, 'font-size': 12, 'font-weight': 700, fill: 'var(--s-ink)' }, gr).textContent = name;
+                        const rankChanged = d.rank_before && d.rank_before !== d.rank_after;
+                        const t2 = this.el('text', { x: 52, y: 32, 'font-size': 10.5, 'font-weight': 600, fill: rankChanged ? (d.dir >= 0 ? 'var(--s-up)' : 'var(--s-down)') : 'var(--s-muted)' }, gr);
+                        t2.textContent = (rankChanged ? d.rank_before + ' → ' + d.rank_after + (d.dir > 0 ? ' ▲' : ' ▼') : (d.rank_after || '—')) + (code ? ' · ' + code : '');
+                        const clients = (d.clients_before !== null && d.clients_before !== d.clients_after) ? d.clients_before + '→' + d.clients_after : d.clients_after;
+                        const diff = Number(d.earned_diff) !== 0 ? ' · ' + this.num(d.earned_diff) + ' €' : '';
+                        this.el('text', { x: 52, y: 46, 'font-size': 10.5, fill: 'var(--s-muted)' }, gr).textContent = 'clienti ' + clients + diff;
+                        if (d.next_rank) { let m = 'per ' + d.next_rank + ': ' + (d.missing ? d.missing : 'ok'); if (m.length > 34) m = m.slice(0, 33) + '…'; this.el('text', { x: 52, y: 59, 'font-size': 9.5, fill: 'var(--s-muted)' }, gr).textContent = m; }
+                        const tt = this.el('title', {}, gr); tt.textContent = d.label + (d.next_rank ? ' — per ' + d.next_rank + ': ' + (d.missing ? 'mancano ' + d.missing : 'requisiti soddisfatti') : '');
+                        if (d.tag === 'new') { this.el('text', { x: W - 8, y: 14, 'text-anchor': 'end', 'font-size': 9.5, 'font-weight': 700, fill: 'var(--s-new)' }, gr).textContent = 'nuovo'; }
+                        if (d.tag === 'moved') { this.el('text', { x: W - 8, y: 14, 'text-anchor': 'end', 'font-size': 9.5, 'font-weight': 700, fill: 'var(--s-move)' }, gr).textContent = 'spostato'; }
+                        const nk = this.kids[id].length;
+                        if (nk) {
+                            const o = !!this.open[id], t = this.el('g', { class: 'tg2', transform: `translate(${W / 2},${H + 1})` }, gr);
+                            this.el('rect', { x: -28, y: -1, width: 56, height: 17, rx: 8.5, fill: 'var(--s-card)', stroke: 'var(--s-line)' }, t);
+                            this.el('text', { 'text-anchor': 'middle', y: 11, 'font-size': 10, 'font-weight': 700, fill: 'var(--s-acc)' }, t).textContent = (o ? '▾ ' : '▸ ') + nk + (!o && d.sub_changes ? ' · ' + d.sub_changes + '!' : '');
+                            t.addEventListener('click', e => { e.stopPropagation(); this.open[id] = !this.open[id]; this.draw(); });
+                            t.addEventListener('pointerdown', e => e.stopPropagation());
+                        }
+                        gr.addEventListener('click', () => { this.sel = this.by[id]; this.draw(); });
+                        gr.addEventListener('pointerdown', e => e.stopPropagation());
+                    }
+                    this.tf();
+                },
+                tf() { this.$refs.g.setAttribute('transform', `translate(${this.tx},${this.ty}) scale(${this.k})`); },
+                fit() {
+                    const g = this.$refs.g, cv = this.$refs.cv, r = cv.getBoundingClientRect(); if (!r.width) { return; }
+                    if (!g.firstChild) { this.draw(); }
+                    const b = g.getBBox(); if (!b.width) { return; }
+                    this.k = Math.max(.06, Math.min(1.1, (r.width - 40) / b.width, (r.height - 90) / b.height));
+                    this.tx = (r.width - b.width * this.k) / 2 - b.x * this.k;
+                    this.ty = 60 - b.y * this.k;
+                    this.tf();
+                },
+                zoom(f, cx, cy) {
+                    const r = this.$refs.cv.getBoundingClientRect(); cx = cx ?? r.width / 2; cy = cy ?? r.height / 2;
+                    const nk = Math.min(2.5, Math.max(.04, this.k * f));
+                    this.tx = cx - (cx - this.tx) * nk / this.k; this.ty = cy - (cy - this.ty) * nk / this.k; this.k = nk; this.tf();
+                },
+                expandAll(refit = true) { this.rows.forEach(n => { if (this.kids[n.id].length) this.open[n.id] = true; }); this.draw(); if (refit) this.fit(); },
+                levels(m) { this.open = {}; this.rows.forEach(n => { if (this.kids[n.id].length && n.depth < m) this.open[n.id] = true; }); this.draw(); this.fit(); },
+            };
+        }
+    </script>
 </x-filament-panels::page>

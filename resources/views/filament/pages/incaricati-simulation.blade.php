@@ -153,10 +153,10 @@
                                 </span>
                             </b>
                             <span class="muted">@if($downs){{ implode(', ', array_map(static fn (array $r) => explode(' — ', $r['label'])[0], array_slice($downs, 0, 4))) }}{{ count($downs) > 4 ? ' e altri '.(count($downs) - 4) : '' }}@else nessuno @endif</span></div>
-                        <div class="kpi"><span class="muted">Compensi del mese</span>
-                            <b class="tip" tabindex="0" style="display:inline-block">{{ $eur($s['total_before']) }} € → {{ $eur($s['total_after']) }} €
+                        <div class="kpi"><span class="muted">Provvigioni degli incaricati nel mese</span>
+                            <b class="tip" tabindex="0">{{ $eur($s['total_before']) }} € → {{ $eur($s['total_after']) }} €
                                 <span class="tipbox" role="tooltip" style="left:auto;right:0">
-                                    <strong>Come sono suddivisi i compensi del mese</strong>
+                                    <strong>Come sono suddivise le provvigioni del mese</strong>
                                     @if($result['totals'])
                                         <ul>@foreach($result['totals'] as $t)<li>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}: {{ $eur($t['before']) }} € → {{ $eur($t['after']) }} € (<span class="{{ $cls($t['diff']) }}">{{ $signed($t['diff']) }} €</span>)</li>@endforeach</ul>
                                     @endif
@@ -168,7 +168,31 @@
                             </b>
                             <span class="{{ $cls($s['total_diff']) }}">{{ $signed($s['total_diff']) }} €</span></div>
                     </div>
-                    <p class="muted" style="margin:.5rem 0 0">Passa il mouse (o tocca) sui numeri per vedere chi sale o scende di qualifica e come si suddividono i compensi, per tipo e per incaricato.</p>
+                    <p class="muted" style="margin:.5rem 0 0">Passa il mouse (o tocca) sui numeri per vedere chi sale o scende di qualifica e a chi cambiano le provvigioni.</p>
+
+                    @php
+                        $bonusInfo = [
+                            'direct' => ['A chi', "All'incaricato che ha il cliente.", "Percentuale sul V.A.P. (la quota del prezzo IVA inclusa che dà diritto a provvigione, di norma il 66,67%) degli ordini dei suoi clienti. La percentuale sale a scaglioni col numero dei suoi clienti personali."],
+                            'indirect' => ['A chi', "Agli incaricati sopra (upline), fino al 5° livello.", "Percentuale del livello sul V.A.P. delle vendite dei clienti degli incaricati sotto di lui. La matura solo se ha i clienti personali e i Pearl al 1° livello richiesti da quel livello."],
+                            'indirect_ext' => ['A chi', "A chi ha qualifica Ruby, Emerald o Diamond.", "1% oltre il 5° livello, fino al successivo incaricato con qualifica uguale o più alta."],
+                            'structure' => ['A chi', "All'upline di chi porta 3 clienti entro 30 giorni dall'ingresso in rete.", "Importo fisso, non dipende dalle vendite: la differenza tra il bonus della propria qualifica (da Crystal a Diamond) e il più alto già riconosciuto più in basso."],
+                        ];
+                    @endphp
+                    <h3 style="margin:1rem 0 .3rem">Che cosa sono queste provvigioni e come maturano</h3>
+                    <p class="muted" style="margin:0 0 .5rem">Sono le provvigioni <strong>lorde</strong> che il Piano Incaricati riconosce agli incaricati per le vendite del mese (compresi gli importi eventualmente trattenuti). Non sono il fatturato né i bonifici: ritenute e trattenute non sono considerate. Maturano sul V.A.P. degli ordini pagati dei clienti, tranne il Bonus di Struttura che è un importo fisso.</p>
+                    <div class="scroll"><table>
+                        <tr><th>Tipo</th><th>Chi le riceve</th><th>Come maturano</th><th>Prima</th><th>Dopo</th><th>Differenza</th></tr>
+                        @foreach($result['totals'] as $t)
+                            <tr>
+                                <td><strong>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}</strong></td>
+                                <td>{{ $bonusInfo[$t['bonus']][1] ?? '—' }}</td>
+                                <td class="muted">{{ $bonusInfo[$t['bonus']][2] ?? '' }}</td>
+                                <td>{{ $eur($t['before']) }} €</td><td>{{ $eur($t['after']) }} €</td><td class="{{ $cls($t['diff']) }}">{{ $signed($t['diff']) }} €</td>
+                            </tr>
+                        @endforeach
+                        <tr><td colspan="3"><strong>Totale provvigioni del mese</strong></td><td><strong>{{ $eur($s['total_before']) }} €</strong></td><td><strong>{{ $eur($s['total_after']) }} €</strong></td><td class="{{ $cls($s['total_diff']) }}"><strong>{{ $signed($s['total_diff']) }} €</strong></td></tr>
+                    </table></div>
+                    <p class="muted" style="margin:.4rem 0 0">Per sapere <em>a chi</em> cambiano e da quali vendite nascono, passa il mouse sulla cifra nella colonna «Compensi del mese» della tabella «Cosa cambia per gli incaricati reali», o sulla variazione accanto a ogni incaricato nella rete.</p>
                 </div>
 
                 @foreach($result['warnings'] as $w)<div class="warn" role="status">{{ $w }}</div>@endforeach
@@ -295,7 +319,7 @@
                     <div class="box">
                         <h3>Agenti simulati</h3>
                         <div class="scroll"><table>
-                            <tr><th>Sotto</th><th>Qualifica richiesta</th><th>Raggiunta</th><th>Struttura creata</th><th>Compensi suoi nel mese</th></tr>
+                            <tr><th>Sotto</th><th>Qualifica richiesta</th><th>Raggiunta</th><th>Struttura creata</th><th>Provvigioni sue nel mese</th></tr>
                             @foreach($result['agents'] as $ag)
                                 <tr>
                                     <td>{{ $ag['sponsor'] }}</td><td>{{ $ag['requested'] }}</td>
@@ -312,7 +336,7 @@
                     <h3>Cosa cambia per gli incaricati reali</h3>
                     @if($result['rows'])
                         <div class="scroll"><table>
-                            <tr><th>Incaricato</th><th>Qualifica</th><th>Clienti</th><th>Pearl 1° liv.</th><th>Per la successiva</th><th>Compensi del mese</th></tr>
+                            <tr><th>Incaricato</th><th>Qualifica</th><th>Clienti</th><th>Pearl 1° liv.</th><th>Per la successiva</th><th>Provvigioni del mese</th></tr>
                             @foreach($result['rows'] as $r)
                                 <tr class="{{ $r['dir'] !== 0 ? 'hl' : '' }}">
                                     <td>{{ $r['label'] }}@if($r['target'])<span class="chip">scelto</span>@endif @if($r['moved'])<span class="chip" style="color:var(--s-move)">spostato</span>@endif</td>
@@ -330,17 +354,6 @@
                     @endif
                 </div>
 
-                @if($result['totals'])
-                    <div class="box">
-                        <h3>Compensi per tipo</h3>
-                        <div class="scroll"><table>
-                            <tr><th>Tipo</th><th>Prima</th><th>Dopo</th><th>Differenza</th></tr>
-                            @foreach($result['totals'] as $t)
-                                <tr><td>{{ $bonusNames[$t['bonus']] ?? $t['bonus'] }}</td><td>{{ $eur($t['before']) }} €</td><td>{{ $eur($t['after']) }} €</td><td class="{{ $cls($t['diff']) }}">{{ $signed($t['diff']) }} €</td></tr>
-                            @endforeach
-                        </table></div>
-                    </div>
-                @endif
 
             @endif
         @endif

@@ -277,7 +277,9 @@ final class IncaricatiSimulationTest extends TestCase
             ->assertSee('Solo simulazione')
             ->assertSee('Incaricato → Pearl')
             ->assertSee('Chi sale di qualifica')
-            ->assertSee('Come sono suddivisi i compensi del mese');
+            ->assertSee('Come sono suddivise le provvigioni del mese')
+            ->assertSee('Che cosa sono queste provvigioni e come maturano')
+            ->assertSee('Chi le riceve');
 
         Livewire::test(IncaricatiSimulationPage::class)
             ->set('changes', [['type' => 'clients', 'target' => 'nessuno', 'count' => '3', 'amount' => '', 'rank' => 'PEARL', 'sponsor' => '']])

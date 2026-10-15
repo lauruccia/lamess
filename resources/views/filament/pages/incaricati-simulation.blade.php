@@ -127,36 +127,44 @@
                     @php
                         $parents = [];
                         $hasKids = [];
-                        foreach ($treeRows as $t) { $parents[$t['id']] = $t['parent']; if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; } }
+                        $labelOf = [];
+                        foreach ($treeRows as $t) { $labelOf[$t['id']] = $t['label']; $parents[$t['id']] = $t['parent']; if ($t['parent'] !== null) { $hasKids[$t['parent']] = true; } }
                     @endphp
                     <div class="box" wire:key="tree-{{ md5(json_encode($treeRows)) }}"
-                         x-data="{ closed: {}, only: false, parents: @js($parents), kids: @js(array_keys($hasKids)),
-                                   hidden(id) { for (let p = this.parents[id]; p; p = this.parents[p]) { if (this.closed[p]) { return true; } } return false; },
-                                   show(id, changed, sub) { return ! this.hidden(id) && (! this.only || changed || sub > 0); },
+                         x-data="{ closed: {}, only: false, parents: @js($parents), labels: @js($labelOf), kids: @js(array_keys($hasKids)),
+                                   view: (() => { try { return localStorage.getItem('simTreeView') === 'list' ? 'list' : 'tree'; } catch (e) { return 'tree'; } })(),
+                                   setView(v) { this.view = v; try { localStorage.setItem('simTreeView', v); } catch (e) {} },
+                                   hidden(id) { if (this.view === 'list') { return false; } for (let p = this.parents[id]; p; p = this.parents[p]) { if (this.closed[p]) { return true; } } return false; },
+                                   show(id, changed, sub) { return ! this.hidden(id) && (! this.only || changed || (this.view === 'tree' && sub > 0)); },
                                    closeAll() { this.kids.forEach(k => this.closed[k] = true); }, openAll() { this.closed = {}; } }">
                         <div class="bar" style="justify-content:space-between">
                             <h3 style="margin:0">{{ $result ? 'Tutta la rete dopo la simulazione' : 'La rete oggi — periodo '.$periodCode }}</h3>
                             <div class="bar">
                                 @if($result)<label><input type="checkbox" x-model="only"> solo i rami con cambiamenti</label>@endif
-                                <button type="button" @click="openAll()">Apri tutto</button>
-                                <button type="button" @click="closeAll()">Chiudi tutto</button>
+                                <span role="group" aria-label="Tipo di vista" style="display:inline-flex">
+                                    <button type="button" :class="view === 'tree' ? 'pri' : ''" style="border-radius:.5rem 0 0 .5rem" @click="setView('tree')" :aria-pressed="view === 'tree'">Vista albero</button>
+                                    <button type="button" :class="view === 'list' ? 'pri' : ''" style="border-radius:0 .5rem .5rem 0;margin-left:-1px" @click="setView('list')" :aria-pressed="view === 'list'">Vista elenco</button>
+                                </span>
+                                <button type="button" x-show="view === 'tree'" @click="openAll()">Apri tutto</button>
+                                <button type="button" x-show="view === 'tree'" @click="closeAll()">Chiudi tutto</button>
                             </div>
                         </div>
                         <p class="muted" style="margin:.3rem 0 .6rem">
                             @if($result)
                                 Ogni incaricato mostra la qualifica <em>prima → dopo</em> (il colore è quello della pietra), i clienti personali e la variazione dei compensi del mese. Le righe evidenziate sono quelle che cambiano. Dopo ogni incaricato trovi cosa gli manca per la qualifica successiva. Usa i pulsanti a destra per aggiungere clienti, agenti o spostarlo.
                             @else
-                                Questo è lo stato reale del periodo, senza nessuna modifica. Ogni incaricato mostra qualifica (colore della pietra), clienti personali e cosa gli manca per la qualifica successiva: è lì che conviene intervenire. Premi <strong>+ clienti</strong>, <strong>+ agenti</strong> o <strong>sposta</strong> accanto all'incaricato scelto e il risultato compare subito qui sotto.
+                                Questo è lo stato reale del periodo, senza nessuna modifica. Con i pulsanti in alto puoi passare dalla vista albero (a rami apribili) alla vista elenco (tutti in fila, con lo sponsor accanto al nome). Ogni incaricato mostra qualifica (colore della pietra), clienti personali e cosa gli manca per la qualifica successiva: è lì che conviene intervenire. Premi <strong>+ clienti</strong>, <strong>+ agenti</strong> o <strong>sposta</strong> accanto all'incaricato scelto e il risultato compare subito qui sotto.
                             @endif
                         </p>
                         <div class="tr">
                             @foreach($treeRows as $t)
-                                <div class="node {{ $t['changed'] ? 'chg' : '' }}" x-show="show({{ \Illuminate\Support\Js::from($t['id']) }}, {{ $t['changed'] ? 'true' : 'false' }}, {{ $t['sub_changes'] }})" style="padding-left:{{ $t['depth'] * 1.3 }}rem">
+                                <div class="node {{ $t['changed'] ? 'chg' : '' }}" x-show="show({{ \Illuminate\Support\Js::from($t['id']) }}, {{ $t['changed'] ? 'true' : 'false' }}, {{ $t['sub_changes'] }})" x-bind:style="view === 'tree' ? 'padding-left:{{ $t['depth'] * 1.3 }}rem' : ''">
                                     @if(isset($hasKids[$t['id']]))
-                                        <button type="button" class="tg" @click="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] = ! closed[{{ \Illuminate\Support\Js::from($t['id']) }}]" x-text="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '▸' : '▾'" aria-label="Apri o chiudi il ramo"></button>
-                                    @else<span class="tg"></span>@endif
+                                        <button type="button" class="tg" @click="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] = ! closed[{{ \Illuminate\Support\Js::from($t['id']) }}]" x-text="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '▸' : '▾'" x-show="view === 'tree'" aria-label="Apri o chiudi il ramo"></button>
+                                    @else<span class="tg" x-show="view === 'tree'"></span>@endif
                                     <span class="dot" style="background:{{ $t['color_after'] }}"></span>
                                     <span class="nm" style="{{ $t['changed'] || $t['target'] ? 'font-weight:700' : '' }}">{{ $t['label'] }}</span>
+                                    <span class="muted" x-show="view === 'list'" x-text="parents[{{ \Illuminate\Support\Js::from($t['id']) }}] ? '(sotto ' + labels[parents[{{ \Illuminate\Support\Js::from($t['id']) }}]] + ')' : '(in cima alla rete)'"></span>
                                     <span class="rk">
                                         @if($t['rank_before'] !== null && $t['rank_before'] !== $t['rank_after'])
                                             <span class="muted">{{ $t['rank_before'] }}</span> → <span class="{{ $t['dir'] >= 0 ? 'up' : 'down' }}">{{ $t['rank_after'] }} {{ $t['dir'] > 0 ? '▲' : '▼' }}</span>
@@ -171,7 +179,7 @@
                                     @if($t['tag'] === 'new')<span class="chip newc">nuovo{{ $t['extra'] > 0 ? ' · +'.$t['extra'].' agenti sotto' : '' }}</span>@endif
                                     @if($t['tag'] === 'moved')<span class="chip" style="color:var(--s-move)">spostato{{ $t['moved_from'] ? ' da '.$t['moved_from'] : '' }}</span>@endif
                                     @if($t['target'] && $t['tag'] !== 'moved')<span class="chip">scelto</span>@endif
-                                    <span x-show="closed[{{ \Illuminate\Support\Js::from($t['id']) }}] && {{ $t['sub_changes'] }} > 0" class="chip" style="color:var(--s-acc)">{{ $t['sub_changes'] }} cambiamenti sotto</span>
+                                    <span x-show="view === 'tree' && closed[{{ \Illuminate\Support\Js::from($t['id']) }}] && {{ $t['sub_changes'] }} > 0" class="chip" style="color:var(--s-acc)">{{ $t['sub_changes'] }} cambiamenti sotto</span>
                                     @unless($t['virtual'])
                                         <span class="acts">
                                             <button type="button" wire:click="addChangeFor('clients', {{ \Illuminate\Support\Js::from($t['label']) }})" title="Aggiungi clienti a questo incaricato">+ clienti</button>

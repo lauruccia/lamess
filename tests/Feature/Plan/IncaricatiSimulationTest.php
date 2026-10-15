@@ -258,6 +258,8 @@ final class IncaricatiSimulationTest extends TestCase
             ->assertSee('La rete oggi')
             ->assertSee('LAU — Incaricato LAU')
             ->assertSee('+ clienti')
+            ->assertSee('Vista albero')
+            ->assertSee('Vista elenco')
             ->call('addChangeFor', 'clients', 'LAU — Incaricato LAU')
             ->assertSee('Tutta la rete dopo la simulazione');
     }

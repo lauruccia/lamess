@@ -57,6 +57,7 @@
   @endif
  </div>
  @unless($minimalHeader)
+ @if(request()->is('area', 'area/*'))
  @auth
  <div class="subnav" aria-label="Area personale">
   @php($items = array_filter([
@@ -79,6 +80,7 @@
   @foreach($items as [$href, $label, $on])<a href="{{ $href }}" class="{{ $on($nav) ? 'on' : '' }}">{{ $label }}</a>@endforeach
  </div>
  @endauth
+ @endif
  @endunless
 </header>
 <main class="@yield('width')">

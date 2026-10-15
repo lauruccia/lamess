@@ -60,19 +60,19 @@
 
 <h2>4. Qualifiche e requisiti</h2>
 <p>Ogni mese ti viene riconosciuta la qualifica più alta di cui rispetti <strong>tutti</strong> i requisiti. Se non ne rispetti più almeno uno, retrocedi alla qualifica più alta di cui li rispetti ancora. Le qualifiche sono {{ $ranks->where('sequence', '>', 0)->pluck('name')->implode(', ') }}.</p>
-<table class="plan-table"><thead><tr><th>Qualifica</th><th>Clienti personali</th><th>Pearl al 1° livello</th><th>Altri incaricati</th><th>Colonne</th></tr></thead><tbody>
+<table class="plan-table"><thead><tr><th>Qualifica</th><th>Clienti personali</th><th>Incaricati almeno Pearl al 1° livello</th><th>Altri incaricati</th><th>Colonne</th></tr></thead><tbody>
 @foreach($ranks->where('sequence', '>', 0) as $r)
  @php($off = $r['disabled_requirements'] ?? [])
  <tr>
   <td><strong>{{ $r['name'] }}</strong></td>
   <td>{{ ($r['min_clients'] ?? 0) > 0 && ! in_array('clients', $off, true) ? $r['min_clients'] : '—' }}</td>
   <td>{{ ($r['min_pearl_first_level'] ?? 0) > 0 && ! in_array('pearl', $off, true) ? $r['min_pearl_first_level'] : '—' }}</td>
-  <td>@if(! empty($r['structure']) && ! in_array('structure', $off, true)){{ collect($r['structure'])->map(fn ($x) => $x['count'].' '.($x['count'] === 1 ? 'linea' : 'linee').' '.$rankName($x['rank']))->implode(' + ') }}@else — @endif</td>
+  <td>@if(! empty($r['structure']) && ! in_array('structure', $off, true)){{ collect($r['structure'])->map(fn ($x) => $x['count'].' '.($x['count'] === 1 ? 'incaricato' : 'incaricati').' almeno '.$rankName($x['rank']))->implode(' e ') }} su {{ collect($r['structure'])->sum('count') }} colonne diverse@else — @endif</td>
   <td>{{ ($r['min_columns'] ?? 0) > 0 && ! in_array('columns', $off, true) ? $r['min_columns'].' colonne da '.$r['min_column_clients'].' clienti' : '—' }}</td>
  </tr>
 @endforeach
 </tbody></table>
-<p class="small">«Pearl al 1° livello»: incaricati portati direttamente da te con qualifica Pearl o superiore. «Altri incaricati»: incaricati con la qualifica indicata, su linee diverse. «Colonne»: una colonna è un tuo incaricato diretto con tutta la sua rete; i clienti della colonna sono quelli personali di tutti i suoi componenti.</p>
+<p class="small">«Incaricati almeno Pearl al 1° livello»: incaricati portati direttamente da te con qualifica Pearl o superiore. «Altri incaricati»: incaricati con almeno la qualifica indicata (vale anche una qualifica superiore), ciascuno su una colonna diversa. «Colonne»: una colonna è un tuo incaricato diretto con tutta la sua rete; i clienti della colonna sono quelli personali di tutti i suoi componenti.</p>
 @if($graceEnd)
  <p><strong>Passaggio al nuovo piano.</strong> Fino al {{ $graceEnd->format('d/m/Y') }} gli incaricati già qualificati nel piano precedente mantengono la loro qualifica; al termine di questo periodo tutti vengono ricalcolati sul piano in vigore e chi non rispetta i requisiti retrocede.</p>
 @endif

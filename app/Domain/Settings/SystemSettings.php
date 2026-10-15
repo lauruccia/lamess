@@ -103,7 +103,7 @@ final class SystemSettings
             'help' => 'Valore provvisorio: confermare l\'aliquota dell\'anno con il commercialista.', 'rules' => 'regex:/^\d{1,6}(\.\d{1,4})?$/'],
         'fiscal_inps_worker_share' => ['config' => 'lamess.fiscal.inps_worker_share', 'type' => 'string', 'group' => 'Ricevute e trattenute (da validare col commercialista)', 'label' => 'Quota INPS a carico dell’incaricato (%)', 'rules' => 'regex:/^\d{1,6}(\.\d{1,4})?$/'],
         'wallet_bank_fee' => ['config' => 'lamess.fiscal.bank_fee', 'type' => 'string', 'group' => 'Wallet e prelievi', 'label' => 'Commissione bonifico sui prelievi (€)',
-            'help' => 'Trattenuta su ogni prelievo su richiesta (2,50). Non si applica ai pagamenti mensili automatici.', 'rules' => 'regex:/^\d{1,6}(\.\d{1,4})?$/'],
+            'help' => 'Trattenuta su ogni prelievo su richiesta (predefinito 0: nessuna commissione, decisione del 15/10/2026). Non si applica ai pagamenti mensili automatici.', 'rules' => 'regex:/^\d{1,6}(\.\d{1,4})?$/'],
         'subscription_retry_days' => ['config' => 'lamess.subscription.retry_days', 'type' => 'int', 'group' => 'Abbonamenti e spedizione', 'label' => 'Giorni tra i tentativi di addebito',
             'help' => 'Se l\'addebito mensile fallisce, si riprova dopo questi giorni.', 'rules' => 'integer|min:1|max:30'],
         'subscription_max_retries' => ['config' => 'lamess.subscription.max_retries', 'type' => 'int', 'group' => 'Abbonamenti e spedizione', 'label' => 'Tentativi di addebito prima della pausa',

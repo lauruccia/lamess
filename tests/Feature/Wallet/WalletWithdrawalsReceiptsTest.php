@@ -239,6 +239,7 @@ final class WalletWithdrawalsReceiptsTest extends TestCase
     public function test_full_withdrawal_flow_approve_pay_and_ledger(): void
     {
         $this->fiscalOn();
+        config(['lamess.fiscal.bank_fee' => '2.50']);
         [, $a] = $this->closedOctober();
         $this->admin();
         $svc = app(WithdrawalService::class);
@@ -434,5 +435,10 @@ final class WalletWithdrawalsReceiptsTest extends TestCase
         $this->assertArrayHasKey('fiscal_withholding_pct', SystemSettings::DEFINITIONS);
         $labels = collect((new GoLiveCheck)->run())->pluck('label');
         $this->assertTrue($labels->contains('Ricevute e trattenute fiscali'));
+    }
+
+    public function test_the_bank_fee_is_zero_by_default(): void
+    {
+        $this->assertSame('0.00', (string) config('lamess.fiscal.bank_fee'));
     }
 }

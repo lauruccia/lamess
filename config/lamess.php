@@ -134,7 +134,7 @@ return [
         'inps_threshold' => env('LAMESS_INPS_THRESHOLD', '5000'),          // soglia annua di provvigioni oltre la quale scatta la Gestione Separata
         'inps_rate' => env('LAMESS_INPS_RATE', '33.72'),                   // aliquota contributiva complessiva (PROVVISORIA)
         'inps_worker_share' => env('LAMESS_INPS_WORKER_SHARE', '33.33'),   // quota del contributo a carico dell'incaricato (il resto è del Consorzio)
-        'bank_fee' => env('LAMESS_BANK_FEE', '2.50'),                      // commissione trattenuta sui prelievi su richiesta
+        'bank_fee' => env('LAMESS_BANK_FEE', '0.00'),                      // commissione trattenuta sui prelievi su richiesta (eliminata il 15/10/2026)
     ],
     // Reg. 5.2: giorni dalla pubblicazione dell'estratto conto per un reclamo circostanziato; poi accettazione tacita
     'dispute_days' => (int) env('LAMESS_DISPUTE_DAYS', 10),

@@ -475,11 +475,11 @@ final class CareerProgress
             $t[] = $r->minClients.' clienti personali';
         }
         if ($r->minPearlFirstLevel > 0 && $r->requires('pearl')) {
-            $t[] = $r->minPearlFirstLevel.' Pearl al 1° livello';
+            $t[] = $r->minPearlFirstLevel.' incaricati almeno Pearl al 1° livello';
         }
         if ($r->requires('structure')) {
             foreach ($r->structure as $sr) {
-                $t[] = $sr->count.($sr->count === 1 ? ' linea ' : ' linee ').$plan->rank($sr->rankCode)->name;
+                $t[] = $sr->count.($sr->count === 1 ? ' incaricato almeno ' : ' incaricati almeno ').$plan->rank($sr->rankCode)->name.' (su colonne diverse)';
             }
         }
         if ($r->minColumns > 0 && $r->minColumnClients > 0 && $r->requires('columns')) {

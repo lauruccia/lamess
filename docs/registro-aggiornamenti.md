@@ -316,3 +316,7 @@
 - **Regolamento v2.0 (bozza)**: riscritto secondo il nuovo piano (terminologia «Incaricato», niente «Consulente Attivo», regole di cliente, acquisto proprio, compressione, retrocessione, passaggio al nuovo piano, Bonus di Struttura, minimo pagabile 15 € in tutto il documento, pagamento mensile entro il 15). Da far vedere al legale/commercialista (fee 2,50 € per bonifico, acquisto proprio, resi).
 - Kcard: refuso di un vecchio progetto, nessuna azione.
 - Test: motore 103 verdi (compressione, retrocessione per clienti/Pearl/colonne/struttura), funzionali su pagina piano e filtro clienti.
+
+## 2026-10-15 (pomeriggio) — Commissione bonifico eliminata, conferme di Laura
+- **Commissione di 2,50 € per bonifico eliminata**: `LAMESS_BANK_FEE` predefinito 0,00 (`lamess.fiscal.bank_fee`, impostazione «Commissione bonifico sui prelievi»); tolta dal Regolamento v2.0 (6.1.a). Dove `.env` o le impostazioni di sistema hanno ancora 2,50 va messo 0.
+- Confermato: l'acquisto proprio paga il compenso diretto all'incaricato, gli indiretti agli upline e conta come cliente per i requisiti e le qualifiche (già così nel motore, K04 acceso). Estesi: restano a distanza genealogica. Resi: per ora ignorati.

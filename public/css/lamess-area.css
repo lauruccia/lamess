@@ -3,7 +3,7 @@
 
 /* ---------- Pagina: usa tutta la larghezza utile ---------- */
 main.area{max-width:none;padding:30px clamp(16px,2.4vw,40px) 72px}
-body:has(main.area) .site-header .bar,body:has(main.area) .subnav{max-width:none;padding-left:clamp(16px,2.4vw,40px);padding-right:clamp(16px,2.4vw,40px)}
+body:has(main.area) .site-header .bar,body:has(main.area) .subnav,body:has(.subnav) .site-header .bar,body:has(.subnav) .subnav{max-width:none;padding-left:clamp(16px,2.4vw,40px);padding-right:clamp(16px,2.4vw,40px)}
 .pg-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;margin:0 0 22px}
 .pg-head h1{margin:0;font-size:clamp(28px,3.4vw,38px)}
 .pg-head .sub{margin:6px 0 0;color:var(--muted);max-width:64ch;font-size:15.5px;line-height:1.5}

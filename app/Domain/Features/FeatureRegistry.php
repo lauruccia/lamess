@@ -49,7 +49,7 @@ final class FeatureRegistry
             'consultant360.section.notes' => ['type' => 'section', 'group' => $card, 'label' => 'Note interne', 'help' => 'Pulsante «Aggiungi nota» e note fissate in alto.', 'parent' => 'consultant360.section.timeline'],
             'consultant360.section.counters' => ['type' => 'section', 'group' => $card, 'label' => 'Pulsanti-contatore', 'help' => 'La riga di pulsanti con i numeri (ordini, movimenti, liquidazioni…) che aprono le liste filtrate.'],
             // ---- Scheda incaricato: contatori
-            'consultant360.counter.directs' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Diretti»', 'parent' => 'consultant360.section.counters'],
+            'consultant360.counter.directs' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Team 1° liv.»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.customers' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Clienti»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.orders' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Ordini»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.movements' => ['legacy' => true, 'type' => 'link', 'group' => $card, 'label' => 'Contatore «Movimenti PV»', 'parent' => 'consultant360.section.counters'],

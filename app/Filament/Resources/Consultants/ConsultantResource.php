@@ -261,7 +261,7 @@ class ConsultantResource extends Resource
                     ->limit(22)->tooltip(fn (Consultant $r): ?string => $r->sponsor_name ? $r->sponsor_name.' · '.$r->sponsor_code : null)
                     ->url(fn (Consultant $r): ?string => $r->sponsor_id ? static::getUrl('view', ['record' => $r->sponsor_id]) : null)
                     ->searchable(false),
-                TextColumn::make('directs_count')->label('Diretti')->numeric()->alignEnd()->sortable()
+                TextColumn::make('directs_count')->label('Team 1° liv.')->tooltip('Incaricati sponsorizzati direttamente')->numeric()->alignEnd()->sortable()
                     ->url(fn (Consultant $r): ?string => $r->directs_count > 0 ? static::getUrl('index', ['filters' => ['sponsor' => ['value' => $r->id]]]) : null),
                 TextColumn::make('stat_group_pr')->label('PR pers. / gruppo')->alignEnd()->placeholder('—')
                     ->state(fn (Consultant $r): ?string => $r->stat_pr === null ? null : number_format((float) $r->stat_pr, 0, ',', '.').' / '.number_format((float) $r->stat_group_pr, 0, ',', '.'))

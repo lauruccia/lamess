@@ -54,7 +54,7 @@ final class ConsultantListTest extends TestCase
     public function test_list_renders_with_useful_columns(): void
     {
         $this->get('/admin/consultants')->assertOk()
-            ->assertSee('Qualifica')->assertSee('Diretti')->assertSee('Da pagare')->assertSee('KYC')
+            ->assertSee('Qualifica')->assertSee('Team 1° liv.')->assertSee('Da pagare')->assertSee('KYC')
             ->assertSee('Incaricato A')->assertSee('Crystal');
     }
 

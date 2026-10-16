@@ -99,6 +99,7 @@ return [
     // Metodi di pagamento offerti nel checkout (modificabili da Negozio → Pagamenti e spedizioni)
     'payments' => ['card' => true, 'transfer' => true, 'kmoney' => true],
     'bank_transfer_instructions' => env('LAMESS_BANK_INSTRUCTIONS', 'IBAN da configurare — causale: numero ordine'),
+    'recalc_on_payment' => true,                                  // dopo ogni pagamento aggiorna subito clienti e qualifiche (senza aspettare il ricalcolo notturno)
     'auto_open_period' => true,                                   // apre il periodo del mese al primo pagamento
     'private_document' => env('LAMESS_PRIVATE_DOCUMENT', 'invoice'), // invoice | receipt per i privati
     'invoice_sink_driver' => env('LAMESS_INVOICE_SINK', 'fake'),  // fake | file | mail

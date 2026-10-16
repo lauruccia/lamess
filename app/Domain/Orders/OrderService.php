@@ -7,6 +7,7 @@ namespace App\Domain\Orders;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Ledger\PvLedger;
+use App\Domain\Periods\NightlyRecalculation;
 use App\Domain\Plan\LegacyPlan;
 use App\Models\BundleRule;
 use App\Models\Consultant;
@@ -28,8 +29,11 @@ use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 /**
  * Ordini: composizione (prezzi, omaggi, kit, spedizione), pagamento e conferma dei punti.
@@ -415,8 +419,33 @@ final class OrderService
         $this->invoices->issueForOrder($order->load('items'));
         OrderEvent::log($order, 'paid', 'Pagamento confermato'.(filled($reference) ? " (rif. {$reference})" : '').(LegacyPlan::hidden() ? ': fattura generata' : ': fattura e punti generati'));
         Notification::send($order->buyer, new OrderPaid($order));
+        $this->refreshCareerAfterPayment();
 
         return $order->refresh();
+    }
+
+    /**
+     * Dopo un pagamento il conteggio clienti e le qualifiche si aggiornano subito (lo stesso calcolo del ricalcolo notturno),
+     * a risposta già inviata: chi paga o Stripe (webhook) non aspetta il calcolo, e un errore qui non tocca mai il pagamento.
+     */
+    private function refreshCareerAfterPayment(): void
+    {
+        if (! config('lamess.recalc_on_payment', true)) {
+            return;
+        }
+        dispatch(function (): void {
+            $lock = Cache::lock('lamess.live_recalc', 120);
+            if (! $lock->get()) {
+                return;   // un ricalcolo è già in corso: il prossimo pagamento o il ricalcolo notturno lo recuperano
+            }
+            try {
+                app(NightlyRecalculation::class)->run();
+            } catch (Throwable $e) {
+                Log::warning('Ricalcolo dopo il pagamento non riuscito: '.$e->getMessage());
+            } finally {
+                $lock->release();
+            }
+        })->afterResponse();
     }
 
     public function cancel(Order $order): Order

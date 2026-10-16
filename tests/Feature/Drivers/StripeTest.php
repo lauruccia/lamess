@@ -13,12 +13,14 @@ use App\Domain\Orders\OrderService;
 use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\StripeCheckoutProvider;
 use App\Domain\Orders\StripeWebhook;
+use App\Domain\Periods\NightlyRecalculation;
 use App\Domain\System\GoLiveCheck;
 use App\Models\IdentityVerification;
 use App\Models\Invoice;
 use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\Support\ShopDb;
@@ -228,6 +230,31 @@ final class StripeTest extends TestCase
         $this->assertTrue($o->paysByCard());
         $transfer = app(OrderService::class)->place($o->buyer, [$o->items()->first()->product_id => 1], 'IT', 'transfer', $this->billing());
         $this->assertFalse($transfer->paysByCard());
+    }
+
+    public function test_paying_an_order_refreshes_clients_and_ranks_right_after_the_response(): void
+    {
+        Cache::forget(NightlyRecalculation::CACHE_KEY);
+        $o = $this->cardOrder();
+
+        $this->hook($this->paidEvent($o))->assertOk();
+        $this->app->terminate();
+
+        $this->assertNotNull(Cache::get(NightlyRecalculation::CACHE_KEY), 'il ricalcolo parte appena pagato, non alle 02:45');
+        $this->assertSame('paid', $o->refresh()->status);
+    }
+
+    public function test_recalculation_can_be_switched_off_and_never_breaks_the_payment(): void
+    {
+        config(['lamess.recalc_on_payment' => false]);
+        Cache::forget(NightlyRecalculation::CACHE_KEY);
+        $o = $this->cardOrder();
+
+        $this->hook($this->paidEvent($o))->assertOk();
+        $this->app->terminate();
+
+        $this->assertNull(Cache::get(NightlyRecalculation::CACHE_KEY));
+        $this->assertSame('paid', $o->refresh()->status);
     }
 
     private function consultantWithOnlineKyc(): array

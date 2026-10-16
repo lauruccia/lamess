@@ -70,6 +70,9 @@ return [
 
     // Chiave per la catena di hash del log di audit (vuoto = derivata da APP_KEY). Cambiarla rende illeggibile il log precedente.
     'audit_key' => env('LAMESS_AUDIT_KEY'),
+    // Chiave con cui sono firmate le prime righe del log (fino all'id indicato) quando il log è stato importato da un altro ambiente: la catena resta una sola e le righe non si toccano.
+    'audit_key_previous' => env('LAMESS_AUDIT_KEY_PREVIOUS'),
+    'audit_key_previous_until' => (int) env('LAMESS_AUDIT_KEY_PREVIOUS_UNTIL', 0),
 
     // Installazione guidata (cPanel, senza terminale): la pagina /installazione esiste SOLO se qui c'è un token di almeno 24 caratteri,
     // finché non esiste un super_admin e non c'è il file storage/app/installed.lock. Dopo l'uso si toglie il token dal .env.

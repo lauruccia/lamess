@@ -32,6 +32,12 @@ Altri avvisi: «Ricevute e trattenute fiscali» (ATTENZIONE finché sono spente)
 - **Operazioni automatiche**: ogni comando pianificato ha la protezione contro la sovrapposizione (si salta il giro se il precedente è ancora in corso; sblocco automatico dopo 2 ore).
 - **A carico tuo sul server** (non si possono fare dal codice): verificare in `.env` `ADMIN_2FA_REQUIRED=true`, `APP_DEBUG=false`, `APP_ENV=production` e **nessuna riga** `LAMESS_INSTALL_TOKEN`; configurare 2FA e codici di recupero del super_admin; scaricare periodicamente i backup da *Sistema → Backup* e tenerli fuori dal server (o attivare i backup di cPanel); provare un ripristino su un database di prova; impostare `memory_limit` ≥ 256 MB e `max_execution_time` ≥ 120 s (cPanel → MultiPHP INI Editor); mettere un controllo esterno (es. UptimeRobot) su `https://lamèss.it/up`; dopo i primi giorni guardare cPanel → *Resource Usage*.
 
+### Log di audit importato da un altro ambiente
+Se nel database live ci sono righe del log create in locale (importazione dei dati), sono firmate con l'`APP_KEY` locale e il Controllo dà BLOCCO «la riga #N è stata modificata». Non è una manomissione: si risolve senza riscrivere nulla, dichiarando nel `.env` del server la chiave con cui sono firmate le prime righe:
+- `LAMESS_AUDIT_KEY_PREVIOUS=` il valore dell'`APP_KEY` dell'ambiente di origine (stessa forma, `base64:…`);
+- `LAMESS_AUDIT_KEY_PREVIOUS_UNTIL=` l'id dell'ultima riga importata (es. 352).
+Le righe fino a quell'id si controllano con la chiave precedente, le successive con quella del server (`APP_KEY`, oppure `LAMESS_AUDIT_KEY` se impostata); il collegamento fra una riga e la precedente resta controllato dappertutto. Con `LAMESS_AUDIT_KEY` vuota la chiave in vigore è l'`APP_KEY` del server. Il valore delle chiavi non va mai scritto in git né nei documenti.
+
 ## 3. Come si aggiorna il sito (cPanel → Git Version Control)
 Il codice sta nel repository GitHub **privato** `lauruccia/lamess` (branch `main`), collegato a cPanel → **Git Version Control** (percorso `/home/lamess/repositories/lamess2`). Il vecchio repository pubblico `lauruccia/lame` resta con la pagina «in arrivo» e non c'entra con questo sito.
 

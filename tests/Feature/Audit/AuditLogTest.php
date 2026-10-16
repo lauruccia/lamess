@@ -47,6 +47,27 @@ final class AuditLogTest extends TestCase
         $this->assertNotNull($check->anchor());
     }
 
+    public function test_a_log_imported_with_an_older_key_verifies_with_the_previous_key_up_to_the_given_row(): void
+    {
+        config(['lamess.audit_key' => 'chiave-importata-da-un-altro-ambiente']);
+        AuditLog::record('test.a', 'primo');
+        $lastOld = AuditLog::record('test.b', 'secondo');
+
+        config(['lamess.audit_key' => 'chiave-del-server']);
+        AuditLog::record('test.c', 'terzo');
+        AuditLog::record('test.d', 'quarto');
+
+        $this->assertSame(1, AuditLog::verify()->badId);
+
+        config(['lamess.audit_key_previous' => 'chiave-importata-da-un-altro-ambiente', 'lamess.audit_key_previous_until' => $lastOld]);
+        $check = AuditLog::verify();
+        $this->assertTrue($check->ok);
+        $this->assertSame(4, $check->checked);
+
+        config(['lamess.audit_key_previous_until' => $lastOld - 1]);
+        $this->assertSame($lastOld, AuditLog::verify()->badId);
+    }
+
     public function test_empty_log_is_valid(): void
     {
         $this->assertTrue(AuditLog::verify()->ok);

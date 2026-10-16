@@ -331,3 +331,8 @@
 - Test: nuovo `LoginLockoutTest` (3); Wallet 28 verdi. Suite completa 899/901: restano `ShopAdminTest::test_product_can_be_created_with_automatic_pv` e `ConsultantListTest::test_no_per_row_queries`, che falliscono già sul commit precedente (non legati a questo lavoro).
 - Non fatto (a carico del server o rimandato): 2FA e `.env` live, backup fuori server e ripristino di prova, limiti PHP, controllo esterno su `/up`, timestamp nel webhook KMoney, CSP, `uncompromised()` sulle password.
 
+## 2026-10-16 (mattina) — Log di audit importato da locale
+- Sul server il Controllo dava BLOCCO sulla catena: le righe 1–352 erano del locale (verificate col dump del 12/10 e l'`APP_KEY` locale), le successive firmate con la chiave del server.
+- Nuove impostazioni `LAMESS_AUDIT_KEY_PREVIOUS` e `LAMESS_AUDIT_KEY_PREVIOUS_UNTIL` (`lamess.audit_key_previous`, `…_until`): in verifica le righe fino all'id indicato usano la chiave precedente; le nuove righe usano sempre quella in vigore. Nessuna riga viene riscritta, il controllo del collegamento fra le righe resta intero.
+- Test: `AuditLogTest` 15 verdi (nuovo: chiave precedente con confine sull'id).
+

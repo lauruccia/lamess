@@ -179,7 +179,7 @@ final class AuditLog
             'reason' => $row['reason'],
         ];
 
-        return hash_hmac('sha256', $row['prev_hash'].'|'.self::canonical($payload), self::key());
+        return hash_hmac('sha256', $row['prev_hash'].'|'.self::canonical($payload), self::key(isset($row['id']) ? (int) $row['id'] : null));
     }
 
     /** JSON deterministico: chiavi ordinate ricorsivamente, nessun escape superfluo. */
@@ -201,9 +201,17 @@ final class AuditLog
         return $v;
     }
 
-    private static function key(): string
+    /**
+     * Chiave dell'HMAC. Le righe nuove usano sempre quella in vigore; in verifica, le righe fino a
+     * LAMESS_AUDIT_KEY_PREVIOUS_UNTIL (id) si controllano con la chiave precedente: serve quando il log è nato
+     * con un'altra chiave (es. importato da un altro ambiente) e la catena non va né riscritta né spezzata.
+     */
+    private static function key(?int $rowId = null): string
     {
-        $configured = config('lamess.audit_key');
+        $previous = config('lamess.audit_key_previous');
+        $until = (int) config('lamess.audit_key_previous_until');
+        $usePrevious = $rowId !== null && $until > 0 && $rowId <= $until && is_string($previous) && $previous !== '';
+        $configured = $usePrevious ? $previous : config('lamess.audit_key');
         $material = is_string($configured) && $configured !== '' ? $configured : (string) config('app.key');
         if (str_starts_with($material, 'base64:')) {
             $material = (string) base64_decode(substr($material, 7), true);

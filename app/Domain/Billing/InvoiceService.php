@@ -163,10 +163,11 @@ final class InvoiceService
     {
         $ok = 0;
         foreach ([Invoice::class, CreditNote::class] as $model) {
-            foreach ($model::query()->whereIn('sink_status', ['pending', 'error'])->get() as $doc) {
+            // Tetto di 200 documenti per giro (il resto al giro successivo, ogni ora): se il gestionale è fermo non si caricano migliaia di righe in memoria.
+            $model::query()->whereIn('sink_status', ['pending', 'error'])->limit(200)->get()->each(function ($doc) use (&$ok): void {
                 $this->deliver($doc);
                 $ok += $doc->refresh()->sink_status === 'sent' ? 1 : 0;
-            }
+            });
         }
 
         return $ok;

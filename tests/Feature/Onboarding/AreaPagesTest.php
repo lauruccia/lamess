@@ -143,6 +143,21 @@ final class AreaPagesTest extends TestCase
         $this->get('/area/clienti?stato=inesistente')->assertOk()->assertSee('Ordina Spesso')->assertSee('Mai Ordinato');
     }
 
+    public function test_customers_list_is_paginated_keeping_the_filters(): void
+    {
+        $a = $this->consultant('A');
+        foreach (range(1, 55) as $i) {
+            $u = User::factory()->create(['name' => sprintf('Cliente%02d Prova', $i), 'email' => sprintf('c%02d@example.test', $i)]);
+            Profile::create(['user_id' => $u->id, 'type' => 'private', 'first_name' => sprintf('Cliente%02d', $i), 'last_name' => 'Prova']);
+            Customer::create(['user_id' => $u->id, 'assigned_consultant_id' => $a->id, 'source' => 'referral', 'registered_at' => now()->subMinutes($i)]);
+        }
+        $this->actingAs($this->withUser($a));
+
+        $this->get('/area/clienti')->assertOk()->assertSee('Cliente01')->assertDontSee('Cliente55')->assertSee('Pagina 1 di 2')->assertSee('55 clienti');
+        $this->get('/area/clienti?pagina=2')->assertOk()->assertSee('Cliente55')->assertDontSee('Cliente01')->assertSee('Precedenti');
+        $this->get('/area/clienti?stato=senza-ordini&pagina=2')->assertOk()->assertSee('Cliente55')->assertSee('stato=senza-ordini', false);
+    }
+
     public function test_profile_can_be_updated_and_password_changed(): void
     {
         $u = User::factory()->create(['password' => 'vecchia-password-lunga']);

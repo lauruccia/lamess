@@ -22,6 +22,7 @@ use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\StripeCheckoutProvider;
 use App\Domain\Settings\SystemSettings;
+use App\Filament\Support\ConsultantList;
 use App\Listeners\AuditSecurityEvents;
 use App\Support\StatusLabels;
 use Filament\Infolists\Components\TextEntry;
@@ -39,6 +40,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Una sola istanza per richiesta: piano in vigore, periodo e qualifiche si leggono una volta, non per ogni riga dell'elenco.
+        $this->app->scoped(ConsultantList::class);
+
         $this->app->bind(SignatureProvider::class, fn () => match (config('lamess.signature_driver')) {
             'fake' => new FakeSignatureProvider,
             'email' => new EmailSignatureProvider,

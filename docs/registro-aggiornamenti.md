@@ -349,3 +349,10 @@
 - Email ai clienti accodabili (`ShouldQueueAfterCommit`, 3 tentativi): con `QUEUE_CONNECTION=database` il cron lancia il lavoro di coda ogni minuto (`lamess:coda`); con `sync` nulla cambia. Codice di firma e reset password restano immediati.
 - Test: `StabilityAndPerformanceTest` (3); suite 908/912, i 3 che non passano falliscono anche prima di questa modifica (ShopAdmin, ConsultantList, IncaricatiCareerProgress).
 
+## 2026-10-16 (sera) — Colli di bottiglia, seconda parte
+- Elenco clienti dell'incaricato (`/area/clienti`): 50 per pagina con navigazione, ricerca e filtri mantenuti; conteggi e riepilogo restano sul totale.
+- Elenco incaricati dell'admin: `ConsultantList` è ora una sola istanza per richiesta (prima ripeteva ~100 query su piano e periodi, una per riga); con 20 righe il test «nessuna query per riga» torna verde.
+- Reinvio fatture al gestionale (`InvoiceService::retryPending`): massimo 200 documenti per giro orario.
+- I PDF (fatture, estratti, ricevute, tesserino, certificato) si generano uno alla volta su richiesta: non c'è una generazione in blocco da alleggerire.
+- Test: `AreaPagesTest` (+1). Suite 909/913: restano `ShopAdminTest` e `IncaricatiCareerProgressTest` (già presenti prima) e `SubscriptionsAndMultiOrdersTest::test_customer_area_pages_and_actions`, che fallisce già sul codice precedente a queste modifiche (arriva dagli ultimi lavori sugli abbonamenti).
+

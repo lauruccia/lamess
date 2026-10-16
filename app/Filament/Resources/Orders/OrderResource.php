@@ -115,7 +115,7 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->modifyQueryUsing(fn ($q) => $q->with('subscription'))->defaultSort('id', 'desc')->columns([
+        return $table->modifyQueryUsing(fn ($query) => $query->with('subscription'))->defaultSort('id', 'desc')->columns([
             TextColumn::make('number')->label('Ordine')->searchable()->sortable(),
             TextColumn::make('buyer.name')->label('Cliente')->searchable(),
             TextColumn::make('buyer.email')->label('Email')->searchable()->toggleable(isToggledHiddenByDefault: true),

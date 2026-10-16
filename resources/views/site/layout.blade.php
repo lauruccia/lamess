@@ -57,7 +57,7 @@
   @endif
  </div>
  @unless($minimalHeader)
- @if(request()->is('area', 'area/*'))
+ @if(request()->is('area', 'area/*', 'piano-compensi'))
  @auth
  <div class="subnav" aria-label="Area personale">
   @php($items = array_filter([
@@ -74,7 +74,7 @@
     ['/area/eventi', 'Eventi', fn ($p) => str_starts_with($p, 'area/eventi')],
     $isConsultant ? ['/area/conformita', 'Conformità', fn ($p) => str_starts_with($p, 'area/conformita')] : null,
     $isConsultant ? ['/area/referral', 'Referral', fn ($p) => str_starts_with($p, 'area/referral')] : null,
-    $isConsultant ? ['/piano-compensi', 'Il piano compensi', fn ($p) => false] : null,
+    $isConsultant ? ['/piano-compensi', 'Il piano compensi', fn ($p) => $p === 'piano-compensi'] : null,
     ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza')],
     ['/area/profilo', 'I miei dati', fn ($p) => str_starts_with($p, 'area/profilo')],
   ]))

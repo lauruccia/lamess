@@ -32,7 +32,7 @@
  </div>
  <section class="panel">
   <div class="tbl-wrap"><table class="tbl cards">
-   <thead><tr><th>Ordine</th><th>Data</th><th class="num">Articoli</th><th class="num">Totale</th><th>Stato</th><th>Documento</th></tr></thead>
+   <thead><tr><th>Ordine</th><th>Data</th><th>Tipo</th><th class="num">Articoli</th><th class="num">Totale</th><th>Stato</th><th>Documento</th></tr></thead>
    <tbody>
    @foreach($orders as $o)
     @php
@@ -41,6 +41,7 @@
     <tr>
      <td data-l="Ordine"><a href="/area/ordini/{{ $o->id }}"><strong>{{ $o->number }}</strong></a></td>
      <td data-l="Data">{{ \App\Support\Ui::date($o->created_at) }}</td>
+     <td data-l="Tipo"><span class="st st-{{ $o->subscription_id ? 'info' : 'mute' }}">{{ $o->subscription_id ? 'Abbonamento' : 'Singolo' }}</span></td>
      <td data-l="Articoli" class="num">{{ $o->items_count }}</td>
      <td data-l="Totale" class="num"><strong>€ {{ $eur($o->total) }}</strong></td>
      <td data-l="Stato"><span class="st st-{{ $tone }}">{{ $lab }}</span></td>

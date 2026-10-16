@@ -39,7 +39,7 @@
       @endif
       <div class="form-actions">
        @if($mine)
-        <form method="post" action="/area/eventi/{{ $e->id }}/annulla">@csrf<button class="btn ghost">Annulla iscrizione</button></form>
+        <form method="post" action="/area/eventi/{{ $e->id }}/annulla" onsubmit="return confirm('Annullare l\'iscrizione all\'evento?')">@csrf<button class="btn ghost">Annulla iscrizione</button></form>
        @elseif($svc->isOpen($e))
         <form method="post" action="/area/eventi/{{ $e->id }}/iscrizione">@csrf<button class="btn accent">{{ $full ? 'Mettiti in lista d\'attesa' : 'Iscriviti' }}</button></form>
        @endif

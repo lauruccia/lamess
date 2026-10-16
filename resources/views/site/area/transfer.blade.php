@@ -22,7 +22,7 @@
     <div class="item">
      <span class="main"><span class="t">{{ $t->number }} <span class="st st-{{ ['awaiting_payment' => 'warn', 'paid' => 'info', 'approved' => 'ok', 'rejected' => 'err', 'cancelled' => ''][$t->status] ?? '' }}">{{ ['awaiting_payment' => 'in attesa del pagamento', 'paid' => 'in esame', 'approved' => 'approvata', 'rejected' => 'non accolta', 'cancelled' => 'annullata'][$t->status] ?? $t->status }}</span></span>
       <span class="m">Cessionario: {{ $t->assignee?->profile?->fullName() ?: $t->assignee?->email }} · richiesta del {{ \App\Support\Ui::date($t->requested_at) }}</span></span>
-     @if($t->isOpen())<span class="end"><form method="post" action="/area/cessione/{{ $t->id }}/annulla">@csrf<button class="btn ghost" style="padding:7px 14px;font-size:13.5px">Annulla</button></form></span>@endif
+     @if($t->isOpen())<span class="end"><form method="post" action="/area/cessione/{{ $t->id }}/annulla" onsubmit="return confirm('Annullare questa cessione?')">@csrf<button class="btn ghost" style="padding:7px 14px;font-size:13.5px">Annulla</button></form></span>@endif
     </div>
    @empty
     <div class="empty"><span class="ico">@include('site.area._i', ['n' => 'users'])</span><div><strong>Nessuna richiesta</strong><p>Non hai ancora avviato una cessione.</p></div></div>

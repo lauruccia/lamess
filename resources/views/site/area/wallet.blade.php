@@ -27,7 +27,7 @@
       <div class="item">
        <span class="main"><span class="t">€ {{ $eur($r->gross) }} <span class="st st-{{ in_array($r->status, ['paid','approved'], true) ? 'ok' : ($r->status === 'rejected' ? 'err' : 'warn') }}">{{ \App\Support\StatusLabels::label($r->status) }}</span></span>
         <span class="m">Richiesta il {{ \App\Support\Ui::date($r->requested_at) }} · netto previsto € {{ $eur($r->net) }}@if((float) $r->withholding) (ritenuta € {{ $eur($r->withholding) }})@endif · pagamento entro il {{ $r->due_by->format('d/m/Y') }}@if($r->status === 'rejected') · motivo: {{ $r->rejection_reason }}@endif</span></span>
-       @if($r->status === 'requested')<span class="end"><form method="post" action="/area/wallet/prelievo/{{ $r->id }}/annulla">@csrf<button class="btn ghost" style="padding:7px 14px;font-size:13.5px">Annulla</button></form></span>@endif
+       @if($r->status === 'requested')<span class="end"><form method="post" action="/area/wallet/prelievo/{{ $r->id }}/annulla" onsubmit="return confirm('Annullare questa richiesta di prelievo?')">@csrf<button class="btn ghost" style="padding:7px 14px;font-size:13.5px">Annulla</button></form></span>@endif
       </div>
      @endforeach
     </div>

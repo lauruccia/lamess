@@ -71,15 +71,15 @@
     @if(! $cancelled)
     <div class="form-actions sub-actions">
      @if($s->status === 'active')
-      <form method="post" action="/area/abbonamenti/{{ $s->id }}/salta">@csrf<button class="btn ghost" title="Ad esempio se sei in vacanza: il prossimo addebito slitta di un mese">Salta il prossimo mese</button></form>
-      <form method="post" action="/area/abbonamenti/{{ $s->id }}/pausa">@csrf<button class="btn ghost">Metti in pausa</button></form>
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/salta" onsubmit="return confirm('Saltare il prossimo addebito? Slitterà di un mese.')">@csrf<button class="btn ghost" title="Ad esempio se sei in vacanza: il prossimo addebito slitta di un mese">Salta il prossimo mese</button></form>
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/pausa" onsubmit="return confirm('Mettere in pausa questo abbonamento?')">@csrf<button class="btn ghost">Metti in pausa</button></form>
      @elseif($s->status === 'paused')
       <form method="post" action="/area/abbonamenti/{{ $s->id }}/riprendi">@csrf<button class="btn accent">Riprendi</button></form>
      @endif
      @if(($canUpdateCard ?? false) && in_array($s->status, ['active', 'paused'], true))
       <form method="post" action="/area/abbonamenti/{{ $s->id }}/carta">@csrf<button class="btn ghost" title="Inserisci una nuova carta sulla pagina sicura di Stripe: nessun addebito">Cambia carta</button></form>
      @endif
-     <form method="post" action="/area/abbonamenti/{{ $s->id }}/annulla" class="sub-cancel">@csrf<button class="btn-link-danger">Annulla abbonamento</button></form>
+     <form method="post" action="/area/abbonamenti/{{ $s->id }}/annulla" class="sub-cancel" onsubmit="return confirm('Vuoi davvero annullare questo abbonamento? L\'operazione non si può annullare.')">@csrf<button class="btn-link-danger">Annulla abbonamento</button></form>
     </div>
     <details class="sub-addr"><summary>Cambia indirizzo di spedizione</summary>
      <form method="post" action="/area/abbonamenti/{{ $s->id }}/indirizzo">@csrf

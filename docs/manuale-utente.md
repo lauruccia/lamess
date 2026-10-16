@@ -72,7 +72,7 @@ Scegliendo la carta nel checkout vieni portato alla **pagina sicura di Stripe**:
 - **Spedizione gratuita** su ogni ordine dell'abbonamento; l'**ordine singolo** paga la spedizione.
 - L'**impegno è di 12 mesi, ma non è vincolante**: puoi interrompere quando vuoi.
 - In **I miei abbonamenti** (`/area/abbonamenti`) puoi **cambiare l'indirizzo di spedizione** (vale dal prossimo ordine), **saltare il prossimo mese**, **mettere in pausa** e riprendere, **cambiare carta** o **annullare**.
-- La pagina mostra ogni abbonamento attivo o in pausa con nome del prodotto, quantità, prossimo addebito e indirizzo; gli abbonamenti già **annullati** stanno raccolti in fondo, nella sezione richiudibile «Abbonamenti annullati».
+- La pagina mostra **una riga per abbonamento** (prodotto, stato, prossimo addebito); cliccandola si apre il dettaglio con indirizzo, cicli e i pulsanti per saltare, mettere in pausa, cambiare carta o annullare. Gli abbonamenti annullati restano in fondo all'elenco, in grigio.
 - Se un addebito non va a buon fine (carta rifiutata o saldo KMoney insufficiente) il sistema riprova dopo un giorno, fino a 3 volte; poi l'abbonamento va in pausa e lo riprendi tu. Per cambiare i prodotti annulla l'abbonamento e creane uno nuovo dal checkout.
 
 ## I miei statini e i pagamenti

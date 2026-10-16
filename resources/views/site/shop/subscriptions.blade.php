@@ -31,35 +31,44 @@
  </div>
  <div class="split">
  <div class="stack">
- @forelse($live as $s)
+ @foreach($live->concat($old) as $s)
   @php
       [$lab, $tone] = \App\Support\Ui::subscriptionStatus($s->status);
+      $cancelled = $s->status === 'cancelled';
       $qty = collect($s->lines)->sum();
       $first = collect($s->lines)->keys()->first();
       $more = max(0, count($s->lines) - 1);
       $sh = $s->billing['shipping'] ?? $s->billing;
       $pct = $s->commitment_months ? min(100, (int) round($s->cycles_done / $s->commitment_months * 100)) : null;
   @endphp
-  <section class="panel sub-card">
-   <header><h2>{{ $nice($first) }}@if($more) <span class="sub-more">+ altri {{ $more }}</span>@endif</h2><span class="st st-{{ $tone }}">{{ $lab }}</span></header>
+  <details class="panel sub-row {{ $cancelled ? 'is-off' : '' }}" @if($loop->first && ! $cancelled && $live->count() === 1) open @endif>
+   <summary>
+    <span class="sr-main"><strong>{{ $nice($first) }}@if($more) <span class="sub-more">+ altri {{ $more }}</span>@endif</strong>
+     <span class="muted">{{ $qty }}× al mese · {{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }} · ciclo {{ $s->cycles_done }}@if($s->commitment_months)/{{ $s->commitment_months }}@endif</span></span>
+    <span class="sr-next">@if($s->status === 'active' && $s->next_run_at)<small>Prossimo addebito</small><b>{{ \App\Support\Ui::date($s->next_run_at, 'd/m/Y') }}</b>@endif</span>
+    <span class="st st-{{ $tone }}">{{ $lab }}</span>
+    <span class="sr-chev" aria-hidden="true"></span>
+   </summary>
    <div class="panel-body">
-    <p class="sub-kicker">Riordino mensile · {{ $qty }} {{ $qty === 1 ? 'pezzo' : 'pezzi' }} a ogni ciclo</p>
+    @if(count($s->lines) > 1)
     <ul class="sub-lines">
      @foreach($s->lines as $pid => $q)<li><span class="q">{{ $q }}×</span><span class="n">{{ $nice($pid) }}</span></li>@endforeach
     </ul>
+    @endif
     <dl class="dl dl-sub">
      @if($s->status === 'active' && $s->next_run_at)<dt>Prossimo addebito</dt><dd><strong>{{ \App\Support\Ui::date($s->next_run_at) }}</strong> <span class="muted">· {{ \App\Support\Ui::inDays($s->next_run_at) }}</span></dd>@endif
      <dt>Cicli completati</dt><dd>{{ $s->cycles_done }}@if($s->commitment_months) di {{ $s->commitment_months }}@endif</dd>
      <dt>Pagamento</dt><dd>{{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }}</dd>
      <dt>Impegno</dt><dd>{{ $s->commitment_months ? $s->commitment_months.' mesi (puoi annullare quando vuoi)' : 'nessuno' }}</dd>
-     <dt>Spedizione a</dt><dd>{{ ! empty($sh['recipient']) ? $sh['recipient'].' · ' : '' }}{{ $sh['address'] ?? '—' }}, {{ $sh['zip'] ?? '' }} {{ $sh['city'] ?? '' }} {{ ! empty($sh['province']) ? '('.$sh['province'].')' : '' }}</dd>
+     @if(! $cancelled)<dt>Spedizione a</dt><dd>{{ ! empty($sh['recipient']) ? $sh['recipient'].' · ' : '' }}{{ $sh['address'] ?? '—' }}, {{ $sh['zip'] ?? '' }} {{ $sh['city'] ?? '' }} {{ ! empty($sh['province']) ? '('.$sh['province'].')' : '' }}</dd>@endif
      @if($s->skip_months > 0 && $s->status === 'active')<dt>Mesi saltati</dt><dd>{{ $s->skip_months }}</dd>@endif
      @if($s->free_shipping)<dt>Costo spedizione</dt><dd><span class="st st-ok">gratuita</span></dd>@endif
     </dl>
-    @if($pct !== null)
+    @if($pct !== null && ! $cancelled)
      <div class="meter" style="margin-top:16px" role="progressbar" aria-label="Avanzamento impegno" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $pct }}%"></i></div>
     @endif
-    @if($s->last_error)<div class="note note-err" style="margin:16px 0 0"><div><strong>Ultimo addebito non riuscito</strong>{{ $s->last_error }}</div></div>@endif
+    @if($s->last_error && ! $cancelled)<div class="note note-err" style="margin:16px 0 0"><div><strong>Ultimo addebito non riuscito</strong>{{ $s->last_error }}</div></div>@endif
+    @if(! $cancelled)
     <div class="form-actions sub-actions">
      @if($s->status === 'active')
       <form method="post" action="/area/abbonamenti/{{ $s->id }}/salta">@csrf<button class="btn ghost" title="Ad esempio se sei in vacanza: il prossimo addebito slitta di un mese">Salta il prossimo mese</button></form>
@@ -79,27 +88,10 @@
       <button class="btn accent">Salva indirizzo</button>
      </form>
     </details>
+    @endif
    </div>
-  </section>
- @empty
-  <section class="panel"><div class="empty"><div><strong>Nessun abbonamento attivo</strong><p>Quelli annullati sono qui sotto. Per ripartire scegli i prodotti e attiva il riordino dal checkout.</p><a class="btn accent" href="/negozio">Vai al negozio</a></div></div></section>
- @endforelse
-
- @if($old->isNotEmpty())
-  <details class="panel sub-old">
-   <summary><span>Abbonamenti annullati</span><span class="st st-mute">{{ $old->count() }}</span></summary>
-   <ul class="sub-old-list">
-    @foreach($old as $s)
-     @php $f = collect($s->lines)->keys()->first(); $m = max(0, count($s->lines) - 1); @endphp
-     <li>
-      <div><strong>{{ $nice($f) }}@if($m) <span class="sub-more">+ altri {{ $m }}</span>@endif</strong>
-       <span class="muted">{{ $s->cycles_done }}@if($s->commitment_months) di {{ $s->commitment_months }}@endif cicli · {{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }}</span></div>
-      <span class="st st-mute">Annullato</span>
-     </li>
-    @endforeach
-   </ul>
   </details>
- @endif
+ @endforeach
  </div>
  <aside class="stack">
   <section class="panel accent">

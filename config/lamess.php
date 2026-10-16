@@ -41,7 +41,7 @@ return [
     'ivd_term_months' => 12,
     'adult_age' => 18,
 
-    // Firma elettronica: driver 'fake' (sviluppo) | futuri provider reali dietro SignatureProvider
+    // Firma elettronica: 'fake' (solo sviluppo, mostra l'OTP a schermo) | 'email' (OTP inviato per email all'indirizzo dell'account, richiede l'invio email attivo) | futuri provider esterni dietro SignatureProvider
     'signature_driver' => env('LAMESS_SIGNATURE_DRIVER', 'fake'),
 
     // KYC / onboarding (RF-014)

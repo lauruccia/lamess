@@ -59,6 +59,12 @@ final class GoLiveCheck
             $fake = config("lamess.{$key}") === 'fake';
             $add($label.' reale', $fake ? 'fail' : 'ok', $fake ? 'Usa ancora il sistema di prova («fake»): non si può aprire ai clienti veri.' : 'Driver «'.config("lamess.{$key}").'».');
         }
+        if (config('lamess.signature_driver') === 'email') {
+            $mailOn = (bool) config('lamess.mail_enabled') && ! in_array((string) config('mail.default'), ['log', 'array'], true);
+            $add('Firma con codice per email: invio attivo', $mailOn ? 'ok' : 'fail', $mailOn
+                ? 'Il codice parte dall\'indirizzo configurato in «Posta in uscita». Prova una firma vera con un indirizzo tuo prima di aprire.'
+                : 'La firma usa il codice per email ma l\'invio email è spento (o su «log»): nessun cliente riceverebbe il codice. Attiva «Invio email attivo» e configura l\'SMTP.');
+        }
         if (config('lamess.payment_driver') === 'stripe') {
             $key = (string) config('services.stripe.secret');
             $hook = (string) config('services.stripe.webhook_secret');

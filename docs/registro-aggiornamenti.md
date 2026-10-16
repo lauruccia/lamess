@@ -336,3 +336,9 @@
 - Nuove impostazioni `LAMESS_AUDIT_KEY_PREVIOUS` e `LAMESS_AUDIT_KEY_PREVIOUS_UNTIL` (`lamess.audit_key_previous`, `…_until`): in verifica le righe fino all'id indicato usano la chiave precedente; le nuove righe usano sempre quella in vigore. Nessuna riga viene riscritta, il controllo del collegamento fra le righe resta intero.
 - Test: `AuditLogTest` 15 verdi (nuovo: chiave precedente con confine sull'id).
 
+## 2026-10-16 (mezzogiorno) — Firma con codice per email
+- Nuovo driver di firma `email` (`EmailSignatureProvider`, notifica `SignatureOtpCode`): OTP di 6 cifre inviato per email, 15 minuti, 5 tentativi, nuovo invio dopo 60 secondi, impronta HMAC in cache (mai in chiaro), nessun codice a schermo; se l'invio email è spento lancia un errore chiaro e non invia nulla.
+- Pagina Diventa Incaricato: pulsante «Invia di nuovo il codice» (`POST /area/diventa-incaricato/codice`, 5 al minuto).
+- Controllo messa online: con driver `email` la voce «Firma con codice per email: invio attivo» (BLOCCO se la posta è spenta o su «log»); il driver `fake` resta BLOCCO.
+- Test: `EmailSignatureTest` (5); suite 905/909 (restano i due fallimenti già presenti).
+

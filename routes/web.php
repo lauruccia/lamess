@@ -73,6 +73,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::get('/diventa-incaricato', [AreaController::class, 'becomeForm']);
     Route::post('/diventa-incaricato', [AreaController::class, 'apply']);
     Route::post('/diventa-incaricato/firma', [AreaController::class, 'sign'])->middleware('throttle:10,1');
+    Route::post('/diventa-incaricato/codice', [AreaController::class, 'resendCode'])->middleware('throttle:5,1');
     Route::get('/onboarding', [AreaController::class, 'onboarding']);
     Route::post('/onboarding/verifica-online', [AreaController::class, 'startOnlineKyc'])->middleware('throttle:6,1');
     Route::post('/onboarding/documento', [AreaController::class, 'uploadDocument']);

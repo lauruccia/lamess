@@ -38,6 +38,11 @@ Se nel database live ci sono righe del log create in locale (importazione dei da
 - `LAMESS_AUDIT_KEY_PREVIOUS_UNTIL=` l'id dell'ultima riga importata (es. 352).
 Le righe fino a quell'id si controllano con la chiave precedente, le successive con quella del server (`APP_KEY`, oppure `LAMESS_AUDIT_KEY` se impostata); il collegamento fra una riga e la precedente resta controllato dappertutto. Con `LAMESS_AUDIT_KEY` vuota la chiave in vigore è l'`APP_KEY` del server. Il valore delle chiavi non va mai scritto in git né nei documenti.
 
+### Firma della Lettera di Incarico con codice per email (16 ottobre 2026)
+Il driver `email` (`LAMESS_SIGNATURE_DRIVER=email` nel `.env`) manda un codice di 6 cifre all'indirizzo dell'account: vale 15 minuti, si può usare una volta, dopo 5 errori si deve chiederne un altro, un nuovo invio si può chiedere dopo 60 secondi (pulsante «Invia di nuovo il codice» nella pagina Diventa Incaricato). Il codice non appare mai a schermo né nei log; in cache resta solo la sua impronta. Il messaggio dice solo l'indirizzo mascherato (`m***@dominio.it`).
+Per usarlo servono: `LAMESS_MAIL_ENABLED=true` (o l'impostazione «Invio email attivo» in Impostazioni di sistema) e l'SMTP configurato (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`). Se l'invio è spento il portale non finge: dice che il codice non può essere inviato. Il Controllo messa online ha la voce «Firma con codice per email: invio attivo» (BLOCCO se la posta è spenta o su «log»). **Prima di aprire**: prova una firma vera con un tuo indirizzo e controlla che l'email arrivi (anche nello spam; SPF/DKIM del dominio aiutano).
+La firma resta una firma elettronica semplice: il valore legale con un OTP per email va confermato col consulente.
+
 ## 3. Come si aggiorna il sito (cPanel → Git Version Control)
 Il codice sta nel repository GitHub **privato** `lauruccia/lamess` (branch `main`), collegato a cPanel → **Git Version Control** (percorso `/home/lamess/repositories/lamess2`). Il vecchio repository pubblico `lauruccia/lame` resta con la pagina «in arrivo» e non c'entra con questo sito.
 
@@ -137,7 +142,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (`php tools/crea-pacchetto-cpanel
 - **Fatture elettroniche**: scegliere come trasmetterle. Il portale produce l'XML FatturaPA (validato contro lo schema 1.2.2). Opzioni: `file` (XML in `storage/app/private/sdi-out`, da ritirare), `mail` (spedito a una casella: gestionale, commercialista o PEC verso lo SdI). **GestionaleK**: nei documenti non risulta nessuna interfaccia; servono le loro specifiche per un collegamento diretto. Da decidere con il commercialista: privati in fattura o in ricevuta (le ricevute non vanno allo SdI).
 - **Dati del venditore**: ragione sociale, partita IVA (11 cifre), indirizzo, CAP, comune, provincia, regime fiscale.
 - **Parametri fiscali** (ritenuta, quota imponibile, INPS, commissione sui prelievi) e **testi** (Lettera IVD, Regolamento): da far validare al commercialista e al Consorzio; ricevute e ritenuta restano spente finché non sono validati.
-- **Firma elettronica reale** della lettera d'incarico: finché `LAMESS_SIGNATURE_DRIVER` è `fake` è un sistema di prova (OTP finto) e il Controllo dà BLOCCO.
+- **Firma elettronica reale** della lettera d'incarico: finché `LAMESS_SIGNATURE_DRIVER` è `fake` è un sistema di prova (OTP mostrato a schermo) e il Controllo dà BLOCCO. Decisione del 16/10: si usa `email` (codice OTP per email), vedi sopra.
 - **IBAN degli incaricati**: li inseriscono loro dall'area personale.
 - **Prova su MariaDB/MySQL** delle migrazioni nuove, sul sito di prova.
 

@@ -8,6 +8,7 @@ use App\Domain\Billing\FatturaPaBuilder;
 use App\Domain\Billing\FileInvoiceSink;
 use App\Domain\Billing\InvoiceSink;
 use App\Domain\Billing\MailInvoiceSink;
+use App\Domain\Onboarding\EmailSignatureProvider;
 use App\Domain\Onboarding\FakeSignatureProvider;
 use App\Domain\Onboarding\IdentityVerifier;
 use App\Domain\Onboarding\NoIdentityVerifier;
@@ -40,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(SignatureProvider::class, fn () => match (config('lamess.signature_driver')) {
             'fake' => new FakeSignatureProvider,
+            'email' => new EmailSignatureProvider,
             default => throw new \RuntimeException('Driver di firma non configurato: '.config('lamess.signature_driver')),
         });
         $this->app->bind(PaymentProvider::class, fn () => match (config('lamess.payment_driver')) {

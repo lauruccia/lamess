@@ -136,7 +136,7 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 | A-08 | **Soglia «cliente» e promozioni**: con `min_amount` a 150 € un ordine in promozione sotto la soglia (es. Box a 129,90 €) non rende cliente | da decidere | Laura |
 | A-09 | **Validazione del Piano Incaricati**: il file del piano è «BOZZA da validare» (presentazioni dell'8/10); punti da confermare prima di pubblicarlo | da validare | Laura, cliente |
 | A-10 | **Mesi già calcolati** (OPEN-47, OPEN-48): gennaio–settembre calcolati con la regola precedente e scelta del primo mese pagato dal portale | da decidere | Laura, cliente |
-| A-11 | **Firma elettronica reale** (OPEN-49): esiste solo il driver di prova; il Controllo messa online dà BLOCCO finché è `fake` | da scegliere il fornitore | cliente |
+| A-11 | **Firma elettronica reale** (OPEN-49): decisione di Laura del 16/10/2026: per ora firma elettronica semplice con **codice OTP inviato per email** (`LAMESS_SIGNATURE_DRIVER=email`, richiede `LAMESS_MAIL_ENABLED=true` e l'SMTP); il driver `fake` resta solo per lo sviluppo e dà BLOCCO. Un fornitore esterno (Yousign/Namirial/InfoCert) resta possibile in futuro; il valore legale della firma con OTP per email va confermato col consulente | da attivare sul server | Laura |
 | A-12 | **Fatture allo SdI / GestionaleK** (OPEN-51): nessun collegamento diretto; scelta fra `file` e `mail` | da decidere | commercialista, cliente |
 | A-13 | **Stripe live**: chiavi `sk_live_…`, webhook, prova di pagamento e di rinnovo di un abbonamento con carta di prova (OPEN-62) | da fare | cliente, Laura |
 | A-14 | **Prova su MySQL/MariaDB** delle migrazioni successive al 5 ottobre e della suite completa (finora provate solo su SQLite) | da fare | sviluppo |

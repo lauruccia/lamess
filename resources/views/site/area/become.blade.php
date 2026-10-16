@@ -18,6 +18,12 @@
      @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
      <div class="form-actions"><button class="accent">Firma</button></div>
     </form>
+    @if(config('lamess.signature_driver') === 'email')
+     <form method="post" action="/area/diventa-incaricato/codice" class="panel-body" style="padding-top:0">@csrf
+      <p style="margin:.2rem 0 .6rem;font-size:.9rem;opacity:.8">Non hai ricevuto il codice? Controlla lo spam, poi puoi chiederne uno nuovo (dopo un minuto dall'ultimo).</p>
+      <button class="btn" type="submit">Invia di nuovo il codice</button>
+     </form>
+    @endif
    </section>
   @elseif($contract && in_array($contract->status, ['signed', 'accepted']))
    <div class="note note-ok"><div><strong>Domanda già in corso o incarico attivo</strong>Non serve fare altro qui: trovi tutto nella tua area.</div><a class="btn" href="/area">Torna alla tua area</a></div>

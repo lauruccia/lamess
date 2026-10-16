@@ -400,6 +400,20 @@ class AreaController extends Controller
         return redirect('/area/diventa-incaricato')->with('signature_hint', $req->hint);
     }
 
+    /** Nuovo invio del codice di firma (se non è arrivato o è scaduto). */
+    public function resendCode(Request $request, IvdService $ivd): RedirectResponse
+    {
+        $contract = $this->contract($request);
+        abort_if($contract === null || $contract->status !== 'awaiting_signature', 404);
+        try {
+            $req = $ivd->requestSignature($contract);
+        } catch (OnboardingException $e) {
+            return back()->withErrors(['otp' => $e->getMessage()]);
+        }
+
+        return redirect('/area/diventa-incaricato')->with('signature_hint', $req->hint);
+    }
+
     public function sign(Request $request, IvdService $ivd): RedirectResponse
     {
         $request->validate(['otp' => 'required'], SiteController::MESSAGES);

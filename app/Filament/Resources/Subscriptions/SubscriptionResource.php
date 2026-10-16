@@ -62,9 +62,12 @@ class SubscriptionResource extends Resource
                 ->formatStateUsing(fn (string $state) => ['pending' => 'In attesa 1° pagamento', 'active' => 'Attivo', 'paused' => 'In pausa', 'cancelled' => 'Annullato'][$state] ?? $state)
                 ->color(fn (string $state) => ['pending' => 'warning', 'active' => 'success', 'paused' => 'warning', 'cancelled' => 'gray'][$state] ?? 'gray'),
             TextColumn::make('payment_method')->label('Pagamento')->formatStateUsing(fn (?string $state) => $state === 'kmoney' ? 'KMoney' : 'Carta'),
-            TextColumn::make('commitment_months')->label('Impegno (mesi)'),
+            TextColumn::make('started_at')->label('Avvio')->dateTime('d/m/Y', 'Europe/Rome')->sortable(),
+            TextColumn::make('commitment_months')->label('Durata')
+                ->formatStateUsing(fn ($state) => (int) $state > 0 ? $state.' mesi' : 'Senza impegno'),
             IconColumn::make('free_shipping')->label('Sped. gratuita')->boolean(),
-            TextColumn::make('cycles_done')->label('Cicli'),
+            TextColumn::make('cycles_done')->label('Cicli')
+                ->formatStateUsing(fn ($state, Subscription $record) => $record->commitment_months > 0 ? $state.'/'.$record->commitment_months : (string) $state),
             TextColumn::make('next_run_at')->label('Prossimo addebito')->dateTime('d/m/Y', 'Europe/Rome')->placeholder('—'),
             TextColumn::make('last_error')->label('Ultimo errore')->placeholder('—')->limit(40),
             IconColumn::make('early_cancel')->label('Disdetta anticipata')->boolean(),

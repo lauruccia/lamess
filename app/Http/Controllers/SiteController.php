@@ -15,12 +15,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Password as PasswordBroker;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 /** Pagine pubbliche: referral, registrazione FAN/Clienti, accesso. */
 class SiteController extends Controller
 {
+    /** Accessi falliti ammessi per coppia email+IP e per sola email, nella finestra di blocco. */
+    private const LOGIN_MAX_PER_PAIR = 5;
+
+    private const LOGIN_MAX_PER_EMAIL = 15;
+
+    private const LOGIN_LOCK_SECONDS = 900;
+
     public const MESSAGES = [
         'required' => 'Il campo «:attribute» è obbligatorio.', 'email' => 'Inserisci un indirizzo email valido.',
         'unique' => 'Questo :attribute è già registrato.', 'confirmed' => 'Le due password non coincidono.',
@@ -97,9 +105,24 @@ class SiteController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $cred = $request->validate(['email' => 'required|email', 'password' => 'required'], self::MESSAGES);
+
+        // Blocco per account oltre al limite per IP: un attacco distribuito su una sola email si ferma comunque.
+        $email = Str::lower($cred['email']);
+        $byPair = 'login:pair:'.sha1($email.'|'.$request->ip());
+        $byEmail = 'login:email:'.sha1($email);
+        if (RateLimiter::tooManyAttempts($byPair, self::LOGIN_MAX_PER_PAIR) || RateLimiter::tooManyAttempts($byEmail, self::LOGIN_MAX_PER_EMAIL)) {
+            $minutes = (int) ceil(max(RateLimiter::availableIn($byPair), RateLimiter::availableIn($byEmail)) / 60);
+
+            return back()->withInput($request->only('email'))->withErrors(['email' => "Troppi tentativi di accesso. Riprova tra {$minutes} minuti oppure usa «Password dimenticata»."]);
+        }
         if (! Auth::attempt($cred, $request->boolean('remember'))) {
+            RateLimiter::hit($byPair, self::LOGIN_LOCK_SECONDS);
+            RateLimiter::hit($byEmail, self::LOGIN_LOCK_SECONDS);
+
             return back()->withInput($request->only('email'))->withErrors(['email' => 'Credenziali non corrette.']);
         }
+        RateLimiter::clear($byPair);
+        RateLimiter::clear($byEmail);
         $request->session()->regenerate();
 
         return redirect()->intended('/area');

@@ -320,3 +320,14 @@
 ## 2026-10-15 (pomeriggio) — Commissione bonifico eliminata, conferme di Laura
 - **Commissione di 2,50 € per bonifico eliminata**: `LAMESS_BANK_FEE` predefinito 0,00 (`lamess.fiscal.bank_fee`, impostazione «Commissione bonifico sui prelievi»); tolta dal Regolamento v2.0 (6.1.a). Dove `.env` o le impostazioni di sistema hanno ancora 2,50 va messo 0.
 - Confermato: l'acquisto proprio paga il compenso diretto all'incaricato, gli indiretti agli upline e conta come cliente per i requisiti e le qualifiche (già così nel motore, K04 acceso). Estesi: restano a distanza genealogica. Resi: per ora ignorati.
+
+## 2026-10-16 — Sicurezza prima dell'apertura (esito dell'analisi del 15/10)
+- **Prelievi wallet**: `WithdrawalService::request` controlla saldo e crea la richiesta dentro la transazione con `lockForUpdate` sul consulente; `approve` rilegge lo stato e blocca il consulente (niente doppio impegno del saldo con richieste simultanee).
+- **Accesso**: blocco per account oltre al limite per IP (`SiteController::login`): 5 errori per email+IP, 15 per sola email, finestra di 15 minuti, azzerati da un accesso riuscito.
+- **Cookie di sessione**: `config/session.php` → `secure` vero di default in produzione; `SESSION_SECURE_COOKIE=true` anche in `.env.cpanel.example`.
+- **HTTPS forzato** in `public/.htaccess` (escluso `/.well-known/` e localhost).
+- **Scheduler**: `withoutOverlapping(120)` su tutti i comandi tranne il battito.
+- **Controllo messa online**: nuove voci «Cookie di sessione solo HTTPS» e «Log di audit protetto nel database».
+- Test: nuovo `LoginLockoutTest` (3); Wallet 28 verdi. Suite completa 899/901: restano `ShopAdminTest::test_product_can_be_created_with_automatic_pv` e `ConsultantListTest::test_no_per_row_queries`, che falliscono già sul commit precedente (non legati a questo lavoro).
+- Non fatto (a carico del server o rimandato): 2FA e `.env` live, backup fuori server e ripristino di prova, limiti PHP, controllo esterno su `/up`, timestamp nel webhook KMoney, CSP, `uncompromised()` sulle password.
+

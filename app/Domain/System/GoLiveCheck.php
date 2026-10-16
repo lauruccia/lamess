@@ -37,6 +37,8 @@ final class GoLiveCheck
         $driver = DB::connection()->getDriverName();
         $add('Database', in_array($driver, ['mysql', 'mariadb'], true) ? 'ok' : ($prod ? 'warn' : 'ok'), "Tipo: {$driver}".(in_array($driver, ['mysql', 'mariadb'], true) ? '' : ' (in linea si usa MySQL/MariaDB).'));
         $add('Accesso admin con 2FA obbligatoria', config('lamess.admin_2fa_required') ? 'ok' : 'fail', config('lamess.admin_2fa_required') ? 'Attiva.' : 'ADMIN_2FA_REQUIRED=false: chi entra nel back-office deve avere la verifica in due passaggi.');
+        $secure = config('session.secure') === true;
+        $add('Cookie di sessione solo HTTPS', $secure ? 'ok' : ($prod ? 'fail' : 'warn'), $secure ? 'Attivo.' : 'SESSION_SECURE_COOKIE non è attivo: aggiungi SESSION_SECURE_COOKIE=true nel file .env.');
         $add('Token di installazione rimosso', config('lamess.install_token') ? 'fail' : 'ok', config('lamess.install_token') ? 'Cancella la riga LAMESS_INSTALL_TOKEN dal file .env.' : 'Rimosso.');
 
         $beat = Cache::get('lamess.scheduler.heartbeat');
@@ -48,6 +50,10 @@ final class GoLiveCheck
 
         $a = AuditLog::verify();
         $add('Catena del log integra', $a->ok ? 'ok' : 'fail', $a->ok ? "{$a->checked} righe controllate." : (string) $a->problem);
+
+        $add('Log di audit protetto nel database', $a->dbProtected ? 'ok' : 'warn', $a->dbProtected
+            ? 'Il database vieta modifiche e cancellazioni sulla tabella del log.'
+            : 'Mancano i blocchi del database sul log: la catena di hash scopre le manomissioni ma non le impedisce. Se l\'hosting lo consente, assegna il privilegio TRIGGER all\'utente del database e riesegui la migrazione; intanto annota l\'«ancora» da Sistema → Verifica log.');
 
         foreach (['payment_driver' => 'Pagamento con carta', 'signature_driver' => 'Firma elettronica'] as $key => $label) {
             $fake = config("lamess.{$key}") === 'fake';

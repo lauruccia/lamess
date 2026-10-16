@@ -57,20 +57,24 @@ final class WithdrawalService
             throw new WalletException('I prelievi su richiesta non sono attivi: i compensi vengono pagati ogni mese in automatico.');
         }
         $amount = Num::money($amount);
-        $sit = $this->wallet->situation($c);
-        if ($sit['reasons'] !== []) {
-            throw new WalletException('Non puoi prelevare: '.implode(', ', $sit['reasons']).'.');
-        }
-        $min = CompPlanVersion::inForce()->plan()->minPayout;
-        if ($amount->isLessThan($min)) {
-            throw new WalletException("Il prelievo minimo è di {$min} €.");
-        }
-        if ($amount->isGreaterThan($sit['available'])) {
-            throw new WalletException("Puoi prelevare al massimo {$sit['available']} €.");
-        }
-        $f = $this->fiscal($c, $amount);
 
-        return DB::transaction(function () use ($c, $amount, $f): WithdrawalRequest {
+        // Controllo del saldo e creazione della richiesta nella stessa transazione, con il consulente bloccato:
+        // due richieste simultanee non possono impegnare entrambe la stessa quota disponibile.
+        return DB::transaction(function () use ($c, $amount): WithdrawalRequest {
+            $c = Consultant::whereKey($c->id)->lockForUpdate()->firstOrFail();
+            $sit = $this->wallet->situation($c);
+            if ($sit['reasons'] !== []) {
+                throw new WalletException('Non puoi prelevare: '.implode(', ', $sit['reasons']).'.');
+            }
+            $min = CompPlanVersion::inForce()->plan()->minPayout;
+            if ($amount->isLessThan($min)) {
+                throw new WalletException("Il prelievo minimo è di {$min} €.");
+            }
+            if ($amount->isGreaterThan($sit['available'])) {
+                throw new WalletException("Puoi prelevare al massimo {$sit['available']} €.");
+            }
+            $f = $this->fiscal($c, $amount);
+
             $r = WithdrawalRequest::create([
                 'consultant_id' => $c->id, 'gross' => (string) $amount, 'withholding' => $f['withholding'], 'inps' => $f['inps_worker'], 'fee' => $f['fee'], 'net' => $f['net'],
                 'iban' => (string) $c->iban, 'iban_holder' => $c->iban_holder, 'status' => WithdrawalRequest::REQUESTED, 'requested_at' => now(),
@@ -116,7 +120,10 @@ final class WithdrawalService
         }
 
         return DB::transaction(function () use ($r): WithdrawalRequest {
-            $c = $r->consultant;
+            $c = Consultant::whereKey($r->consultant_id)->lockForUpdate()->firstOrFail();
+            if ($r->fresh()?->status !== WithdrawalRequest::REQUESTED) {
+                throw new WalletException('Si approva solo una richiesta in attesa.');
+            }
             $sit = $this->wallet->situation($c, $r->id);
             if ($sit['reasons'] !== []) {
                 throw new WalletException('Non approvabile: '.implode(', ', $sit['reasons']).'.');

@@ -16,7 +16,7 @@ use Brick\Math\BigDecimal;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Wallet provvigionale (RF-083): registro dei movimenti, il saldo è sempre la somma dei movimenti.
+ * Wallet provvigionale (RF-083): registro dei movimenti, il saldo è sempre la somma dei movimenti (calcolata dal database con SUM, senza caricare le righe).
  * Si usa solo con la modalità di pagamento «su richiesta»: alla chiusura del mese le liquidazioni diventano accrediti.
  * Un saldo negativo (storni) resta a debito e si compensa con gli accrediti successivi.
  */
@@ -24,24 +24,16 @@ final class WalletService
 {
     public function balance(int $consultantId): BigDecimal
     {
-        $sum = BigDecimal::zero();
-        foreach (WalletTransaction::where('consultant_id', $consultantId)->pluck('amount') as $a) {
-            $sum = $sum->plus((string) $a);
-        }
-
-        return Num::money($sum);
+        return Num::money(BigDecimal::of((string) (WalletTransaction::where('consultant_id', $consultantId)->sum('amount') ?? 0)));
     }
 
     /** Importo già impegnato da prelievi richiesti o approvati e non ancora pagati. */
     public function reserved(int $consultantId, ?int $exceptRequestId = null): BigDecimal
     {
-        $sum = BigDecimal::zero();
-        foreach (WithdrawalRequest::where('consultant_id', $consultantId)->whereIn('status', [WithdrawalRequest::REQUESTED, WithdrawalRequest::APPROVED])
-            ->when($exceptRequestId, fn ($q) => $q->where('id', '!=', $exceptRequestId))->pluck('gross') as $g) {
-            $sum = $sum->plus((string) $g);
-        }
+        $sum = WithdrawalRequest::where('consultant_id', $consultantId)->whereIn('status', [WithdrawalRequest::REQUESTED, WithdrawalRequest::APPROVED])
+            ->when($exceptRequestId, fn ($q) => $q->where('id', '!=', $exceptRequestId))->sum('gross');
 
-        return Num::money($sum);
+        return Num::money(BigDecimal::of((string) ($sum ?? 0)));
     }
 
     /**

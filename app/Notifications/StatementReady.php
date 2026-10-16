@@ -4,12 +4,24 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /** Avviso a un INCARICATO: lo statino del mese chiuso è disponibile. */
-class StatementReady extends Notification
+class StatementReady extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
+    public int $tries = 3;
+
+    /** @return list<int> */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
     public function __construct(public readonly string $periodCode) {}
 
     /** @return list<string> */

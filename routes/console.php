@@ -24,3 +24,5 @@ Schedule::command('lamess:estratti')->dailyAt('06:00')->timezone('Europe/Rome')-
 Schedule::command('lamess:kyc-promemoria')->dailyAt('08:00')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:sanzioni')->dailyAt('00:20')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:successioni')->dailyAt('00:30')->timezone('Europe/Rome')->withoutOverlapping(120);
+// Coda delle email: parte solo se QUEUE_CONNECTION non è «sync» (nel .env). Un giro al minuto, si ferma quando la coda è vuota.
+Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')->name('lamess:coda')->everyMinute()->withoutOverlapping(5)->when(fn () => config('queue.default') !== 'sync');

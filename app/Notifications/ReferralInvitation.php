@@ -6,12 +6,24 @@ namespace App\Notifications;
 
 use App\Domain\Customers\ReferralInviteService;
 use App\Models\ReferralInvite;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /** Email di invito inviata dal portale a nome di un incaricato, con il link personale dell'invito. */
-class ReferralInvitation extends Notification
+class ReferralInvitation extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
+    public int $tries = 3;
+
+    /** @return list<int> */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
     public function __construct(public readonly ReferralInvite $invite, public readonly bool $reminder = false) {}
 
     /** @return list<string> */

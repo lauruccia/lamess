@@ -342,3 +342,10 @@
 - Controllo messa online: con driver `email` la voce «Firma con codice per email: invio attivo» (BLOCCO se la posta è spenta o su «log»); il driver `fake` resta BLOCCO.
 - Test: `EmailSignatureTest` (5); suite 905/909 (restano i due fallimenti già presenti).
 
+## 2026-10-16 (pomeriggio) — Stabilità e colli di bottiglia
+- Saldo wallet e importi impegnati calcolati dal database con `SUM` (prima si caricavano tutte le righe in PHP).
+- Immagini del negozio: cache di 30 giorni, `ETag`/`Last-Modified` e risposta 304 se il browser le ha già.
+- Calcoli lunghi del periodo: tempo di esecuzione esteso (300 s), non si interrompono se la pagina viene chiusa, il blocco si rilascia anche dopo un errore fatale.
+- Email ai clienti accodabili (`ShouldQueueAfterCommit`, 3 tentativi): con `QUEUE_CONNECTION=database` il cron lancia il lavoro di coda ogni minuto (`lamess:coda`); con `sync` nulla cambia. Codice di firma e reset password restano immediati.
+- Test: `StabilityAndPerformanceTest` (3); suite 908/912, i 3 che non passano falliscono anche prima di questa modifica (ShopAdmin, ConsultantList, IncaricatiCareerProgress).
+

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Periods;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Engine\Calc\ImpactReport;
 use App\Domain\Engine\Calc\PeriodCalculator;
@@ -16,6 +15,7 @@ use App\Domain\Engine\Support\PeriodKey;
 use App\Domain\Payouts\PayoutService;
 use App\Domain\Payouts\StatementLifecycle;
 use App\Domain\Payouts\StructureBonusService;
+use App\Domain\Plan\LegacyPlan;
 use App\Domain\Wallet\WalletException;
 use App\Domain\Wallet\WalletService;
 use App\Models\CalculationRun;
@@ -125,7 +125,7 @@ final class PeriodService
             }
             $pending = PvMovement::where('period_id', $period->id)->where('status', 'pending_payment')->count();
             if ($pending > 0) {
-                throw new PeriodStateException("Ci sono {$pending} movimenti ".(LegacyPlan::hidden() ? '' : 'PV ')."in attesa di pagamento: confermali o annullali prima di chiudere.");
+                throw new PeriodStateException("Ci sono {$pending} movimenti ".(LegacyPlan::hidden() ? '' : 'PV ').'in attesa di pagamento: confermali o annullali prima di chiudere.');
             }
             $input = SnapshotBuilder::build($period);
             $result = PeriodCalculator::calculate($input);
@@ -223,6 +223,11 @@ final class PeriodService
         if (! $lock->get()) {
             throw new PeriodStateException("Un altro calcolo è già in corso sul periodo {$period->code}.");
         }
+        // Calcoli lunghi lanciati dal pannello: più tempo e nessuna interruzione se la pagina viene chiusa;
+        // il blocco si rilascia anche se PHP si ferma per un errore fatale (altrimenti resterebbe 10 minuti).
+        @set_time_limit(300);
+        ignore_user_abort(true);
+        register_shutdown_function(static fn () => $lock->release());
         try {
             return $fn();
         } finally {

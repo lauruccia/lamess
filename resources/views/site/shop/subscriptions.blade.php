@@ -5,6 +5,10 @@
 @php
     $active = $subs->where('status', 'active');
     $next = $active->pluck('next_run_at')->filter()->sort()->first();
+    $live = $subs->where('status', '!=', 'cancelled');
+    $old = $subs->where('status', 'cancelled');
+    // Nome leggibile: toglie il prefisso numerico di catalogo ("1 - ") e il MAIUSCOLO urlato
+    $nice = fn ($pid) => \Illuminate\Support\Str::title(mb_strtolower(trim(preg_replace('/^\s*\d+\s*[-–]\s*/u', '', (string) ($products[$pid] ?? 'Prodotto')))));
 @endphp
 <div class="pg-head">
  <div>
@@ -27,67 +31,86 @@
  </div>
  <div class="split">
  <div class="stack">
- @foreach($subs as $s)
+ @forelse($live as $s)
   @php
       [$lab, $tone] = \App\Support\Ui::subscriptionStatus($s->status);
       $qty = collect($s->lines)->sum();
+      $first = collect($s->lines)->keys()->first();
+      $more = max(0, count($s->lines) - 1);
+      $sh = $s->billing['shipping'] ?? $s->billing;
+      $pct = $s->commitment_months ? min(100, (int) round($s->cycles_done / $s->commitment_months * 100)) : null;
   @endphp
-  <section class="panel">
-   <header><h2>{{ $qty }} {{ $qty === 1 ? 'prodotto' : 'prodotti' }} al mese</h2><span class="st st-{{ $tone }}">{{ $lab }}</span></header>
+  <section class="panel sub-card">
+   <header><h2>{{ $nice($first) }}@if($more) <span class="sub-more">+ altri {{ $more }}</span>@endif</h2><span class="st st-{{ $tone }}">{{ $lab }}</span></header>
    <div class="panel-body">
-    <ul class="todo" style="margin:0 0 14px;padding-left:18px">
-     @foreach($s->lines as $pid => $q)<li>{{ $q }} × {{ $products[$pid] ?? 'prodotto' }}</li>@endforeach
+    <p class="sub-kicker">Riordino mensile · {{ $qty }} {{ $qty === 1 ? 'pezzo' : 'pezzi' }} a ogni ciclo</p>
+    <ul class="sub-lines">
+     @foreach($s->lines as $pid => $q)<li><span class="q">{{ $q }}×</span><span class="n">{{ $nice($pid) }}</span></li>@endforeach
     </ul>
-    <dl class="dl">
-     @if($s->status === 'active' && $s->next_run_at)<dt>Prossimo addebito</dt><dd>{{ \App\Support\Ui::date($s->next_run_at) }} · {{ \App\Support\Ui::inDays($s->next_run_at) }}</dd>@endif
+    <dl class="dl dl-sub">
+     @if($s->status === 'active' && $s->next_run_at)<dt>Prossimo addebito</dt><dd><strong>{{ \App\Support\Ui::date($s->next_run_at) }}</strong> <span class="muted">· {{ \App\Support\Ui::inDays($s->next_run_at) }}</span></dd>@endif
      <dt>Cicli completati</dt><dd>{{ $s->cycles_done }}@if($s->commitment_months) di {{ $s->commitment_months }}@endif</dd>
      <dt>Pagamento</dt><dd>{{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }}</dd>
-     <dt>Impegno</dt><dd>{{ $s->commitment_months ? $s->commitment_months.' mesi' : 'nessuno' }}</dd>
-     @php($sh = $s->billing['shipping'] ?? $s->billing)
-     @if($s->status !== 'cancelled')<dt>Spedizione a</dt><dd>{{ ! empty($sh['recipient']) ? $sh['recipient'].' · ' : '' }}{{ $sh['address'] ?? '—' }}, {{ $sh['zip'] ?? '' }} {{ $sh['city'] ?? '' }} {{ ! empty($sh['province']) ? '('.$sh['province'].')' : '' }}</dd>@endif
+     <dt>Impegno</dt><dd>{{ $s->commitment_months ? $s->commitment_months.' mesi (puoi annullare quando vuoi)' : 'nessuno' }}</dd>
+     <dt>Spedizione a</dt><dd>{{ ! empty($sh['recipient']) ? $sh['recipient'].' · ' : '' }}{{ $sh['address'] ?? '—' }}, {{ $sh['zip'] ?? '' }} {{ $sh['city'] ?? '' }} {{ ! empty($sh['province']) ? '('.$sh['province'].')' : '' }}</dd>
      @if($s->skip_months > 0 && $s->status === 'active')<dt>Mesi saltati</dt><dd>{{ $s->skip_months }}</dd>@endif
-     @if($s->free_shipping)<dt>Spedizione</dt><dd><span class="st st-ok">spedizione gratuita</span></dd>@endif
+     @if($s->free_shipping)<dt>Costo spedizione</dt><dd><span class="st st-ok">gratuita</span></dd>@endif
     </dl>
-    @if($s->commitment_months)
-     <div class="meter" style="margin-top:14px" role="progressbar" aria-valuenow="{{ min(100, (int) round($s->cycles_done / $s->commitment_months * 100)) }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ min(100, (int) round($s->cycles_done / $s->commitment_months * 100)) }}%"></i></div>
+    @if($pct !== null)
+     <div class="meter" style="margin-top:16px" role="progressbar" aria-label="Avanzamento impegno" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $pct }}%"></i></div>
     @endif
-    @if($s->last_error && $s->status !== 'cancelled')<div class="note note-err" style="margin:14px 0 0"><div><strong>Ultimo addebito non riuscito</strong>{{ $s->last_error }}</div></div>@endif
-    @if($s->status !== 'cancelled')
-     <div class="form-actions">
-      @if($s->status === 'active')
-       <form method="post" action="/area/abbonamenti/{{ $s->id }}/salta">@csrf<button class="btn ghost" title="Ad esempio se sei in vacanza: il prossimo addebito slitta di un mese">Salta il prossimo mese</button></form>
-       <form method="post" action="/area/abbonamenti/{{ $s->id }}/pausa">@csrf<button class="btn ghost">Metti in pausa</button></form>
-      @elseif($s->status === 'paused')
-       <form method="post" action="/area/abbonamenti/{{ $s->id }}/riprendi">@csrf<button class="btn accent">Riprendi</button></form>
-      @endif
-      @if(($canUpdateCard ?? false) && in_array($s->status, ['active', 'paused'], true))
-       <form method="post" action="/area/abbonamenti/{{ $s->id }}/carta">@csrf<button class="btn ghost" title="Inserisci una nuova carta sulla pagina sicura di Stripe: nessun addebito">Cambia carta</button></form>
-      @endif
-      <form method="post" action="/area/abbonamenti/{{ $s->id }}/annulla">@csrf<button class="btn ghost">Annulla abbonamento</button></form>
-     </div>
-     <details style="margin-top:14px"><summary style="cursor:pointer">Cambia indirizzo di spedizione</summary>
-      <form method="post" action="/area/abbonamenti/{{ $s->id }}/indirizzo" style="margin-top:10px">@csrf
-       @include('site.shop._ship_picker', ['addresses' => $addresses, 'max' => $maxAddresses, 'selected' => ($sh['id'] ?? null) ?: 'new'])
-       <p class="muted" style="font-size:13px">Vale dal prossimo ordine; quelli già spediti non cambiano. La fatturazione resta quella dei tuoi dati.</p>
-       <button class="btn accent">Salva indirizzo</button>
-      </form>
-     </details>
-     @if($s->free_shipping && $s->cycles_done < $s->commitment_months)<p class="muted" style="margin:12px 0 0;font-size:13px">L'impegno è di {{ $s->commitment_months }} mesi, ma puoi annullare quando vuoi: la disdetta anticipata viene solo registrata.</p>@endif
-    @endif
+    @if($s->last_error)<div class="note note-err" style="margin:16px 0 0"><div><strong>Ultimo addebito non riuscito</strong>{{ $s->last_error }}</div></div>@endif
+    <div class="form-actions sub-actions">
+     @if($s->status === 'active')
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/salta">@csrf<button class="btn ghost" title="Ad esempio se sei in vacanza: il prossimo addebito slitta di un mese">Salta il prossimo mese</button></form>
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/pausa">@csrf<button class="btn ghost">Metti in pausa</button></form>
+     @elseif($s->status === 'paused')
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/riprendi">@csrf<button class="btn accent">Riprendi</button></form>
+     @endif
+     @if(($canUpdateCard ?? false) && in_array($s->status, ['active', 'paused'], true))
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/carta">@csrf<button class="btn ghost" title="Inserisci una nuova carta sulla pagina sicura di Stripe: nessun addebito">Cambia carta</button></form>
+     @endif
+     <form method="post" action="/area/abbonamenti/{{ $s->id }}/annulla" class="sub-cancel">@csrf<button class="btn-link-danger">Annulla abbonamento</button></form>
+    </div>
+    <details class="sub-addr"><summary>Cambia indirizzo di spedizione</summary>
+     <form method="post" action="/area/abbonamenti/{{ $s->id }}/indirizzo">@csrf
+      @include('site.shop._ship_picker', ['addresses' => $addresses, 'max' => $maxAddresses, 'selected' => ($sh['id'] ?? null) ?: 'new'])
+      <p class="muted" style="font-size:13px">Vale dal prossimo ordine; quelli già spediti non cambiano. La fatturazione resta quella dei tuoi dati.</p>
+      <button class="btn accent">Salva indirizzo</button>
+     </form>
+    </details>
    </div>
   </section>
- @endforeach
+ @empty
+  <section class="panel"><div class="empty"><div><strong>Nessun abbonamento attivo</strong><p>Quelli annullati sono qui sotto. Per ripartire scegli i prodotti e attiva il riordino dal checkout.</p><a class="btn accent" href="/negozio">Vai al negozio</a></div></div></section>
+ @endforelse
+
+ @if($old->isNotEmpty())
+  <details class="panel sub-old">
+   <summary><span>Abbonamenti annullati</span><span class="st st-mute">{{ $old->count() }}</span></summary>
+   <ul class="sub-old-list">
+    @foreach($old as $s)
+     @php $f = collect($s->lines)->keys()->first(); $m = max(0, count($s->lines) - 1); @endphp
+     <li>
+      <div><strong>{{ $nice($f) }}@if($m) <span class="sub-more">+ altri {{ $m }}</span>@endif</strong>
+       <span class="muted">{{ $s->cycles_done }}@if($s->commitment_months) di {{ $s->commitment_months }}@endif cicli · {{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }}</span></div>
+      <span class="st st-mute">Annullato</span>
+     </li>
+    @endforeach
+   </ul>
+  </details>
+ @endif
  </div>
  <aside class="stack">
   <section class="panel accent">
    <header><h2>Come funziona</h2></header>
    <div class="panel-body">
-    <ul class="todo" style="margin:0;padding-left:18px;line-height:1.7">
-     <li>Il riordino parte ogni mese alla data indicata, con la carta usata al checkout oppure sul tuo saldo KMoney.</li>
-     <li>Se sei in vacanza puoi saltare il prossimo mese, oppure mettere in pausa e riprendere senza perdere i cicli fatti.</li>
-     <li>Puoi cambiare l'indirizzo di spedizione in qualsiasi momento (scegli uno dei tuoi indirizzi salvati o ne aggiungi uno): vale dal prossimo ordine.</li>
-     <li>La spedizione è gratuita su ogni riordino. Puoi annullare quando vuoi.</li>
-     <li>Se un addebito non va a buon fine (carta rifiutata o saldo KMoney insufficiente) riproviamo dopo un giorno, fino a 3 volte; poi l'abbonamento va in pausa e lo riprendi da qui.</li>
+    <ul class="sub-help">
+     <li><strong>Riordino mensile.</strong> Parte ogni mese alla data indicata, con la carta usata al checkout oppure sul tuo saldo KMoney.</li>
+     <li><strong>In vacanza?</strong> Salta il prossimo mese, oppure metti in pausa e riprendi senza perdere i cicli fatti.</li>
+     <li><strong>Indirizzo.</strong> Cambialo quando vuoi (uno dei tuoi indirizzi salvati o uno nuovo): vale dal prossimo ordine.</li>
+     <li><strong>Spedizione gratuita</strong> su ogni riordino. Puoi annullare quando vuoi.</li>
+     <li><strong>Addebito non riuscito?</strong> Carta rifiutata o saldo KMoney insufficiente: riproviamo dopo un giorno, fino a 3 volte; poi l'abbonamento va in pausa e lo riprendi da qui.</li>
     </ul>
    </div>
   </section>

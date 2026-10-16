@@ -22,6 +22,7 @@ use App\Models\CreditNote;
 use App\Models\Order;
 use App\Models\Refund;
 use App\Models\ReturnRequest;
+use App\Models\Subscription;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
@@ -114,16 +115,32 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')->columns([
+        return $table->modifyQueryUsing(fn ($q) => $q->with('subscription'))->defaultSort('id', 'desc')->columns([
             TextColumn::make('number')->label('Ordine')->searchable()->sortable(),
             TextColumn::make('buyer.name')->label('Cliente')->searchable(),
             TextColumn::make('buyer.email')->label('Email')->searchable()->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('buyer_type')->label('Tipo')->formatStateUsing(fn (string $state) => $state === 'consultant' ? 'Incaricato' : 'Cliente'),
             TextColumn::make('beneficiary.name')->label(fn (): string => LegacyPlan::hidden() ? 'Incaricato' : 'PV a')->placeholder('— (vendita casa)'),
             TextColumn::make('subscription_id')->label('Ordine')->badge()
-                ->state(fn (Order $r) => $r->subscription_id ? 'Abbonamento' : 'Singolo')
-                ->color(fn (Order $r) => $r->subscription_id ? 'info' : 'gray')
-                ->icon(fn (Order $r) => $r->subscription_id ? 'heroicon-o-arrow-path' : null),
+                ->state(fn (Order $r) => match ($r->subscription?->status) {
+                    null => $r->subscription_id ? 'Abbonamento' : 'Singolo',
+                    Subscription::CANCELLED => 'Abbonamento annullato',
+                    Subscription::PAUSED => 'Abbonamento in pausa',
+                    Subscription::PENDING => 'Abbonamento in attesa',
+                    default => 'Abbonamento attivo',
+                })
+                ->color(fn (Order $r) => match ($r->subscription?->status) {
+                    null => $r->subscription_id ? 'info' : 'gray',
+                    Subscription::CANCELLED => 'gray',
+                    Subscription::PAUSED, Subscription::PENDING => 'warning',
+                    default => 'info',
+                })
+                ->icon(fn (Order $r) => match ($r->subscription?->status) {
+                    null => $r->subscription_id ? 'heroicon-o-arrow-path' : null,
+                    Subscription::CANCELLED => 'heroicon-o-x-circle',
+                    Subscription::PAUSED => 'heroicon-o-pause-circle',
+                    default => 'heroicon-o-arrow-path',
+                }),
             TextColumn::make('status')->label('Stato')->badge()->formatStateUsing(fn (string $state) => self::STATUS[$state] ?? $state)
                 ->color(fn (string $state) => match ($state) {
                     'pending_payment' => 'warning', 'paid', 'processing', 'shipped', 'delivered' => 'success', 'cancelled' => 'gray', default => 'danger',

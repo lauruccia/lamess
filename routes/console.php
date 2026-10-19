@@ -13,6 +13,8 @@ Artisan::command('inspire', function () {
 Schedule::command('lamess:backup')->dailyAt('02:15')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:canoni')->dailyAt('03:30')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:fatture')->hourly()->withoutOverlapping(120);
+// Invio in blocco degli XML (modalità «in blocco»): il 1° del mese; se l'email è spenta non fa nulla e le fatture restano in coda.
+Schedule::command('lamess:fatture --tutte')->monthlyOn(1, '08:30')->timezone('Europe/Rome')->withoutOverlapping(120)->when(fn () => \App\Domain\Billing\InvoiceService::batchMode());
 Schedule::call(fn () => app(PlanVersionService::class)->promoteDue())->name('lamess:piano-in-vigore')->dailyAt('00:10')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:abbonamenti')->dailyAt('04:00')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:pagamenti')->dailyAt('05:00')->timezone('Europe/Rome')->withoutOverlapping(120);

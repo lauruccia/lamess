@@ -154,7 +154,7 @@ return [
     'structure_bonus_weekday' => 1,
     'structure_bonus_hour' => 6,
     // Interruttore «nascondi il vecchio piano di marketing» (PV/PR): nasconde senza cancellare. Modificabile da pannello.
-    'legacy_plan_hidden' => (bool) env('LAMESS_LEGACY_PLAN_HIDDEN', false),
+    'legacy_plan_hidden' => (bool) env('LAMESS_LEGACY_PLAN_HIDDEN', true),
     // Bonifici SEPA (pain.001): conto dell'azienda da cui partono i pagamenti agli incaricati
     'sepa' => [
         'debtor_name' => env('LAMESS_SEPA_NAME', ''),
@@ -178,5 +178,6 @@ return [
     ],
     'sdi' => [
         'mail_to' => env('LAMESS_SDI_MAIL_TO', ''),           // destinatario del driver «mail»
+        'send_mode' => env('LAMESS_SDI_SEND_MODE', 'immediate'), // immediate = subito all'emissione | batch = in blocco (pulsante o 1° del mese)
     ],
 ];

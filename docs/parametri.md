@@ -153,7 +153,8 @@ Si cambiano dal pannello (Impostazioni di sistema, che ha la precedenza sul `.en
 
 | Chiave | Predefinito | Significato |
 |---|---|---|
-| `legacy_plan_hidden` (`LAMESS_LEGACY_PLAN_HIDDEN`) | no | nasconde il piano precedente in tutto il portale; lo commuta solo il super_admin dalla pagina «Visibilità piano precedente» (Compensi) |
+| `legacy_plan_hidden` (`LAMESS_LEGACY_PLAN_HIDDEN`) | sì (dal 19/10/2026; prima no) | nasconde il piano precedente in tutto il portale; lo commuta solo il super_admin dalla pagina «Visibilità piano precedente» (Compensi) |
+| `sdi.send_mode` (`LAMESS_SDI_SEND_MODE`) | `immediate` | invio degli XML delle fatture: `immediate` all'emissione, `batch` in blocco (pulsante o 1° del mese alle 08:30) |
 | `period_auto_close` | `calculate` | chiusura mensile automatica: `off` · `calculate` (solo calcolo ufficiale) · `close` |
 | `commission_calc_day`, `commission_calc_hour` | `1`, `1` | quando parte il calcolo del mese: `end` (ultimo giorno) oppure giorno 1–28 del mese successivo, all'ora indicata (ora italiana) |
 | `structure_bonus_auto`, `structure_bonus_weekday`, `structure_bonus_hour` | no, 1 (lunedì), 6 | calcolo settimanale del Bonus di Struttura |

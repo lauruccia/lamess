@@ -362,5 +362,6 @@
 - Decisioni aperte: commissione di prelievo 2,50 € tolta da OPEN-54 e A-01 (eliminata il 15/10, `LAMESS_BANK_FEE` = 0,00); A-12 riporta la richiesta di Laura sugli XML per email (invio mensile o a pulsante); A-03 annota che il test non compare fra i rossi dell'ultima esecuzione.
 - README: elenco dei test rossi allineato al registro del 16/10.
 - Dossier `docs/dossier.html` rigenerato (era fermo al 14/10).
-- Non toccati: `parametri.md` (il file di piano non è cambiato dopo l'ultima generazione), `CHANGELOG.md` (è quello di Laravel, non del portale), i documenti della vecchia piattaforma Odoo in `Documentazione/`.
+- **Unione con il lavoro locale (19/10, mattina)**: il codice presente solo sul computer di Laura è stato unito a `main` (un solo conflitto, in `InvoiceService`, risolto tenendo il tetto di 200 per giro). Contiene: invio fatture «in blocco» (`LAMESS_SDI_SEND_MODE`, pulsante in *Fatture*, invio il 1° del mese alle 08:30), pagina pubblica `/regolamento` con il Regolamento v2.0 (link nel piè di pagina e nella domanda), `LAMESS_LEGACY_PLAN_HIDDEN` predefinito acceso, tolto dal modulo del piano il campo «giorni» della protezione qualifiche (resta la data fissa), test `PasswordRecoveryTest` e di invio in blocco.
+- Non toccati: `CHANGELOG.md` (è quello di Laravel, non del portale), i documenti della vecchia piattaforma Odoo in `Documentazione/`.
 - Non verificato qui: la suite di test non è stata rieseguita (dipendenze non installabili in questo ambiente).

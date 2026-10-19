@@ -175,10 +175,8 @@ class CompPlanVersionResource extends Resource
                         ->schema(fn (Get $get): array => self::rankFields(self::isIncaricati($get))),
                     $policy('kosmos_rank_maintenance')->visible($inc)->helperText(null),
                     $policy('kosmos_compression')->visible($inc)->helperText(null),
-                    TextInput::make('kosmos.rank_grace_days')->label('Mantieni le qualifiche attuali per … giorni dall’attivazione del piano')->visible($inc)->numeric()->minValue(0)->maxValue(3650)->suffix('giorni')
-                        ->helperText('Per questi giorni dall’attivazione del piano le qualifiche non si riducono per mancanza di clienti, così gli incaricati hanno il tempo di passare al nuovo piano (90 = circa tre mesi). I giorni si contano dal giorno di attivazione e ogni mese iniziato nella finestra è protetto per intero. Vuoto o 0 = nessuna protezione a giorni.'),
-                    DatePicker::make('kosmos.rank_grace_until')->label('Oppure: mantieni le qualifiche attuali fino al')->visible($inc)->native(false)->displayFormat('d/m/Y')->format('Y-m-d')
-                        ->helperText('Data fissa, alternativa ai giorni (vale la più lontana tra le due). Un mese è protetto se finisce entro la data: scegli 31/12 per proteggere anche dicembre. Vuoto = nessuna data fissa.'),
+                    DatePicker::make('kosmos.rank_grace_until')->label('Protezione delle qualifiche attuali fino al')->visible($inc)->native(false)->displayFormat('d/m/Y')->format('Y-m-d')
+                        ->helperText('Data fissa decisa da admin (es. 31/12/2026). Per il singolo incaricato si può cambiare dalla sua scheda («Mantieni qualifica»). Un mese è protetto se finisce entro la data: scegli 31/12 per proteggere anche dicembre. Vuoto = nessuna data fissa.'),
                 ]),
 
             Section::make('Bonus di Struttura (PearlQ)')->visible($inc)->columnSpanFull()->columns(2)

@@ -49,6 +49,7 @@ Base per questo sito: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://
 | `LAMESS_SIGNATURE_DRIVER` | `fake` (default, solo sviluppo) · `email` | firma elettronica della lettera: `email` invia un codice OTP all'indirizzo dell'account (serve `LAMESS_MAIL_ENABLED=true` e l'SMTP); `fake` mostra l'OTP a schermo |
 | `LAMESS_INVOICE_SINK` | `fake` · `file` · `mail` | destinazione delle fatture elettroniche (XML FatturaPA) |
 | `LAMESS_SDI_MAIL_TO` | indirizzo email | destinatario del driver `mail` (casella di importazione del gestionale, commercialista o PEC verso lo SdI) |
+| `LAMESS_SDI_SEND_MODE` | `immediate` (default) · `batch` | `immediate`: l'XML parte a ogni emissione; `batch`: restano «Da inviare» e partono col pulsante in *Fatture* o il 1° del mese alle 08:30 (modificabile anche da Impostazioni di sistema → Ordini e fatture) |
 | `LAMESS_SELLER_NAME`, `_VAT`, `_ADDRESS`, `_ZIP`, `_CITY`, `_PROVINCE`, `_TAX_CODE`, `_REGIME` | testo | dati del venditore (modificabili anche da Impostazioni → Venditore) |
 | `LAMESS_MAIL_ENABLED` | `false` (default) · `true` | interruttore generale delle email, comprese le fatture spedite dal driver `mail` |
 | `LAMESS_RECEIPTS_ENABLED`, `LAMESS_WITHHOLDING_ENABLED` | `false` (default) | ricevute provvigionali e ritenuta d'acconto: **lasciare spenti** finché non risponde il commercialista |

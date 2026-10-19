@@ -152,6 +152,34 @@ final class FatturaPaTest extends TestCase
         $this->assertStringContainsString($inv->number, Storage::get('sdi-out/'.$inv->sink_ref));
     }
 
+    public function test_batch_mode_keeps_invoices_pending_until_sent_in_block(): void
+    {
+        Mail::fake();
+        config(['lamess.invoice_sink_driver' => 'mail', 'lamess.sdi.mail_to' => 'sdi@example.com', 'lamess.mail_enabled' => true, 'lamess.sdi.send_mode' => 'batch']);
+        $inv = $this->paidOrder()->invoice->refresh();
+
+        $this->assertSame('pending', $inv->sink_status);
+        Mail::assertNothingSent();
+        $this->assertSame(0, app(InvoiceService::class)->retryPending(), 'il giro orario non invia in modalità in blocco');
+        $this->assertSame(1, app(InvoiceService::class)->pendingCount());
+        $this->assertNull(InvoiceService::sendBlocker());
+
+        $this->artisan('lamess:fatture', ['--tutte' => true])->assertSuccessful();
+        $this->assertSame('sent', $inv->refresh()->sink_status);
+        Mail::assertSent(\App\Mail\InvoiceXmlMail::class, 1);
+        $this->assertSame(0, app(InvoiceService::class)->pendingCount());
+    }
+
+    public function test_batch_send_is_blocked_while_email_is_off(): void
+    {
+        config(['lamess.invoice_sink_driver' => 'mail', 'lamess.sdi.mail_to' => 'sdi@example.com', 'lamess.mail_enabled' => false, 'lamess.sdi.send_mode' => 'batch']);
+        $inv = $this->paidOrder()->invoice->refresh();
+
+        $this->assertNotNull(InvoiceService::sendBlocker());
+        $this->artisan('lamess:fatture', ['--tutte' => true])->assertSuccessful();
+        $this->assertSame('pending', $inv->refresh()->sink_status, 'con la posta spenta non si tocca nulla');
+    }
+
     public function test_sink_error_is_recorded_without_losing_the_invoice_and_retry_recovers(): void
     {
         config(['lamess.invoice_sink_driver' => 'file', 'lamess.seller.zip' => '']);

@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 14/10/2026 13:14</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale dell'incaricato e del cliente</h1>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Lamèss — Dossier</title><style>body{font:15px/1.5 system-ui;max-width:900px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px;font-size:13px}code{background:#f3f3f3;padding:0 3px}section{margin-top:3rem;border-top:2px solid #333}</style></head><body><h1>Lamèss — Dossier</h1><p>Generato il 19/10/2026 10:21</p><ul><li><a href="#manuale-utente">Manuale utente</a></li><li><a href="#manuale-admin">Manuale amministratore</a></li><li><a href="#manuale-sviluppatori">Manuale sviluppatori</a></li><li><a href="#installazione-cpanel">Installazione su cPanel</a></li><li><a href="#messa-online">Messa online e piano di ritorno</a></li><li><a href="#guida-breve-admin">Guida breve per l'amministratore</a></li><li><a href="#specifica-motore">Specifica del motore</a></li><li><a href="#architettura">Architettura</a></li><li><a href="#decisioni-aperte">Decisioni aperte</a></li><li><a href="#parametri">Parametri</a></li><li><a href="#registro-aggiornamenti">Registro aggiornamenti</a></li></ul><section id="manuale-utente"><h1>Manuale dell'incaricato e del cliente</h1>
 <blockquote>
 <p>Aggiornato il 14/10/2026. Il portale è ancora chiuso al pubblico: si apre quando lo decide il Consorzio.
 Qui trovi come funzionano acquisti, abbonamenti e compensi, e come si usano le pagine dell'area riservata.
@@ -34,7 +34,7 @@ Dove si parla di «incaricato» (prima «consulente») ci si riferisce a chi ha 
 <h2>Diventare incaricato</h2>
 <ol>
 <li><strong>Registrati</strong> da <code>/registrazione</code> (privato o azienda): sei un cliente. Se arrivi da un link, l'incaricato che te l'ha dato diventa il tuo referente.</li>
-<li>Dalla tua area scegli <strong>«Diventa incaricato»</strong> (solo persone fisiche maggiorenni): compili i dati anagrafici e fiscali (codice fiscale, nascita, residenza) e puoi confermare o cambiare lo sponsor fino all'invio della richiesta.</li>
+<li>Dalla tua area scegli <strong>«Diventa incaricato»</strong> (solo persone fisiche maggiorenni). La scheda ha quattro sezioni: <strong>sponsor</strong>, <strong>dati anagrafici</strong> (codice fiscale, data e luogo di nascita; nome ed email sono quelli del tuo account), <strong>residenza e contatti</strong> (indirizzo, città, CAP, provincia, nazione, telefono, PEC facoltativa) e <strong>conferma</strong>. Se ti sei registrato da un link referral, da un invito o dal cookie del link, lo sponsor è quello del link e <strong>non si può cambiare</strong>; se invece non c'è, lo indichi tu (codice o referral) fino all'invio della richiesta. L'IBAN e i documenti si inseriscono subito dopo la firma, nell'onboarding.</li>
 <li><strong>Firma</strong> la Lettera di incarico IVD con un codice a 6 cifre (OTP). Da quel momento sei in attesa di accettazione. Dopo la firma puoi scaricare la lettera e il <strong>certificato di firma</strong> (PDF con le prove della firma).</li>
 <li>Il Consorzio <strong>accetta o rifiuta</strong>. Se accetta ricevi la mail di benvenuto e puoi stampare il <strong>tesserino</strong>. Se rifiuta torni cliente e gli acquisti maturati nel frattempo restano allo sponsor proposto.</li>
 <li><strong>Onboarding</strong> (<em>Area → Onboarding</em>): carica foto formato tessera e documento d'identità (verificati dal back-office; puoi caricare anche codice fiscale e prova di intestazione dell'IBAN) e inserisci IBAN e intestatario (l'IBAN è controllato). Finché l'onboarding non è completo non puoi ricevere pagamenti né commissioni indirette.</li>
@@ -73,6 +73,7 @@ Dove si parla di «incaricato» (prima «consulente») ci si riferisce a chi ha 
 <li><strong>Spedizione gratuita</strong> su ogni ordine dell'abbonamento; l'<strong>ordine singolo</strong> paga la spedizione.</li>
 <li>L'<strong>impegno è di 12 mesi, ma non è vincolante</strong>: puoi interrompere quando vuoi.</li>
 <li>In <strong>I miei abbonamenti</strong> (<code>/area/abbonamenti</code>) puoi <strong>cambiare l'indirizzo di spedizione</strong> (vale dal prossimo ordine), <strong>saltare il prossimo mese</strong>, <strong>mettere in pausa</strong> e riprendere, <strong>cambiare carta</strong> o <strong>annullare</strong>.</li>
+<li>La pagina mostra <strong>una riga per abbonamento</strong> (prodotto, stato, prossimo addebito); cliccandola si apre il dettaglio con indirizzo, cicli e i pulsanti per saltare, mettere in pausa, cambiare carta o annullare. Gli abbonamenti annullati restano in fondo all'elenco, in grigio.</li>
 <li>Se un addebito non va a buon fine (carta rifiutata o saldo KMoney insufficiente) il sistema riprova dopo un giorno, fino a 3 volte; poi l'abbonamento va in pausa e lo riprendi tu. Per cambiare i prodotti annulla l'abbonamento e creane uno nuovo dal checkout.</li>
 </ul>
 <h2>I miei statini e i pagamenti</h2>
@@ -99,9 +100,11 @@ Dove si parla di «incaricato» (prima «consulente») ci si riferisce a chi ha 
 </ul>
 <h2>Pagine dell'area personale</h2>
 <ul>
-<li><strong>Il mio ramo</strong> (solo incaricati): la tua rete ad albero, in sola lettura. Tocca un nome per aprire o chiudere il ramo; per ogni persona vedi qualifica, stato e numero di diretti. Ogni qualifica ha il colore della sua pietra, con la legenda sopra l'albero. I numeri sono quelli dell'ultimo calcolo.</li>
-<li><strong>I miei clienti</strong> (solo incaricati): chi si è iscritto con il tuo link o è assegnato a te, con ordini pagati (IVA inclusa) e ultimo ordine.</li>
+<li><strong>Il mio ramo</strong> (solo incaricati): la tua rete in sola lettura, con i dati del Piano Incaricati. In alto: persone nel ramo, i tuoi clienti, clienti nel ramo, Pearl nel ramo, venduto del mese. L'<strong>albero</strong> è un organigramma come quello del back-office, con te alla radice e solo il tuo ramo: ogni persona è una scheda con il colore della sua pietra, i clienti e una barra verso la qualifica successiva; si trascina e si zooma, c'è la minimappa, la ricerca per nome o codice, «Livelli 1–3», «Livelli 1–6», «Espandi tutto» e lo schermo intero. Un clic apre la scheda della persona (qualifica, clienti, iscritti, venduto del mese, diretti Pearl, requisiti per la prossima qualifica); ▾/▸ apre e chiude il ramo; doppio clic (o il pulsante nella scheda) apre l'albero di quella persona. La tabella <strong>Le mie colonne</strong> (un tuo diretto con tutta la sua discendenza) mostra persone, clienti e la barra verso la soglia richiesta (es. colonna da 90); <strong>Livello per livello</strong> mostra persone, clienti e se il tuo compenso di quel livello è sbloccato. A destra <strong>Verso la qualifica successiva</strong>: requisiti con valore raggiunto e richiesto (clienti, Pearl diretti, linee, colonne), «Cosa fare», scaglioni dei diretti, livelli indiretti, mantenimento della qualifica e scala di tutte le qualifiche. I numeri sono quelli dell'ultimo calcolo.</li>
+<li><strong>I miei clienti</strong> (solo incaricati): chi si è iscritto con il tuo link o è assegnato a te, con ordini pagati (IVA inclusa) e ultimo ordine. In alto un <strong>filtro</strong>: cerca per nome, email o telefono e scegli <em>Senza ordini</em>, <em>Contano per il piano</em>, <em>Ordine sotto il minimo</em>, <em>Hanno ordinato questo mese</em>, <em>Fermi da oltre 30 giorni</em>. L'elenco mostra <strong>50 clienti per pagina</strong> (← Precedenti / Successivi →): ricerca e filtri restano attivi cambiando pagina, e i conteggi in alto riguardano sempre tutti i clienti.</li>
+<li><strong>Il piano compensi</strong> (voce del menù e piè di pagina; pagina pubblica <code>/piano-compensi</code>): percentuali, requisiti delle qualifiche, compressione, retrocessione, Bonus di Struttura e pagamenti, generati dal piano in vigore e sempre aggiornati. È il testo a cui rimandano la casella di accettazione della domanda e la Lettera di Incarico.</li>
 <li><strong>Password dimenticata o reimpostata dal Consorzio</strong>: se ricevi l'email «Lamèss — recupero della password», il link vale 60 minuti e ti fa scegliere una nuova password; la vecchia resta valida finché non la cambi. Se non l'hai chiesta, ignora l'email.</li>
+<li><strong>Accesso bloccato per troppi tentativi</strong>: dopo 5 password sbagliate sullo stesso indirizzo dallo stesso dispositivo, o 15 da dispositivi diversi, l'accesso con quell'email si ferma per 15 minuti e il portale indica fra quanti minuti riprovare. Un accesso riuscito azzera il conteggio.</li>
 <li><strong>I miei dati</strong> (tutti): anagrafica e indirizzo di fatturazione, indirizzi di spedizione, conto KMoney e cambio password. Email e dati fiscali si cambiano scrivendo al Consorzio.</li>
 <li><strong>Assistenza</strong>: apri una richiesta (domanda generale, problema tecnico, segnalazione, altro), segui le risposte del Consorzio e puoi rispondere o chiudere. Ricevi una risposta in pagina; le email partono solo quando l'invio email è attivo.</li>
 </ul>
@@ -118,8 +121,21 @@ Dove si parla di «incaricato» (prima «consulente») ci si riferisce a chi ha 
 <p>Prima di usare materiali promozionali tuoi (volantini, post, video) <strong>proponili al Consorzio</strong> da <em>Area → Conformità</em>: descrizione e file. Solo i materiali <strong>approvati</strong> (con codice <code>MA-AAAA-nnnn</code>) si possono usare; puoi ritirarli quando vuoi. Per segnalare comportamenti scorretti di altri usa Assistenza → «Segnalazione».</p>
 <h2>Cedere il tuo codice e successione</h2>
 <ul>
-<li><strong>Cessione</strong> (<em>Area → Cessione</em>, dal profilo): puoi cedere il tuo codice a un'altra persona già registrata. Serve il <strong>contributo di cessione</strong> (50 €), poi il Consorzio approva. Prima della cessione i compensi non ancora pagati vanno saldati, a meno che il Consorzio decida che seguano il codice. Il cessionario firma una <strong>nuova lettera di incarico</strong> e carica i propri documenti e il proprio IBAN: finché non è accettato il codice resta sospeso. Puoi annullare la richiesta prima della decisione. Un codice sanzionato o con casi di conformità aperti non si può cedere.</li>
-<li><strong>In caso di decesso</strong> gli eredi contattano il Consorzio: documenti, quote e liquidazione dei compensi maturati agli eredi. Un erede può <strong>subentrare</strong> nel codice con una nuova lettera; se non si decide entro 180 giorni il codice cessa.</li>
+<li>
+<p><strong>Cessione</strong> (<em>Area → Cessione</em>, dal profilo): puoi cedere il tuo codice a un'altra persona già registrata. Serve il <strong>contributo di cessione</strong> (50 €), poi il Consorzio approva. Prima della cessione i compensi non ancora pagati vanno saldati, a meno che il Consorzio decida che seguano il codice. Il cessionario firma una <strong>nuova lettera di incarico</strong> e carica i propri documenti e il proprio IBAN: finché non è accettato il codice resta sospeso. Puoi annullare la richiesta prima della decisione. Un codice sanzionato o con casi di conformità aperti non si può cedere.</p>
+</li>
+<li>
+<p><strong>In caso di decesso</strong> gli eredi contattano il Consorzio: documenti, quote e liquidazione dei compensi maturati agli eredi. Un erede può <strong>subentrare</strong> nel codice con una nuova lettera; se non si decide entro 180 giorni il codice cessa.</p>
+</li>
+<li>
+<p><strong>Panoramica e I miei clienti</strong> (incaricati, Piano Incaricati): la panoramica mostra clienti personali, diretti Pearl, compensi del mese (stima, con i trattenuti) e Bonus di Struttura. In <em>I miei clienti</em> ogni cliente ha primo e ultimo ordine, ordine più alto e se <strong>conta per il piano</strong> (ordine sopra l'importo minimo).</p>
+</li>
+<li>
+<p><strong>Link referral</strong>: si genera da solo se manca; a video il dominio compare con l'accento (lamèss.it), mentre «Copia», QR e WhatsApp usano l'indirizzo ASCII.</p>
+</li>
+<li>
+<p><strong>Requisiti e crescita (incaricati)</strong>: in <em>Il mio ramo</em>, pannello a destra, trovi i <strong>requisiti della tua qualifica attuale</strong> (con ✓ se li soddisfi ancora), i <strong>requisiti che mancano per la prossima</strong> e «Cosa fare». La tabella <strong>Dove agire</strong> elenca tutte le persone sotto di te, con le più vicine alla prossima qualifica in cima: qualifica, clienti, iscritti (validi e senza primo ordine), ultimo ordine, il loro ramo, cosa manca loro e il venduto del mese. «Ti serve Pearl» segnala un tuo diretto che, salendo a Pearl, ti aiuta a completare i requisiti. Dei clienti degli altri incaricati vedi solo numeri e date, mai nomi o contatti.</p>
+</li>
 </ul>
 </section>
 <section id="manuale-admin"><h1>Manuale amministratore</h1>
@@ -140,7 +156,7 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 <h2>Il menu in alto</h2>
 <ul>
 <li><strong>Rete</strong>: Incaricati, Albero della rete, Elenco per livelli, Domande IVD, Documenti KYC, Canoni annuali, Clienti (FAN), Cessioni del codice, Successioni (decessi).</li>
-<li><strong>Compensi</strong>: Piano compensi, Periodi, Movimenti PV (solo con il piano precedente visibile), Liquidazioni, Pagamenti, Prelievi su richiesta, Movimenti wallet, Ricevute provvigionali, Bonus di Struttura, Confronto qualifiche (idem), Visibilità piano precedente (solo super_admin).</li>
+<li><strong>Compensi</strong>: Piano compensi, Periodi, Movimenti PV (solo con il piano precedente visibile), Liquidazioni, Pagamenti, Prelievi su richiesta, Movimenti wallet, Ricevute provvigionali, Bonus di Struttura, Confronto qualifiche (idem), Simulazione incaricati, Visibilità piano precedente (solo super_admin).</li>
 <li><strong>Vendite</strong>: Cruscotto vendite, Prodotti, Categorie, Omaggi (bundle), Sconti, Spedizioni, Ordini, Abbonamenti, Fatture, Note di credito, Pagamenti e spedizioni.</li>
 <li><strong>Assistenza</strong>: Ticket e reclami, Novità, Materiali scaricabili, Eventi e corsi, Registro download, Casi di conformità, Sanzioni, Materiali da approvare.</li>
 <li><strong>Sistema</strong>: Utenti, Impostazioni di sistema, Funzionalità e viste, Log di audit, Verifica del log, Backup, Controllo messa online (tutte solo super_admin, salvo <em>Funzionalità e viste</em>, concessa anche a un admin con il permesso apposito), più Riconciliazione Odoo (per chi vede gli ordini).</li>
@@ -208,7 +224,7 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 <li><strong>Mantenere la qualifica</strong> (nessuna discesa per mancanza di clienti, la qualifica può sempre salire), in due modi che si sommano:
 <ol>
 <li><strong>Per singolo incaricato, fino a una data scelta dall'admin</strong> (permesso <code>network.restructure</code>): azione <strong>Mantieni qualifica</strong> nella scheda, sulla riga dell'elenco (menu <em>Azioni</em>), in massa sulle righe selezionate, oppure <strong>Mantieni qualifiche a tutti</strong> in alto nell'elenco <em>Incaricati</em>. Si indica la data (sono protetti i mesi che finiscono entro la data: per proteggere tutto ottobre, 31/10) oppure si accende <strong>Fino a revoca (senza scadenza)</strong>: la qualifica resta finché un admin o il super admin non la toglie (si salva <code>2099-12-31</code>, in elenco compare «fino a revoca»); si aggiunge un motivo; data vuota e interruttore spento = protezione tolta. La protezione riguarda solo la qualifica: i clienti contati con la regola cliente incidono comunque su scaglioni dei diretti e livelli indiretti. I cessati sono esclusi. Vale dal prossimo ricalcolo notturno. Ogni cambio è nel log (<code>rank.hold</code>, <code>rank.hold_removed</code>). La colonna <em>Qualifica mantenuta fino al</em> è nascosta di default (si attiva dalle colonne). Funziona solo con il Piano Incaricati attivo.</li>
-<li><strong>Protezione generale del piano</strong>: in <em>Piano compensi → bozza → Qualifiche e requisiti</em>, «Mantieni le qualifiche attuali per … giorni dall'attivazione del piano» (predefinito 90) oppure «fino al» una data fissa; se ci sono entrambi vale la più lontana.</li>
+<li><strong>Protezione generale del piano</strong>: in <em>Piano compensi → bozza → Qualifiche e requisiti</em>, «Mantieni le qualifiche attuali per … giorni dall'attivazione del piano» (predefinito vuoto) oppure «fino al» una data fissa (predefinito 31/12/2026); se ci sono entrambi vale la più lontana. <strong>Attenzione</strong>: se il piano attivo ha 90 giorni e la data 31/12, gennaio resta protetto; per chiudere la protezione al 31/12 lascia vuoti i giorni. A fine protezione il motore ricalcola tutti sul nuovo piano e <strong>retrocede chi non rispetta almeno un requisito</strong> della qualifica attuale (clienti, Pearl al 1° livello, altri incaricati, colonne): politica «Mantenimento della qualifica» = tutti i requisiti. Politica «Compressione della linea»: chi non rispetta i requisiti del livello è saltato e il livello passa al primo sopra di lui che li rispetta.</li>
 </ol>
 </li>
 <li><strong>Canone annuale</strong>: 19 € IVA compresa, dal secondo anno (il primo è gratuito). In <em>Impostazioni di sistema → Canone annuale</em> si può cambiare l'importo, i giorni di tolleranza e <strong>disattivarlo</strong> («Canone annuale attivo» spento: nessun canone, rinnovi gratuiti).</li>
@@ -216,14 +232,22 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 <li><strong>Bonus di Struttura (PearlQ)</strong>: <em>Compensi → Bonus di Struttura</em> elenca i bonus (Calcolato / Trattenuto / Confermato / Pagato / Annullato). Il calcolo è settimanale (giorno e ora in <em>Impostazioni → Bonus di Struttura (settimanale)</em>, acceso o spento) oppure subito con <strong>Calcola ora</strong>. Sulle righe selezionate: <strong>Conferma</strong>, <strong>Segna come pagati</strong> (riferimento del bonifico), <strong>Annulla</strong> (motivo).</li>
 <li><strong>Piano compensi</strong>: nuova bozza con <em>Nuova bozza</em> o <em>Crea bozza «Piano Incaricati»</em>; sulla versione <strong>Simula impatto</strong> (nulla viene scritto), <strong>Duplica come bozza</strong>. Pubblicare richiede, per default, l'<strong>approvazione a quattro occhi</strong>: chi ha il permesso <code>plan.manage</code> preme <strong>Chiedi approvazione</strong> (data di efficacia e motivo); un <strong>secondo</strong> admin con <code>plan.approve</code> sceglie <strong>Approva e pubblica</strong> o <strong>Rifiuta</strong> (motivo obbligatorio). Chi ha chiesto non può approvare la propria richiesta, ma può <strong>Ritirare la richiesta</strong>. Il super_admin pubblica direttamente (il pulsante è <strong>Attiva</strong>, o <strong>Rimetti in vigore</strong> per una versione archiviata); lo stesso vale per tutti con l'impostazione dei quattro occhi spenta. Le versioni già attive non si modificano e i periodi già chiusi non cambiano.</li>
 <li><strong>Confronto qualifiche</strong> (permesso <code>plan.compare</code>): confronta la qualifica del sistema precedente con quella del Piano Incaricati. Sparisce se il piano precedente è nascosto.</li>
+<li><strong>Simulazione incaricati</strong> (permesso <code>plan.compare</code>, voce <em>Compensi → Simulazione incaricati</em>): risponde a «cosa succede se…» senza scrivere nulla nel database (nessun cliente, ordine, agente, qualifica o compenso viene creato; usa lo stesso motore del Piano Incaricati, prima e dopo).
+<ul>
+<li><strong>Subito all'apertura</strong> compare la <strong>rete di oggi</strong> del periodo scelto, in due viste a scelta (il pulsante ricorda l'ultima usata): <strong>Vista albero</strong> (grafico con zoom, trascinamento e rotella, come <em>Albero della rete</em>; clic su un incaricato per i dettagli e le azioni) ed <strong>Elenco per livelli</strong> (tabella come <em>Elenco per livelli</em>, con livello, qualifica, diretti, clienti, compensi). In entrambe, per ogni incaricato, c'è <strong>cosa gli manca per la qualifica successiva</strong>: è lì che si interviene per ottenere il risultato che si vuole vedere.</li>
+<li><strong>Cosa si può cambiare</strong>: <em>aggiungi clienti</em> (con importo dell'ordine), <em>aggiungi ordini</em>, <em>aggiungi agenti</em> (numero e livello: il portale crea agenti virtuali con tutto ciò che serve per raggiungerlo), <em>sposta nell'albero</em> (nuovo sponsor). Si può compilare il modulo oppure usare i pulsanti <strong>+ clienti</strong>, <strong>+ agenti</strong>, <strong>sposta</strong> accanto all'incaricato (nell'albero: clic sul riquadro). Dopo <strong>Simula</strong> i riquadri in alto riassumono il risultato: passando il mouse (o toccando) su «Qualifiche che salgono» e «Qualifiche che scendono» vedi <strong>chi</strong> sono, con qualifica prima → dopo; su «Provvigioni degli incaricati nel mese» vedi come si <strong>suddividono</strong> e a quali incaricati cambiano di più. Sono le provvigioni <strong>lorde</strong> del Piano Incaricati per le vendite del mese (non il fatturato né i bonifici; ritenute e trattenute non sono considerate). Il totale <strong>comprende le provvigioni degli agenti simulati</strong> e dei loro clienti; sotto il totale compare la quota degli agenti simulati separata da quella degli incaricati reali. Sotto i riquadri la tabella «Che cosa sono queste provvigioni e come maturano» (<strong>clicca su una riga</strong> per aprire il dettaglio: per ogni incaricato, reale o simulato, qualifica, clienti, quanto matura prima → dopo e da quali vendite nasce — di chi sono i clienti, livello, numero di vendite, importo degli ordini, base V.A.P., aliquota, requisiti del livello, eventuale trattenuta) le divide per tipo con <strong>chi le riceve</strong> e <strong>come maturano</strong>: Compensi diretti (all'incaricato che ha il cliente, % a scaglioni dei clienti personali sul V.A.P.), Compensi indiretti (all'upline fino al 5° livello, se ha clienti e Pearl richiesti), Indiretti estesi (Ruby/Emerald/Diamond, 1% oltre il 5° livello) e Bonus di Struttura (importo fisso all'upline di chi porta 3 clienti in 30 giorni). La rete mostra qualifica <strong>prima → dopo</strong>, clienti e variazione dei compensi; i riquadri/le righe evidenziati sono quelli che cambiano, e «solo i rami con cambiamenti» nasconde il resto. «Sposta» aggiunge la modifica nel modulo: va indicato lì il nuovo sponsor.</li>
+<li>Sotto la rete: agenti simulati, tabella <em>Cosa cambia per gli incaricati reali</em> e <em>Compensi per tipo</em>. <strong>Azzera tutto</strong> riparte dallo stato reale. L'albero iniziale è tenuto in memoria 2 minuti.</li>
+</ul>
+</li>
 </ul>
 <h2>Nascondere il piano precedente (a PR/PV)</h2>
 <p><em>Compensi → Visibilità piano precedente</em> — <strong>solo super_admin</strong>. Il pulsante <strong>Nascondi il piano precedente</strong> (con conferma) toglie a tutti, amministratori compresi, ogni riferimento al vecchio piano: menu <em>Movimenti PV</em> e <em>Confronto qualifiche</em>, scheda «Volumi e rank», colonne PV/PR, schede 360, grafici, rete, estratti, esportazioni e testi salvati; gli importi dei vecchi bonus restano nei totali sotto la voce «Compensi del periodo precedente». <strong>I dati non si cancellano e nulla si ricalcola</strong>: sono solo nascosti. Il <strong>log di audit non viene toccato</strong>. <strong>Mostra di nuovo il piano precedente</strong> (stesso punto) ripristina tutto. Lo stesso interruttore è in <em>Impostazioni di sistema → Piano di marketing</em>. Predefinito: visibile.</p>
 <h2>Rete</h2>
-<p><strong>Incaricati</strong> (<em>Rete → Incaricati</em>): elenco con schede per stato (Tutti, Attivi, In attesa, Sospesi, Cessati, Da completare, KYC da verificare), filtri e ricerca. La colonna <strong>Qualifica</strong> mostra solo il nome della pietra (Pearl, Crystal…). Azioni sulla scheda: <strong>Sposta / cambia sponsor</strong> (con anteprima d'impatto, motivo obbligatorio; «Ricalcola i mesi chiusi» solo super_admin), <strong>Riassegna i clienti</strong>, <strong>Forza qualifica</strong>, <strong>Mantieni qualifica</strong>, <strong>Sospendi</strong>, <strong>Riattiva</strong>, <strong>Cessa</strong> (motivo obbligatorio; i diretti passano al primo ascendente attivo), <strong>Aggiungi nota</strong>, <strong>Mostra IBAN</strong>, <strong>Stampa tesserino</strong>, <strong>Certificato di firma</strong>, <strong>Richiedi documenti</strong>, <strong>Invia documenti</strong>, <strong>Invia reset password</strong>. Lo sponsor non si modifica a mano dopo l'iscrizione: solo con <em>Sposta / cambia sponsor</em>. Un incaricato senza onboarding completo non matura le commissioni indirette.</p>
+<p><strong>Incaricati</strong> (<em>Rete → Incaricati</em>): elenco con schede per stato (Tutti, Attivi, In attesa, Sospesi, Cessati, Da completare, KYC da verificare), filtri e ricerca. La colonna <strong>Qualifica</strong> mostra solo il nome della pietra (Pearl, Crystal…). <strong>«Team 1° liv.»</strong> (prima «Diretti») conta gli incaricati sponsorizzati; «Clienti diretti» resta il numero dei clienti. Azioni sulla scheda: <strong>Sposta / cambia sponsor</strong> (con anteprima d'impatto, motivo obbligatorio; «Ricalcola i mesi chiusi» solo super_admin), <strong>Riassegna i clienti</strong>, <strong>Forza qualifica</strong>, <strong>Mantieni qualifica</strong>, <strong>Sospendi</strong>, <strong>Riattiva</strong>, <strong>Cessa</strong> (motivo obbligatorio; gli incaricati del suo Team 1° liv. passano al primo ascendente attivo), <strong>Aggiungi nota</strong>, <strong>Mostra IBAN</strong>, <strong>Stampa tesserino</strong>, <strong>Certificato di firma</strong>, <strong>Richiedi documenti</strong>, <strong>Invia documenti</strong>, <strong>Invia reset password</strong>. Lo sponsor non si modifica a mano dopo l'iscrizione: solo con <em>Sposta / cambia sponsor</em>. Un incaricato senza onboarding completo non matura le commissioni indirette.</p>
+<p><strong>Inserire un incaricato a mano</strong> (<em>Rete → Incaricati → Nuovo</em>): la scheda ha quattro sezioni. <strong>Iscrizione</strong>: codice attività (automatico, lo cambia solo il super_admin), <strong>sponsor facoltativo</strong> (si cerca per nome o codice; se resta vuoto l'incaricato entra senza sponsor e dopo l'iscrizione non si cambia) e data della lettera. <strong>Anagrafica</strong>: nome, cognome, data di nascita (solo maggiorenni), luogo di nascita, codice fiscale. <strong>Residenza e contatti</strong>: indirizzo, città, CAP, provincia, nazione, telefono, PEC ed <strong>email di accesso</strong> (obbligatoria se compili anagrafica o contatti, perché i dati si salvano nel profilo dell'utente; manda l'invito per scegliere la password). <strong>Pagamento delle provvigioni (facoltativo)</strong>: IBAN e intestatario, validati al salvataggio; se vuoti li inserisce l'incaricato nell'onboarding. Chi si registra da solo dal link referral ha invece lo sponsor del link, bloccato.</p>
 <p>La scheda ha le schede <em>Riepilogo</em> (con <strong>Avanzamento di carriera</strong>: qualifica attuale e prossima, e i <strong>requisiti mancanti per la prossima qualifica col nuovo piano</strong>: clienti personali, Pearl al 1° livello, struttura), <em>Anagrafica</em>, <em>Rete</em>, <em>Commissioni</em>, <em>Pagamenti</em>, <em>Ordini</em>, <em>Documenti</em>, <em>Audit</em> (e <em>Volumi e rank</em> se il piano precedente è visibile). Nella sezione Rete la tabella <strong>«Incaricati diretti (1° livello)»</strong> mostra per ciascuno <strong>Ordini del mese</strong> e <strong>Importo del mese</strong> (ordini pagati del mese, IVA inclusa); accanto c'è l'elenco dei clienti diretti con gli stessi dati.</p>
 <p><strong>Albero della rete</strong>: albero interattivo con ricerca, zoom, apri/chiudi tutto e pannello «cosa manca per il livello successivo». Ogni qualifica ha il <strong>colore della sua pietra</strong> (Pearl, Crystal, Sapphire, Ruby, Emerald, Diamond) e il nome è sempre scritto; i cessati sono nascosti di default.</p>
-<p><strong>Elenco per livelli</strong>: gli incaricati in ordine di ramo con rientro per livello (0 = chi scegli come «Parti da», 1 = i suoi diretti…). Filtri: punto di partenza, «Fino al livello», stato. La colonna <strong>«Hanno acquistato»</strong> conta i clienti assegnati all'incaricato con almeno un ordine pagato nel periodo scelto (ogni cliente vale uno anche con più ordini); il periodo si sceglie fra <em>Mese in corso</em>, <em>Mese scorso</em>, <em>Ultimi 3 mesi</em>, <em>Anno in corso</em>, <em>Periodo a scelta…</em>. Ci si arriva anche dal pulsante <em>Elenco per livelli</em> nell'elenco incaricati.</p>
+<p><strong>Elenco per livelli</strong>: gli incaricati in ordine di ramo con rientro per livello (0 = chi scegli come «Parti da», 1 = il suo Team 1° liv.…). Filtri: punto di partenza, «Fino al livello», stato. La colonna <strong>«Hanno acquistato»</strong> conta i clienti assegnati all'incaricato con almeno un ordine pagato nel periodo scelto (ogni cliente vale uno anche con più ordini); il periodo si sceglie fra <em>Mese in corso</em>, <em>Mese scorso</em>, <em>Ultimi 3 mesi</em>, <em>Anno in corso</em>, <em>Periodo a scelta…</em>. Ci si arriva anche dal pulsante <em>Elenco per livelli</em> nell'elenco incaricati.</p>
 <p><strong>Domande IVD</strong>: elenco predefinito «Da accettare». <strong>Accetta</strong> (genera il tesserino PDF e invia la mail di benvenuto) o <strong>Rifiuta</strong> (l'account torna Cliente; gli acquisti dei suoi clienti nel frattempo restano allo sponsor proposto). <strong>Lettera firmata</strong> apre il PDF e <strong>Certificato di firma</strong> il certificato di completamento (non registra la geolocalizzazione).</p>
 <p><strong>Tesserino agente</strong>: il PDF ha un <strong>QR</strong> che porta a una pagina pubblica di verifica (<em>Tesserino valido / non valido</em>, con nome, codice e scadenza, senza altri dati). L'admin lo stampa da <em>Stampa tesserino</em> e lo può inviare all'incaricato.</p>
 <p><strong>Documenti KYC</strong>: predefinito «Da verificare». <strong>Apri</strong>, <strong>Approva</strong>, <strong>Rifiuta</strong> (motivazione visibile all'incaricato). Quando tutti i documenti obbligatori sono approvati, con IBAN e dati completi, l'onboarding risulta completo. <strong>Richiedi documenti</strong> (scheda, riga dell'elenco o azione di massa «Richiedi documenti KYC», permesso <code>kyc.manage</code>): scegli i documenti, un messaggio e i giorni per rispondere (predefinito 7); l'incaricato riceve una email e un riquadro nella sua area, e promemoria dopo 3 e 6 giorni. Con <code>LAMESS_KYC_DRIVER=stripe_identity</code> c'è anche la <strong>Verifica ora</strong> online (documento + selfie); la foto del tesserino va comunque verificata a mano.</p>
@@ -283,7 +307,7 @@ Le istruzioni che richiedono <code>php artisan</code> non si possono eseguire su
 </ul>
 <p><strong>Abbonamenti</strong> (<em>Vendite → Abbonamenti</em>): l'abbonamento mensile ha <strong>spedizione gratuita</strong>; l'impegno di 12 mesi <strong>non è vincolante</strong>: si interrompe quando si vuole (la colonna «Disdetta anticipata» è solo informativa). Un <strong>ordine singolo</strong> paga la spedizione. Si paga con carta (Stripe: la carta resta salvata e viene addebitata ogni mese) o KMoney. Il cliente può <strong>sospendere</strong> (pausa e ripresa) o <strong>saltare un mese</strong> (fino a 3 mesi in anticipo) dalla sua area; l'admin ha <strong>Pausa</strong>, <strong>Riprendi</strong>, <strong>Annulla</strong> (con motivo). Se l'addebito non riesce si riprova (<em>Impostazioni → Abbonamenti e spedizione</em>: giorni tra i tentativi, tentativi prima della pausa) e poi va in pausa. Gli abbonamenti partono ogni notte alle 04:00.</p>
 <p><strong>Ordini per conto di altri</strong>: un incaricato attivo può comprare per i suoi clienti e per gli incaricati diretti; un solo ordine e una sola spedizione, con il vantaggio al destinatario.</p>
-<p><strong>Fatture e note di credito</strong>: elenco con PDF di cortesia, <strong>XML</strong>, e stato di consegna al gestionale (pendente / inviata / errore); <strong>Reinvia</strong> riprova, e ogni ora il portale riprova da solo. Ogni fattura (TD01) e nota di credito (TD04) è un XML FatturaPA 1.2.2 validato; le ricevute per i privati (<code>private_document = receipt</code>) non sono fatture elettroniche. Il driver (<code>LAMESS_INVOICE_SINK</code>): <code>file</code> scrive in <code>storage/app/private/sdi-out</code>, <code>mail</code> lo spedisce anche a <code>LAMESS_SDI_MAIL_TO</code>; la trasmissione allo SdI la fa chi riceve il file. Errori tipici: dati del venditore incompleti (<em>Impostazioni → Venditore</em>), cliente senza codice fiscale o partita IVA, indirizzo incompleto. Codice destinatario <code>0000000</code> per i privati.</p>
+<p><strong>Fatture e note di credito</strong>: elenco con PDF di cortesia, <strong>XML</strong>, e stato di consegna al gestionale (pendente / inviata / errore); <strong>Reinvia</strong> riprova, e ogni ora il portale riprova da solo (al massimo 200 documenti per giro: se ne restano, proseguono al giro successivo). Ogni fattura (TD01) e nota di credito (TD04) è un XML FatturaPA 1.2.2 validato; le ricevute per i privati (<code>private_document = receipt</code>) non sono fatture elettroniche. Il driver (<code>LAMESS_INVOICE_SINK</code>): <code>file</code> scrive in <code>storage/app/private/sdi-out</code>, <code>mail</code> lo spedisce anche a <code>LAMESS_SDI_MAIL_TO</code>; la trasmissione allo SdI la fa chi riceve il file. Errori tipici: dati del venditore incompleti (<em>Impostazioni → Venditore</em>), cliente senza codice fiscale o partita IVA, indirizzo incompleto. Codice destinatario <code>0000000</code> per i privati.</p>
 <p><strong>Cruscotto vendite</strong>: vendite per finestra di tempo (30/90 giorni…, con avanti e indietro).</p>
 <p><strong>Importare il catalogo</strong> (<code>php artisan lamess:importa-prodotti</code>, listino in <code>database/data/catalogo-odoo.csv</code>): <strong>da fare in sviluppo</strong>. Online si ritocca tutto da <em>Prodotti</em>. I prodotti con stesso nome e prezzi diversi sono stati importati disattivati (resta attivo il prezzo più alto).</p>
 <h2>Assistenza</h2>
@@ -435,6 +459,8 @@ $res   = PeriodCalculator::calculate($input);            // PeriodResult
 $res-&gt;lines;        // righe con bonus, beneficiario, importo, base, aliquota, spiegazione
 $res-&gt;inputHash;    // hash canonico dello snapshot
 ImpactReport::compare($base, $alt);                      // simulazione &quot;cosa cambia se…&quot;
+IncaricatiSimulator::run($period, $plan, $changes);        // «cosa succede se» sulla rete (pagina Simulazione incaricati), sola lettura
+IncaricatiSimulator::currentTree($period, $plan);          // albero reale del periodo con requisiti mancanti (stesse righe del risultato, nessuna modifica)
 </code></pre>
 <p>Il motore non tocca il database: <code>SnapshotBuilder::build($period)</code> costruisce <code>Node</code>, <code>Movement</code> e <code>PriorState</code> dal database (per il Piano Incaricati anche i clienti e i mesi di validità). Un <code>Node</code> porta <code>rankHoldUntil</code> (data di «Mantieni qualifica») e il piano porta <code>kosmos.activation_date</code>.</p>
 <h3>Scrivere scenari di test</h3>
@@ -459,11 +485,11 @@ $r = $s-&gt;run();
 <li><strong>Importi, non punti</strong>: <code>pv_movements.amount</code> (migrazione <code>2026_10_25_100000_pv_movements_amount</code>) è l'importo IVA inclusa della riga, scritto da <code>OrderService::createMovements</code> con <code>grossUnit()</code>; <code>vap_amount</code>, <code>validity_months</code>, <code>client_count</code> vengono dal prodotto (migrazioni <code>2026_11_01_100000_product_vap_and_customer_validity</code> e <code>2026_11_02_100000_product_customer_count</code>). Movimenti storici senza importo: punti × <code>commission_base_per_pv</code>.</li>
 <li><strong>Nessuno stato ATTIVO</strong>: <code>PeriodCalculator</code> non lo valuta con <code>kosmos</code>; le schermate lo nascondono con <code>ActiveStatus::applies()</code>.</li>
 <li><strong>Qualifica che vale subito</strong>: <code>CareerState::effectiveFrom()</code> con <code>immediate = true</code>. Le qualifiche calcolate si riscrivono ogni notte (<code>lamess:ricalcolo-notturno</code> → <code>NightlyRecalculation</code> → <code>PeriodService::calculate($period, 'live', syncRanks: true)</code>), togliendo quelle non più valide dopo un reso; non toccano le qualifiche forzate.</li>
-<li><strong>Mantenimento delle qualifiche</strong> (politica K05 <code>kosmos_rank_maintenance</code> = <code>clients</code>):
+<li><strong>Mantenimento delle qualifiche</strong> (politica K05 <code>kosmos_rank_maintenance</code> = <code>requirements</code>: retrocessione su tutti i requisiti, classe <code>RankMaintenance</code>; <code>clients</code> = solo clienti; <code>none</code>):
 <ul>
-<li>protezione del piano: <code>kosmos.rank_grace_days</code> (predefinito 90, dall'efficacia della versione) e/o <code>kosmos.rank_grace_until</code>; vale la più lontana; ogni mese che finisce entro la fine è protetto (<code>KosmosConfig::rankGraceEnd()</code>, <code>ranksProtectedIn()</code>);</li>
+<li>protezione del piano: <code>kosmos.rank_grace_days</code> (vuoto nel piano attivo) e/o <code>kosmos.rank_grace_until</code> (31/12/2026); vale la più lontana; ogni mese che finisce entro la fine è protetto (<code>KosmosConfig::rankGraceEnd()</code>, <code>ranksProtectedIn()</code>);</li>
 <li>protezione per incaricato: <code>consultants.rank_hold_until</code> e <code>rank_hold_reason</code> (migrazione <code>2026_11_04_100000_consultants_rank_hold_until</code>), <code>Node::rankHeldIn()</code>; si imposta con la classe condivisa <code>App\Filament\Support\RankHoldAction</code> (riga, azione di massa, «tutti i registrati», scheda incaricato), permesso <code>network.restructure</code>, funzionalità <code>consultant360.action.hold_rank</code>; scrive nel log di audit <code>rank.hold</code> e <code>rank.hold_removed</code>;</li>
-<li>vale solo con il Piano Incaricati e K05 = <code>clients</code>; protegge dal ribasso, non dalla promozione.</li>
+<li>vale solo con il Piano Incaricati e K05 = <code>clients</code> o <code>requirements</code>; protegge dal ribasso, non dalla promozione.</li>
 </ul>
 </li>
 <li><strong>Bonus di Struttura</strong>: fuori dal calcolo mensile; <code>StructureBonusService</code> lo scrive in <code>structure_bonuses</code> (stati calcolato → confermato → pagato), <code>lamess:bonus-struttura</code> (ogni ora, agisce solo se attivo e nel giorno/ora scelti; <code>--force</code> per calcolare subito).</li>
@@ -553,6 +579,10 @@ App\Domain\Billing       InvoiceService, FatturaPaBuilder, InvoiceSink (+ Fake, 
 <li><code>bcmath</code> può mancare sull'hosting: niente <code>bcadd</code> (si usa <code>Num</code>).</li>
 <li>L'ordine conserva i dati cliente in <code>billing</code> (campo <code>name</code>, più <code>first_name</code>/<code>last_name</code> dagli ordini nuovi).</li>
 <li>Immagini prodotto nell'admin: usano la route <code>/media/...</code> dello shop (l'URL firmato era rifiutato in produzione).</li>
+<li><strong>Sicurezza</strong> (16/10/2026): <code>WithdrawalService::request</code>/<code>approve</code> lavorano in transazione con <code>lockForUpdate</code> sul consulente (niente doppio impegno del saldo); <code>SiteController::login</code> blocca per account con <code>RateLimiter</code> (<code>LOGIN_MAX_PER_PAIR</code> = 5 errori per email+IP, <code>LOGIN_MAX_PER_EMAIL</code> = 15 per sola email, <code>LOGIN_LOCK_SECONDS</code> = 900; un accesso riuscito azzera i contatori); cookie di sessione <code>secure</code> di default in produzione (<code>SESSION_SECURE_COOKIE</code>) e HTTPS forzato da <code>public/.htaccess</code> (escluso <code>/.well-known/</code>); log di audit con chiave precedente per le righe importate (<code>lamess.audit_key_previous</code>, <code>…_until</code>).</li>
+<li><strong>Prestazioni e stabilità</strong>: saldo wallet e importi impegnati con <code>SUM</code> in database; <code>ShopController::media</code> risponde con cache di 30 giorni, <code>ETag</code>/<code>Last-Modified</code> e 304; i calcoli di periodo (<code>PeriodService</code>) allungano il tempo a 300 s, ignorano la chiusura della pagina e rilasciano il blocco anche dopo un errore fatale; <code>ConsultantList</code> è registrato <code>scoped</code> in <code>AppServiceProvider</code> (una sola istanza per richiesta, niente query per riga); <code>InvoiceService::retryPending</code> consegna al massimo 200 documenti per giro orario; <code>/area/clienti</code> è paginato a 50 (<code>pagina</code>, filtri mantenuti).</li>
+<li><strong>Email in coda</strong>: le notifiche ai clienti implementano <code>ShouldQueueAfterCommit</code> (3 tentativi); con <code>QUEUE_CONNECTION=database</code> il cron lancia <code>lamess:coda</code> ogni minuto (<code>queue:work --stop-when-empty</code>), con <code>sync</code> nulla cambia. Il codice di firma (OTP) e il reset password restano immediati.</li>
+<li><strong>Firma con codice</strong>: driver <code>email</code> (<code>Onboarding\EmailSignatureProvider</code>, notifica <code>SignatureOtpCode</code>): 6 cifre, 15 minuti, 5 tentativi, reinvio dopo 60 s, impronta HMAC in cache; senza invio email attivo lancia un errore e non invia nulla; il driver <code>fake</code> resta un BLOCCO nel controllo di messa online.</li>
 <li>Aggiornare <code>docs/registro-aggiornamenti.md</code> a ogni passo e rigenerare il dossier (<code>php artisan lamess:manuale</code>, scrive <code>docs/dossier.html</code>) quando cambiano i manuali.</li>
 <li>Dopo ogni modifica PHP: <code>vendor/bin/pint --dirty --format agent</code>.</li>
 </ul>
@@ -658,8 +688,8 @@ Il <strong>Piano Incaricati</strong> non viene caricato dall'installazione: si c
 </tr>
 <tr>
 <td><code>LAMESS_SIGNATURE_DRIVER</code></td>
-<td><code>fake</code> (default)</td>
-<td>firma elettronica della lettera: l'unico driver presente è quello di prova</td>
+<td><code>fake</code> (default, solo sviluppo) · <code>email</code></td>
+<td>firma elettronica della lettera: <code>email</code> invia un codice OTP all'indirizzo dell'account (serve <code>LAMESS_MAIL_ENABLED=true</code> e l'SMTP); <code>fake</code> mostra l'OTP a schermo</td>
 </tr>
 <tr>
 <td><code>LAMESS_INVOICE_SINK</code></td>
@@ -745,8 +775,7 @@ Il deploy non lancia <code>migrate</code> né <code>lamess:ruoli</code>, e l'ins
 <p>Requisiti: PHP 8.3 o superiore con le estensioni indicate sopra, MySQL 8 / MariaDB 10.6+, cron ogni minuto.</p>
 <ol>
 <li><code>.env</code> (copia da <code>.env.cpanel.example</code>) con <code>APP_ENV=production</code>, <code>APP_DEBUG=false</code>, <code>APP_URL</code>, <code>DB_*</code>, <code>SESSION_DRIVER=file</code>, <code>CACHE_STORE=file</code>, <code>QUEUE_CONNECTION=sync</code>, posta, <code>ADMIN_2FA_REQUIRED=true</code>.</li>
-<li>Comandi, nella cartella del progetto:
-<pre><code>composer install --no-dev --optimize-autoloader
+<li>Comandi, nella cartella del progetto:<pre><code>composer install --no-dev --optimize-autoloader
 php artisan key:generate --force
 php artisan migrate --force
 php artisan lamess:ruoli
@@ -819,8 +848,29 @@ Non verificato: la tua versione esatta di MySQL/PHP sull'hosting, l'esito reale 
 Elenca ogni controllo con <strong>OK</strong>, <strong>ATTENZIONE</strong> (da valutare) o <strong>BLOCCO</strong> (da sistemare prima di aprire ai clienti). Si ripete dopo ogni correzione fino a non avere più blocchi.</p>
 <p>I blocchi tipici: debug acceso, indirizzo senza https, 2FA non obbligatoria, token di installazione ancora nel <code>.env</code>, cron non attivo, pagamento con carta e firma elettronica ancora «di prova» (<code>fake</code>), dati del venditore incompleti, catena del log compromessa, cartelle <code>storage</code> e <code>bootstrap/cache</code> non scrivibili.
 Con i driver reali compaiono controlli in più: chiavi e webhook di Stripe (BLOCCO se manca <code>STRIPE_SECRET</code> o <code>STRIPE_WEBHOOK_SECRET</code>, ATTENZIONE se la chiave è di prova), verifica d'identità online (ATTENZIONE se è manuale, BLOCCO se attiva senza chiave), invio delle fatture (ATTENZIONE con <code>fake</code> o <code>file</code>, BLOCCO con <code>mail</code> senza destinatario) e completezza dei dati del venditore per la fattura elettronica (partita IVA a 11 cifre, CAP, comune, provincia).
+Dal 16 ottobre il controllo verifica anche il <strong>cookie di sessione solo HTTPS</strong> (BLOCCO in produzione se il cookie non è marcato sicuro: in produzione lo è da solo, oppure <code>SESSION_SECURE_COOKIE=true</code> nel <code>.env</code>) e la <strong>protezione del log di audit nel database</strong> (ATTENZIONE se l'hosting non ha concesso il privilegio TRIGGER: la catena di hash resta, ma il database non vieta da solo modifiche e cancellazioni; chiedere all'hosting il privilegio TRIGGER per l'utente del database e rieseguire la migrazione del log).
 Altri avvisi: «Ricevute e trattenute fiscali» (ATTENZIONE finché sono spente), «Posta in uscita» (ATTENZIONE finché l'invio email è spento), incaricati attivi senza IBAN, utenti di prova.
 <strong>Il controllo non verifica KMoney</strong>: la configurazione di KMoney (punto 5) va guardata a mano.</p>
+<h3>Sicurezza prima dell'apertura (16 ottobre 2026)</h3>
+<ul>
+<li><strong>HTTPS forzato</strong>: <code>public/.htaccess</code> rimanda ogni richiesta <code>http://</code> a <code>https://</code> (esclusa la verifica del certificato AutoSSL <code>/.well-known/</code>). Si attiva con il primo deploy; provare <code>http://lamèss.it</code> e controllare che arrivi su <code>https://</code>.</li>
+<li><strong>Cookie di sessione</strong>: in produzione solo HTTPS di default; il modello <code>.env.cpanel.example</code> ha anche <code>SESSION_SECURE_COOKIE=true</code>.</li>
+<li><strong>Accesso</strong>: dopo 5 password sbagliate (stessa email e stesso IP) o 15 (stessa email da IP diversi) l'accesso è bloccato per 15 minuti; un accesso riuscito azzera il conteggio. Chi è bloccato può usare «Password dimenticata».</li>
+<li><strong>Prelievi dal wallet</strong>: la verifica del saldo disponibile e la creazione della richiesta (e l'approvazione) avvengono nella stessa transazione, con il consulente bloccato: due richieste simultanee non possono più impegnare la stessa quota.</li>
+<li><strong>Operazioni automatiche</strong>: ogni comando pianificato ha la protezione contro la sovrapposizione (si salta il giro se il precedente è ancora in corso; sblocco automatico dopo 2 ore).</li>
+<li><strong>A carico tuo sul server</strong> (non si possono fare dal codice): verificare in <code>.env</code> <code>ADMIN_2FA_REQUIRED=true</code>, <code>APP_DEBUG=false</code>, <code>APP_ENV=production</code> e <strong>nessuna riga</strong> <code>LAMESS_INSTALL_TOKEN</code>; configurare 2FA e codici di recupero del super_admin; scaricare periodicamente i backup da <em>Sistema → Backup</em> e tenerli fuori dal server (o attivare i backup di cPanel); provare un ripristino su un database di prova; impostare <code>memory_limit</code> ≥ 256 MB e <code>max_execution_time</code> ≥ 120 s (cPanel → MultiPHP INI Editor); mettere un controllo esterno (es. UptimeRobot) su <code>https://lamèss.it/up</code>; dopo i primi giorni guardare cPanel → <em>Resource Usage</em>.</li>
+</ul>
+<h3>Log di audit importato da un altro ambiente</h3>
+<p>Se nel database live ci sono righe del log create in locale (importazione dei dati), sono firmate con l'<code>APP_KEY</code> locale e il Controllo dà BLOCCO «la riga #N è stata modificata». Non è una manomissione: si risolve senza riscrivere nulla, dichiarando nel <code>.env</code> del server la chiave con cui sono firmate le prime righe:</p>
+<ul>
+<li><code>LAMESS_AUDIT_KEY_PREVIOUS=</code> il valore dell'<code>APP_KEY</code> dell'ambiente di origine (stessa forma, <code>base64:…</code>);</li>
+<li><code>LAMESS_AUDIT_KEY_PREVIOUS_UNTIL=</code> l'id dell'ultima riga importata (es. 352).
+Le righe fino a quell'id si controllano con la chiave precedente, le successive con quella del server (<code>APP_KEY</code>, oppure <code>LAMESS_AUDIT_KEY</code> se impostata); il collegamento fra una riga e la precedente resta controllato dappertutto. Con <code>LAMESS_AUDIT_KEY</code> vuota la chiave in vigore è l'<code>APP_KEY</code> del server. Il valore delle chiavi non va mai scritto in git né nei documenti.</li>
+</ul>
+<h3>Firma della Lettera di Incarico con codice per email (16 ottobre 2026)</h3>
+<p>Il driver <code>email</code> (<code>LAMESS_SIGNATURE_DRIVER=email</code> nel <code>.env</code>) manda un codice di 6 cifre all'indirizzo dell'account: vale 15 minuti, si può usare una volta, dopo 5 errori si deve chiederne un altro, un nuovo invio si può chiedere dopo 60 secondi (pulsante «Invia di nuovo il codice» nella pagina Diventa Incaricato). Il codice non appare mai a schermo né nei log; in cache resta solo la sua impronta. Il messaggio dice solo l'indirizzo mascherato (<code>m***@dominio.it</code>).
+Per usarlo servono: <code>LAMESS_MAIL_ENABLED=true</code> (o l'impostazione «Invio email attivo» in Impostazioni di sistema) e l'SMTP configurato (<code>MAIL_HOST</code>, <code>MAIL_PORT</code>, <code>MAIL_USERNAME</code>, <code>MAIL_PASSWORD</code>, <code>MAIL_FROM_ADDRESS</code>). Se l'invio è spento il portale non finge: dice che il codice non può essere inviato. Il Controllo messa online ha la voce «Firma con codice per email: invio attivo» (BLOCCO se la posta è spenta o su «log»). <strong>Prima di aprire</strong>: prova una firma vera con un tuo indirizzo e controlla che l'email arrivi (anche nello spam; SPF/DKIM del dominio aiutano).
+La firma resta una firma elettronica semplice: il valore legale con un OTP per email va confermato col consulente.</p>
 <h2>3. Come si aggiorna il sito (cPanel → Git Version Control)</h2>
 <p>Il codice sta nel repository GitHub <strong>privato</strong> <code>lauruccia/lamess</code> (branch <code>main</code>), collegato a cPanel → <strong>Git Version Control</strong> (percorso <code>/home/lamess/repositories/lamess2</code>). Il vecchio repository pubblico <code>lauruccia/lame</code> resta con la pagina «in arrivo» e non c'entra con questo sito.</p>
 <p><strong>Procedura per ogni aggiornamento</strong></p>
@@ -882,6 +932,14 @@ Se un token è stato mostrato in uno screenshot o in una chat, va <strong>ruotat
 <li><strong>Email</strong>: <code>LAMESS_MAIL_ENABLED=false</code>. Si accende solo a posta verificata, da Impostazioni → Email → «Invio email attivo».</li>
 <li><strong>Sito al pubblico</strong>: chiuso (punto 1).</li>
 </ul>
+<h3>Email in coda (consigliato quando accendi la posta)</h3>
+<p>Con <code>QUEUE_CONNECTION=sync</code> (oggi) le email partono dentro la richiesta: se il server di posta è lento, rallenta anche la pagina. Le notifiche ai clienti (ordine pagato e spedito, estratti, KYC, inviti, canone, abbonamento) sono ora <strong>accodabili</strong>; restano immediate solo il codice di firma e il reset password.</p>
+<ol>
+<li>Nel <code>.env</code> metti <code>QUEUE_CONNECTION=database</code> (la tabella <code>jobs</code> c'è già dall'installazione, nessuna migrazione).</li>
+<li>Non serve altro: lo scheduler (il cron di ogni minuto) lancia da solo <code>queue:work --stop-when-empty --max-time=50</code>. Con <code>sync</code> quel lavoro non parte.</li>
+<li>Svuota <code>bootstrap/cache/config.php</code> se presente. Le email partono entro circa un minuto; quelle fallite si ritentano 3 volte (dopo 1 e 5 minuti) e poi finiscono in <code>failed_jobs</code>.</li>
+<li>Prova: un ordine di prova pagato, poi controlla in phpMyAdmin che <code>jobs</code> si svuoti e <code>failed_jobs</code> resti vuota.</li>
+</ol>
 <h2>7. Sequenza consigliata</h2>
 <ol>
 <li><strong>Prova generale</strong> (sito di prova o, in mancanza, il sito chiuso con l'accesso admin): importazione, calcolo di un mese, confronto con Odoo (<code>lamess:verifica-odoo</code>, che richiede un terminale: si fa in sviluppo).</li>
@@ -917,7 +975,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 <li><strong>Fatture elettroniche</strong>: scegliere come trasmetterle. Il portale produce l'XML FatturaPA (validato contro lo schema 1.2.2). Opzioni: <code>file</code> (XML in <code>storage/app/private/sdi-out</code>, da ritirare), <code>mail</code> (spedito a una casella: gestionale, commercialista o PEC verso lo SdI). <strong>GestionaleK</strong>: nei documenti non risulta nessuna interfaccia; servono le loro specifiche per un collegamento diretto. Da decidere con il commercialista: privati in fattura o in ricevuta (le ricevute non vanno allo SdI).</li>
 <li><strong>Dati del venditore</strong>: ragione sociale, partita IVA (11 cifre), indirizzo, CAP, comune, provincia, regime fiscale.</li>
 <li><strong>Parametri fiscali</strong> (ritenuta, quota imponibile, INPS, commissione sui prelievi) e <strong>testi</strong> (Lettera IVD, Regolamento): da far validare al commercialista e al Consorzio; ricevute e ritenuta restano spente finché non sono validati.</li>
-<li><strong>Firma elettronica reale</strong> della lettera d'incarico: finché <code>LAMESS_SIGNATURE_DRIVER</code> è <code>fake</code> è un sistema di prova (OTP finto) e il Controllo dà BLOCCO.</li>
+<li><strong>Firma elettronica reale</strong> della lettera d'incarico: finché <code>LAMESS_SIGNATURE_DRIVER</code> è <code>fake</code> è un sistema di prova (OTP mostrato a schermo) e il Controllo dà BLOCCO. Decisione del 16/10: si usa <code>email</code> (codice OTP per email), vedi sopra.</li>
 <li><strong>IBAN degli incaricati</strong>: li inseriscono loro dall'area personale.</li>
 <li><strong>Prova su MariaDB/MySQL</strong> delle migrazioni nuove, sul sito di prova.</li>
 </ul>
@@ -941,7 +999,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 <h2>Il menu in alto</h2>
 <ul>
 <li><strong>Rete</strong>: Incaricati, Albero della rete, Elenco per livelli, Domande IVD, Documenti KYC, Canoni annuali, Clienti (FAN).</li>
-<li><strong>Compensi</strong>: Piano compensi, Periodi, Liquidazioni, Pagamenti, Bonus di Struttura.</li>
+<li><strong>Compensi</strong>: Piano compensi, Periodi, Liquidazioni, Pagamenti, Bonus di Struttura, Simulazione incaricati (prova «cosa succede se» su rete e qualifiche, senza scrivere nulla: all'apertura vedi la rete di oggi come albero o come elenco per livelli, con cosa manca a ciascuno per salire).</li>
 <li><strong>Vendite</strong>: Ordini, Abbonamenti, Prodotti, Sconti, Spedizioni, Fatture, Note di credito.</li>
 <li><strong>Assistenza</strong>: Ticket e reclami, Novità, Materiali, Eventi, Casi di conformità, Sanzioni.</li>
 <li><strong>Sistema</strong> (solo titolare): Utenti, Impostazioni di sistema, Log di audit, Backup, Controllo messa online.</li>
@@ -971,6 +1029,8 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 </ul>
 <h2>Quando qualcosa non torna</h2>
 <ul>
+<li>Una persona dice «Troppi tentativi di accesso»: dopo 5 password errate (stesso dispositivo) o 15 (qualsiasi dispositivo) l'accesso con quell'email si ferma 15 minuti; basta aspettare, poi riprovare con la password giusta (l'email «Password dimenticata» è utile per sceglierne una nuova, ma non toglie il blocco prima dei 15 minuti).</li>
+<li>Le fatture «Da inviare» o in errore si rimandano da <em>Vendite → Fatture</em> con <strong>Reinvia</strong>; il portale riprova da solo ogni ora (al massimo 200 per giro).</li>
 <li>Mese sbagliato dopo la chiusura: solo la titolare può <strong>Riaprire il mese</strong> (non se ci sono importi già pagati).</li>
 <li>Un pagamento sbagliato non ancora pagato: <strong>Annulla</strong> con motivo.</li>
 <li>Il piano a PR/PV si nasconde con un click (<em>Compensi → Visibilità piano precedente</em>, solo titolare): i dati restano.</li>
@@ -1045,8 +1105,8 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 </tr>
 <tr>
 <td>5</td>
-<td>Qualifica pagata (K05 = <code>clients</code>): ogni mese si paga la più alta per cui i clienti bastano. <strong>Nessun ribasso</strong> se il mese finisce entro la protezione del piano (<code>rank_grace_days</code> / <code>rank_grace_until</code>, vale la più lontana) o entro la data «Mantieni qualifica» dell'incaricato (<code>rank_hold_until</code>); la qualifica può sempre salire</td>
-<td><code>PeriodCalculator</code>, <code>KosmosConfig::ranksProtectedIn</code>, <code>Node::rankHeldIn</code></td>
+<td>Qualifica pagata (K05 = <code>requirements</code>, predefinito dal 15/10/2026): ogni mese si paga la più alta di cui si rispettano ancora <strong>tutti</strong> i requisiti (clienti, Pearl al 1° livello con la loro qualifica già ridotta, struttura per linea, colonne); si procede dal basso verso l'alto (<code>RankMaintenance</code>). <code>clients</code> = solo i clienti; <code>none</code> = nessun ribasso. <strong>Nessun ribasso</strong> se il mese finisce entro la protezione del piano (<code>rank_grace_days</code> / <code>rank_grace_until</code>, vale la più lontana) o entro la data «Mantieni qualifica» dell'incaricato (<code>rank_hold_until</code>); la qualifica può sempre salire</td>
+<td><code>PeriodCalculator</code>, <code>RankMaintenance</code>, <code>KosmosConfig::ranksProtectedIn</code>, <code>Node::rankHeldIn</code></td>
 </tr>
 <tr>
 <td>6</td>
@@ -1060,7 +1120,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 </tr>
 <tr>
 <td>8</td>
-<td><strong>Compensi indiretti</strong> livelli 1–5: ogni upline matura la % del livello × V.A.P. se ha i clienti personali e i Pearl al 1° livello richiesti dal livello. I Pearl si contano sulla qualifica pagata. Lo sponsor matura sull'acquisto di un suo diretto come su un cliente di quest'ultimo</td>
+<td><strong>Compensi indiretti</strong> livelli 1–5: ogni upline matura la % del livello × V.A.P. se ha i clienti personali e i Pearl al 1° livello richiesti dal livello. I Pearl si contano sulla qualifica pagata. <strong>Compressione (K06 = <code>skip</code>, predefinito, decisione di Laura del 15/10/2026)</strong>: chi non rispetta i requisiti del livello (o è escluso/sospeso) è saltato e il livello passa al primo upline che li rispetta; i livelli si contano solo tra chi li rispetta e nessuno incassa due volte sulla stessa vendita (<code>none</code> = livello genealogico come prima; gli estesi restano a distanza genealogica e partono dopo il 5° livello pagato). Lo sponsor matura sull'acquisto di un suo diretto come su un cliente di quest'ultimo</td>
 <td><code>KosmosCalculator::calculate</code></td>
 </tr>
 <tr>
@@ -1220,7 +1280,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 </tr>
 <tr>
 <td>Piano Incaricati</td>
-<td>motore <code>kosmos_v1</code>: <code>KosmosConfig</code>, <code>KosmosCalculator</code>, sezione <code>kosmos</code> del JSON del piano; politiche K01–K05</td>
+<td>motore <code>kosmos_v1</code>: <code>KosmosConfig</code>, <code>KosmosCalculator</code>, sezione <code>kosmos</code> del JSON del piano; politiche K01–K06</td>
 </tr>
 <tr>
 <td>Piano precedente (nascondibile)</td>
@@ -1240,7 +1300,7 @@ Alternativa al deploy da Git: il pacchetto ZIP (<code>php tools/crea-pacchetto-c
 <h2>Livelli</h2>
 <pre><code>App\Domain\Engine         puro PHP, nessuna dipendenza da Laravel/DB
   Support/   Num (BigDecimal), PeriodKey (mese solare Europe/Rome), Canonical (hash input)
-  Policy/    PolicySpecs (registro D01–D12 e K01–K05), Policies (valori validati)
+  Policy/    PolicySpecs (registro D01–D12 e K01–K06), Policies (valori validati)
   Plan/      PlanConfig, RankDef, StructureReq, FsbStepDef, KosmosConfig (piano Incaricati), PlanLoader
   Model/     Node, Movement, PriorState, PeriodInput → Line, PartnerStat, PeriodResult (+ AchievedRank, RankAwardResult…)
   Calc/      Tree, CareerState, BonusContext, PeriodCalculator (orchestratore), ImpactReport (simulazioni)
@@ -1339,7 +1399,7 @@ App\Domain\Billing        InvoiceService, FatturaPaBuilder, InvoiceSink (+ Fake 
 </ul>
 <h3>Operazioni pianificate</h3>
 <p>Richiedono <code>schedule:run</code> ogni minuto (cron di cPanel); orari Europa/Roma, definiti in <code>routes/console.php</code>:
-<code>lamess:sanzioni</code> 00:20 · <code>lamess:successioni</code> 00:30 · piano in vigore 00:10 · backup 02:15 · <code>lamess:ricalcolo-notturno</code> 02:45 · <code>lamess:canoni</code> 03:30 · <code>lamess:abbonamenti</code> 04:00 · <code>lamess:pagamenti</code> 05:00 · <code>lamess:estratti</code> 06:00 · <code>lamess:kyc-promemoria</code> 08:00 · ogni ora <code>lamess:fatture</code>, <code>lamess:chiusura-mese</code> (agisce solo nel giorno e all'ora scelti) e <code>lamess:bonus-struttura</code> (solo se attivo, nel giorno e all'ora scelti) · battito del cron ogni minuto (mostrato in dashboard).</p>
+<code>lamess:sanzioni</code> 00:20 · <code>lamess:successioni</code> 00:30 · piano in vigore 00:10 · backup 02:15 · <code>lamess:ricalcolo-notturno</code> 02:45 · <code>lamess:canoni</code> 03:30 · <code>lamess:abbonamenti</code> 04:00 · <code>lamess:pagamenti</code> 05:00 · <code>lamess:estratti</code> 06:00 · <code>lamess:kyc-promemoria</code> 08:00 · ogni ora <code>lamess:fatture</code>, <code>lamess:chiusura-mese</code> (agisce solo nel giorno e all'ora scelti) e <code>lamess:bonus-struttura</code> (solo se attivo, nel giorno e all'ora scelti) · battito del cron ogni minuto (mostrato in dashboard) · ogni minuto <code>lamess:coda</code> (esegue la coda delle email, solo se <code>QUEUE_CONNECTION</code> non è <code>sync</code>). Tutti i comandi, tranne il battito, usano <code>withoutOverlapping(120)</code>: se un giro dura troppo il successivo non parte in parallelo.</p>
 <h2>Altri moduli</h2>
 <p><code>Plan</code> (versioni, quattro occhi, <code>LegacyPlan</code>, <code>ActiveStatus</code>, <code>PlanFormMapper</code>, <code>RankComparison</code>), <code>Features</code>, <code>Support</code> (ticket), <code>Wallet</code>, <code>Content</code> (novità, materiali, eventi, QR), <code>Compliance</code> (casi, sanzioni, materiali), <code>Succession</code> (cessione ed eredi), <code>Import</code> (Odoo), <code>Audit</code> (log a catena di hash), <code>Settings</code> (<code>SystemSettings</code>: impostazioni del pannello che sovrascrivono <code>config('lamess.*')</code>), <code>System</code> (backup, controllo messa online).</p>
 <p>Le integrazioni esterne passano da <strong>porte</strong> (interfacce) con driver scelti da configurazione:</p>
@@ -1782,7 +1842,7 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 <tr>
 <td>OPEN-54 (nuova)</td>
 <td>Parametri fiscali sui compensi</td>
-<td>ritenuta 23% sulla quota imponibile 78%; INPS Gestione Separata 33,72% oltre 5.000 €, 33,33% a carico dell'incaricato; commissione prelievo 2,50 €; <strong>tutto spento</strong> (<code>LAMESS_RECEIPTS_ENABLED</code>, <code>LAMESS_WITHHOLDING_ENABLED</code>, <code>LAMESS_INPS_ENABLED</code> = false) finché non risponde il commercialista</td>
+<td>ritenuta 23% sulla quota imponibile 78%; INPS Gestione Separata 33,72% oltre 5.000 €, 33,33% a carico dell'incaricato; commissione prelievo <strong>eliminata il 15/10/2026</strong> (<code>LAMESS_BANK_FEE</code> = 0,00); <strong>tutto spento</strong> (<code>LAMESS_RECEIPTS_ENABLED</code>, <code>LAMESS_WITHHOLDING_ENABLED</code>, <code>LAMESS_INPS_ENABLED</code> = false) finché non risponde il commercialista</td>
 <td>Impostazioni → Ricevute e trattenute; <strong>da validare col commercialista</strong> prima di accendere</td>
 </tr>
 <tr>
@@ -1869,8 +1929,28 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 </tr>
 <tr>
 <td>Mantenimento delle qualifiche</td>
-<td>finestra di <code>rank_grace_days</code> (90) dall'attivazione del piano, data fissa <code>rank_grace_until</code>, e «Mantieni qualifica» per singolo incaricato (<code>rank_hold_until</code>)</td>
-<td>08/10, 12/10, 13/10</td>
+<td>protezione fino al 31/12/2026 (<code>rank_grace_until</code>, giorni vuoti) per chi viene dal vecchio piano, e «Mantieni qualifica» per singolo incaricato (<code>rank_hold_until</code>, admin con <code>network.restructure</code>); a fine protezione tutti si ricalcolano e retrocede chi non rispetta almeno un requisito (K05 <code>requirements</code>)</td>
+<td>08/10, 12/10, 13/10, 15/10</td>
+</tr>
+<tr>
+<td>Compressione degli indiretti</td>
+<td>chi non rispetta i requisiti è saltato, i livelli si contano tra chi li rispetta, nessun doppio pagamento (K06 <code>skip</code>)</td>
+<td>15/10</td>
+</tr>
+<tr>
+<td>Acquisto proprio</td>
+<td>vale come cliente personale e paga gli indiretti agli incaricati sopra</td>
+<td>15/10</td>
+</tr>
+<tr>
+<td>Bonus di Struttura</td>
+<td>calcolo settimanale, conferma e pagamento manuali; poi conferma automatica, pagamento sempre manuale. Resi non considerati per ora</td>
+<td>15/10</td>
+</tr>
+<tr>
+<td>Clienti che contano</td>
+<td>3 clienti che acquistano ogni mese oppure 3 clienti con un prodotto da 12 mesi; Box e confezioni con «Rende cliente»</td>
+<td>15/10</td>
 </tr>
 <tr>
 <td>Spedizione</td>
@@ -1904,7 +1984,7 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 </tr>
 <tr>
 <td>Dati dell'azienda</td>
-<td>KADEO GROUP – CONSORZIO KADEO GROUP, Via G. Ferraris 63, Arezzo, P.IVA 02530190517, PEC <a href="mailto:kadeogroup@pec.it">kadeogroup@pec.it</a>, nel piè di pagina di ogni pagina del sito</td>
+<td>KADEO GROUP – CONSORZIO KADEO GROUP, Via G. Ferraris 63, Arezzo, P.IVA 02530190517, PEC kadeogroup@pec.it, nel piè di pagina di ogni pagina del sito</td>
 <td>14/10</td>
 </tr>
 <tr>
@@ -1957,7 +2037,7 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 <tbody>
 <tr>
 <td>A-01</td>
-<td><strong>Commercialista</strong>: ricevute provvigionali, ritenuta d'acconto (23% sul 78%), INPS Gestione Separata, commissione prelievo 2,50 €, privati in fattura o in ricevuta (OPEN-52, OPEN-54)</td>
+<td><strong>Commercialista</strong>: ricevute provvigionali, ritenuta d'acconto (23% sul 78%), INPS Gestione Separata, privati in fattura o in ricevuta (OPEN-52, OPEN-54)</td>
 <td>tutto spento; serve la risposta per accendere</td>
 <td>commercialista, Laura</td>
 </tr>
@@ -1969,7 +2049,7 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 </tr>
 <tr>
 <td>A-03</td>
-<td><strong>Test noto rosso</strong> <code>SitePagesTest::test_full_consultant_journey_through_the_site</code>: il tesserino risulta scaricabile subito dopo la firma (200) mentre il test si aspetta 404. Va deciso quale comportamento è giusto e allineare codice o test. Un secondo rosso del 12/10, <code>InstallerTest::test_install_creates_superadmin_once_and_locks</code>, dipendeva dai requisiti server dell'ambiente cloud di prova</td>
+<td><strong>Test noto rosso</strong> <code>SitePagesTest::test_full_consultant_journey_through_the_site</code>: il tesserino risulta scaricabile subito dopo la firma (200) mentre il test si aspetta 404. Va deciso quale comportamento è giusto e allineare codice o test. Nell'ultima esecuzione registrata (16/10/2026) non compare fra i test rossi: da riverificare al prossimo giro completo. Un secondo rosso del 12/10, <code>InstallerTest::test_install_creates_superadmin_once_and_locks</code>, dipendeva dai requisiti server dell'ambiente cloud di prova</td>
 <td>da decidere/correggere</td>
 <td>Laura, sviluppo</td>
 </tr>
@@ -2017,14 +2097,14 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 </tr>
 <tr>
 <td>A-11</td>
-<td><strong>Firma elettronica reale</strong> (OPEN-49): esiste solo il driver di prova; il Controllo messa online dà BLOCCO finché è <code>fake</code></td>
-<td>da scegliere il fornitore</td>
-<td>cliente</td>
+<td><strong>Firma elettronica reale</strong> (OPEN-49): decisione di Laura del 16/10/2026: per ora firma elettronica semplice con <strong>codice OTP inviato per email</strong> (<code>LAMESS_SIGNATURE_DRIVER=email</code>, richiede <code>LAMESS_MAIL_ENABLED=true</code> e l'SMTP); il driver <code>fake</code> resta solo per lo sviluppo e dà BLOCCO. Un fornitore esterno (Yousign/Namirial/InfoCert) resta possibile in futuro; il valore legale della firma con OTP per email va confermato col consulente</td>
+<td>da attivare sul server</td>
+<td>Laura</td>
 </tr>
 <tr>
 <td>A-12</td>
 <td><strong>Fatture allo SdI / GestionaleK</strong> (OPEN-51): nessun collegamento diretto; scelta fra <code>file</code> e <code>mail</code></td>
-<td>da decidere</td>
+<td>Laura vuole gli XML per email a <code>LAMESS_SDI_MAIL_TO</code>, con invio mensile o con un pulsante (non uno per uno): si attiva con la posta quando il portale è online; per ora il driver <code>mail</code> spedisce a ogni emissione</td>
 <td>commercialista, cliente</td>
 </tr>
 <tr>
@@ -2320,7 +2400,7 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 </ul>
 <p><strong>Movimenti senza importo</strong> (storico importato): <code>pv_movements.amount</code> vuoto → importo = punti × <code>settings.commission_base_per_pv</code> (1,5: 100 punti = 150 €).</p>
 <h2>7. Mantenimento della qualifica</h2>
-<p>Con la politica K05 = <code>clients</code> (predefinita) ogni mese si paga la qualifica più alta per cui i clienti personali bastano. Due protezioni evitano il ribasso per mancanza di clienti (la qualifica può sempre salire):</p>
+<p>Con la politica K05 = <code>requirements</code> (predefinita dal 15/10/2026) ogni mese si paga la qualifica più alta di cui l'incaricato rispetta ancora tutti i requisiti (clienti personali, Pearl al 1° livello, struttura, colonne); con <code>clients</code> contano solo i clienti. Due protezioni evitano il ribasso per mancanza di clienti (la qualifica può sempre salire):</p>
 <table>
 <thead>
 <tr>
@@ -2333,7 +2413,7 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <tr>
 <td><code>kosmos.rank_grace_days</code></td>
 <td>piano</td>
-<td>giorni dall'efficacia della versione (<code>effective_from</code>, altrimenti giorno di attivazione) in cui nessuno scende; ogni mese iniziato nella finestra è protetto per intero. Predefinito 90; vuoto o 0 = nessuna protezione a giorni</td>
+<td>giorni dall'efficacia della versione (<code>effective_from</code>, altrimenti giorno di attivazione) in cui nessuno scende; ogni mese iniziato nella finestra è protetto per intero. Predefinito vuoto (la protezione è la data fissa 31/12/2026); vuoto o 0 = nessuna protezione a giorni</td>
 </tr>
 <tr>
 <td><code>kosmos.rank_grace_until</code></td>
@@ -2405,7 +2485,7 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 </tr>
 </tbody>
 </table>
-<h2>9. Politiche del Piano Incaricati (K01–K05)</h2>
+<h2>9. Politiche del Piano Incaricati (K01–K06)</h2>
 <p>Le politiche D01–D12 del piano precedente stanno nella sezione 11. Quelle del Piano Incaricati sono (valori predefiniti):</p>
 <table>
 <thead>
@@ -2448,10 +2528,17 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 </tr>
 <tr>
 <td>K05</td>
-<td><code>kosmos_rank_maintenance</code></td>
-<td><code>clients</code></td>
-<td>provvisoria</td>
-<td><code>clients</code> = si paga la qualifica più alta per cui i clienti bastano; <code>none</code> = la qualifica raggiunta resta</td>
+<td><code>kosmos_rank_maintenance</code> — Mantenimento della qualifica</td>
+<td><code>requirements</code></td>
+<td>client_decided</td>
+<td><code>requirements</code> = si paga la qualifica più alta di cui si rispettano ancora tutti i requisiti; <code>clients</code> = solo i clienti personali; <code>none</code> = nessun mantenimento</td>
+</tr>
+<tr>
+<td>K06</td>
+<td><code>kosmos_compression</code> — Compressione della linea negli indiretti</td>
+<td><code>skip</code></td>
+<td>client_decided</td>
+<td><code>skip</code> = chi non rispetta i requisiti è saltato e i livelli si contano solo tra chi li rispetta; <code>none</code> = livello genealogico</td>
 </tr>
 </tbody>
 </table>
@@ -3148,6 +3235,135 @@ I valori sono congelati sulla riga d'ordine (<code>order_items.vap_mode/vap_valu
 <li>Aggiunta al repository la notifica <code>ResetPasswordIt</code> (usata da <code>User</code> ma mancante su GitHub: il «password dimenticata» online andava in errore).</li>
 <li>Test: <code>AdminPasswordResetLinksTest</code> (11). Documentazione aggiornata: manuale admin, guida breve, manuale utente, manuale sviluppatori, dossier.</li>
 <li>Nota: <code>ConsultantListTest::test_no_per_row_queries</code> fallisce già prima di questa modifica (soglia di 60 query, ne fa ~120).</li>
+</ul>
+<h2>2026-10-14 — Area incaricato allineata al Piano Incaricati</h2>
+<ul>
+<li><strong>Il mio ramo</strong>: albero con ricerca e dati per persona (clienti, ramo, diretti Pearl, venduto del mese), tabelle per colonna (barra verso la soglia) e per livello, pannello «Verso la qualifica successiva». <code>NetworkOverview</code> raccoglie i dati; nessun recapito, solo nome, codice, qualifica, stato e numeri aggregati.</li>
+<li><strong>Avanzamento</strong> (<code>CareerProgress::buildKosmos</code>, partial <code>career-progress-kosmos</code>, usato anche nella scheda admin): requisiti con raggiunto/richiesto, scaglioni diretti, livelli indiretti, mantenimento e scala qualifiche. Il motore salva in <code>next_rank</code> anche <code>personal_clients</code> e <code>pearl_first_level_now</code> (rifare il calcolo del mese per averli per tutti).</li>
+<li><strong>Panoramica</strong>: clienti, diretti Pearl, compensi del mese stimati (<code>EarningsSummary</code>) e Bonus di Struttura. <strong>I miei clienti</strong>: primo ordine, ordine più alto, «conta per il piano».</li>
+<li><strong>Referral</strong>: il codice mancante (account importati) si genera al primo uso, risolvendo il 404 su <code>/area/referral</code> e il link <code>/r</code> senza codice; dominio mostrato come lamèss.it (<code>App\Support\Idn</code>), copiato in ASCII.</li>
+<li>Test non eseguiti in questa sessione (PHP assente sul PC): lanciare <code>php artisan test</code>, in particolare <code>LegacyPlanTest</code>, <code>AreaPagesTest</code>, <code>ContentTest</code>, <code>CareerProgressTest</code>.</li>
+</ul>
+<h2>2026-10-14 — Requisiti attuali e «Dove agire» nell'area incaricato</h2>
+<ul>
+<li>Il motore salva in <code>next_rank['current']</code> l'esito dei requisiti della qualifica attuale; <code>CareerProgress</code> li espone come <code>current_requirements</code> e il pannello li mostra sopra quelli della prossima qualifica.</li>
+<li><code>NetworkOverview</code>: per ogni persona sotto di te clienti registrati/validi/senza ordine, ultimo ordine, venduto del mese, ramo e cosa manca per la sua prossima qualifica; tabella «Dove agire» con ricerca, ordinata per vicinanza alla qualifica. Dei clienti altrui solo conteggi e date (nessun nome o contatto).</li>
+<li>Corretto il 500 su <code>/area</code>: le righe <code>@php(...)</code> in linea nella panoramica venivano unite al <code>@endphp</code> successivo; verifica con compilazione Blade di tutte le viste dell'area.</li>
+</ul>
+<h2>2026-10-14 — Avanzamento anche per chi non è nel calcolo salvato</h2>
+<ul>
+<li><code>CareerProgress::forConsultant()</code>: se l'incaricato non compare nell'ultimo calcolo salvato (entrato dopo il calcolo), si usa un calcolo di prova in memoria (cache 10 min, nessuna scrittura). Il pannello &quot;Il mio avanzamento&quot; non resta più vuoto.</li>
+</ul>
+<h2>2026-10-14 — Qualifiche congelate «fino a revoca», estese same_or_higher, test del piano precedente nascosto, manuali</h2>
+<ul>
+<li><strong>Qualifiche congelate</strong>: la protezione della qualifica ora ha l'opzione «Fino a revoca (senza scadenza)» (salva <code>2099-12-31</code>) nella scheda, nell'azione di riga, di massa e in «Mantieni qualifiche a tutti». L'elenco mostra «fino a revoca». La qualifica resta finché l'admin o il super admin la toglie. Il congelamento riguarda <strong>solo la qualifica</strong>: i clienti contati con la regola dei 150 € incidono comunque su scaglioni dei diretti e livelli degli indiretti.</li>
+<li><strong>Indirette estese</strong>: la regola <code>same_or_higher</code> (stessa qualifica o più alta) è il default in <code>PolicySpecs</code> (K02, decisa da Laura) e nel JSON <code>plan-incaricati-2026-10-08.json</code>; il piano attivo nel database già la usa.</li>
+<li><strong>Piano precedente nascosto</strong>: nuovi test <code>tests/Feature/Plan/LegacyPlanTest.php</code> (8) sul pulsante/impostazione che nasconde il piano a PR (menu, schede, permessi, ambiente, nessun effetto sui calcoli).</li>
+<li><strong>Altri test</strong>: <code>Consultant360Test</code> (qualifica fino a revoca), <code>KosmosPlanTest</code> (estese di default, qualifica mantenuta). I due test che erano rossi sono verdi.</li>
+<li><strong>Manuali aggiornati</strong>: utente, amministratore, guida breve, specifica del motore, architettura, sviluppatori, decisioni aperte (K01–K08), scheda incaricato, messa online, installazione cPanel, parametri (sezione Incaricati generata) e dossier.</li>
+<li><strong>Date</strong>: il Piano Incaricati parte il 1° novembre 2026 (ottobre resta sul piano precedente); lo storico Odoo serve solo come dato dei mesi precedenti. Fast Start, Team, Matching e Rank Bonus restano spenti.</li>
+<li>Suite completa: restano 4 rossi non legati al piano (lavori su shop/KMoney/form del 13/10). Nessun commit.</li>
+<li><strong>Regola cliente a due vie</strong> (14/10/2026): un ordine rende cliente se il <strong>totale</strong> raggiunge l'importo minimo del piano (qualunque siano i prodotti, anche solo accessori) <strong>oppure</strong> contiene un prodotto con il nuovo interruttore «Rende cliente a prescindere dall'importo» (scheda prodotto, spento di default, quindi il comportamento di oggi non cambia). Il flag si congela sull'ordine e sul movimento (migrazione <code>2026_11_05_100000_product_makes_client</code>). Cambiare il minimo = nuova versione del piano; cambiare un prodotto = interruttore. Test in <code>ClientRuleTest</code> e <code>ShopCatalogAdminTest</code>; manuali e parametri aggiornati.</li>
+</ul>
+<h2>2026-10-14 (sera) — Mantenimento qualifiche solo per chi viene dal vecchio piano</h2>
+<ul>
+<li><strong>Decisione di Laura</strong>: la data di mantenimento del piano (<code>rank_grace_until</code> / <code>rank_grace_days</code>) vale solo per gli incaricati importati dal vecchio sistema, cioè con <code>consultants.previous_rank_code</code> valorizzato (lo riempie «Congela qualifiche attuali come precedenti»). I nuovi incaricati possono essere promossi ma, se i clienti calano, la qualifica scende.</li>
+<li>Il mantenimento per il singolo incaricato (<code>rank_hold_until</code>, anche «fino a revoca») resta valido per tutti.</li>
+<li>Il motore prende la data più lontana tra <code>rank_grace_until</code> e i giorni dall'attivazione: per far valere il 31/12/2026 svuotare <code>rank_grace_days</code>.</li>
+<li>Il Piano Incaricati è attivo dal 09/10/2026 (versione 5); il periodo 2026-10 resta legato alla versione precedente finché non lo si sposta (vedi procedura).</li>
+<li>Tecnico: <code>Node::$previousRank</code> (fuori dall'hash se vuoto), <code>SnapshotBuilder</code>, <code>PeriodCalculator</code>, <code>CareerProgress::isLegacy()</code>; test <code>test_the_plan_wide_date_protects_only_those_coming_from_the_previous_system</code>.</li>
+</ul>
+<h2>2026-10-14 (sera) — «Il mio ramo»: albero grafico come quello del back-office</h2>
+<ul>
+<li>L'albero dell'area incaricato non è più un elenco: è lo stesso organigramma del back-office (schede con colore della pietra, barra verso la qualifica successiva, ricerca, livelli 1–3 / 1–6, espandi tutto, schermo intero, minimappa, scheda al clic, doppio clic per aprire l'albero di una persona), con l'incaricato alla radice e solo il suo ramo. Niente PV, PR, Fast Start o regola del 50%.</li>
+<li>La scheda mostra qualifica, livello, clienti, iscritti, senza primo ordine, ultimo ordine, venduto del mese, diretti Pearl e i requisiti per la prossima qualifica, con testi neutri; i requisiti si caricano da <code>GET /area/rete/{id}/dettaglio</code> (solo per sé e la propria downline, altrimenti 404).</li>
+<li>Tecnico: <code>Domain/Career/NetworkTree</code> (dati e dettaglio), vista <code>site/area/_tree.blade.php</code>, script <code>public/js/lamess-tree.js</code> (nessuna libreria, nessun build). Se i dati dell'albero non si possono costruire resta il vecchio elenco ad albero.</li>
+<li>Test: <code>AreaPagesTest</code> (dati dell'albero con radice l'incaricato e senza punti; scheda di dettaglio solo per il proprio ramo). Nessun commit.</li>
+</ul>
+<h2>2026-10-15 — Scheda incaricato completa (admin e iscrizione da referral)</h2>
+<ul>
+<li><strong>Admin, Rete → Incaricati → Nuovo</strong>: modulo a sezioni (Iscrizione, Anagrafica, Residenza e contatti, IBAN facoltativo). Nome e cognome separati, data e luogo di nascita (solo maggiorenni), residenza, nazione, telefono, PEC, IBAN e intestatario facoltativi. Sponsor facoltativo. I dati personali si salvano nel profilo dell'utente, quindi l'email è obbligatoria se si compilano anagrafica o contatti; se l'utente esiste già si completano solo i campi vuoti.</li>
+<li><strong>Iscrizione da referral (<code>/area/diventa-incaricato</code>)</strong>: vista a quattro sezioni (sponsor, anagrafica, residenza e contatti, conferma) con nazione e PEC; chi arriva da link, cookie o invito ha lo sponsor <strong>bloccato</strong> (il valore inviato nel form viene ignorato); IBAN e documenti restano nell'onboarding dopo la firma.</li>
+<li>Nessuna migrazione. Non salvati perché non esistono nel profilo: profilo fiscale, tipo autofattura, posizione fiscale, lingua (presenti nei dati Odoo).</li>
+<li>Tecnico: <code>ConsultantAccess::grant()</code> riceve i dati del profilo; <code>AreaController::lockedSponsor()</code>.</li>
+<li>Test: <code>ConsultantAccessTest</code> (profilo completo con sponsor assente e IBAN, email obbligatoria con dati personali, minorenni e IBAN non validi) e <code>SitePagesTest</code> (sponsor del link non modificabile).</li>
+</ul>
+<h2>2026-10-15 — Simulazione incaricati: albero subito visibile</h2>
+<ul>
+<li>La pagina «Simulazione incaricati» mostra l'albero reale del periodo già all'apertura (prima di simulare), con qualifica a colori, clienti e, per ogni incaricato, cosa manca per la qualifica successiva: indica dove intervenire.</li>
+<li>I pulsanti «+ clienti», «+ agenti», «sposta» sono attivi fin da subito; dopo la simulazione l'albero diventa quello «dopo» con le stesse informazioni.</li>
+<li><code>IncaricatiSimulator::currentTree()</code> (sola lettura, nessuna scrittura nel database); albero di base in cache per 2 minuti.</li>
+<li>Albero della simulazione con due viste, come nelle pagine «Albero rete» ed «Elenco incaricati per livelli»: <strong>Vista albero</strong> (grafico con zoom e trascinamento, riquadri a colori della pietra, evidenziati quelli che cambiano, clic per dettagli e azioni) ed <strong>Elenco per livelli</strong> (tabella con livello, qualifica prima → dopo, diretti, clienti, requisiti mancanti, compensi e pulsanti). La vista scelta resta ricordata nel browser.</li>
+<li>Riepilogo della simulazione: tooltip su «Qualifiche che salgono/scendono» (chi, prima → dopo) e su «Compensi del mese» (suddivisione per tipo e incaricati con la variazione maggiore), con i codici di chi sale/scende sotto il numero.</li>
+<li>Simulazione: «Compensi del mese» ridenominato «Provvigioni degli incaricati nel mese»; tabella esplicativa per tipo (chi le riceve, come maturano, prima/dopo/differenza, totale) al posto del vecchio riquadro «Compensi per tipo»; corretta l'impaginazione del riquadro.</li>
+<li>Simulazione: il totale delle provvigioni mostra separati agenti simulati e incaricati reali (<code>summary.total_virtual</code>, <code>summary.total_real_diff</code>), con nota che il totale comprende gli agenti simulati.</li>
+<li>Simulazione: nella tabella delle provvigioni ogni tipo si apre al clic e mostra, per incaricato (reale o simulato), quanto matura prima → dopo e da quali vendite (origine, livello, vendite, ordini, base V.A.P., aliquota, requisiti); <code>IncaricatiSimulator::breakdown()</code>, primi 60 incaricati per tipo.</li>
+<li>Simulazione: nuova modifica «Aggiungi colonne» (anche pulsante «+ colonne» nell'albero): crea N linee dirette sotto l'incaricato, ciascuna con un agente Pearl e almeno M clienti (di default 90, il minimo di colonna del piano), per provare le qualifiche che richiedono colonne (es. Ruby: 3 colonne da 90 clienti). <code>IncaricatiSimulator::addColumns()</code> / <code>defaultColumnClients()</code>; test in <code>IncaricatiSimulationTest</code>.</li>
+</ul>
+<h2>2026-10-15 (sera) — Decisioni di Laura sul piano: compressione, retrocessione, pagina del piano</h2>
+<ul>
+<li><strong>Compressione degli indiretti</strong> (nuova politica K06 <code>kosmos_compression</code>, predefinita <code>skip</code>): chi non rispetta i requisiti del livello (o è escluso/sospeso) è saltato e il livello passa al primo upline che li rispetta; nessuno incassa due volte sulla stessa vendita; gli estesi restano a distanza genealogica. <code>none</code> ripristina il comportamento precedente. Il campo è nel pannello del piano (bozza → Qualifiche e requisiti).</li>
+<li><strong>Retrocessione su tutti i requisiti</strong> (K05 <code>kosmos_rank_maintenance</code>, nuovo valore e predefinito <code>requirements</code>): ogni mese si paga la qualifica più alta di cui si rispettano ancora clienti, Pearl al 1° livello, struttura e colonne (<code>RankMaintenance</code>, dal basso verso l'alto: un Pearl che scende fa scendere anche chi sta sopra). Restano le protezioni (piano e «Mantieni qualifica» per singolo incaricato, già disponibile per gli admin con <code>network.restructure</code>). L'area incaricato mostra anche i requisiti da mantenere.</li>
+<li><strong>Piano attivo</strong>: <code>rank_grace_days</code> vuoto e <code>rank_grace_until</code> = 31/12/2026 (decisione del 14/10); fino a quella data restano protetti gli importati dal vecchio piano; poi tutti ricalcolati.</li>
+<li><strong>Pagina «Il piano compensi»</strong> (<code>/piano-compensi</code>, pubblica): generata dal piano in vigore (tabelle diretti, indiretti, estesi, qualifiche, Bonus di Struttura, pagamenti, avvertenze); linkata dalla casella di accettazione della domanda, dal menù dell'area incaricato, dal piè di pagina e dalla Lettera di Incarico.</li>
+<li><strong>Filtro e ricerca nell'elenco clienti</strong> dell'incaricato (<code>AreaController::CUSTOMER_FILTERS</code>).</li>
+<li><strong>Regolamento v2.0 (bozza)</strong>: riscritto secondo il nuovo piano (terminologia «Incaricato», niente «Consulente Attivo», regole di cliente, acquisto proprio, compressione, retrocessione, passaggio al nuovo piano, Bonus di Struttura, minimo pagabile 15 € in tutto il documento, pagamento mensile entro il 15). Da far vedere al legale/commercialista (fee 2,50 € per bonifico, acquisto proprio, resi).</li>
+<li>Kcard: refuso di un vecchio progetto, nessuna azione.</li>
+<li>Test: motore 103 verdi (compressione, retrocessione per clienti/Pearl/colonne/struttura), funzionali su pagina piano e filtro clienti.</li>
+</ul>
+<h2>2026-10-15 (pomeriggio) — Commissione bonifico eliminata, conferme di Laura</h2>
+<ul>
+<li><strong>Commissione di 2,50 € per bonifico eliminata</strong>: <code>LAMESS_BANK_FEE</code> predefinito 0,00 (<code>lamess.fiscal.bank_fee</code>, impostazione «Commissione bonifico sui prelievi»); tolta dal Regolamento v2.0 (6.1.a). Dove <code>.env</code> o le impostazioni di sistema hanno ancora 2,50 va messo 0.</li>
+<li>Confermato: l'acquisto proprio paga il compenso diretto all'incaricato, gli indiretti agli upline e conta come cliente per i requisiti e le qualifiche (già così nel motore, K04 acceso). Estesi: restano a distanza genealogica. Resi: per ora ignorati.</li>
+</ul>
+<h2>2026-10-16 — Sicurezza prima dell'apertura (esito dell'analisi del 15/10)</h2>
+<ul>
+<li><strong>Prelievi wallet</strong>: <code>WithdrawalService::request</code> controlla saldo e crea la richiesta dentro la transazione con <code>lockForUpdate</code> sul consulente; <code>approve</code> rilegge lo stato e blocca il consulente (niente doppio impegno del saldo con richieste simultanee).</li>
+<li><strong>Accesso</strong>: blocco per account oltre al limite per IP (<code>SiteController::login</code>): 5 errori per email+IP, 15 per sola email, finestra di 15 minuti, azzerati da un accesso riuscito.</li>
+<li><strong>Cookie di sessione</strong>: <code>config/session.php</code> → <code>secure</code> vero di default in produzione; <code>SESSION_SECURE_COOKIE=true</code> anche in <code>.env.cpanel.example</code>.</li>
+<li><strong>HTTPS forzato</strong> in <code>public/.htaccess</code> (escluso <code>/.well-known/</code> e localhost).</li>
+<li><strong>Scheduler</strong>: <code>withoutOverlapping(120)</code> su tutti i comandi tranne il battito.</li>
+<li><strong>Controllo messa online</strong>: nuove voci «Cookie di sessione solo HTTPS» e «Log di audit protetto nel database».</li>
+<li>Test: nuovo <code>LoginLockoutTest</code> (3); Wallet 28 verdi. Suite completa 899/901: restano <code>ShopAdminTest::test_product_can_be_created_with_automatic_pv</code> e <code>ConsultantListTest::test_no_per_row_queries</code>, che falliscono già sul commit precedente (non legati a questo lavoro).</li>
+<li>Non fatto (a carico del server o rimandato): 2FA e <code>.env</code> live, backup fuori server e ripristino di prova, limiti PHP, controllo esterno su <code>/up</code>, timestamp nel webhook KMoney, CSP, <code>uncompromised()</code> sulle password.</li>
+</ul>
+<h2>2026-10-16 (mattina) — Log di audit importato da locale</h2>
+<ul>
+<li>Sul server il Controllo dava BLOCCO sulla catena: le righe 1–352 erano del locale (verificate col dump del 12/10 e l'<code>APP_KEY</code> locale), le successive firmate con la chiave del server.</li>
+<li>Nuove impostazioni <code>LAMESS_AUDIT_KEY_PREVIOUS</code> e <code>LAMESS_AUDIT_KEY_PREVIOUS_UNTIL</code> (<code>lamess.audit_key_previous</code>, <code>…_until</code>): in verifica le righe fino all'id indicato usano la chiave precedente; le nuove righe usano sempre quella in vigore. Nessuna riga viene riscritta, il controllo del collegamento fra le righe resta intero.</li>
+<li>Test: <code>AuditLogTest</code> 15 verdi (nuovo: chiave precedente con confine sull'id).</li>
+</ul>
+<h2>2026-10-16 (mezzogiorno) — Firma con codice per email</h2>
+<ul>
+<li>Nuovo driver di firma <code>email</code> (<code>EmailSignatureProvider</code>, notifica <code>SignatureOtpCode</code>): OTP di 6 cifre inviato per email, 15 minuti, 5 tentativi, nuovo invio dopo 60 secondi, impronta HMAC in cache (mai in chiaro), nessun codice a schermo; se l'invio email è spento lancia un errore chiaro e non invia nulla.</li>
+<li>Pagina Diventa Incaricato: pulsante «Invia di nuovo il codice» (<code>POST /area/diventa-incaricato/codice</code>, 5 al minuto).</li>
+<li>Controllo messa online: con driver <code>email</code> la voce «Firma con codice per email: invio attivo» (BLOCCO se la posta è spenta o su «log»); il driver <code>fake</code> resta BLOCCO.</li>
+<li>Test: <code>EmailSignatureTest</code> (5); suite 905/909 (restano i due fallimenti già presenti).</li>
+</ul>
+<h2>2026-10-16 (pomeriggio) — Stabilità e colli di bottiglia</h2>
+<ul>
+<li>Saldo wallet e importi impegnati calcolati dal database con <code>SUM</code> (prima si caricavano tutte le righe in PHP).</li>
+<li>Immagini del negozio: cache di 30 giorni, <code>ETag</code>/<code>Last-Modified</code> e risposta 304 se il browser le ha già.</li>
+<li>Calcoli lunghi del periodo: tempo di esecuzione esteso (300 s), non si interrompono se la pagina viene chiusa, il blocco si rilascia anche dopo un errore fatale.</li>
+<li>Email ai clienti accodabili (<code>ShouldQueueAfterCommit</code>, 3 tentativi): con <code>QUEUE_CONNECTION=database</code> il cron lancia il lavoro di coda ogni minuto (<code>lamess:coda</code>); con <code>sync</code> nulla cambia. Codice di firma e reset password restano immediati.</li>
+<li>Test: <code>StabilityAndPerformanceTest</code> (3); suite 908/912, i 3 che non passano falliscono anche prima di questa modifica (ShopAdmin, ConsultantList, IncaricatiCareerProgress).</li>
+</ul>
+<h2>2026-10-16 (sera) — Colli di bottiglia, seconda parte</h2>
+<ul>
+<li>Elenco clienti dell'incaricato (<code>/area/clienti</code>): 50 per pagina con navigazione, ricerca e filtri mantenuti; conteggi e riepilogo restano sul totale.</li>
+<li>Elenco incaricati dell'admin: <code>ConsultantList</code> è ora una sola istanza per richiesta (prima ripeteva ~100 query su piano e periodi, una per riga); con 20 righe il test «nessuna query per riga» torna verde.</li>
+<li>Reinvio fatture al gestionale (<code>InvoiceService::retryPending</code>): massimo 200 documenti per giro orario.</li>
+<li>I PDF (fatture, estratti, ricevute, tesserino, certificato) si generano uno alla volta su richiesta: non c'è una generazione in blocco da alleggerire.</li>
+<li>Test: <code>AreaPagesTest</code> (+1). Suite 909/913: restano <code>ShopAdminTest</code> e <code>IncaricatiCareerProgressTest</code> (già presenti prima) e <code>SubscriptionsAndMultiOrdersTest::test_customer_area_pages_and_actions</code>, che fallisce già sul codice precedente a queste modifiche (arriva dagli ultimi lavori sugli abbonamenti).</li>
+</ul>
+<h2>2026-10-19 — Revisione di documentazione e manuali</h2>
+<ul>
+<li>Allineati ai lavori del 16/10: <strong>Team 1° liv.</strong> al posto di «Diretti» (scheda 360° e manuale admin), elenco clienti dell'incaricato a 50 per pagina e blocco dell'accesso per troppi tentativi (manuale utente e guida breve), reinvio fatture a 200 per giro, <code>lamess:coda</code> e <code>withoutOverlapping</code> fra le operazioni pianificate (architettura), sezioni su sicurezza, prestazioni, email in coda e firma con codice nel manuale sviluppatori (§10).</li>
+<li>Decisioni aperte: commissione di prelievo 2,50 € tolta da OPEN-54 e A-01 (eliminata il 15/10, <code>LAMESS_BANK_FEE</code> = 0,00); A-12 riporta la richiesta di Laura sugli XML per email (invio mensile o a pulsante); A-03 annota che il test non compare fra i rossi dell'ultima esecuzione.</li>
+<li>README: elenco dei test rossi allineato al registro del 16/10.</li>
+<li>Dossier <code>docs/dossier.html</code> rigenerato (era fermo al 14/10).</li>
+<li>Non toccati: <code>parametri.md</code> (il file di piano non è cambiato dopo l'ultima generazione), <code>CHANGELOG.md</code> (è quello di Laravel, non del portale), i documenti della vecchia piattaforma Odoo in <code>Documentazione/</code>.</li>
+<li>Non verificato qui: la suite di test non è stata rieseguita (dipendenze non installabili in questo ambiente).</li>
 </ul>
 </section>
 </body></html>

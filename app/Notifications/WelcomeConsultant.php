@@ -5,11 +5,23 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Consultant;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WelcomeConsultant extends Notification
+class WelcomeConsultant extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
+    public int $tries = 3;
+
+    /** @return list<int> */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
     public function __construct(public readonly Consultant $consultant) {}
 
     /** @return list<string> */

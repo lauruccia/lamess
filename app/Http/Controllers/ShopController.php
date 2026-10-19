@@ -352,13 +352,18 @@ class ShopController extends Controller
     }
 
     /** Immagini del negozio: si servono da /media/… perché su cPanel senza terminale non si può creare il collegamento «storage». */
-    public function media(string $path)
+    public function media(Request $request, string $path)
     {
         abort_unless(str_starts_with($path, 'shop/') && ! str_contains($path, '..') && preg_match('/\.(jpe?g|png|webp)$/i', $path) === 1, 404);
         $disk = Storage::disk('local');
         abort_unless($disk->exists($path), 404);
 
-        return $disk->response($path, null, ['Cache-Control' => 'public, max-age=604800']);
+        $response = $disk->response($path, null, ['Cache-Control' => 'public, max-age=2592000']);
+        $response->setEtag(md5($path.'|'.$disk->lastModified($path).'|'.$disk->size($path)));
+        $response->setLastModified(\DateTimeImmutable::createFromFormat('U', (string) $disk->lastModified($path)) ?: null);
+        $response->isNotModified($request);   // se il browser ha già l'immagine risponde 304, senza rinviare i byte
+
+        return $response;
     }
 
     public function add(Request $r)

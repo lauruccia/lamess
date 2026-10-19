@@ -342,3 +342,25 @@
 - Controllo messa online: con driver `email` la voce «Firma con codice per email: invio attivo» (BLOCCO se la posta è spenta o su «log»); il driver `fake` resta BLOCCO.
 - Test: `EmailSignatureTest` (5); suite 905/909 (restano i due fallimenti già presenti).
 
+## 2026-10-16 (pomeriggio) — Stabilità e colli di bottiglia
+- Saldo wallet e importi impegnati calcolati dal database con `SUM` (prima si caricavano tutte le righe in PHP).
+- Immagini del negozio: cache di 30 giorni, `ETag`/`Last-Modified` e risposta 304 se il browser le ha già.
+- Calcoli lunghi del periodo: tempo di esecuzione esteso (300 s), non si interrompono se la pagina viene chiusa, il blocco si rilascia anche dopo un errore fatale.
+- Email ai clienti accodabili (`ShouldQueueAfterCommit`, 3 tentativi): con `QUEUE_CONNECTION=database` il cron lancia il lavoro di coda ogni minuto (`lamess:coda`); con `sync` nulla cambia. Codice di firma e reset password restano immediati.
+- Test: `StabilityAndPerformanceTest` (3); suite 908/912, i 3 che non passano falliscono anche prima di questa modifica (ShopAdmin, ConsultantList, IncaricatiCareerProgress).
+
+## 2026-10-16 (sera) — Colli di bottiglia, seconda parte
+- Elenco clienti dell'incaricato (`/area/clienti`): 50 per pagina con navigazione, ricerca e filtri mantenuti; conteggi e riepilogo restano sul totale.
+- Elenco incaricati dell'admin: `ConsultantList` è ora una sola istanza per richiesta (prima ripeteva ~100 query su piano e periodi, una per riga); con 20 righe il test «nessuna query per riga» torna verde.
+- Reinvio fatture al gestionale (`InvoiceService::retryPending`): massimo 200 documenti per giro orario.
+- I PDF (fatture, estratti, ricevute, tesserino, certificato) si generano uno alla volta su richiesta: non c'è una generazione in blocco da alleggerire.
+- Test: `AreaPagesTest` (+1). Suite 909/913: restano `ShopAdminTest` e `IncaricatiCareerProgressTest` (già presenti prima) e `SubscriptionsAndMultiOrdersTest::test_customer_area_pages_and_actions`, che fallisce già sul codice precedente a queste modifiche (arriva dagli ultimi lavori sugli abbonamenti).
+
+
+## 2026-10-19 — Revisione di documentazione e manuali
+- Allineati ai lavori del 16/10: **Team 1° liv.** al posto di «Diretti» (scheda 360° e manuale admin), elenco clienti dell'incaricato a 50 per pagina e blocco dell'accesso per troppi tentativi (manuale utente e guida breve), reinvio fatture a 200 per giro, `lamess:coda` e `withoutOverlapping` fra le operazioni pianificate (architettura), sezioni su sicurezza, prestazioni, email in coda e firma con codice nel manuale sviluppatori (§10).
+- Decisioni aperte: commissione di prelievo 2,50 € tolta da OPEN-54 e A-01 (eliminata il 15/10, `LAMESS_BANK_FEE` = 0,00); A-12 riporta la richiesta di Laura sugli XML per email (invio mensile o a pulsante); A-03 annota che il test non compare fra i rossi dell'ultima esecuzione.
+- README: elenco dei test rossi allineato al registro del 16/10.
+- Dossier `docs/dossier.html` rigenerato (era fermo al 14/10).
+- Non toccati: `parametri.md` (il file di piano non è cambiato dopo l'ultima generazione), `CHANGELOG.md` (è quello di Laravel, non del portale), i documenti della vecchia piattaforma Odoo in `Documentazione/`.
+- Non verificato qui: la suite di test non è stata rieseguita (dipendenze non installabili in questo ambiente).

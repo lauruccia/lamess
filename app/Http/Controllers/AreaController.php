@@ -42,6 +42,7 @@ use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -187,8 +188,12 @@ class AreaController extends Controller
             });
         }
 
+        $perPage = 50;
+        $page = max(1, (int) $request->query('pagina', 1));
+        $rows = new LengthAwarePaginator($rows->values()->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'pageName' => 'pagina', 'query' => $request->except('pagina')]);
+
         return view('site.area.customers', [
-            'rows' => $rows->values(), 'all' => $all, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress,
+            'rows' => $rows, 'all' => $all, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress,
             'search' => $search, 'state' => array_key_exists($state, self::CUSTOMER_FILTERS) ? $state : '', 'filters' => self::CUSTOMER_FILTERS,
         ]);
     }

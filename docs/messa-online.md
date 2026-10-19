@@ -107,6 +107,13 @@ Se un token è stato mostrato in uno screenshot o in una chat, va **ruotato** (r
 - **Email**: `LAMESS_MAIL_ENABLED=false`. Si accende solo a posta verificata, da Impostazioni → Email → «Invio email attivo».
 - **Sito al pubblico**: chiuso (punto 1).
 
+### Email in coda (consigliato quando accendi la posta)
+Con `QUEUE_CONNECTION=sync` (oggi) le email partono dentro la richiesta: se il server di posta è lento, rallenta anche la pagina. Le notifiche ai clienti (ordine pagato e spedito, estratti, KYC, inviti, canone, abbonamento) sono ora **accodabili**; restano immediate solo il codice di firma e il reset password.
+1. Nel `.env` metti `QUEUE_CONNECTION=database` (la tabella `jobs` c'è già dall'installazione, nessuna migrazione).
+2. Non serve altro: lo scheduler (il cron di ogni minuto) lancia da solo `queue:work --stop-when-empty --max-time=50`. Con `sync` quel lavoro non parte.
+3. Svuota `bootstrap/cache/config.php` se presente. Le email partono entro circa un minuto; quelle fallite si ritentano 3 volte (dopo 1 e 5 minuti) e poi finiscono in `failed_jobs`.
+4. Prova: un ordine di prova pagato, poi controlla in phpMyAdmin che `jobs` si svuoti e `failed_jobs` resti vuota.
+
 ## 7. Sequenza consigliata
 1. **Prova generale** (sito di prova o, in mancanza, il sito chiuso con l'accesso admin): importazione, calcolo di un mese, confronto con Odoo (`lamess:verifica-odoo`, che richiede un terminale: si fa in sviluppo).
 2. **Controllo sicurezza**: Controllo messa online senza blocchi; verifica del log; backup creato e scaricato; prova del ripristino su un database di prova.

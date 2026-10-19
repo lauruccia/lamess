@@ -5,12 +5,24 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Subscription;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /** Addebito mensile dell'abbonamento non riuscito: avvisa il cliente e gli indica come sistemare (carta o saldo KMoney). */
-class SubscriptionChargeFailed extends Notification
+class SubscriptionChargeFailed extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
+    public int $tries = 3;
+
+    /** @return list<int> */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
     public function __construct(public Subscription $subscription, public bool $paused, public int $retryDays) {}
 
     /** @return list<string> */

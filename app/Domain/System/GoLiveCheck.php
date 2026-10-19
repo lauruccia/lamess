@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\System;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Billing\InvoiceService;
 use App\Domain\Payouts\SepaExport;
 use App\Models\Consultant;
 use App\Models\User;
@@ -86,7 +87,7 @@ final class GoLiveCheck
         }, match ($sinkName) {
             'fake' => 'Le fatture sono generate ma non trasmesse: decidere come inviarle.',
             'file' => 'L\'XML viene scritto in storage/app/private/sdi-out ma qualcuno deve ritirarlo e caricarlo sullo SdI.',
-            'mail' => filled(config('lamess.sdi.mail_to')) ? 'XML spedito a '.config('lamess.sdi.mail_to').' (serve «Invio email attivo»).' : 'LAMESS_SDI_MAIL_TO mancante.',
+            'mail' => filled(config('lamess.sdi.mail_to')) ? 'XML spedito a '.config('lamess.sdi.mail_to').(InvoiceService::batchMode() ? ' in blocco: pulsante in Fatture o il 1° del mese alle 08:30' : ' a ogni emissione').' (serve «Invio email attivo»).' : 'LAMESS_SDI_MAIL_TO mancante.',
             default => "Driver «{$sinkName}».",
         });
         if ($sinkName !== 'fake') {

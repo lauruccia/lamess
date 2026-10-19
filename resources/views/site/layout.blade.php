@@ -108,7 +108,7 @@
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 @if($isAuth || $minimalHeader)
-<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; <a href="/negozio">Negozio</a>@auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a> · <a href="/piano-compensi">Il piano compensi</a>
+<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; <a href="/negozio">Negozio</a>@auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a> · <a href="/piano-compensi">Il piano compensi</a> · <a href="/regolamento">Regolamento</a>
  @php($co = config('lamess.company'))
  <br><small>© {{ date('Y') }} {{ $co['brand_owner'] }} – Tutti i diritti riservati. {{ $co['name'] }} - {{ $co['address'] }} - P.IVA {{ $co['vat'] }} ● PEC: <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> ● Designed by <a href="https://gruppokosmos.it" target="_blank" rel="noopener">Gruppo Kosmos</a></small>
 </footer>

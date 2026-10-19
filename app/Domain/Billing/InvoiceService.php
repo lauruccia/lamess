@@ -87,7 +87,7 @@ final class InvoiceService
             return $inv;
         });
 
-        $this->deliver($invoice);
+        $this->deliverOnIssue($invoice);
 
         return $invoice->refresh();
     }
@@ -142,7 +142,7 @@ final class InvoiceService
             return $cn;
         });
 
-        $this->deliver($note);
+        $this->deliverOnIssue($note);
 
         return $note->refresh();
     }
@@ -158,18 +158,79 @@ final class InvoiceService
         }
     }
 
-    /** Reinvia i documenti non consegnati. @return int quanti consegnati */
-    public function retryPending(): int
+    /** Modalità «in blocco»: i documenti restano «Da inviare» finché non si preme il pulsante o scatta l'invio mensile. */
+    public static function batchMode(): bool
     {
-        $ok = 0;
-        foreach ([Invoice::class, CreditNote::class] as $model) {
-            foreach ($model::query()->whereIn('sink_status', ['pending', 'error'])->get() as $doc) {
-                $this->deliver($doc);
-                $ok += $doc->refresh()->sink_status === 'sent' ? 1 : 0;
-            }
+        return config('lamess.sdi.send_mode') === 'batch';
+    }
+
+    /** All'emissione: consegna subito, tranne in modalità «in blocco» (il documento resta in coda). */
+    private function deliverOnIssue(Invoice|CreditNote $doc): void
+    {
+        if (! self::batchMode()) {
+            $this->deliver($doc);
+        }
+    }
+
+    /** Motivo per cui un invio in blocco non può partire adesso (null = si può). */
+    public static function sendBlocker(): ?string
+    {
+        if (config('lamess.invoice_sink_driver') !== 'mail') {
+            return 'Il driver delle fatture non è «mail» (LAMESS_INVOICE_SINK): l\'invio per email non è attivo.';
+        }
+        if (trim((string) config('lamess.sdi.mail_to')) === '') {
+            return 'Manca l\'indirizzo di destinazione (LAMESS_SDI_MAIL_TO).';
+        }
+        if (! config('lamess.mail_enabled')) {
+            return 'L\'invio email è spento: accendi «Invio email attivo» in Impostazioni di sistema.';
         }
 
-        return $ok;
+        return null;
+    }
+
+    /** Quanti documenti aspettano di essere consegnati. */
+    public function pendingCount(): int
+    {
+        return Invoice::query()->whereIn('sink_status', ['pending', 'error'])->count()
+            + CreditNote::query()->whereIn('sink_status', ['pending', 'error'])->count();
+    }
+
+    /**
+     * Consegna i documenti in coda (da inviare o in errore), fatture prima e note di credito dopo.
+     *
+     * @return array{sent: int, failed: int, left: int} left = documenti non toccati per il tetto $limit
+     */
+    public function sendPending(?int $limit = null): array
+    {
+        $sent = $failed = $left = 0;
+        foreach ([Invoice::class, CreditNote::class] as $model) {
+            $query = $model::query()->whereIn('sink_status', ['pending', 'error'])->orderBy('id');
+            $room = $limit === null ? null : $limit - $sent - $failed;
+            $total = (clone $query)->count();
+            $docs = $room === null ? $query->get() : ($room > 0 ? $query->limit($room)->get() : $query->whereRaw('1 = 0')->get());
+            foreach ($docs as $doc) {
+                $this->deliver($doc);
+                $doc->refresh()->sink_status === 'sent' ? $sent++ : $failed++;
+            }
+            $left += $total - $docs->count();
+        }
+
+        return ['sent' => $sent, 'failed' => $failed, 'left' => $left];
+    }
+
+    /**
+     * Giro orario: reinvia i documenti non consegnati (tetto di 200 per giro). In modalità «in blocco» non fa nulla,
+     * a meno di $force (invio mensile o pulsante).
+     *
+     * @return int quanti consegnati
+     */
+    public function retryPending(bool $force = false): int
+    {
+        if (! $force && self::batchMode()) {
+            return 0;
+        }
+
+        return $this->sendPending($force ? null : 200)['sent'];
     }
 
     public function pdf(Invoice|CreditNote $doc): string

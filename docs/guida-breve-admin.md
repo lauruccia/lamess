@@ -37,6 +37,8 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 - Abbonamento: spedizione gratuita, impegno di 12 mesi non vincolante; il cliente può mettere in pausa o saltare un mese, tu hai **Pausa / Riprendi / Annulla**.
 
 ## Quando qualcosa non torna
+- Una persona dice «Troppi tentativi di accesso»: dopo 5 password errate (stesso dispositivo) o 15 (qualsiasi dispositivo) l'accesso con quell'email si ferma 15 minuti; basta aspettare, poi riprovare con la password giusta (l'email «Password dimenticata» è utile per sceglierne una nuova, ma non toglie il blocco prima dei 15 minuti).
+- Le fatture «Da inviare» o in errore si rimandano da *Vendite → Fatture* con **Reinvia**; il portale riprova da solo ogni ora (al massimo 200 per giro).
 - Mese sbagliato dopo la chiusura: solo la titolare può **Riaprire il mese** (non se ci sono importi già pagati).
 - Un pagamento sbagliato non ancora pagato: **Annulla** con motivo.
 - Il piano a PR/PV si nasconde con un click (*Compensi → Visibilità piano precedente*, solo titolare): i dati restano.

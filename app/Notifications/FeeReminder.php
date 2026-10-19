@@ -5,11 +5,23 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\AnnualFee;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class FeeReminder extends Notification
+class FeeReminder extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
+    public int $tries = 3;
+
+    /** @return list<int> */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
     public function __construct(public readonly AnnualFee $fee, public readonly int $daysLeft) {}
 
     /** @return list<string> */

@@ -12,6 +12,7 @@ class LegalController extends Controller
         'termini' => ['title' => 'Termini e Condizioni', 'view' => 'site.legal.termini'],
         'politiche-di-reso' => ['title' => 'Politiche di Reso', 'view' => 'site.legal.resi'],
         'piano-compensi' => ['title' => 'Il piano compensi', 'view' => 'site.legal.piano-compensi'],
+        'regolamento' => ['title' => 'Principi generali e Regolamento', 'view' => 'site.legal.regolamento'],
     ];
 
     public function show(string $page)

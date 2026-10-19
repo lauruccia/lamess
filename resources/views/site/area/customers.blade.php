@@ -55,6 +55,13 @@
    @endforeach
    </tbody>
   </table></div>
+  @if($rows->lastPage() > 1)
+  <p class="muted" style="padding:12px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+   @if($rows->previousPageUrl())<a href="{{ $rows->previousPageUrl() }}">← Precedenti</a>@endif
+   <span>Pagina {{ $rows->currentPage() }} di {{ $rows->lastPage() }} · {{ $rows->total() }} clienti</span>
+   @if($rows->nextPageUrl())<a href="{{ $rows->nextPageUrl() }}">Successivi →</a>@endif
+  </p>
+  @endif
  </section>
 @endif
 @endsection

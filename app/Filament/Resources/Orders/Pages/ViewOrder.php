@@ -63,7 +63,7 @@ class ViewOrder extends ViewRecord
                 TextEntry::make('beneficiary.name')->label('Incaricato (vendita)')->placeholder('— (vendita casa)'),
                 TextEntry::make('payment_method')->label('Pagamento')->state(fn (Order $r) => OrderService::methodLabel($r->payment_method).($r->kmoney_rest_method ? ' + '.OrderService::methodLabel($r->kmoney_rest_method) : '')),
                 TextEntry::make('order_kind')->label('Tipo ordine')->badge()
-                    ->state(fn (Order $r) => $r->subscription_id ? 'Abbonamento mensile · n. '.$r->subscription_id.' · ciclo '.self::subscriptionCycle($r) : 'Ordine singolo')
+                    ->state(fn (Order $r) => $r->subscription_id ? 'Abbonamento '.($r->subscription?->intervalMonths() === 2 ? 'bimestrale' : 'mensile').' · n. '.$r->subscription_id.' · ciclo '.self::subscriptionCycle($r) : 'Ordine singolo')
                     ->color(fn (Order $r) => $r->subscription_id ? 'info' : 'gray')
                     ->icon(fn (Order $r) => $r->subscription_id ? 'heroicon-o-arrow-path' : null)
                     ->url(fn (Order $r) => $r->subscription_id ? SubscriptionResource::getUrl('edit', ['record' => $r->subscription_id]) : null),

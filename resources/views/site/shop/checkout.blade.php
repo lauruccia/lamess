@@ -22,7 +22,7 @@
    <div class="row" data-company><div><label>Codice SDI (aziende)</label><input name="sdi_code" value="{{ old('sdi_code', $profile?->sdi_code) }}"></div><div><label>PEC (aziende)</label><input name="pec" value="{{ old('pec', $profile?->pec) }}"></div></div>
    <label>Indirizzo di fatturazione</label><input name="address" value="{{ old('address', $profile?->address) }}" autocomplete="street-address">
    <div class="row"><div><label>Città</label><input name="city" value="{{ old('city', $profile?->city) }}" autocomplete="address-level2"></div><div><label>CAP</label><input name="zip" value="{{ old('zip', $profile?->zip) }}" autocomplete="postal-code" inputmode="numeric"></div></div>
-   <label>Provincia</label><input name="province" maxlength="3" value="{{ old('province', $profile?->province) }}">
+   <div class="row"><div><label>Provincia</label><input name="province" maxlength="3" value="{{ old('province', $profile?->province) }}"></div><div><label for="country">Nazione</label><select name="country" id="country" data-country-reload>@foreach($countries as $code => $name)<option value="{{ $code }}" @selected(old('country', $country) === $code)>{{ $name }}</option>@endforeach</select></div></div>
    <input type="hidden" name="remember" value="0">
    <label class="chk"><input type="checkbox" name="remember" value="1" @checked(old('remember', '1') == '1')> Salva questi dati per i prossimi ordini (potrai cambiare l'indirizzo in ogni ordine)</label>
    @foreach(['address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
@@ -48,8 +48,8 @@
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">Consigliato</em></label>
      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>
-      <span data-sum-single @if($sub === 'monthly') hidden @endif>Dopo «Conferma ordine» ti chiediamo di confermare l'addebito di {{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY dal tuo conto KMoney.@if($priced->kmoneyRest()->isPositive()) Poi scegli come pagare il resto, € {{ \App\Support\Money::eur($priced->kmoneyRest()) }}, con carta o bonifico.@endif</span>
-      <span data-sum-sub @if($sub !== 'monthly') hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($pricedSub->kmoneyShare()) }} KY dal tuo conto KMoney.@if($pricedSub->kmoneyRest()->isPositive()) Il resto, € {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}, si addebita in automatico sulla carta.@endif Lo stesso ogni mese.</span>
+      <span data-sum-single @if($sub !== 'none') hidden @endif>Dopo «Conferma ordine» ti chiediamo di confermare l'addebito di {{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY dal tuo conto KMoney.@if($priced->kmoneyRest()->isPositive()) Poi scegli come pagare il resto, € {{ \App\Support\Money::eur($priced->kmoneyRest()) }}, con carta o bonifico.@endif</span>
+      <span data-sum-sub @if($sub === 'none') hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($pricedSub->kmoneyShare()) }} KY dal tuo conto KMoney.@if($pricedSub->kmoneyRest()->isPositive()) Il resto, € {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}, si addebita in automatico sulla carta.@endif Lo stesso a ogni addebito.</span>
      </p>
     @endif
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
@@ -57,9 +57,10 @@
    </fieldset>
    <fieldset class="choice" data-subscribe-box>
     <legend>Come vuoi riceverla</legend>
-    <label class="opt-card"><input type="radio" name="subscribe" value="none" @checked($sub !== 'monthly')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
+    <label class="opt-card"><input type="radio" name="subscribe" value="none" @checked($sub === 'none')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
     <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
-    <p class="muted small" data-subscribe-note @if($sub !== 'monthly') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
+    <label class="opt-card" data-subscribe-monthly><input type="radio" name="subscribe" value="bimonthly" @checked($sub === 'bimonthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento bimestrale</b><small>Ricevi la box ogni 2 mesi, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    <p class="muted small" data-subscribe-note @if($sub === 'none') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
    </fieldset>
   </section>
  </form>
@@ -74,15 +75,33 @@
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  <div data-sum-single @if($sub === 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
-  <div data-sum-sub @if($sub !== 'monthly') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-single @if($sub !== 'none') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-sub @if($sub === 'none') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
   <div class="co-confirm">
   <label class="chk"><input type="checkbox" name="privacy" value="1" form="checkout-form"><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
   @error('privacy')<div class="err">{{ $message }}</div>@enderror
-  <button class="btn accent wide cta-lock" form="checkout-form"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($sub === 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if($sub !== 'monthly') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
+  <button class="btn accent wide cta-lock" form="checkout-form"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($sub !== 'none') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if($sub === 'none') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
   <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
   </div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>
+<script>
+// Cambio nazione: ricalcola spedizione e prodotti vendibili senza perdere i dati già scritti (il modulo viene reinviato e riaperto).
+(function () {
+ var f = document.getElementById('checkout-form'); if (!f) return;
+ var current = @json($country);
+ function effective() {
+  var to = f.elements['ship_to'] ? f.elements['ship_to'].value : 'billing';
+  if (/^\d+$/.test(to)) return f.elements['ship_to'].selectedOptions[0].dataset.country || 'IT';
+  var el = f.elements[to === 'new' ? 'ship_country' : 'country'];
+  return el ? el.value : 'IT';
+ }
+ f.querySelectorAll('[data-country-reload]').forEach(function (el) {
+  el.addEventListener('change', function () {
+   if (effective() !== current) { f.action = '/area/checkout/nazione'; f.submit(); }
+  });
+ });
+})();
+</script>
 @endsection

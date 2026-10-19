@@ -39,6 +39,14 @@ class ShopController extends Controller
 {
     private const COUNTRY = 'IT';
 
+    /** Nazione di spedizione scelta nel checkout (in sessione): decide tariffa e prodotti vendibili. Senza scelta o se non aperta: Italia. */
+    private function country(Request $r): string
+    {
+        $c = strtoupper((string) $r->session()->get('checkout_country', self::COUNTRY));
+
+        return in_array($c, (array) config('lamess.shop_countries'), true) ? $c : self::COUNTRY;
+    }
+
     /** Righe per pagina nella vista a griglia: i prodotti per pagina sono sempre colonne × righe, così non resta una riga a metà. */
     private const GRID_ROWS = 4;
 
@@ -89,7 +97,7 @@ class ShopController extends Controller
     {
         $ids = array_unique(array_merge(array_keys($this->cart($r)), ...array_map('array_keys', array_values($this->others($r)))));
 
-        return Product::buyable()->with('parent')->whereIn('id', $ids)->get()->filter(fn (Product $p) => $p->sellableIn(self::COUNTRY))->keyBy('id');
+        return Product::buyable()->with('parent')->whereIn('id', $ids)->get()->filter(fn (Product $p) => $p->sellableIn($this->country($r)))->keyBy('id');
     }
 
     /** Toglie dal carrello i prodotti non più in vendita e porta le quantità entro la giacenza. @return list<string> avvisi */
@@ -148,7 +156,7 @@ class ShopController extends Controller
             }
         }
 
-        return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, self::COUNTRY, $shippingWaived);
+        return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, $this->country($r), $shippingWaived);
     }
 
     private function cartCount(Request $r): int
@@ -470,7 +478,7 @@ class ShopController extends Controller
         foreach ($this->sellableProducts($r) as $p) {
             $entries["x:{$p->id}"] = ['product' => $p, 'qty' => max(1, $this->cart($r)[$p->id] ?? 1)];
         }
-        $priced = app(CartPricer::class)->price($entries, $r->user(), $trial, null, self::COUNTRY);
+        $priced = app(CartPricer::class)->price($entries, $r->user(), $trial, null, $this->country($r));
         $why = $priced->messages[$code] ?? null;
         if ($why !== null && ! str_starts_with($why, 'Non applicato:')) {
             return back()->withInput()->withErrors(['code' => $why]);
@@ -528,7 +536,32 @@ class ShopController extends Controller
 
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r)]);
+        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries()]);
+    }
+
+    /** @return array<string,string> codice => nome delle nazioni aperte nello shop */
+    private function openCountries(): array
+    {
+        $names = (array) config('lamess.country_names');
+
+        return collect((array) config('lamess.shop_countries'))->mapWithKeys(fn ($c) => [$c => $names[$c] ?? $c])->all();
+    }
+
+    /**
+     * Cambio nazione nel checkout: ricalcola spedizione e prodotti vendibili senza perdere quanto già scritto nel modulo.
+     * La nazione è quella dell'indirizzo salvato scelto, oppure quella indicata per fatturazione/nuovo indirizzo.
+     */
+    public function checkoutCountry(Request $r)
+    {
+        $to = (string) $r->input('ship_to', 'billing');
+        if (ctype_digit($to)) {
+            $c = ShippingAddress::where('user_id', $r->user()->id)->find((int) $to)?->country_code;
+        } else {
+            $c = $to === 'new' ? $r->input('ship_country') : $r->input('country');
+        }
+        $r->session()->put('checkout_country', app(ShippingAddressBook::class)->country($c));
+
+        return redirect('/area/checkout')->withInput($r->except(['_token', 'privacy']));
     }
 
     /**
@@ -565,8 +598,8 @@ class ShopController extends Controller
         $d = $r->validate([
             'type' => 'required|in:private,company', 'first_name' => 'nullable', 'last_name' => 'nullable', 'company_name' => 'nullable',
             'tax_code' => 'nullable', 'vat_number' => 'nullable', 'sdi_code' => 'nullable', 'pec' => 'nullable|email',
-            'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable',
-            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => 'nullable|in:none,monthly',
+            'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
+            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => 'nullable|in:none,monthly,bimonthly',
         ], SiteController::MESSAGES);
         $subscribe = $d['subscribe'] ?? 'none';
         if (! ($orders->enabledMethods()[$d['payment_method']] ?? false)) {
@@ -596,6 +629,9 @@ class ShopController extends Controller
         } catch (OrderException $e) {
             return back()->withInput()->withErrors(['order' => $e->getMessage()]);
         }
+        // L'ordine è venduto e spedito nella nazione dell'indirizzo di spedizione scelto (Italia se non indicata).
+        $country = (string) $d['shipping']['country_code'];
+        $r->session()->put('checkout_country', $country);
 
         // Un ordine rimasto in attesa (pagina di pagamento abbandonata, poi «torna al carrello») si chiude prima di crearne uno nuovo: la merce non resta bloccata.
         if (($stale = PendingCart::pending($r)) !== null) {
@@ -615,7 +651,7 @@ class ShopController extends Controller
         if ($subscribe !== 'none') {
             $this->rememberBilling($r, $d);
             try {
-                $sub = $subs->subscribe($r->user(), $this->cart($r), self::COUNTRY, $d, 12, $this->others($r), null, $d['payment_method']);
+                $sub = $subs->subscribe($r->user(), $this->cart($r), $country, $d, 12, $this->others($r), null, $d['payment_method'], $subscribe === 'bimonthly' ? 2 : 1);
             } catch (OrderException $e) {
                 return back()->withInput()->withErrors(['order' => $e->getMessage()]);
             }
@@ -633,7 +669,7 @@ class ShopController extends Controller
             return redirect('/area/abbonamenti')->with('status', $sub->status === 'active' ? 'Abbonamento attivato: primo ordine pagato.' : 'Abbonamento creato ma il primo addebito non è riuscito: puoi riprovare da qui.');
         }
         try {
-            $order = $orders->place($r->user(), $this->cart($r), self::COUNTRY, $d['payment_method'], $d, forOthers: $this->others($r), discountCodes: $this->codes($r), kmoneyRest: $d['kmoney_rest'] ?? null);
+            $order = $orders->place($r->user(), $this->cart($r), $country, $d['payment_method'], $d, forOthers: $this->others($r), discountCodes: $this->codes($r), kmoneyRest: $d['kmoney_rest'] ?? null);
         } catch (OrderException $e) {
             return back()->withInput()->withErrors(['order' => $e->getMessage()]);
         }

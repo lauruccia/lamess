@@ -108,7 +108,7 @@
    <div class="panel-body">
     <dl class="dl">
      <dt>Pagamento</dt><dd>@if($order->payment_method === 'kmoney')KMoney {{ $eur($order->kmoney_amount) }} KY @if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
-     @if($order->subscription_id)<dt>Tipo</dt><dd>Abbonamento mensile</dd>@endif
+     @if($order->subscription_id)<dt>Tipo</dt><dd>Abbonamento {{ $order->subscription?->intervalMonths() === 2 ? 'bimestrale' : 'mensile' }}</dd>@endif
      @if($order->paid_at)<dt>Pagato il</dt><dd>{{ \App\Support\Ui::date($order->paid_at) }}</dd>@endif
      @if($order->shipped_at)<dt>Spedito il</dt><dd>{{ \App\Support\Ui::date($order->shipped_at) }}</dd>@endif
      @if($order->carrier)<dt>Corriere</dt><dd>{{ $order->carrier }}</dd>@endif

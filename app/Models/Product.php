@@ -23,7 +23,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'net_price' => 'decimal:8', 'vat_rate' => 'decimal:2', 'pv' => 'decimal:2', 'cv' => 'decimal:2',
+            'net_price' => 'decimal:8', 'founder_net_price' => 'decimal:8', 'vat_rate' => 'decimal:2', 'pv' => 'decimal:2', 'cv' => 'decimal:2',
             'commissionable_pct' => 'decimal:2', 'shipping_commissionable' => 'boolean',
             'promo_rank_double_cv' => 'boolean', 'is_kit' => 'boolean', 'active' => 'boolean', 'countries' => 'array',
             'compare_at_net' => 'decimal:8', 'images' => 'array', 'featured' => 'boolean', 'allow_backorder' => 'boolean', 'stock_qty' => 'integer',
@@ -97,9 +97,9 @@ class Product extends Model
     }
 
     /** Prezzo più basso e più alto tra le varianti in vendita (IVA inclusa); null senza varianti. @return array{0: string, 1: string}|null */
-    public function variantPriceRange(): ?array
+    public function variantPriceRange(?User $user = null): ?array
     {
-        $prices = $this->sellableVariants()->map(fn (Product $v) => $v->grossPrice())->sortBy(fn ($p) => (float) $p)->values();
+        $prices = $this->sellableVariants()->map(fn (Product $v) => $v->grossPriceFor($user))->sortBy(fn ($p) => (float) $p)->values();
 
         return $prices->isEmpty() ? null : [(string) $prices->first(), (string) $prices->last()];
     }
@@ -140,7 +140,26 @@ class Product extends Model
     /** Prezzo IVA inclusa, arrotondato al centesimo come lo vede il cliente. */
     public function grossPrice(): string
     {
-        return (string) Num::money(Num::of($this->net_price)->multipliedBy(Num::of('100')->plus(Num::of($this->vat_rate)))->dividedBy(100, 10, RoundingMode::HalfUp));
+        return $this->grossPriceFor(null);
+    }
+
+    /** Vero se per questo utente vale il prezzo founder: è un incaricato founder e il prodotto ha un prezzo founder. */
+    public function hasFounderPriceFor(?User $user): bool
+    {
+        return $user !== null && $this->founder_net_price !== null && Num::of($this->founder_net_price)->isPositive()
+            && (bool) $user->consultant?->is_founder;
+    }
+
+    /** Prezzo IVA esclusa che vale per l'utente (null = listino): è quello che finisce nel carrello. */
+    public function netPriceFor(?User $user): string
+    {
+        return (string) ($this->hasFounderPriceFor($user) ? $this->founder_net_price : $this->net_price);
+    }
+
+    /** Prezzo IVA inclusa per l'utente: i founder vedono il prezzo founder, tutti gli altri il listino. */
+    public function grossPriceFor(?User $user): string
+    {
+        return (string) Num::money(Num::of($this->netPriceFor($user))->multipliedBy(Num::of('100')->plus(Num::of($this->vat_rate)))->dividedBy(100, 10, RoundingMode::HalfUp));
     }
 
     /** Prezzo di listino barrato IVA incluso, solo se davvero superiore al prezzo di vendita. */
@@ -154,14 +173,14 @@ class Product extends Model
     }
 
     /** Percentuale di risparmio rispetto al prezzo di listino, intera. */
-    public function savingPercent(): ?int
+    public function savingPercent(?User $user = null): ?int
     {
         $was = $this->compareAtGross();
         if ($was === null) {
             return null;
         }
 
-        return (int) Num::of($was)->minus(Num::of($this->grossPrice()))->multipliedBy(100)->dividedBy($was, 0, RoundingMode::HalfUp)->toInt();
+        return (int) Num::of($was)->minus(Num::of($this->grossPriceFor($user)))->multipliedBy(100)->dividedBy($was, 0, RoundingMode::HalfUp)->toInt();
     }
 
     /** @return list<string> percorsi delle immagini, la prima è la copertina */
@@ -326,7 +345,7 @@ class Product extends Model
         });
         // Ogni modifica a prezzo, PV/CV o parametri commissionali va nel log con valore precedente e nuovo.
         static::updated(function (Product $p): void {
-            $watch = ['net_price', 'vat_rate', 'pv', 'cv', 'promo_rank_double_cv', 'commission_base', 'commissionable_pct', 'pv_discount_mode', 'shipping_commissionable', 'active', 'compare_at_net', 'stock_qty'];
+            $watch = ['net_price', 'vat_rate', 'pv', 'cv', 'promo_rank_double_cv', 'commission_base', 'commissionable_pct', 'pv_discount_mode', 'shipping_commissionable', 'active', 'compare_at_net', 'founder_net_price', 'stock_qty'];
             $changes = [];
             foreach ($watch as $f) {
                 if ($p->wasChanged($f)) {

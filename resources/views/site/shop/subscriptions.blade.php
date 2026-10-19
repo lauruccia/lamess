@@ -39,12 +39,12 @@
       $first = collect($s->lines)->keys()->first();
       $more = max(0, count($s->lines) - 1);
       $sh = $s->billing['shipping'] ?? $s->billing;
-      $pct = $s->commitment_months ? min(100, (int) round($s->cycles_done / $s->commitment_months * 100)) : null;
+      $pct = $s->commitment_months ? min(100, (int) round($s->cycles_done / $s->commitmentCycles() * 100)) : null;
   @endphp
   <details class="panel sub-row {{ $cancelled ? 'is-off' : '' }}" @if($loop->first && ! $cancelled && $live->count() === 1) open @endif>
    <summary>
     <span class="sr-main"><strong>{{ $nice($first) }}@if($more) <span class="sub-more">+ altri {{ $more }}</span>@endif</strong>
-     <span class="muted">{{ $qty }}× al mese · {{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }} · ciclo {{ $s->cycles_done }}@if($s->commitment_months)/{{ $s->commitment_months }}@endif</span></span>
+     <span class="muted">{{ $qty }}× {{ $s->cadenceLabel() }} · {{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }} · ciclo {{ $s->cycles_done }}@if($s->commitment_months)/{{ $s->commitmentCycles() }}@endif</span></span>
     <span class="sr-next">@if($s->status === 'active' && $s->next_run_at)<small>Prossimo addebito</small><b>{{ \App\Support\Ui::date($s->next_run_at, 'd/m/Y') }}</b>@endif</span>
     <span class="st st-{{ $tone }}">{{ $lab }}</span>
     <span class="sr-chev" aria-hidden="true"></span>
@@ -57,7 +57,7 @@
     @endif
     <dl class="dl dl-sub">
      @if($s->status === 'active' && $s->next_run_at)<dt>Prossimo addebito</dt><dd><strong>{{ \App\Support\Ui::date($s->next_run_at) }}</strong> <span class="muted">· {{ \App\Support\Ui::inDays($s->next_run_at) }}</span></dd>@endif
-     <dt>Cicli completati</dt><dd>{{ $s->cycles_done }}@if($s->commitment_months) di {{ $s->commitment_months }}@endif</dd>
+     <dt>Cicli completati</dt><dd>{{ $s->cycles_done }}@if($s->commitment_months) di {{ $s->commitmentCycles() }}@endif</dd>
      <dt>Pagamento</dt><dd>{{ $s->payment_method === 'kmoney' ? 'Saldo KMoney' : 'Carta' }}</dd>
      <dt>Impegno</dt><dd>{{ $s->commitment_months ? $s->commitment_months.' mesi (puoi annullare quando vuoi)' : 'nessuno' }}</dd>
      @if(! $cancelled)<dt>Spedizione a</dt><dd>{{ ! empty($sh['recipient']) ? $sh['recipient'].' · ' : '' }}{{ $sh['address'] ?? '—' }}, {{ $sh['zip'] ?? '' }} {{ $sh['city'] ?? '' }} {{ ! empty($sh['province']) ? '('.$sh['province'].')' : '' }}</dd>@endif
@@ -98,7 +98,7 @@
    <header><h2>Come funziona</h2></header>
    <div class="panel-body">
     <ul class="sub-help">
-     <li><strong>Riordino mensile.</strong> Parte ogni mese alla data indicata, con la carta usata al checkout oppure sul tuo saldo KMoney.</li>
+     <li><strong>Riordino periodico.</strong> Parte ogni mese o ogni 2 mesi, secondo l'abbonamento scelto, alla data indicata, con la carta usata al checkout oppure sul tuo saldo KMoney.</li>
      <li><strong>In vacanza?</strong> Salta il prossimo mese, oppure metti in pausa e riprendi senza perdere i cicli fatti.</li>
      <li><strong>Indirizzo.</strong> Cambialo quando vuoi (uno dei tuoi indirizzi salvati o uno nuovo): vale dal prossimo ordine.</li>
      <li><strong>Spedizione gratuita</strong> su ogni riordino. Puoi annullare quando vuoi.</li>

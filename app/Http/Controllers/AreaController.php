@@ -144,7 +144,10 @@ class AreaController extends Controller
         abort_unless($id === (int) $me->id || DB::table('network_paths')->where('ancestor_id', $me->id)->where('descendant_id', $id)->where('depth', '>', 0)->exists(), 404);
         $p = $this->safely(static fn () => app(CareerProgress::class)->forConsultant($id));
 
-        return response()->json(app(NetworkTree::class)->detail($p));
+        $tree = app(NetworkTree::class);
+        $contact = $id === (int) $me->id ? null : $tree->contact(Consultant::findOrFail($id));
+
+        return response()->json($tree->detail($p) + ['contact' => $contact]);
     }
 
     /** Filtri dell'elenco clienti dell'incaricato (chiave in query => etichetta). */

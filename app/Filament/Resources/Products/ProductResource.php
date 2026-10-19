@@ -283,6 +283,13 @@ class ProductResource extends Resource
                     Section::make('Scheda prodotto')->icon('heroicon-o-sparkles')->columns(['default' => 1, 'md' => 3])->schema([
                         TextInput::make('name')->label('Nome del prodotto')->required()->maxLength(150)->autofocus()->columnSpan(['md' => 2]),
                         TextInput::make('sku')->label('Codice (SKU)')->required()->unique(ignoreRecord: true)->columnSpan(['md' => 1]),
+                        TextInput::make('barcode')->label('Codice a barre (EAN)')->maxLength(14)->inputMode('numeric')->placeholder('es. 8012345678905')
+                            ->rules([fn () => function (string $attribute, $value, \Closure $fail): void {
+                            if (filled($value) && ! \App\Support\Ean::isValid((string) $value)) {
+                                $fail('Il codice a barre deve essere un EAN-13 (13 cifre) o EAN-8 (8 cifre) con cifra di controllo corretta.');
+                            }
+                        }])
+                            ->helperText('EAN-13 o EAN-8. Compare in anteprima e si può stampare dalla tabella prodotti.')->columnSpan(['md' => 1]),
                         Textarea::make('description')->label('Descrizione breve')->rows(2)->maxLength(500)->columnSpanFull()
                             ->helperText('Compare sotto il nome nel catalogo e in cima alla scheda.'),
                     ]),
@@ -302,6 +309,7 @@ class ProductResource extends Resource
                                 ->afterStateUpdated(function (Get $get, Set $set, $state): void {
                                     $set('net_price', self::netFromGross($get('gross_price'), $state));
                                     $set('compare_at_net', filled($get('compare_at_gross')) ? self::netFromGross($get('compare_at_gross'), $state) : null);
+                                    $set('founder_net_price', filled($get('founder_gross')) ? self::netFromGross($get('founder_gross'), $state) : null);
                                 })
                                 ->helperText('Il prezzo IVA esclusa si calcola da solo.'),
                             TextInput::make('compare_at_gross')->label('Listino barrato IVA inclusa')->prefix('€')->numeric()->minValue(0)->gt('gross_price')->nullable()->live(onBlur: true)->dehydrated(false)
@@ -309,9 +317,16 @@ class ProductResource extends Resource
                                 ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('compare_at_net', filled($state) ? self::netFromGross($state, $get('vat_rate')) : null))
                                 ->validationMessages(['gt' => 'Il listino barrato deve essere più alto del prezzo.'])
                                 ->helperText('Facoltativo: nel negozio compare barrato, con il risparmio.'),
+                            TextInput::make('founder_gross')->label('Prezzo founder IVA inclusa')->prefix('€')->numeric()->minValue(0)->lt('gross_price')->nullable()->live(onBlur: true)->dehydrated(false)
+                                ->visible(fn (Get $get) => blank($get('variants')))
+                                ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->founder_net_price !== null ? self::grossFromNet($record->founder_net_price, $record->vat_rate) : null))
+                                ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('founder_net_price', filled($state) ? self::netFromGross($state, $get('vat_rate')) : null))
+                                ->validationMessages(['lt' => 'Il prezzo founder deve essere più basso del prezzo di listino.'])
+                                ->helperText('Facoltativo: gli incaricati founder pagano questo prezzo al posto del listino. Cambia solo il prezzo, i punti restano quelli del prodotto. Vuoto = nessun prezzo founder.'),
                             // Importi IVA esclusa: non si vedono, si ricavano dai prezzi IVA inclusa e restano quelli salvati e usati da ordini e fatture.
                             Hidden::make('net_price')->default(0)->dehydrateStateUsing(fn ($state) => filled($state) ? $state : 0),
                             Hidden::make('compare_at_net')->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
+                            Hidden::make('founder_net_price')->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
                         ]),
                     Section::make('Commissioni e durata (Piano Incaricati)')->icon('heroicon-o-star')
                         ->description('Esempio: Box da 150 € con V.A.P. 100 € → i compensi si calcolano su 100 €. Un prodotto da 5 box può valere 5 clienti, uno da 10 box può valere 1 cliente per 12 mesi.')
@@ -382,6 +397,12 @@ class ProductResource extends Resource
                                     Hidden::make('variant_label'),
                                     Hidden::make('variant_options'),
                                     TextInput::make('sku')->label('Codice (SKU)')->placeholder('automatico')->maxLength(60)->distinct()->unique(ignoreRecord: true),
+                                    TextInput::make('barcode')->label('Codice a barre (EAN)')->maxLength(14)->inputMode('numeric')
+                                        ->rules([fn () => function (string $attribute, $value, \Closure $fail): void {
+                                if (filled($value) && ! \App\Support\Ean::isValid((string) $value)) {
+                                    $fail('Il codice a barre deve essere un EAN-13 (13 cifre) o EAN-8 (8 cifre) con cifra di controllo corretta.');
+                                }
+                        }]),
                                     TextInput::make('net_price')->label('Prezzo IVA esclusa')->prefix('€')->numeric()->minValue(0.01)->required()->live(onBlur: true)
                                         ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('price_gross', self::grossFromNet($state, $get('../../vat_rate') ?? 22))),
                                     TextInput::make('price_gross')->label('Prezzo IVA incl. (calcolato)')->prefix('€')->readOnly()->dehydrated(false),
@@ -485,7 +506,8 @@ class ProductResource extends Resource
                 ->tooltip(fn (Product $r): string => $r->name.' — '.$r->sku)
                 ->description(fn (Product $r) => Str::limit((string) $r->sku, 28))
                 ->extraAttributes(['style' => 'max-width:16rem'])
-                ->searchable(['name', 'sku']),
+                ->searchable(['name', 'sku', 'barcode']),
+            TextColumn::make('barcode')->label('Codice a barre')->placeholder('—')->copyable()->toggleable(),
             TextColumn::make('category.name')->label('Categoria')->badge()->color('gray')->placeholder('—')->toggleable(),
             TextColumn::make('price')->label('Prezzo IVA incl. €')->alignEnd()
                 ->state(function (Product $r): string {
@@ -523,10 +545,18 @@ class ProductResource extends Resource
             Filter::make('low_stock')->label('Giacenza bassa o esaurita')->query(fn (Builder $q) => $q->whereNull('parent_id')->where(fn (Builder $w) => $w->where(fn (Builder $x) => $x->whereNotNull('stock_qty')->where('stock_qty', '<=', self::LOW_STOCK))->orWhereHas('variants', fn (Builder $v) => $v->whereNotNull('stock_qty')->where('stock_qty', '<=', self::LOW_STOCK)))),
         ])->recordActions([
             EditAction::make()->label('Modifica')->iconButton()->tooltip('Modifica'),
+            Action::make('barcode')->label('Codice a barre')->icon('heroicon-o-qr-code')->iconButton()->tooltip('Codice a barre')
+                ->visible(fn (Product $r) => \App\Support\Ean::isValid($r->barcode))
+                ->modalHeading(fn (Product $r) => 'Codice a barre — '.$r->name)->modalWidth('md')
+                ->modalContent(fn (Product $r) => new \Illuminate\Support\HtmlString(
+                    '<div style="text-align:center"><div style="background:#fff;padding:12px;display:inline-block">'.\App\Support\Ean::svg($r->barcode).'</div>'
+                    .'<p style="margin-top:10px"><a href="data:image/svg+xml;base64,'.base64_encode(\App\Support\Ean::svg($r->barcode, 3, 100)).'" download="ean-'.e(\App\Support\Ean::normalize($r->barcode)).'.svg" style="text-decoration:underline">Scarica il codice (SVG, per la stampa)</a></p></div>'
+                ))->modalSubmitAction(false)->modalCancelActionLabel('Chiudi'),
             ReplicateAction::make()->label('Duplica')->iconButton()->tooltip('Duplica')->authorize('catalog.manage')
                 ->excludeAttributes(['slug', 'stock_qty'])
                 ->beforeReplicaSaved(function (Model $replica): void {
                     $replica->sku = Str::limit($replica->sku, 40, '').'-COPIA'.Str::upper(Str::random(3));
+                    $replica->barcode = null;   // il codice a barre identifica un solo prodotto
                     $replica->name = $replica->name.' (copia)';
                     $replica->active = false;
                 })

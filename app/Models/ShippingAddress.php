@@ -25,6 +25,9 @@ class ShippingAddress extends Model
     public function oneLine(): string
     {
         $place = trim("{$this->zip} {$this->city}".($this->province ? " ({$this->province})" : ''));
+        if ($this->country_code && $this->country_code !== 'IT') {
+            $place .= ', '.(config('lamess.country_names')[$this->country_code] ?? $this->country_code);
+        }
 
         return trim(($this->label ? "{$this->label} — " : '')."{$this->address}, {$place}");
     }

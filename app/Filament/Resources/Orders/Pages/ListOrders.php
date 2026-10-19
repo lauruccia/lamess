@@ -75,7 +75,7 @@ class ListOrders extends SuperadminListRecords
                     TextInput::make('city')->label('Città')->required(),
                     TextInput::make('zip')->label('CAP')->required(),
                     TextInput::make('province')->label('Provincia')->maxLength(3),
-                    Select::make('country')->label('Paese')->options(fn () => collect((array) config('lamess.shop_countries'))->mapWithKeys(fn ($c) => [$c => $c])->all())->default('IT')->required(),
+                    Select::make('country')->label('Nazione di spedizione')->options(fn () => collect((array) config('lamess.shop_countries'))->mapWithKeys(fn ($c) => [$c => (config('lamess.country_names')[$c] ?? $c)])->all())->default('IT')->required(),
                 ]),
                 Select::make('method')->label('Metodo di pagamento')->options(['transfer' => 'Bonifico', 'card' => 'Carta (paga il cliente su Stripe)', 'kmoney' => 'KMoney'])->default('transfer')->required()->live(),
                 Toggle::make('paid')->visible(fn (Get $get) => $get('method') !== 'card')->label(LegacyPlan::hidden() ? 'Già pagato: conferma subito il pagamento (genera la fattura)' : 'Già pagato: conferma subito il pagamento (genera punti e fattura)')->default(false),

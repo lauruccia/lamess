@@ -39,7 +39,7 @@ final class ShippingAddressBook
             'user_id' => $user->id, 'is_default' => $count === 0,
             'label' => $this->clean($d['label'] ?? null, 60), 'recipient' => $this->clean($d['recipient'] ?? null, 190),
             'address' => $this->clean($d['address'], 190), 'city' => $this->clean($d['city'], 120), 'zip' => $this->clean($d['zip'], 10),
-            'province' => $this->clean($d['province'] ?? null, 3), 'phone' => $this->clean($d['phone'] ?? null, 30),
+            'province' => $this->clean($d['province'] ?? null, 3), 'country_code' => $this->country($d['country_code'] ?? null), 'phone' => $this->clean($d['phone'] ?? null, 30),
         ]);
     }
 
@@ -55,7 +55,7 @@ final class ShippingAddressBook
         $a->update([
             'label' => $this->clean($d['label'] ?? null, 60), 'recipient' => $this->clean($d['recipient'] ?? null, 190),
             'address' => $this->clean($d['address'], 190), 'city' => $this->clean($d['city'], 120), 'zip' => $this->clean($d['zip'], 10),
-            'province' => $this->clean($d['province'] ?? null, 3), 'phone' => $this->clean($d['phone'] ?? null, 30),
+            'province' => $this->clean($d['province'] ?? null, 3), 'country_code' => $this->country($d['country_code'] ?? null), 'phone' => $this->clean($d['phone'] ?? null, 30),
         ]);
 
         return $a->refresh();
@@ -84,7 +84,7 @@ final class ShippingAddressBook
      *
      * @param  array<string,mixed>  $in  campi del modulo
      * @param  array<string,mixed>  $billing  dati di fatturazione (per «come la fatturazione»)
-     * @return array{id:?int,label:?string,recipient:?string,address:string,city:string,zip:string,province:?string,phone:?string}
+     * @return array{id:?int,label:?string,recipient:?string,address:string,city:string,zip:string,province:?string,country_code:string,phone:?string}
      */
     public function resolve(User $user, array $in, array $billing): array
     {
@@ -92,7 +92,7 @@ final class ShippingAddressBook
         if ($to === 'new') {
             $data = [
                 'label' => $in['ship_label'] ?? null, 'recipient' => $in['ship_recipient'] ?? null, 'address' => $in['ship_address'] ?? null,
-                'city' => $in['ship_city'] ?? null, 'zip' => $in['ship_zip'] ?? null, 'province' => $in['ship_province'] ?? null, 'phone' => $in['ship_phone'] ?? null,
+                'city' => $in['ship_city'] ?? null, 'zip' => $in['ship_zip'] ?? null, 'province' => $in['ship_province'] ?? null, 'country_code' => $in['ship_country'] ?? null, 'phone' => $in['ship_phone'] ?? null,
             ];
             if (! empty($in['ship_save'])) {
                 return $this->toArray($this->add($user, $data));
@@ -102,6 +102,8 @@ final class ShippingAddressBook
                     throw new OrderException('Completa l\'indirizzo di spedizione: servono indirizzo, città e CAP.');
                 }
             }
+
+            $data['country_code'] = $this->country($data['country_code']);
 
             return ['id' => null] + array_map(fn ($v) => $v === null || $v === '' ? null : trim((string) $v), $data);
         }
@@ -121,14 +123,14 @@ final class ShippingAddressBook
 
         return [
             'id' => null, 'label' => null, 'recipient' => null, 'address' => (string) $billing['address'], 'city' => (string) $billing['city'],
-            'zip' => (string) $billing['zip'], 'province' => $billing['province'] ?? null, 'phone' => null,
+            'zip' => (string) $billing['zip'], 'province' => $billing['province'] ?? null, 'country_code' => $this->country($billing['country'] ?? null), 'phone' => null,
         ];
     }
 
-    /** @return array{id:?int,label:?string,recipient:?string,address:string,city:string,zip:string,province:?string,phone:?string} */
+    /** @return array{id:?int,label:?string,recipient:?string,address:string,city:string,zip:string,province:?string,country_code:string,phone:?string} */
     private function toArray(ShippingAddress $a): array
     {
-        return ['id' => $a->id, 'label' => $a->label, 'recipient' => $a->recipient, 'address' => $a->address, 'city' => $a->city, 'zip' => $a->zip, 'province' => $a->province, 'phone' => $a->phone];
+        return ['id' => $a->id, 'label' => $a->label, 'recipient' => $a->recipient, 'address' => $a->address, 'city' => $a->city, 'zip' => $a->zip, 'province' => $a->province, 'country_code' => $a->country_code ?: 'IT', 'phone' => $a->phone];
     }
 
     private function own(User $user, ShippingAddress $a): void
@@ -136,6 +138,14 @@ final class ShippingAddressBook
         if ($a->user_id !== $user->id) {
             throw new OrderException('Indirizzo di spedizione non trovato.');
         }
+    }
+
+    /** Nazione ISO a 2 lettere: vuota o non aperta nello shop = Italia. */
+    public function country(mixed $v): string
+    {
+        $c = strtoupper(trim((string) $v));
+
+        return in_array($c, (array) config('lamess.shop_countries'), true) ? $c : 'IT';
     }
 
     private function clean(mixed $v, int $max): ?string

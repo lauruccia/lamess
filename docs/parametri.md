@@ -159,6 +159,9 @@ Si cambiano dal pannello (Impostazioni di sistema, che ha la precedenza sul `.en
 | `commission_calc_day`, `commission_calc_hour` | `1`, `1` | quando parte il calcolo del mese: `end` (ultimo giorno) oppure giorno 1–28 del mese successivo, all'ora indicata (ora italiana) |
 | `structure_bonus_auto`, `structure_bonus_weekday`, `structure_bonus_hour` | no, 1 (lunedì), 6 | calcolo settimanale del Bonus di Struttura |
 | `plan_four_eyes` (`LAMESS_PLAN_FOUR_EYES`) | sì | la pubblicazione del piano richiede un secondo amministratore |
+| `subscription.reminder_days` | 7 | giorni di preavviso del promemoria prima dell'addebito (0 = nessun promemoria) |
+| `network.downline_contacts`, `network.downline_place` | acceso, acceso | cosa vede l'incaricato dei sotto-incaricati: email/telefono e città/provincia |
+| `shop_countries` (`LAMESS_SHOP_COUNTRIES`) | IT | nazioni aperte nello shop, separate da virgola |
 | `subscription.retry_days`, `subscription.max_retries`, `subscription.max_skip_ahead_months` | 1, 3, 3 | tentativi di addebito e mesi che il cliente può saltare. L'impegno minimo configurabile non esiste più: i nuovi abbonamenti partono con impegno di 12 mesi **non vincolante** e con spedizione sempre gratuita |
 | `max_shipping_addresses` | 10 | indirizzi di spedizione per utente (valore fisso in `config/lamess.php`) |
 | `kmoney_driver` (`LAMESS_KMONEY_DRIVER`) | `fake` | `fake` (sviluppo) · `api` (produzione) · `off` |

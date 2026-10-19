@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\SubscriptionChargeFailed;
+use App\Notifications\SubscriptionChargeReminder;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Support\Arr;
@@ -43,9 +44,12 @@ final class SubscriptionService
      * @param  array<string,mixed>  $billing
      * @param  array<int,array<int,int>>  $forOthers  destinatari dell'ordine multiplo
      */
-    public function subscribe(User $user, array $lines, string $country, array $billing, int $commitmentMonths = 0, array $forOthers = [], ?DateTimeImmutable $now = null, string $method = 'card'): Subscription
+    public function subscribe(User $user, array $lines, string $country, array $billing, int $commitmentMonths = 0, array $forOthers = [], ?DateTimeImmutable $now = null, string $method = 'card', int $intervalMonths = 1): Subscription
     {
         $now ??= CarbonImmutable::now();
+        if (! in_array($intervalMonths, [1, 2], true)) {
+            throw new OrderException('Cadenza dell\'abbonamento non valida: scegli mensile o bimestrale.');
+        }
         if (! in_array($method, [Subscription::METHOD_CARD, Subscription::METHOD_KMONEY], true)) {
             throw new OrderException('L\'abbonamento si paga con carta o con KMoney.');
         }
@@ -66,9 +70,9 @@ final class SubscriptionService
         $free = true;
         $sub = Subscription::create([
             'user_id' => $user->id, 'status' => Subscription::ACTIVE, 'lines' => $lines, 'for_others' => $forOthers ?: null, 'country_code' => $country,
-            'billing' => $billing, 'payment_method' => $method, 'commitment_months' => $commitmentMonths, 'free_shipping' => $free, 'started_at' => $now, 'next_run_at' => $now,
+            'billing' => $billing, 'payment_method' => $method, 'interval_months' => $intervalMonths, 'commitment_months' => $commitmentMonths, 'free_shipping' => $free, 'started_at' => $now, 'next_run_at' => $now,
         ]);
-        AuditLog::record('subscription.created', "Abbonamento creato per {$user->email}", $sub, ['impegno_mesi' => $commitmentMonths, 'spedizione_gratuita' => $free, 'metodo' => $method]);
+        AuditLog::record('subscription.created', "Abbonamento creato per {$user->email}", $sub, ['impegno_mesi' => $commitmentMonths, 'ogni_mesi' => $intervalMonths, 'spedizione_gratuita' => $free, 'metodo' => $method]);
 
         // Carta su una pagina esterna (Stripe): il primo pagamento lo fa il cliente lì e salva la carta per i cicli successivi.
         // L'abbonamento resta «in attesa» finché il webhook non conferma (vedi activateAfterCheckout).
@@ -112,7 +116,7 @@ final class SubscriptionService
         $sub->update([
             'status' => Subscription::ACTIVE, 'cycles_done' => 1, 'retry_count' => 0, 'last_error' => null,
             'stripe_customer_id' => $stripeCustomerId, 'stripe_payment_method_id' => $stripePaymentMethodId,
-            'next_run_at' => CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow(1 + $sub->skip_months),
+            'next_run_at' => CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow((1 + $sub->skip_months) * $sub->intervalMonths()),
         ]);
         AuditLog::record('subscription.activated', "Abbonamento #{$sub->id} attivo: primo ordine pagato", $sub, ['carta_salvata' => $stripePaymentMethodId !== null]);
 
@@ -130,6 +134,39 @@ final class SubscriptionService
         }
 
         return $out;
+    }
+
+    /**
+     * Promemoria prima dell'addebito: per ogni abbonamento attivo con scadenza entro reminder_days giorni, una sola email per scadenza.
+     * Se l'email non parte (errore di posta) non si segna come inviata e si riprova al prossimo passaggio.
+     *
+     * @return int email inviate
+     */
+    public function sendReminders(?DateTimeImmutable $now = null): int
+    {
+        $days = (int) config('lamess.subscription.reminder_days');
+        if ($days <= 0) {
+            return 0;
+        }
+        $now = CarbonImmutable::instance($now ?? CarbonImmutable::now());
+        $sent = 0;
+        $due = Subscription::where('status', Subscription::ACTIVE)->where('retry_count', 0)
+            ->where('next_run_at', '>', $now)->where('next_run_at', '<=', $now->addDays($days))->orderBy('id')->get();
+        foreach ($due as $sub) {
+            if ($sub->reminded_for !== null && $sub->reminded_for->equalTo($sub->next_run_at)) {
+                continue;
+            }
+            try {
+                $last = $sub->orders()->whereIn('status', ['paid', 'shipped', 'delivered', 'completed'])->latest('id')->first();
+                $sub->user?->notify(new SubscriptionChargeReminder($sub, $last !== null ? number_format((float) $last->total, 2, ',', '.') : null));
+                $sub->update(['reminded_for' => $sub->next_run_at]);
+                $sent++;
+            } catch (Throwable $e) {
+                AuditLog::record('subscription.notify_failed', "Abbonamento #{$sub->id}: promemoria pre-addebito non inviato", $sub, ['errore' => $e->getMessage()]);
+            }
+        }
+
+        return $sent;
     }
 
     /** Un ciclo: ordine + addebito. @return 'paid'|'failed'|'paused' */
@@ -187,11 +224,12 @@ final class SubscriptionService
             $done = $sub->cycles_done + 1;
             $skipped = $sub->skip_months;
             $anchor = CarbonImmutable::instance($sub->started_at);
-            $next = $anchor->addMonthsNoOverflow($done + $skipped);
-            // Dopo una pausa lunga i mesi passati non si recuperano: si salta alla prima scadenza futura.
+            $iv = $sub->intervalMonths();
+            $next = $anchor->addMonthsNoOverflow(($done + $skipped) * $iv);
+            // Dopo una pausa lunga le scadenze passate non si recuperano: si salta alla prima scadenza futura.
             while ($next->lessThanOrEqualTo($now)) {
                 $skipped++;
-                $next = $anchor->addMonthsNoOverflow($done + $skipped);
+                $next = $anchor->addMonthsNoOverflow(($done + $skipped) * $iv);
             }
             $sub->update(['cycles_done' => $done, 'retry_count' => 0, 'last_error' => null, 'skip_months' => $skipped, 'next_run_at' => $next]);
             $this->syncKMoney($sub);
@@ -247,7 +285,7 @@ final class SubscriptionService
             throw new OrderException('Solo un abbonamento in pausa si può riprendere.');
         }
         $now ??= CarbonImmutable::now();
-        $due = CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow($sub->cycles_done + $sub->skip_months);
+        $due = CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow(($sub->cycles_done + $sub->skip_months) * $sub->intervalMonths());
         $payNow = $due->lessThanOrEqualTo($now);
         $sub->update(['status' => Subscription::ACTIVE, 'paused_at' => null, 'retry_count' => 0, 'last_error' => null, 'next_run_at' => $payNow ? $now : $due]);
         AuditLog::record('subscription.resumed', "Abbonamento #{$sub->id} ripreso", $sub, ['addebito_subito' => $payNow]);
@@ -270,10 +308,11 @@ final class SubscriptionService
         if ($sub->retry_count > 0) {
             throw new OrderException('L\'ultimo addebito non è riuscito: riprendi o metti in pausa l\'abbonamento.');
         }
-        $next = $sub->next_run_at->addMonthsNoOverflow(1);
-        $limit = CarbonImmutable::instance($now)->addMonthsNoOverflow((int) config('lamess.subscription.max_skip_ahead_months'));
+        $next = $sub->next_run_at->addMonthsNoOverflow($sub->intervalMonths());
+        // L'orizzonte è in cicli: 3 mesi per il mensile, 6 per il bimestrale.
+        $limit = CarbonImmutable::instance($now)->addMonthsNoOverflow((int) config('lamess.subscription.max_skip_ahead_months') * $sub->intervalMonths());
         if ($next->greaterThan($limit)) {
-            throw new OrderException('Puoi saltare al massimo fino a '.(int) config('lamess.subscription.max_skip_ahead_months').' mesi in anticipo: se ti serve di più, metti l\'abbonamento in pausa.');
+            throw new OrderException('Puoi saltare al massimo fino a '.((int) config('lamess.subscription.max_skip_ahead_months') * $sub->intervalMonths()).' mesi in anticipo: se ti serve di più, metti l\'abbonamento in pausa.');
         }
         $sub->update(['skip_months' => $sub->skip_months + 1, 'next_run_at' => $next]);
         AuditLog::record('subscription.skipped', "Abbonamento #{$sub->id}: prossimo addebito spostato al {$next->format('d/m/Y')}", $sub, ['mesi_saltati' => $sub->skip_months]);
@@ -308,7 +347,7 @@ final class SubscriptionService
             throw new OrderException('L\'abbonamento è già annullato.');
         }
         $this->releasePendingOrders($sub);
-        $early = $sub->status !== Subscription::PENDING && $sub->commitment_months > 0 && $sub->cycles_done < $sub->commitment_months;
+        $early = $sub->status !== Subscription::PENDING && $sub->commitment_months > 0 && $sub->cycles_done < $sub->commitmentCycles();
         $sub->update(['status' => Subscription::CANCELLED, 'cancelled_at' => now(), 'cancel_reason' => $reason, 'early_cancel' => $early, 'next_run_at' => null]);
         AuditLog::record('subscription.cancelled', "Abbonamento #{$sub->id} annullato".($early ? ' prima dell\'impegno minimo' : ''), $sub, ['disdetta_anticipata' => $early, 'cicli' => $sub->cycles_done], $reason);
         $this->syncKMoney($sub);

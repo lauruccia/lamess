@@ -31,8 +31,26 @@ class Subscription extends Model
     {
         return [
             'lines' => 'array', 'for_others' => 'array', 'billing' => 'array', 'free_shipping' => 'boolean', 'early_cancel' => 'boolean',
-            'started_at' => 'immutable_datetime', 'next_run_at' => 'immutable_datetime', 'paused_at' => 'immutable_datetime', 'cancelled_at' => 'immutable_datetime',
+            'started_at' => 'immutable_datetime', 'next_run_at' => 'immutable_datetime', 'reminded_for' => 'immutable_datetime', 'paused_at' => 'immutable_datetime', 'cancelled_at' => 'immutable_datetime',
         ];
+    }
+
+    /** Ogni quanti mesi parte un ordine (1 = mensile, 2 = bimestrale). */
+    public function intervalMonths(): int
+    {
+        return max(1, (int) $this->interval_months);
+    }
+
+    /** «al mese» / «ogni 2 mesi», per le frasi del tipo «1× al mese». */
+    public function cadenceLabel(): string
+    {
+        return $this->intervalMonths() === 1 ? 'al mese' : 'ogni '.$this->intervalMonths().' mesi';
+    }
+
+    /** Numero di ordini che coprono l'impegno (impegno in mesi diviso la cadenza, arrotondato per eccesso); 0 = nessun impegno. */
+    public function commitmentCycles(): int
+    {
+        return (int) ceil((int) $this->commitment_months / $this->intervalMonths());
     }
 
     public function user(): BelongsTo

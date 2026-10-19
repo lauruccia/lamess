@@ -126,7 +126,7 @@
 @endphp
       <a class="item" href="/area/abbonamenti">
        <span class="ico">@include('site.area._i', ['n' => 'repeat'])</span>
-       <span class="main"><span class="t">{{ collect($s->lines)->sum() }} {{ collect($s->lines)->sum() === 1 ? 'prodotto' : 'prodotti' }} al mese</span><span class="m">{{ $s->status === 'active' && $s->next_run_at ? 'Prossimo addebito '.\App\Support\Ui::date($s->next_run_at).' · '.\App\Support\Ui::inDays($s->next_run_at) : 'Cicli completati: '.$s->cycles_done }}</span></span>
+       <span class="main"><span class="t">{{ collect($s->lines)->sum() }} {{ collect($s->lines)->sum() === 1 ? 'prodotto' : 'prodotti' }} {{ $s->cadenceLabel() }}</span><span class="m">{{ $s->status === 'active' && $s->next_run_at ? 'Prossimo addebito '.\App\Support\Ui::date($s->next_run_at).' · '.\App\Support\Ui::inDays($s->next_run_at) : 'Cicli completati: '.$s->cycles_done }}</span></span>
        <span class="end"><span class="st st-{{ $tone }}">{{ $lab }}</span></span>
       </a>
      @endforeach

@@ -179,7 +179,7 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
                 'items' => $items,
                 'seller_account_number' => config('lamess.kmoney.seller_account'),
                 'amount' => $kmoneyAmount === null ? null : BigDecimal::of((string) $kmoneyAmount)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp)->toInt(),
-                'interval_months' => 1,
+                'interval_months' => $subscription->intervalMonths(),
                 'status' => match ($subscription->status) {
                     Subscription::ACTIVE => 'active',
                     Subscription::CANCELLED => 'cancelled',

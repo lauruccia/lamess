@@ -73,6 +73,33 @@ final class NetworkTree
     }
 
     /**
+     * Recapiti di un incaricato del proprio ramo, secondo le impostazioni dell'admin. Mai dati fiscali, IBAN o documenti.
+     * Chi chiama deve aver già verificato che la persona sia nel ramo.
+     *
+     * @return array{email:?string, phone:?string, place:?string}|null null se nessun dato è abilitato
+     */
+    public function contact(Consultant $c): ?array
+    {
+        $showContacts = (bool) config('lamess.network.downline_contacts');
+        $showPlace = (bool) config('lamess.network.downline_place');
+        if (! $showContacts && ! $showPlace) {
+            return null;
+        }
+        $c->loadMissing('user.profile');
+        $profile = $c->user?->profile;
+        $out = ['email' => null, 'phone' => null, 'place' => null];
+        if ($showContacts) {
+            $out['email'] = $c->user?->email ?: null;
+            $out['phone'] = $profile?->phone ?: null;
+        }
+        if ($showPlace) {
+            $out['place'] = trim(($profile?->city ?? '').($profile?->province ? ' ('.$profile->province.')' : '')) ?: null;
+        }
+
+        return $out;
+    }
+
+    /**
      * Requisiti di una persona per la prossima qualifica, caricati al clic su un nodo. Testi neutri (non «ti mancano»):
      * chi guarda è l'upline, non la persona.
      *

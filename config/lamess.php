@@ -84,7 +84,13 @@ return [
     // Negozio e fatturazione (F2)
     'eur_per_pv' => env('LAMESS_EUR_PER_PV', '1.23'),            // PV suggerito = imponibile / 1,23 (RF-040)
     'default_vat_rate' => '22.00',
-    'shop_countries' => ['IT'],                                   // mercati aperti (RF-036)
+    // Cosa vede un incaricato delle persone sotto di lui (decide l'admin da Impostazioni di sistema). I dati fiscali non si mostrano mai.
+    'network' => [
+        'downline_contacts' => true,  // email e telefono degli incaricati del proprio ramo
+        'downline_place' => true,     // città e provincia degli incaricati del proprio ramo
+    ],
+    'shop_countries' => array_values(array_filter(array_map('trim', explode(',', strtoupper((string) env('LAMESS_SHOP_COUNTRIES', 'IT')))))), // mercati aperti (RF-036): es. LAMESS_SHOP_COUNTRIES=IT,DE,FR nel .env
+    'country_names' => ['IT' => 'Italia', 'DE' => 'Germania', 'FR' => 'Francia', 'ES' => 'Spagna', 'AT' => 'Austria', 'CH' => 'Svizzera', 'BE' => 'Belgio', 'NL' => 'Paesi Bassi', 'PT' => 'Portogallo', 'GB' => 'Regno Unito', 'IE' => 'Irlanda', 'LU' => 'Lussemburgo', 'SM' => 'San Marino', 'MT' => 'Malta', 'GR' => 'Grecia', 'US' => 'Stati Uniti'],
     'payment_driver' => env('LAMESS_PAYMENT_DRIVER', env('APP_ENV') === 'production' ? 'stripe' : 'fake'),   // fake (solo sviluppo) | stripe: ogni pagamento con carta passa da Stripe
     'kmoney_driver' => env('LAMESS_KMONEY_DRIVER', 'fake'),   // fake | api | off
     // Connessione a KMoney (kmoney-app): OAuth2 + mandato di pagamento. Le credenziali arrivano da KMoney (client «kshop»).
@@ -113,6 +119,7 @@ return [
     // Abbonamento e spedizione gratuita sugli ordini ripetitivi (RF-A01, RF-A03). Modificabili da Impostazioni di sistema.
     'subscription' => [
         'retry_days' => 1,         // giorni tra un tentativo di addebito e il successivo
+        'reminder_days' => 7,      // giorni prima dell'addebito in cui parte il promemoria al cliente (0 = nessun promemoria)
         'max_retries' => 3,        // dopo l'ultimo tentativo fallito l'abbonamento va in pausa
         'max_skip_ahead_months' => 3, // il cliente può saltare mesi finché il prossimo addebito non supera questo orizzonte
     ],

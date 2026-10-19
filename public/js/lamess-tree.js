@@ -311,6 +311,14 @@
   }
   function renderDetail(holder, j, id) {
     holder.innerHTML = '';
+    if (j && j.contact) {
+      var cbox = h('div', 'lt-req');
+      cbox.appendChild(h('h4', '', 'Scheda e recapiti'));
+      if (j.contact.email) { var ea = h('a', '', j.contact.email); ea.href = 'mailto:' + j.contact.email; var er = h('div', 'lt-rrow'); er.appendChild(h('span', '', 'Email')); er.appendChild(ea); cbox.appendChild(er); }
+      if (j.contact.phone) { var pa = h('a', '', j.contact.phone); pa.href = 'tel:' + j.contact.phone.replace(/\s+/g, ''); var pr = h('div', 'lt-rrow'); pr.appendChild(h('span', '', 'Telefono')); pr.appendChild(pa); cbox.appendChild(pr); }
+      if (j.contact.place) { var lr = h('div', 'lt-rrow'); lr.appendChild(h('span', '', 'Città')); lr.appendChild(h('span', '', j.contact.place)); cbox.appendChild(lr); }
+      holder.appendChild(cbox);
+    }
     if (!j || !j.known) {
       holder.appendChild(h('p', 'lt-sub', 'Nessun dato di carriera: la persona non è ancora nel calcolo del periodo. I requisiti compaiono dopo il prossimo calcolo.'));
       return;

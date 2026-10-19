@@ -6,7 +6,7 @@
  $desc = $product->seo_description ?: ($product->description ?: 'Scopri '.$product->name.' su Lamèss.');
  $images = $product->imagePaths();
  $firstImage = $withVariants && $chosen->imagePaths() ? $chosen->imagePaths()[0] : ($images[0] ?? null);
- $saving = $current->savingPercent();
+ $saving = $current->savingPercent(auth()->user());
  $max = $current->availableQty();
 @endphp
 @section('title', $title.' — Lamèss')
@@ -19,8 +19,8 @@
  '@context' => 'https://schema.org', '@type' => 'Product', 'name' => $product->name, 'sku' => $product->sku, 'description' => $desc,
  'image' => array_map(fn ($p) => \App\Models\Product::mediaUrl($p), $images) ?: null,
  'offers' => $withVariants
-  ? $variants->map(fn ($v) => ['@type' => 'Offer', 'name' => $v->variant_label, 'sku' => $v->sku, 'priceCurrency' => 'EUR', 'price' => $v->grossPrice(), 'availability' => $v->isSoldOut() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock', 'url' => $v->shopUrl()])->all()
-  : ['@type' => 'Offer', 'priceCurrency' => 'EUR', 'price' => $product->grossPrice(), 'availability' => $product->isSoldOut() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock', 'url' => url('/negozio/'.$product->slug)],
+  ? $variants->map(fn ($v) => ['@type' => 'Offer', 'name' => $v->variant_label, 'sku' => $v->sku, 'priceCurrency' => 'EUR', 'price' => $v->grossPriceFor(auth()->user()), 'availability' => $v->isSoldOut() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock', 'url' => $v->shopUrl()])->all()
+  : ['@type' => 'Offer', 'priceCurrency' => 'EUR', 'price' => $product->grossPriceFor(auth()->user()), 'availability' => $product->isSoldOut() ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock', 'url' => url('/negozio/'.$product->slug)],
 ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
 @section('content')
@@ -42,7 +42,7 @@
  <div class="pdp-info">
   @if($product->category)<a class="pcard-cat" href="/negozio?categoria={{ $product->category->slug }}">{{ $product->category->name }}</a>@endif
   <h1>{{ $product->displayName() }}</h1>
-  <p class="price big" data-v-price><b>€ {{ \App\Support\Money::eur($current->grossPrice()) }}</b>@if($current->compareAtGross()) <s>€ {{ \App\Support\Money::eur($current->compareAtGross()) }}</s> <span class="save">Risparmi il {{ $saving }}%</span>@endif</p>
+  <p class="price big" data-v-price><b>€ {{ \App\Support\Money::eur($current->grossPriceFor(auth()->user())) }}</b>@if($current->compareAtGross()) <s>€ {{ \App\Support\Money::eur($current->compareAtGross()) }}</s> <span class="save">Risparmi il {{ $saving }}%</span>@endif</p>
   <p class="muted small vat-line">IVA inclusa · spedizione calcolata al checkout</p>
   @if($product->description)<p class="pdp-lead">{{ $product->description }}</p>@endif
 
@@ -79,7 +79,7 @@
    <p class="variant-na" data-v-na hidden>Questa combinazione non è disponibile: scegline un'altra.</p>
    <script type="application/json" id="variants-data">{!! json_encode($variants->map(fn ($v) => [
     'id' => $v->id, 'options' => array_values((array) $v->variant_options), 'sku' => $v->sku,
-    'price' => \App\Support\Money::eur($v->grossPrice()), 'was' => $v->compareAtGross() ? \App\Support\Money::eur($v->compareAtGross()) : null, 'saving' => $v->savingPercent(),
+    'price' => \App\Support\Money::eur($v->grossPriceFor(auth()->user())), 'was' => $v->compareAtGross() ? \App\Support\Money::eur($v->compareAtGross()) : null, 'saving' => $v->savingPercent(auth()->user()),
     'soldOut' => $v->isSoldOut(), 'low' => $v->isLowStock(), 'max' => $v->availableQty(), 'img' => $v->imagePaths() ? \App\Models\Product::mediaUrl($v->imagePaths()[0]) : null,
    ])->values(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
   @endif

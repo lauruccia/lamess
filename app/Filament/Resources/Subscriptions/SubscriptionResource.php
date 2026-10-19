@@ -7,8 +7,8 @@ namespace App\Filament\Resources\Subscriptions;
 use App\Domain\Orders\OrderException;
 use App\Domain\Subscriptions\SubscriptionService;
 use App\Filament\Concerns\GatedByPermission;
-use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
 use App\Filament\Resources\Subscriptions\Pages\EditSubscription;
+use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
 use App\Models\Subscription;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -62,12 +62,13 @@ class SubscriptionResource extends Resource
                 ->formatStateUsing(fn (string $state) => ['pending' => 'In attesa 1° pagamento', 'active' => 'Attivo', 'paused' => 'In pausa', 'cancelled' => 'Annullato'][$state] ?? $state)
                 ->color(fn (string $state) => ['pending' => 'warning', 'active' => 'success', 'paused' => 'warning', 'cancelled' => 'gray'][$state] ?? 'gray'),
             TextColumn::make('payment_method')->label('Pagamento')->formatStateUsing(fn (?string $state) => $state === 'kmoney' ? 'KMoney' : 'Carta'),
+            TextColumn::make('interval_months')->label('Cadenza')->formatStateUsing(fn ($state) => (int) $state === 2 ? 'Bimestrale' : 'Mensile'),
             TextColumn::make('started_at')->label('Avvio')->dateTime('d/m/Y', 'Europe/Rome')->sortable(),
             TextColumn::make('commitment_months')->label('Durata')
                 ->formatStateUsing(fn ($state) => (int) $state > 0 ? $state.' mesi' : 'Senza impegno'),
             IconColumn::make('free_shipping')->label('Sped. gratuita')->boolean(),
             TextColumn::make('cycles_done')->label('Cicli')
-                ->formatStateUsing(fn ($state, Subscription $record) => $record->commitment_months > 0 ? $state.'/'.$record->commitment_months : (string) $state),
+                ->formatStateUsing(fn ($state, Subscription $record) => $record->commitment_months > 0 ? $state.'/'.$record->commitmentCycles() : (string) $state),
             TextColumn::make('next_run_at')->label('Prossimo addebito')->dateTime('d/m/Y', 'Europe/Rome')->placeholder('—'),
             TextColumn::make('last_error')->label('Ultimo errore')->placeholder('—')->limit(40),
             IconColumn::make('early_cancel')->label('Disdetta anticipata')->boolean(),

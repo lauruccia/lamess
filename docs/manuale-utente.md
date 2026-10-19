@@ -67,8 +67,10 @@ Scegliendo la carta nel checkout vieni portato alla **pagina sicura di Stripe**:
 - **Prima di pagare devi collegare il tuo conto KMoney** da *I miei dati → Conto KMoney* (`/area/profilo#kmoney`): **collega** il conto, **autorizza i pagamenti** e, se vuoi, **scollega**. L'accesso si fa sul sito di KMoney: il portale non vede né salva le tue credenziali. Se non hai un conto puoi aprirlo dal link indicato. Se il conto non è collegato il checkout ti rimanda lì.
 - Dopo «Conferma ordine» ti chiediamo di **confermare esplicitamente l'addebito** in KY dal tuo conto. **Prima si paga la quota KMoney**, poi scegli come pagare il resto (carta o bonifico).
 
-## Abbonamento mensile
-- Dal checkout scegli **«Abbonamento mensile»** (invece di «Ordine singolo») e paghi con **carta o KMoney**: l'ordine si ripete ogni mese con **addebito automatico**. Il primo ordine parte subito.
+## Abbonamento mensile o bimestrale
+- Dal checkout scegli **«Abbonamento mensile»** o **«Abbonamento bimestrale»** (invece di «Ordine singolo») e paghi con **carta o KMoney**: l'ordine si ripete ogni mese, oppure ogni 2 mesi, con **addebito automatico**. Il primo ordine parte subito.
+- **7 giorni prima** di ogni addebito ricevi un'email di promemoria: controlla che la carta sia valida o che il saldo KMoney sia sufficiente. Puoi saltare il ciclo, cambiare carta o indirizzo, o mettere in pausa prima della data.
+- Nel checkout trovi il campo **Nazione** (Italia selezionata): la spedizione si calcola in base alla nazione dell'indirizzo di consegna.
 - **Spedizione gratuita** su ogni ordine dell'abbonamento; l'**ordine singolo** paga la spedizione.
 - L'**impegno è di 12 mesi, ma non è vincolante**: puoi interrompere quando vuoi.
 - In **I miei abbonamenti** (`/area/abbonamenti`) puoi **cambiare l'indirizzo di spedizione** (vale dal prossimo ordine), **saltare il prossimo mese**, **mettere in pausa** e riprendere, **cambiare carta** o **annullare**.

@@ -20,6 +20,7 @@ use App\Filament\Resources\Consultants\Pages\ViewConsultant;
 use App\Filament\Support\ConsultantAccessAction;
 use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\ConsultantList;
+use App\Filament\Support\FounderAction;
 use App\Filament\Support\KycRequestAction;
 use App\Filament\Support\PasswordResetAction;
 use App\Filament\Support\RankHoldAction;
@@ -274,6 +275,7 @@ class ConsultantResource extends Resource
                     ->state(fn (Consultant $r): string => $r->kyc_status ?: 'unverified')
                     ->formatStateUsing(fn (string $state) => $state === 'none' ? 'Nessuno' : StatusLabels::label($state))
                     ->color(fn (string $state) => $state === 'verified' ? 'success' : ($state === 'rejected' ? 'danger' : 'warning')),
+                IconColumn::make('is_founder')->label('Founder')->tooltip('Incaricato founder: prezzi founder sui prodotti')->boolean()->toggleable(),
                 IconColumn::make('onboarding_complete')->label('Onb.')->tooltip('Onboarding completo')->boolean()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('referral_code')->label('Referral')->copyable()->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('since')->label('Dal')->size('sm')->dateTime('d/m/y', 'Europe/Rome')->sortable(),
@@ -314,6 +316,7 @@ class ConsultantResource extends Resource
                     PasswordResetAction::forRow(),
                     ...ConsultantAccessAction::forRow(),
                     RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
+                    FounderAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated'),
                     Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
                         ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))
                         ->url(fn (Consultant $record): string => url("/admin-files/badge/{$record->id}"), shouldOpenInNewTab: true),

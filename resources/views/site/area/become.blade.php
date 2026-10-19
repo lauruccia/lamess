@@ -36,7 +36,7 @@
      <div class="panel-body">
       @if($lockedSponsor)
        <label for="b-sp">Il tuo sponsor</label>
-       <input id="b-sp" value="{{ $lockedSponsor->name }} [{{ $lockedSponsor->code }}]" readonly>
+       <input id="b-sp" value="{{ $lockedSponsor->code }}" readonly>
        <p class="muted" style="margin:6px 0 0;font-size:13px">Scelto dal link con cui ti sei registrato. Non si può cambiare.</p>
       @else
        <label for="b-sp">Sponsor (codice o referral)</label>

@@ -47,7 +47,7 @@ final class CartPricer
         // Stato di lavoro: importo netto corrente per riga (8 decimali).
         $state = [];
         foreach ($entries as $key => $e) {
-            $list = Num::of($e['product']->net_price)->toScale(8, RoundingMode::HalfUp);
+            $list = Num::of($e['product']->netPriceFor($user))->toScale(8, RoundingMode::HalfUp);   // listino, o prezzo founder per gli incaricati founder
             $state[$key] = ['product' => $e['product'], 'qty' => (int) $e['qty'], 'list' => $list, 'cur' => $list->multipliedBy((int) $e['qty'])];
         }
 

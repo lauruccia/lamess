@@ -101,6 +101,30 @@ final class AreaPagesTest extends TestCase
         $this->actingAs($this->withUser($b))->getJson('/area/rete/'.$a->id.'/dettaglio')->assertNotFound();
     }
 
+    public function test_branch_detail_shows_contacts_of_downline_only_as_allowed_by_admin_settings(): void
+    {
+        $this->plan();
+        $this->openPeriod('2026-10');
+        $a = $this->consultant('A');
+        $b = $this->consultant('B', $a);
+        $c = $this->consultant('C', $b);
+        app(NetworkService::class)->rebuildClosure();
+        $userC = $this->withUser($c);
+        $userC->update(['email' => 'c.sotto@example.test']);
+        $userC->profile()->updateOrCreate([], ['phone' => '3331112222', 'city' => 'Reggio Calabria', 'province' => 'RC']);
+        $this->actingAs($this->withUser($a));
+
+        $this->getJson('/area/rete/'.$c->id.'/dettaglio')->assertOk()
+            ->assertJsonPath('contact.email', 'c.sotto@example.test')->assertJsonPath('contact.phone', '3331112222')->assertJsonPath('contact.place', 'Reggio Calabria (RC)');
+        $this->getJson('/area/rete/'.$a->id.'/dettaglio')->assertOk()->assertJsonPath('contact', null);
+
+        config(['lamess.network.downline_contacts' => false]);
+        $this->getJson('/area/rete/'.$c->id.'/dettaglio')->assertJsonPath('contact.email', null)->assertJsonPath('contact.phone', null)->assertJsonPath('contact.place', 'Reggio Calabria (RC)');
+
+        config(['lamess.network.downline_place' => false]);
+        $this->getJson('/area/rete/'.$c->id.'/dettaglio')->assertJsonPath('contact', null);
+    }
+
     public function test_branch_and_customers_are_for_consultants_only(): void
     {
         $fan = User::factory()->create();

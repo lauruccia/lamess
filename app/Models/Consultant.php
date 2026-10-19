@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class Consultant extends Model
 {
@@ -50,7 +51,7 @@ class Consultant extends Model
 
     protected function casts(): array
     {
-        return ['since' => 'immutable_datetime', 'network_since' => 'immutable_datetime', 'terminated_at' => 'immutable_datetime', 'onboarding_complete' => 'boolean', 'bonus_hold' => 'boolean', 'onboarding_completed_at' => 'immutable_datetime', 'badge_valid_until' => 'immutable_date', 'rank_hold_until' => 'immutable_date'];
+        return ['since' => 'immutable_datetime', 'network_since' => 'immutable_datetime', 'terminated_at' => 'immutable_datetime', 'onboarding_complete' => 'boolean', 'bonus_hold' => 'boolean', 'is_founder' => 'boolean', 'onboarding_completed_at' => 'immutable_datetime', 'badge_valid_until' => 'immutable_date', 'rank_hold_until' => 'immutable_date'];
     }
 
     /** Il codice referral c'è sempre: se manca (account importati o creati dal pannello) lo si genera al primo uso. */
@@ -58,7 +59,7 @@ class Consultant extends Model
     {
         if (blank($this->referral_code)) {
             do {
-                $code = strtoupper(\Illuminate\Support\Str::random(8));
+                $code = strtoupper(Str::random(8));
             } while (static::query()->where('referral_code', $code)->exists());
             $this->forceFill(['referral_code' => $code])->save();
         }

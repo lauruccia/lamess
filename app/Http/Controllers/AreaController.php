@@ -46,6 +46,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 /** Area riservata di FAN e Incaricati (F1: domanda, firma, onboarding). */
@@ -220,6 +221,7 @@ class AreaController extends Controller
 
         return view('site.area.profile', [
             'user' => $user, 'profile' => $profile, 'addresses' => $book->list($user), 'maxAddresses' => $book->max(),
+            'countries' => (array) config('lamess.country_names'), 'shipCountries' => $this->shipCountries(),
             // Riquadro «Conto KMoney»: stato del collegamento e se il collegamento è possibile ora.
             'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(),
             'kmoneyConnectable' => $provider instanceof KMoneyApiProvider || $provider instanceof FakeKMoneyProvider,
@@ -242,7 +244,7 @@ class AreaController extends Controller
 
     public function addAddress(Request $request, ShippingAddressBook $book): RedirectResponse
     {
-        $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
+        $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'country_code' => 'nullable|string|size:2', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
         try {
             $book->add($request->user(), $d);
         } catch (OrderException $e) {
@@ -254,7 +256,7 @@ class AreaController extends Controller
 
     public function updateAddress(Request $request, ShippingAddress $address, ShippingAddressBook $book): RedirectResponse
     {
-        $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
+        $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'country_code' => 'nullable|string|size:2', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
         try {
             $book->update($request->user(), $address, $d);
         } catch (OrderException $e) {
@@ -279,12 +281,20 @@ class AreaController extends Controller
         return back()->with('status', $action === 'elimina' ? 'Indirizzo eliminato.' : 'Indirizzo predefinito aggiornato.');
     }
 
+    /** @return array<string,string> codice => nome delle nazioni dove lo shop spedisce */
+    private function shipCountries(): array
+    {
+        $names = (array) config('lamess.country_names');
+
+        return collect((array) config('lamess.shop_countries'))->mapWithKeys(fn ($c) => [$c => $names[$c] ?? $c])->all();
+    }
+
     public function saveProfile(Request $request): RedirectResponse
     {
         $profile = $this->ensureProfile($request->user());
         $rules = [
             'phone' => 'nullable|string|max:30', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120',
-            'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'pec' => 'nullable|email|max:190', 'sdi_code' => 'nullable|string|size:7',
+            'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'country_code' => ['sometimes', 'required', Rule::in(array_keys((array) config('lamess.country_names')))], 'pec' => 'nullable|email|max:190', 'sdi_code' => 'nullable|string|size:7',
         ];
         $rules += $profile->type === 'company' ? ['company_name' => 'required|string|max:190'] : ['first_name' => 'required|string|max:120', 'last_name' => 'required|string|max:120'];
         $data = $request->validate($rules, SiteController::MESSAGES + ['size' => 'Il campo «:attribute» deve avere :size caratteri.', 'max' => 'Il campo «:attribute» è troppo lungo.']);

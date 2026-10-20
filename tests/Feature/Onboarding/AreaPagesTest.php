@@ -197,6 +197,21 @@ final class AreaPagesTest extends TestCase
         $this->assertTrue(\Hash::check('nuova-password-lunga', $u->refresh()->password));
     }
 
+    public function test_profile_and_shipping_addresses_save_the_country(): void
+    {
+        $user = User::factory()->create();
+        Profile::create(['user_id' => $user->id, 'type' => 'private', 'first_name' => 'Anna', 'last_name' => 'Verdi', 'address' => 'Via Roma 1', 'city' => 'Roma', 'zip' => '00100']);
+        $this->actingAs($user)->get('/area/profilo')->assertOk()->assertSee('name="country_code"', false)->assertSee('Nazione');
+
+        $this->post('/area/profilo', ['first_name' => 'Anna', 'last_name' => 'Bianchi', 'address' => 'Via Milano 2', 'city' => 'Milano', 'zip' => '20100', 'province' => 'MI', 'country_code' => 'DE'])->assertSessionHasNoErrors();
+        $this->assertSame('DE', $user->profile->fresh()->country_code);
+
+        $this->post('/area/profilo', ['first_name' => 'Anna', 'last_name' => 'Bianchi', 'address' => 'Via Milano 2', 'city' => 'Milano', 'zip' => '20100', 'country_code' => 'XX'])->assertSessionHasErrors('country_code');
+
+        $this->post('/area/indirizzi', ['address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC'])->assertSessionHasNoErrors();
+        $this->assertSame('IT', $user->shippingAddresses()->first()->country_code);
+    }
+
     public function test_profile_requires_address(): void
     {
         $u = User::factory()->create();

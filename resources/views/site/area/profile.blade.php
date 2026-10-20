@@ -35,6 +35,7 @@
       <div><label for="p-zip">CAP</label><input id="p-zip" name="zip" value="{{ old('zip', $profile->zip) }}" autocomplete="postal-code" inputmode="numeric"></div>
       <div><label for="p-prov">Prov.</label><input id="p-prov" name="province" value="{{ old('province', $profile->province) }}" maxlength="3" autocapitalize="characters"></div>
      </div>
+     <div class="full"><label for="p-country">Nazione</label><select id="p-country" name="country_code">@foreach($countries as $code => $name)<option value="{{ $code }}" @selected(old('country_code', $profile->country_code ?: 'IT') === $code)>{{ $name }}</option>@endforeach</select></div>
      @if($company)
       <div><label for="p-pec">PEC</label><input id="p-pec" name="pec" type="email" value="{{ old('pec', $profile->pec) }}"></div>
       <div><label for="p-sdi">Codice SDI</label><input id="p-sdi" name="sdi_code" value="{{ old('sdi_code', $profile->sdi_code) }}" maxlength="7" autocapitalize="characters"></div>
@@ -59,6 +60,7 @@
         <div class="full"><label>Indirizzo</label><input name="address" value="{{ $a->address }}"></div>
         <div><label>Città</label><input name="city" value="{{ $a->city }}"></div>
         <div class="form-grid" style="grid-template-columns:1fr 90px;gap:0 14px"><div><label>CAP</label><input name="zip" value="{{ $a->zip }}" inputmode="numeric"></div><div><label>Prov.</label><input name="province" maxlength="3" value="{{ $a->province }}"></div></div>
+        <div class="full"><label>Nazione</label><select name="country_code">@foreach($shipCountries + [($a->country_code ?: 'IT') => ($countries[$a->country_code ?: 'IT'] ?? $a->country_code)] as $code => $name)<option value="{{ $code }}" @selected(($a->country_code ?: 'IT') === $code)>{{ $name }}</option>@endforeach</select></div>
         <div class="full"><label>Telefono per il corriere</label><input name="phone" maxlength="30" value="{{ $a->phone }}"></div>
        </div>
        <div class="form-actions"><button class="btn accent">Salva</button></div>
@@ -79,6 +81,7 @@
         <div class="full"><label>Indirizzo</label><input name="address" value="{{ old('address') }}"></div>
         <div><label>Città</label><input name="city" value="{{ old('city') }}"></div>
         <div class="form-grid" style="grid-template-columns:1fr 90px;gap:0 14px"><div><label>CAP</label><input name="zip" value="{{ old('zip') }}" inputmode="numeric"></div><div><label>Prov.</label><input name="province" maxlength="3" value="{{ old('province') }}"></div></div>
+        <div class="full"><label>Nazione</label><select name="country_code">@foreach($shipCountries as $code => $name)<option value="{{ $code }}" @selected(old('country_code', 'IT') === $code)>{{ $name }}</option>@endforeach</select></div>
         <div class="full"><label>Telefono per il corriere</label><input name="phone" maxlength="30" value="{{ old('phone') }}"></div>
        </div>
        <div class="form-actions"><button class="btn accent">Salva indirizzo</button></div>

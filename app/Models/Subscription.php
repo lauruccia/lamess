@@ -42,6 +42,24 @@ class Subscription extends Model
     }
 
     /** «al mese» / «ogni 2 mesi», per le frasi del tipo «1× al mese». */
+    /**
+     * Cadenze che il cliente può scegliere ora (in base alle impostazioni): codice del checkout => ogni quanti mesi.
+     *
+     * @return array<string,int>
+     */
+    public static function offeredCadences(): array
+    {
+        return array_filter([
+            'monthly' => config('lamess.subscription.monthly_enabled', true) ? 1 : null,
+            'bimonthly' => config('lamess.subscription.bimonthly_enabled', true) ? 2 : null,
+        ]);
+    }
+
+    public static function isOffered(): bool
+    {
+        return self::offeredCadences() !== [];
+    }
+
     public function cadenceLabel(): string
     {
         return $this->intervalMonths() === 1 ? 'al mese' : 'ogni '.$this->intervalMonths().' mesi';

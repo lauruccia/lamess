@@ -90,7 +90,7 @@
   <h2>Dal primo caffè al tuo spazio personale, in tre passi</h2>
   <div class="how-steps">
    <div class="how-step"><div class="n">01</div><h3>Registrati</h3><p>Crei il tuo spazio in pochi minuti. È gratuito e non c’è nessun obbligo di acquisto.</p></div>
-   <div class="how-step"><div class="n">02</div><h3>Scegli la tua box</h3><p>Ordina quando vuoi, oppure attiva l’abbonamento mensile: lo metti in pausa o lo interrompi in qualsiasi momento.</p></div>
+   <div class="how-step"><div class="n">02</div><h3>Scegli la tua box</h3><p>Ordina quando vuoi@if(\App\Models\Subscription::isOffered()), oppure attiva l’abbonamento: lo metti in pausa o lo interrompi in qualsiasi momento@endif.</p></div>
    <div class="how-step"><div class="n">03</div><h3>Vivi il rituale</h3><p>Segui ordini, spedizioni e abbonamenti dalla tua area personale, con assistenza diretta.</p></div>
   </div>
  </div>

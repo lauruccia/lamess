@@ -109,4 +109,35 @@ final class BimonthlySubscriptionTest extends TestCase
         $this->assertSame(2, Subscription::firstOrFail()->interval_months);
         $this->actingAs($u)->get('/area/abbonamenti')->assertOk()->assertSee('ogni 2 mesi');
     }
+
+    public function test_cadences_can_be_switched_off_from_settings(): void
+    {
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '123.00');
+        $svc = app(SubscriptionService::class);
+
+        config(['lamess.subscription.bimonthly_enabled' => false]);
+        $this->assertSame(['monthly' => 1], Subscription::offeredCadences());
+        try {
+            $svc->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 12, [], null, 'card', 2);
+            $this->fail('Il bimestrale spento non deve poter essere attivato.');
+        } catch (OrderException $e) {
+            $this->assertStringContainsString('bimestrale', $e->getMessage());
+        }
+        $this->assertSame(1, $svc->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 12)->interval_months);
+    }
+
+    public function test_with_both_cadences_off_the_checkout_offers_no_subscription(): void
+    {
+        config(['lamess.subscription.monthly_enabled' => false, 'lamess.subscription.bimonthly_enabled' => false]);
+        $this->assertFalse(Subscription::isOffered());
+
+        $u = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '123.00');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()
+            ->assertDontSee('data-subscribe-box', false)->assertDontSee('Abbonamento mensile');
+
+        $this->post('/area/checkout', $this->billing() + ['payment_method' => 'card', 'privacy' => '1', 'subscribe' => 'monthly'])
+            ->assertSessionHasErrors('subscribe');
+    }
 }

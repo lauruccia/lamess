@@ -50,6 +50,9 @@ final class SubscriptionService
         if (! in_array($intervalMonths, [1, 2], true)) {
             throw new OrderException('Cadenza dell\'abbonamento non valida: scegli mensile o bimestrale.');
         }
+        if (! in_array($intervalMonths, Subscription::offeredCadences(), true)) {
+            throw new OrderException($intervalMonths === 2 ? 'L\'abbonamento bimestrale non è disponibile al momento.' : 'L\'abbonamento mensile non è disponibile al momento.');
+        }
         if (! in_array($method, [Subscription::METHOD_CARD, Subscription::METHOD_KMONEY], true)) {
             throw new OrderException('L\'abbonamento si paga con carta o con KMoney.');
         }

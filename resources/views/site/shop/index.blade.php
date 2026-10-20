@@ -23,12 +23,12 @@
  <div class="hero-copy">
   <span class="eyebrow">Negozio Lamèss</span>
   <h1>I prodotti Lamèss, spediti a casa tua.</h1>
-  <p>Con l’abbonamento mensile la spedizione è gratuita e puoi interromperlo quando vuoi.</p>
+  @if(\App\Models\Subscription::isOffered())<p>Con l’abbonamento la spedizione è gratuita e puoi interromperlo quando vuoi.</p>@endif
  </div>
  <ul class="trust" aria-label="Perché ordinare da noi">
   <li>{!! $ico('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>') !!}<span><b>Pagamenti sicuri</b>Carta, bonifico o KMoney</span></li>
   <li>{!! $ico('<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="17.5" cy="17.5" r="1.7"/>') !!}<span><b>Spedizione a casa</b>@if($shippingPromo)Gratuita da € {{ $shippingPromo }}@else Gratuita con l’abbonamento @endif</span></li>
-  <li>{!! $ico('<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/>') !!}<span><b>Abbonamento flessibile</b>Si interrompe quando vuoi</span></li>
+  @if(\App\Models\Subscription::isOffered())<li>{!! $ico('<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/>') !!}<span><b>Abbonamento flessibile</b>Si interrompe quando vuoi</span></li>@endif
   <li>{!! $ico('<path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-5 4v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/>') !!}<span><b>Assistenza</b>Dalla tua area personale</span></li>
  </ul>
 </section>

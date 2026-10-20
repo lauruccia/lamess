@@ -117,7 +117,7 @@
   <section class="panel">
    <header><h2>Abbonamenti</h2><a href="/area/abbonamenti">Gestisci →</a></header>
    @if($d['subs']['list']->isEmpty())
-    <div class="empty"><span class="ico">@include('site.area._i', ['n' => 'repeat'])</span><div><strong>Ricevi i tuoi prodotti ogni mese</strong><p>Con l'abbonamento riordini in automatico senza pagare la spedizione e puoi annullare quando vuoi. Lo attivi dal checkout pagando con carta.</p><a class="btn ghost" href="/negozio">Scopri il negozio</a></div></div>
+    <div class="empty"><span class="ico">@include('site.area._i', ['n' => 'repeat'])</span><div><strong>Ricevi i tuoi prodotti ogni mese</strong><p>@if(\App\Models\Subscription::isOffered())Con l'abbonamento riordini in automatico senza pagare la spedizione e puoi annullare quando vuoi. Lo attivi dal checkout pagando con carta.@else Ordina quando vuoi dal negozio: qui trovi i tuoi abbonamenti, quando ne avrai uno.@endif</p><a class="btn ghost" href="/negozio">Scopri il negozio</a></div></div>
    @else
     <div class="list">
      @foreach($d['subs']['list'] as $s)

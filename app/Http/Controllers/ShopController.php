@@ -33,6 +33,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 /** Negozio: catalogo, scheda prodotto, carrello (in sessione), sconti, checkout, ordini e documenti dell'utente. */
 class ShopController extends Controller
@@ -536,7 +537,7 @@ class ShopController extends Controller
 
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries()]);
+        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => Subscription::offeredCadences()]);
     }
 
     /** @return array<string,string> codice => nome delle nazioni aperte nello shop */
@@ -599,7 +600,7 @@ class ShopController extends Controller
             'type' => 'required|in:private,company', 'first_name' => 'nullable', 'last_name' => 'nullable', 'company_name' => 'nullable',
             'tax_code' => 'nullable', 'vat_number' => 'nullable', 'sdi_code' => 'nullable', 'pec' => 'nullable|email',
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
-            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => 'nullable|in:none,monthly,bimonthly',
+            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => ['nullable', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
         ], SiteController::MESSAGES);
         $subscribe = $d['subscribe'] ?? 'none';
         if (! ($orders->enabledMethods()[$d['payment_method']] ?? false)) {

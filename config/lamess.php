@@ -118,6 +118,8 @@ return [
     'order_prefix' => 'ORD',
     // Abbonamento e spedizione gratuita sugli ordini ripetitivi (RF-A01, RF-A03). Modificabili da Impostazioni di sistema.
     'subscription' => [
+        'monthly_enabled' => true,   // il cliente può attivare l'abbonamento mensile (nuove sottoscrizioni; quelli già attivi proseguono)
+        'bimonthly_enabled' => true, // il cliente può attivare l'abbonamento bimestrale
         'retry_days' => 1,         // giorni tra un tentativo di addebito e il successivo
         'reminder_days' => 7,      // giorni prima dell'addebito in cui parte il promemoria al cliente (0 = nessun promemoria)
         'max_retries' => 3,        // dopo l'ultimo tentativo fallito l'abbonamento va in pausa

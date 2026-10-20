@@ -35,7 +35,7 @@
    <h2><span class="step">3</span> Pagamento</h2>
    @php($methods = $methods ?? ['card' => true, 'transfer' => true, 'kmoney' => true])
    @php($pay = old('payment_method', $methods['card'] ? 'card' : ($methods['transfer'] ? 'transfer' : 'kmoney')))
-   @php($sub = old('subscribe', empty($codes) ? 'monthly' : 'none')) {{-- abbonamento preselezionato (non con codici sconto nel carrello: valgono solo sugli ordini singoli) --}}
+   @php($sub = old('subscribe', empty($codes) ? (array_key_first($cadences) ?? 'none') : 'none')) {{-- abbonamento preselezionato (non con codici sconto nel carrello: valgono solo sugli ordini singoli) --}}
    <fieldset class="choice">
     <legend>Come vuoi pagare</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
@@ -55,13 +55,19 @@
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
    </fieldset>
+   @if($cadences !== [])
    <fieldset class="choice" data-subscribe-box>
     <legend>Come vuoi riceverla</legend>
     <label class="opt-card"><input type="radio" name="subscribe" value="none" @checked($sub === 'none')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
+    @isset($cadences['monthly'])
     <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    @endisset
+    @isset($cadences['bimonthly'])
     <label class="opt-card" data-subscribe-monthly><input type="radio" name="subscribe" value="bimonthly" @checked($sub === 'bimonthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento bimestrale</b><small>Ricevi la box ogni 2 mesi, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    @endisset
     <p class="muted small" data-subscribe-note @if($sub === 'none') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
    </fieldset>
+   @endif
   </section>
  </form>
 

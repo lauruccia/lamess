@@ -377,3 +377,9 @@
 - Migrazioni nuove: `2026_11_07_100000` … `2026_11_07_140000` (nazione indirizzi, promemoria, barcode, founder, cadenza).
 - Non ancora: variazione dei dati fiscali con nuova firma della Lettera di Incarico (in attesa di decisioni).
 
+## 2026-10-20 — Fatture verso l'estero, Natura/bollo, annullo ordini in sospeso
+- **Clienti esteri in fattura elettronica**: il paese del cliente (`country_code` dell'ordine) finisce in `IdPaese` e `Nazione`; codice destinatario `XXXXXXX` (nessuna PEC); partita IVA senza prefisso del paese; un privato estero senza partita IVA riceve `IdCodice 0000000`; provincia solo per l'Italia; CAP non a 5 cifre → `00000`. Il codice fiscale è obbligatorio al checkout solo per i privati italiani. Fatture già emesse senza paese restano italiane.
+- **Natura e bollo**: le righe a IVA 0 portano `Natura` (riga e riepilogo) e `RiferimentoNormativo`. Cliente fuori UE → `N3.1`; azienda UE con partita IVA → `N3.2`; altrimenti `LAMESS_VAT_ZERO_NATURE` (default `N2.2`). Per N1/N2.x/N3.5/N3.6/N4 sopra 77,47 € si scrive il bollo virtuale da 2 €. File validati contro lo schema FatturaPA nei test.
+- **Annullo ordini in sospeso alla chiusura del mese**: `PeriodService::close()` annulla da solo gli ordini ancora «in attesa di pagamento» creati fino a fine mese (o con righe PV in attesa nel mese): righe PV annullate, magazzino e sconti liberati, quota KMoney già incassata riaccreditata, evento sull'ordine e riga nel registro audit. Un ordine non annullabile resta e blocca la chiusura come prima.
+- **Ancora aperto (commercialista)**: quale IVA applicare ai clienti UE/extra-UE (oggi si applica l'aliquota del prodotto) e OSS; scelta della Natura per i casi diversi da quelli sopra.
+

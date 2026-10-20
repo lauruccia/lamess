@@ -605,7 +605,7 @@ final class OrderService
                 throw new OrderException('Completa l\'indirizzo di fatturazione e spedizione.');
             }
         }
-        if ($type === 'private' && blank($b['tax_code'] ?? null)) {
+        if ($type === 'private' && $country === 'IT' && blank($b['tax_code'] ?? null)) {
             throw new OrderException('Il codice fiscale è obbligatorio per la fattura.');
         }
         if ($type === 'company') {

@@ -140,3 +140,6 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 | A-12 | **Fatture allo SdI / GestionaleK** (OPEN-51): nessun collegamento diretto; scelta fra `file` e `mail` | Laura vuole gli XML per email a `LAMESS_SDI_MAIL_TO`, con invio mensile o con un pulsante (non uno per uno): si attiva con la posta quando il portale è online; per ora il driver `mail` spedisce a ogni emissione | commercialista, cliente |
 | A-13 | **Stripe live**: chiavi `sk_live_…`, webhook, prova di pagamento e di rinnovo di un abbonamento con carta di prova (OPEN-62) | da fare | cliente, Laura |
 | A-14 | **Prova su MySQL/MariaDB** delle migrazioni successive al 5 ottobre e della suite completa (finora provate solo su SQLite) | da fare | sviluppo |
+| A-15 | **Clienti esteri e IVA** (20/10): l'XML ora gestisce paese, `XXXXXXX` e Natura; resta da decidere l'IVA da applicare ai clienti UE/extra-UE (oggi aliquota del prodotto, soglia 10.000 € e OSS) e la Natura per i casi diversi da N3.1/N3.2 | codice pronto, regola fiscale aperta | commercialista, Laura |
+| A-16 | **Soggetto emittente** (20/10): le fatture 2026 in Odoo sono di INHORECA.IT SRLS (P.IVA 02507740518), il portale è configurato per il Consorzio Kadeo Group (P.IVA 02530190517): decidere da quando e con quale numerazione | aperta | Laura, commercialista |
+

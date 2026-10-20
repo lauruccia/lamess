@@ -32,6 +32,7 @@ final class FatturaPaBuilder
         $rows = $doc->lines->map(fn ($l) => ['net' => (string) $l->net, 'rate' => (string) $l->vat_rate]);
         $totals = InvoiceService::totals($rows);
         $grand = (string) Num::money(Num::of($totals['net'])->plus($totals['vat']));
+        $nature = self::nature($buyer);
 
         $w = new XMLWriter;
         $w->openMemory();
@@ -56,6 +57,13 @@ final class FatturaPaBuilder
         $this->text($w, 'Divisa', 'EUR');
         $this->text($w, 'Data', $doc->issued_at->setTimezone('Europe/Rome')->format('Y-m-d'));
         $this->text($w, 'Numero', $doc->number, 20);
+        $stamp = $this->stampDue($totals, $nature);
+        if ($stamp) {
+            $w->startElement('DatiBollo');
+            $this->text($w, 'BolloVirtuale', 'SI');
+            $this->text($w, 'ImportoBollo', '2.00');
+            $w->endElement();
+        }
         $this->text($w, 'ImportoTotaleDocumento', $grand);
         if ($isCredit && $doc->reason !== '') {
             $this->text($w, 'Causale', $doc->reason, 200);
@@ -71,6 +79,7 @@ final class FatturaPaBuilder
 
         $w->startElement('DatiBeniServizi');
         foreach ($doc->lines->values() as $i => $l) {
+            $zero = Num::of((string) $l->vat_rate)->isZero();
             $w->startElement('DettaglioLinee');
             $this->text($w, 'NumeroLinea', (string) ($i + 1));
             $this->text($w, 'Descrizione', (string) $l->description, 1000);
@@ -78,14 +87,24 @@ final class FatturaPaBuilder
             $this->text($w, 'PrezzoUnitario', $this->price((string) $l->unit_net));
             $this->text($w, 'PrezzoTotale', (string) $l->net);
             $this->text($w, 'AliquotaIVA', (string) $l->vat_rate);
+            if ($zero) {
+                $this->text($w, 'Natura', $nature);
+            }
             $w->endElement();
         }
         foreach ($totals['by_rate'] as $rate => $x) {
             $w->startElement('DatiRiepilogo');
             $this->text($w, 'AliquotaIVA', (string) $rate);
+            $rateZero = Num::of((string) $rate)->isZero();
+            if ($rateZero) {
+                $this->text($w, 'Natura', $nature);
+            }
             $this->text($w, 'ImponibileImporto', $x['net']);
             $this->text($w, 'Imposta', $x['vat']);
             $this->text($w, 'EsigibilitaIVA', 'I');
+            if ($rateZero) {
+                $this->text($w, 'RiferimentoNormativo', self::natureReference($nature), 100);
+            }
             $w->endElement();
         }
         $w->endElement();
@@ -105,6 +124,33 @@ final class FatturaPaBuilder
         $w->endDocument();
 
         return ['filename' => "IT{$seller['vat']}_{$progressive}.xml", 'xml' => $w->outputMemory()];
+    }
+
+
+    /** Bollo virtuale da 2 € se le operazioni N1, N2.x, N3.5, N3.6 e N4 superano 77,47 € (le esportazioni N3.1 e le cessioni UE N3.2 non lo richiedono). */
+    private function stampDue(array $totals, string $nature): bool
+    {
+        if (! preg_match('/^(N1|N2(\.\d)?|N3\.[56]|N4)$/', $nature)) {
+            return false;
+        }
+        $exempt = Num::zero();
+        foreach ($totals['by_rate'] as $rate => $x) {
+            if (Num::of((string) $rate)->isZero()) {
+                $exempt = $exempt->plus(Num::of($x['net']));
+            }
+        }
+
+        return $exempt->isGreaterThan(Num::of('77.47'));
+    }
+
+    private static function natureReference(string $nature): string
+    {
+        return match ($nature) {
+            'N3.1' => 'Operazione non imponibile - esportazione (art. 8 DPR 633/72)',
+            'N3.2' => 'Cessione intracomunitaria non imponibile (art. 41 DL 331/93)',
+            'N2.2' => 'Operazione non soggetta ad IVA',
+            default => 'Operazione senza applicazione di IVA',
+        };
     }
 
     /** Prezzo unitario con almeno 2 e al massimo 8 decimali. */
@@ -155,6 +201,9 @@ final class FatturaPaBuilder
     {
         $sdi = strtoupper(trim((string) ($buyer['sdi_code'] ?? '')));
         $sdi = preg_match('/^[A-Z0-9]{7}$/', $sdi) === 1 ? $sdi : '0000000';
+        if (self::country($buyer) !== 'IT') {
+            $sdi = 'XXXXXXX'; // cessionario estero: nessun canale SdI, la copia si consegna al cliente
+        }
         $w->startElement('DatiTrasmissione');
         $w->startElement('IdTrasmittente');
         $this->text($w, 'IdPaese', 'IT');
@@ -192,25 +241,37 @@ final class FatturaPaBuilder
     private function buyer_block(XMLWriter $w, array $b): void
     {
         $company = ($b['type'] ?? 'private') === 'company';
-        $vat = preg_replace('/^IT/i', '', preg_replace('/\s/', '', (string) ($b['vat_number'] ?? '')) ?? '') ?? '';
+        $country = self::country($b);
+        $domestic = $country === 'IT';
+        // Partita IVA senza il prefisso del paese (IT…, DE…, EL…): il paese va in IdPaese.
+        $vat = preg_replace('/\s|[.\-]/', '', (string) ($b['vat_number'] ?? '')) ?? '';
+        $vat = strtoupper(preg_replace('/^[A-Za-z]{2}(?=\d|[A-Za-z0-9]{6,})/', '', $vat) ?? '');
         $cf = strtoupper(preg_replace('/\s/', '', (string) ($b['tax_code'] ?? '')) ?? '');
-        if ($vat === '' && $cf === '') {
+        if ($domestic && $vat === '' && $cf === '') {
             throw new BillingException('Cliente senza codice fiscale né partita IVA: la fattura elettronica non è trasmissibile.');
         }
-        $zip = preg_replace('/\D/', '', (string) ($b['zip'] ?? '')) ?? '';
+        $zip = $domestic ? (preg_replace('/\D/', '', (string) ($b['zip'] ?? '')) ?? '') : self::foreignZip((string) ($b['zip'] ?? ''));
         if (trim((string) ($b['address'] ?? '')) === '' || strlen($zip) !== 5 || trim((string) ($b['city'] ?? '')) === '') {
             throw new BillingException('Indirizzo del cliente incompleto (via, CAP, comune).');
         }
         $w->startElement('CessionarioCommittente');
         $w->startElement('DatiAnagrafici');
-        if ($vat !== '') {
+        if ($domestic) {
+            if ($vat !== '') {
+                $w->startElement('IdFiscaleIVA');
+                $this->text($w, 'IdPaese', 'IT');
+                $this->text($w, 'IdCodice', $vat);
+                $w->endElement();
+            }
+            if ($cf !== '') {
+                $this->text($w, 'CodiceFiscale', $cf);
+            }
+        } else {
+            // Estero: identificativo fiscale del paese; senza partita IVA (privato) il tracciato prevede il codice «0000000».
             $w->startElement('IdFiscaleIVA');
-            $this->text($w, 'IdPaese', 'IT');
-            $this->text($w, 'IdCodice', $vat);
+            $this->text($w, 'IdPaese', $country);
+            $this->text($w, 'IdCodice', $vat !== '' ? $vat : '0000000', 28);
             $w->endElement();
-        }
-        if ($cf !== '') {
-            $this->text($w, 'CodiceFiscale', $cf);
         }
         $w->startElement('Anagrafica');
         $name = trim((string) ($b['name'] ?? ''));
@@ -235,20 +296,54 @@ final class FatturaPaBuilder
         }
         $w->endElement();
         $w->endElement();
-        $this->address($w, (string) $b['address'], $zip, (string) $b['city'], strtoupper(trim((string) ($b['province'] ?? ''))));
+        $this->address($w, (string) $b['address'], $zip, (string) $b['city'], strtoupper(trim((string) ($b['province'] ?? ''))), $country);
         $w->endElement();
     }
 
-    private function address(XMLWriter $w, string $street, string $zip, string $city, string $province): void
+    /** Paese del cessionario (ISO a 2 lettere); le fatture emesse prima di questo campo sono italiane. */
+    public static function country(array $buyer): string
+    {
+        $c = strtoupper(trim((string) ($buyer['country_code'] ?? '')));
+
+        return preg_match('/^[A-Z]{2}$/', $c) === 1 ? $c : 'IT';
+    }
+
+    /** Il tracciato vuole un CAP di 5 cifre anche per l'estero: se il paese ne usa un altro formato si scrive «00000». */
+    private static function foreignZip(string $zip): string
+    {
+        $d = preg_replace('/\D/', '', $zip) ?? '';
+
+        return strlen($d) === 5 ? $d : '00000';
+    }
+
+    /**
+     * Natura dell'operazione per le righe a IVA 0. Configurabile (LAMESS_VAT_ZERO_NATURE); per i paesi fuori UE è N3.1 (esportazione),
+     * per un'azienda UE con partita IVA N3.2 (cessione intracomunitaria). Da confermare con il commercialista.
+     */
+    public static function nature(array $buyer): string
+    {
+        $country = self::country($buyer);
+        $eu = (array) config('lamess.eu_countries', []);
+        if ($country !== 'IT' && ! in_array($country, $eu, true)) {
+            return 'N3.1';
+        }
+        if ($country !== 'IT' && ($buyer['type'] ?? 'private') === 'company' && filled($buyer['vat_number'] ?? null)) {
+            return 'N3.2';
+        }
+
+        return (string) config('lamess.vat_zero_nature', 'N2.2');
+    }
+
+    private function address(XMLWriter $w, string $street, string $zip, string $city, string $province, string $country = 'IT'): void
     {
         $w->startElement('Sede');
         $this->text($w, 'Indirizzo', $street, 60);
         $this->text($w, 'CAP', $zip);
         $this->text($w, 'Comune', $city, 60);
-        if (strlen($province) === 2) {
+        if ($country === 'IT' && strlen($province) === 2) {
             $this->text($w, 'Provincia', $province);
         }
-        $this->text($w, 'Nazione', 'IT');
+        $this->text($w, 'Nazione', $country);
         $w->endElement();
     }
 

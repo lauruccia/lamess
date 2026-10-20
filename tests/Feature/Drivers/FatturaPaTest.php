@@ -85,6 +85,81 @@ final class FatturaPaTest extends TestCase
         $this->assertStringContainsString('<ModalitaPagamento>MP05</ModalitaPagamento>', $f['xml']);
     }
 
+    /** Ordine verso l'estero: paese, tariffa di spedizione e mercato aperti per il test. */
+    private function foreignOrder(string $country, array $billing, string $vat = '22.00'): Order
+    {
+        config(['lamess.shop_countries' => ['IT', $country]]);
+        $this->plan();
+        \App\Models\ShippingRate::create(['country_code' => $country, 'amount_net' => '0.00', 'vat_rate' => $vat]);
+        $p = $this->product('FX'.$country, '100.00', ['vat_rate' => $vat]);
+        $orders = app(OrderService::class);
+        $o = $orders->place($this->buyer($this->activeSponsor()), [$p->id => 1], $country, 'card', $this->billing($billing));
+
+        return $orders->markPaid($o);
+    }
+
+    public function test_foreign_private_customer_gets_country_xxxxxxx_and_zero_id_without_cf(): void
+    {
+        $o = $this->foreignOrder('DE', ['tax_code' => null, 'zip' => '10115', 'city' => 'Berlin', 'province' => null, 'address' => 'Unter den Linden 1']);
+        $f = app(FatturaPaBuilder::class)->build($o->invoice);
+
+        $this->assertValidFatturaPa($f['xml']);
+        $this->assertStringContainsString('<CodiceDestinatario>XXXXXXX</CodiceDestinatario>', $f['xml']);
+        $buyer = substr($f['xml'], (int) strpos($f['xml'], '<CessionarioCommittente>'));
+        $this->assertStringContainsString('<IdPaese>DE</IdPaese>', $buyer);
+        $this->assertStringContainsString('<IdCodice>0000000</IdCodice>', $buyer);
+        $this->assertStringContainsString('<Nazione>DE</Nazione>', $buyer);
+        $this->assertStringNotContainsString('<Provincia>', $buyer, 'nessuna provincia per l\'estero');
+        $this->assertStringNotContainsString('<CodiceFiscale>', $buyer);
+    }
+
+    public function test_foreign_company_uses_its_vat_without_country_prefix_and_non_five_digit_zip_becomes_00000(): void
+    {
+        $o = $this->foreignOrder('NL', ['type' => 'company', 'company_name' => 'Koffie BV', 'vat_number' => 'NL123456789B01', 'tax_code' => '', 'first_name' => '', 'last_name' => '', 'zip' => '1012 AB', 'city' => 'Amsterdam', 'province' => null, 'pec' => 'x@pec.it']);
+        $f = app(FatturaPaBuilder::class)->build($o->invoice);
+
+        $this->assertValidFatturaPa($f['xml']);
+        $buyer = substr($f['xml'], (int) strpos($f['xml'], '<CessionarioCommittente>'));
+        $this->assertStringContainsString('<IdPaese>NL</IdPaese>', $buyer);
+        $this->assertStringContainsString('<IdCodice>123456789B01</IdCodice>', $buyer);
+        $this->assertStringContainsString('<CAP>00000</CAP>', $buyer);
+        $this->assertStringNotContainsString('PECDestinatario', $f['xml'], 'nessuna PEC verso l\'estero');
+    }
+
+    public function test_zero_vat_lines_carry_natura_and_non_eu_buyer_is_an_export(): void
+    {
+        $o = $this->foreignOrder('US', ['tax_code' => null, 'zip' => '10001', 'city' => 'New York', 'province' => null, 'address' => '5th Ave 1'], '0.00');
+        $f = app(FatturaPaBuilder::class)->build($o->invoice);
+
+        $this->assertValidFatturaPa($f['xml']);
+        $this->assertSame(2, substr_count($f['xml'], '<Natura>N3.1</Natura>'), 'una nella riga, una nel riepilogo');
+        $this->assertStringContainsString('<RiferimentoNormativo>', $f['xml']);
+        $this->assertStringNotContainsString('<DatiBollo>', $f['xml'], 'le esportazioni non pagano il bollo');
+    }
+
+    public function test_zero_vat_for_italian_customer_uses_configured_natura_and_adds_virtual_stamp_over_77_47(): void
+    {
+        $this->plan();
+        $this->shipping('0.00');
+        $p = $this->product('Z', '100.00', ['vat_rate' => '0.00']);
+        $orders = app(OrderService::class);
+        $o = $orders->markPaid($orders->place($this->buyer($this->activeSponsor()), [$p->id => 1], 'IT', 'card', $this->billing()));
+        $f = app(FatturaPaBuilder::class)->build($o->invoice);
+
+        $this->assertValidFatturaPa($f['xml']);
+        $this->assertStringContainsString('<Natura>N2.2</Natura>', $f['xml']);
+        $this->assertStringContainsString('<BolloVirtuale>SI</BolloVirtuale>', $f['xml']);
+        $this->assertStringContainsString('<ImportoBollo>2.00</ImportoBollo>', $f['xml']);
+    }
+
+    public function test_foreign_private_checkout_does_not_require_a_tax_code(): void
+    {
+        $o = $this->foreignOrder('ES', ['tax_code' => null, 'zip' => '28001', 'city' => 'Madrid', 'province' => null]);
+
+        $this->assertNotNull($o->invoice, 'documento emesso senza codice fiscale');
+        $this->assertSame('ES', $o->invoice->buyer['country_code']);
+    }
+
     public function test_pec_is_used_when_no_sdi_code(): void
     {
         $o = $this->paidOrder(['type' => 'company', 'company_name' => 'Acme', 'vat_number' => '09876543210', 'pec' => 'acme@pec.it']);

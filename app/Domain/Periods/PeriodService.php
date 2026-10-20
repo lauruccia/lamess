@@ -112,6 +112,37 @@ final class PeriodService
         return ImpactReport::compare($base, $simulated);
     }
 
+    /**
+     * Alla chiusura del mese gli ordini ancora in attesa di pagamento (bonifici non arrivati, carte non completate) si annullano da soli:
+     * le righe PV tornano «annullate», il magazzino e i codici sconto si liberano. Se la quota KMoney era già incassata la si riaccredita.
+     * Un ordine che non si riesce ad annullare resta in attesa e blocca la chiusura, con il motivo nel registro.
+     * Sono nel perimetro gli ordini con righe PV in attesa nel mese e quelli creati fino alla fine del mese.
+     *
+     * @return int ordini annullati
+     */
+    public function cancelPendingOrders(Period $period): int
+    {
+        $orders = app(\App\Domain\Orders\OrderService::class);
+        $ids = PvMovement::where('period_id', $period->id)->where('status', 'pending_payment')->whereNotNull('order_id')->pluck('order_id');
+        $query = \App\Models\Order::query()->where('status', 'pending_payment')
+            ->where(fn ($q) => $q->whereIn('id', $ids)->orWhere('created_at', '<=', $period->ends_at));
+        $done = 0;
+        foreach ($query->orderBy('id')->get() as $order) {
+            try {
+                $orders->hasKMoneyToRefund($order) ? $orders->refundKMoneyAndCancel($order) : $orders->cancel($order);
+                \App\Models\OrderEvent::log($order->refresh(), 'cancelled', "Annullato in automatico alla chiusura del mese {$period->code}: pagamento non ricevuto");
+                $done++;
+            } catch (Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Chiusura mese: ordine in attesa non annullabile', ['order' => $order->number, 'errore' => $e->getMessage()]);
+            }
+        }
+        if ($done > 0) {
+            AuditLog::record('period.pending_orders_cancelled', "{$done} ordini in attesa di pagamento annullati alla chiusura di {$period->code}", $period, ['ordini' => $done]);
+        }
+
+        return $done;
+    }
+
     /** Chiusura: checklist bloccante, blocco delle righe, qualifiche e premi definitivi. */
     public function close(Period $period): Period
     {
@@ -123,6 +154,7 @@ final class PeriodService
             if ($run === null) {
                 throw new PeriodStateException('Esegui prima il runtime ufficiale del mese.');
             }
+            $this->cancelPendingOrders($period);
             $pending = PvMovement::where('period_id', $period->id)->where('status', 'pending_payment')->count();
             if ($pending > 0) {
                 throw new PeriodStateException("Ci sono {$pending} movimenti ".(LegacyPlan::hidden() ? '' : 'PV ').'in attesa di pagamento: confermali o annullali prima di chiudere.');

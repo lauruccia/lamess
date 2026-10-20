@@ -26,7 +26,7 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 ## Ogni mese
 1. Il portale calcola il mese da solo nel giorno e ora scelti nelle Impostazioni (di norma il 1°, ore 01:00).
 2. **Compensi → Periodi → il mese**: controlla i numeri, poi **Chiudi periodo**.
-3. Dal 15 il portale prepara i pagamenti. **Compensi → Pagamenti**: **Esporta file SEPA (XML)**, caricalo in banca, poi **Segna pagato**.
+3. Alla chiusura gli ordini rimasti «in attesa di pagamento» si annullano da soli. Dal 15 il portale prepara i pagamenti. **Compensi → Pagamenti**: **Esporta file SEPA (XML)**, caricalo in banca, poi **Segna pagato**.
 4. Gli incaricati senza IBAN o senza documenti verificati non sono pagabili: restano «bloccati» e gli importi si cumulano.
 5. Compensi sul **Piano Incaricati**: niente PV, la qualifica vale appena raggiunta (aggiornata ogni notte). Ricevute provvigionali e ritenuta d'acconto sono **spente** fino alla risposta del commercialista.
 

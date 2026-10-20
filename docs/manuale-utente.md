@@ -70,7 +70,7 @@ Scegliendo la carta nel checkout vieni portato alla **pagina sicura di Stripe**:
 ## Abbonamento mensile o bimestrale
 - Dal checkout scegli **«Abbonamento mensile»** o **«Abbonamento bimestrale»** (invece di «Ordine singolo») e paghi con **carta o KMoney**: l'ordine si ripete ogni mese, oppure ogni 2 mesi, con **addebito automatico**. Il primo ordine parte subito.
 - **7 giorni prima** di ogni addebito ricevi un'email di promemoria: controlla che la carta sia valida o che il saldo KMoney sia sufficiente. Puoi saltare il ciclo, cambiare carta o indirizzo, o mettere in pausa prima della data.
-- Nel checkout trovi il campo **Nazione** (Italia selezionata): la spedizione si calcola in base alla nazione dell'indirizzo di consegna.
+- Nel checkout trovi il campo **Nazione** (Italia selezionata): la spedizione si calcola in base alla nazione dell'indirizzo di consegna. Se compri da fuori Italia il codice fiscale non è obbligatorio; la fattura riporta il tuo paese. Un ordine con bonifico non pagato entro la fine del mese viene annullato in automatico: se vuoi ancora i prodotti, rifai l'ordine.
 - **Spedizione gratuita** su ogni ordine dell'abbonamento; l'**ordine singolo** paga la spedizione.
 - L'**impegno è di 12 mesi, ma non è vincolante**: puoi interrompere quando vuoi.
 - In **I miei abbonamenti** (`/area/abbonamenti`) puoi **cambiare l'indirizzo di spedizione** (vale dal prossimo ordine), **saltare il prossimo mese**, **mettere in pausa** e riprendere, **cambiare carta** o **annullare**.

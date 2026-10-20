@@ -124,6 +124,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/ricevute/{receipt}/reclamo', [WalletController::class, 'disputeReceipt'])->middleware('throttle:6,1');
     Route::get('/checkout', [ShopController::class, 'checkoutForm']);
     Route::post('/checkout', [ShopController::class, 'checkout'])->middleware('throttle:20,1');
+    Route::post('/checkout/nazione', [ShopController::class, 'checkoutCountry'])->middleware('throttle:60,1');
     Route::post('/carrello/per-altri', [ShopController::class, 'addForOther']);
     Route::get('/abbonamenti', [ShopController::class, 'subscriptions']);
     Route::post('/abbonamenti/{subscription}/{action}', [ShopController::class, 'subscriptionAction'])->whereIn('action', ['pausa', 'riprendi', 'annulla', 'salta'])->middleware('throttle:20,1');

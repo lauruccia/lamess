@@ -36,3 +36,7 @@ Thumbs.db
 /database/*.sqlite-journal
 /LaTuaNuovaPassword123*
 /ScegliUnaPassword2026*
+/storage/framework/views/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/logs/*

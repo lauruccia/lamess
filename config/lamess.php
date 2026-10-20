@@ -90,6 +90,10 @@ return [
         'downline_place' => true,     // città e provincia degli incaricati del proprio ramo
     ],
     'shop_countries' => array_values(array_filter(array_map('trim', explode(',', strtoupper((string) env('LAMESS_SHOP_COUNTRIES', 'IT')))))), // mercati aperti (RF-036): es. LAMESS_SHOP_COUNTRIES=IT,DE,FR nel .env
+    // Paesi UE (per scegliere la Natura delle righe a IVA 0 nella fattura elettronica)
+    'eu_countries' => ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'],
+    // Natura per le righe a IVA 0 verso clienti italiani (N2.2 non soggette; N4 esenti): da confermare con il commercialista
+    'vat_zero_nature' => env('LAMESS_VAT_ZERO_NATURE', 'N2.2'),
     'country_names' => ['IT' => 'Italia', 'DE' => 'Germania', 'FR' => 'Francia', 'ES' => 'Spagna', 'AT' => 'Austria', 'CH' => 'Svizzera', 'BE' => 'Belgio', 'NL' => 'Paesi Bassi', 'PT' => 'Portogallo', 'GB' => 'Regno Unito', 'IE' => 'Irlanda', 'LU' => 'Lussemburgo', 'SM' => 'San Marino', 'MT' => 'Malta', 'GR' => 'Grecia', 'US' => 'Stati Uniti'],
     'payment_driver' => env('LAMESS_PAYMENT_DRIVER', env('APP_ENV') === 'production' ? 'stripe' : 'fake'),   // fake (solo sviluppo) | stripe: ogni pagamento con carta passa da Stripe
     'kmoney_driver' => env('LAMESS_KMONEY_DRIVER', 'fake'),   // fake | api | off

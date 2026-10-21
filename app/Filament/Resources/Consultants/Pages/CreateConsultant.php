@@ -8,6 +8,7 @@ use App\Domain\Network\ConsultantAccess;
 use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Network\NetworkException;
 use App\Domain\Network\NetworkService;
+use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
 use App\Filament\Resources\Consultants\ConsultantResource;
@@ -56,6 +57,8 @@ class CreateConsultant extends CreateRecord
                 Notification::make()->title('Incaricato creato, ma accesso non creato')->body($e->getMessage().' Puoi crearlo dalla scheda con «Crea accesso».')->warning()->persistent()->send();
             }
         }
+
+        app(BadgeService::class)->generateQuietly($consultant); // iscritto dall'admin: la data di firma vale come firma della lettera
 
         return $consultant;
     }

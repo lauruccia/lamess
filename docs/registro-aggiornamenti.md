@@ -414,3 +414,8 @@
 - Salva in un colpo solo i dati di incaricato, utente di accesso e profilo (email, nome, codice fiscale, recapiti). Senza accesso, scrivere l'email lo crea.
 - Restano protetti: sponsor e stato (si cambiano dalla scheda), codice attività (solo super_admin), IBAN (mascherato; per cambiarlo si scrive il nuovo). Log di audit con valori prima e dopo.
 - Nessuna migrazione, nessun SQL da eseguire. Test: `EditConsultantTest`.
+
+## 2026-10-21 — Tesserino generato alla firma della lettera
+- Il tesserino (numero e validità) ora nasce **alla firma della lettera d'incarico**, non più all'accettazione dell'admin; vale e si stampa subito. Anche per gli incaricati iscritti dall'admin (la data di firma vale come firma). Se la generazione del PDF fallisce, la firma o l'iscrizione non si bloccano: l'errore va nei log.
+- Per chi era già iscritto senza tesserino: si genera al primo «Salva modifiche» nella pagina di modifica.
+- Nessuna migrazione. Test aggiornati: `CustomersAndIvdTest`, `SitePagesTest`, `ConsultantAccessTest`, `EditConsultantTest`.

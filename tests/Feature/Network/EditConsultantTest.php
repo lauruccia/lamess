@@ -136,6 +136,19 @@ final class EditConsultantTest extends TestCase
         Livewire::test(EditConsultant::class, ['record' => $c->getKey()])->fillForm(['email' => 'occupata@example.com'])->call('save')->assertHasFormErrors(['email']);
     }
 
+    public function test_saving_creates_the_badge_for_who_has_none_yet(): void
+    {
+        $this->actingAsRole('admin_network');
+        $c = $this->consultantWithAccess();
+        $this->assertNull($c->badge_number);
+
+        Livewire::test(EditConsultant::class, ['record' => $c->getKey()])->call('save')->assertHasNoFormErrors();
+
+        $c->refresh();
+        $this->assertSame($c->code, $c->badge_number);
+        $this->assertNotNull($c->badge_valid_until);
+    }
+
     public function test_who_cannot_manage_the_network_cannot_open_the_page(): void
     {
         $this->actingAsRole('support');

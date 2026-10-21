@@ -10,6 +10,7 @@ use App\Domain\Career\CareerProgress;
 use App\Domain\Features\Feature;
 use App\Domain\Network\ConsultantAccess;
 use App\Domain\Network\NetworkException;
+use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\Iban;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
@@ -352,6 +353,11 @@ class EditConsultant extends EditRecord
             throw new Halt;
         }
         $changes += $this->saveRankHold($record, $data);
+
+        $badges = app(BadgeService::class);
+        if (blank($record->refresh()->badge_number) && $badges->isIssuable($record)) {
+            $badges->generateQuietly($record); // incaricati iscritti prima che il tesserino nascesse con la firma
+        }
 
         if ($changes !== []) {
             AuditLog::record('consultant.updated', "Dati modificati: incaricato {$record->code} ({$record->name})", $record, $changes);

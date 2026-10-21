@@ -58,6 +58,7 @@ final class ConsultantAccessTest extends TestCase
         $this->assertSame($user->id, $c->user_id);
         $this->assertTrue($user->hasRole('consultant'));
         $this->assertNotNull($c->referral_code);
+        $this->assertSame($c->code, $c->badge_number, 'iscritto dall\'admin: il tesserino nasce subito');
         $this->assertSame(['Linda', 'Gean', 'GNELND80A41H501X'], [$user->profile->first_name, $user->profile->last_name, $user->profile->tax_code]);
         $this->assertSame($c->id, $user->consultant->id);
         Notification::assertSentTo($user, InvitoAccessoIt::class);

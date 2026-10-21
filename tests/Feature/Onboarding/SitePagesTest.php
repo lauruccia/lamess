@@ -95,7 +95,7 @@ final class SitePagesTest extends TestCase
 
         $contract = IvdContract::firstOrFail();
         $this->get('/area/file/lettera')->assertOk();
-        $this->get('/area/file/tesserino')->assertNotFound(); // non ancora accettata
+        $this->get('/area/file/tesserino')->assertOk(); // il tesserino vale dalla firma, senza aspettare l'accettazione
 
         $this->post('/area/onboarding/documento', ['type' => 'photo', 'file' => UploadedFile::fake()->image('f.jpg')])->assertSessionHasNoErrors();
         $this->post('/area/onboarding/documento', ['type' => 'photo', 'file' => UploadedFile::fake()->create('virus.exe', 10)])->assertSessionHasErrors('file');

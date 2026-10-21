@@ -115,6 +115,9 @@ final class CustomersAndIvdTest extends TestCase
         $this->assertMatchesRegularExpression('/^LM\d{5}$/', $consultant->code);
         $this->assertNotEmpty($consultant->referral_code);
         $this->assertFalse($consultant->onboarding_complete);
+        Storage::assertExists($consultant->refresh()->badge_path); // il tesserino nasce alla firma, senza aspettare l'accettazione
+        $this->assertSame($consultant->code, $consultant->badge_number);
+        $this->assertNotNull($consultant->badge_valid_until);
         Storage::assertExists($c->pdf_path);
         $this->assertSame(hash('sha256', Storage::get($c->pdf_path)), $c->pdf_hash);
         $this->assertSame('10.0.0.1', $c->evidence['ip']);

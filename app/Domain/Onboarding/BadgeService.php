@@ -14,13 +14,14 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /** Tesserino di riconoscimento in PDF (RF-016): foto, codice, validità annuale. */
 final class BadgeService
 {
     /**
      * Il tesserino si stampa solo per chi ha un incarico in essere: attivo, non sospeso né cessato,
-     * e senza una Lettera IVD ancora in attesa di firma o di accettazione.
+     * e senza una Lettera IVD ancora in attesa di firma. Vale dalla firma: non aspetta l'accettazione dell'admin.
      * Gli incaricati importati, senza lettera in archivio, restano stampabili.
      */
     public function isIssuable(Consultant $c): bool
@@ -30,7 +31,7 @@ final class BadgeService
         }
         $contract = $this->latestContract($c);
 
-        return $contract === null || ! in_array($contract->status, ['awaiting_signature', 'signed'], true);
+        return $contract === null || $contract->status !== 'awaiting_signature';
     }
 
     /** PDF del tesserino sempre aggiornato (nome, codice, validità, foto), pronto da stampare: non tocca il database. */
@@ -67,6 +68,19 @@ final class BadgeService
         $c->update(['badge_path' => $path, 'badge_number' => $c->code, 'badge_valid_until' => $this->validUntil($c)->format('Y-m-d')]);
 
         return $path;
+    }
+
+    /**
+     * Genera il tesserino senza mai bloccare l'operazione che lo richiede (firma, iscrizione dall'admin):
+     * se il PDF non riesce, l'errore va nei log e il tesserino si stampa poi dalla scheda.
+     */
+    public function generateQuietly(Consultant $c): void
+    {
+        try {
+            $this->generate($c->refresh());
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /** Indirizzo pubblico di verifica: firmato, così i codici (progressivi) non si possono provare a tentativi. */

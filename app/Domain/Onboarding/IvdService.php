@@ -109,7 +109,7 @@ final class IvdService
             throw new OnboardingException('Codice OTP non valido o scaduto.');
         }
 
-        return DB::transaction(function () use ($c, $ip, $userAgent): IvdContract {
+        $signed = DB::transaction(function () use ($c, $ip, $userAgent): IvdContract {
             $now = new DateTimeImmutable;
             $user = $c->user()->with('profile')->firstOrFail();
             $profile = $user->profile;
@@ -143,6 +143,9 @@ final class IvdService
 
             return $c->refresh();
         });
+        $this->badges->generateQuietly($signed->consultant); // il tesserino nasce con la firma della lettera
+
+        return $signed;
     }
 
     public function accept(IvdContract $c, string $by): IvdContract

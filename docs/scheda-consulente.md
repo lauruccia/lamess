@@ -11,7 +11,7 @@ In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sos
 **Azioni** (icone con descrizione al passaggio del mouse, ciascuna con il proprio permesso e interruttore):
 - **Richiedi documenti KYC** (permesso `kyc.manage`): l'incaricato riceve una email e vede il riquadro in *Onboarding*; la richiesta si chiude da sola al caricamento di tutto, con promemoria dopo 3 e 6 giorni. Si può fare anche dall'elenco e in massa.
 - **Invia documenti** (permesso `network.manage`): lettera firmata, certificato di firma, tesserino, estratti conto e ricevute, per email; ogni invio finisce nel log.
-- **Stampa tesserino**: il tesserino per la vendita porta a porta (con il retro e il QR di verifica pubblica), solo per incarichi attivi e con lettera accettata.
+- **Stampa tesserino**: il tesserino per la vendita porta a porta (con il retro e il QR di verifica pubblica). **Nasce da solo alla firma della lettera d'incarico** (numero = codice attività, validità = durata della lettera), o all'iscrizione fatta dall'admin; non aspetta l'accettazione. Solo per incarichi attivi senza lettera in attesa di firma.
 - **Certificato di firma**: PDF con le prove della firma (non disponibile per le lettere importate da Odoo).
 - **Riassegna i clienti**, **Forza qualifica**, **Mantieni qualifica** (permesso `network.restructure`): «Mantieni qualifica» congela la qualifica attuale fino a una data, solo con il Piano Incaricati attivo; ogni cambio è nel log.
 - **Sospendi / Riattiva / Cessa**, **Aggiungi nota**, **Mostra IBAN**, **Sposta / cambia sponsor** (vedi sotto).

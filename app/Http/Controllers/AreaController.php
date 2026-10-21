@@ -10,6 +10,7 @@ use App\Domain\Career\NetworkOverview;
 use App\Domain\Career\NetworkTree;
 use App\Domain\Customers\ReferralResolver;
 use App\Domain\Customers\ShippingAddressBook;
+use App\Domain\Ledger\PointsGrant;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
 use App\Domain\Onboarding\IvdService;
@@ -68,6 +69,7 @@ class AreaController extends Controller
             // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
             'progress' => $live ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($live->id)) : null,
             'earn' => $live ? $this->safely(static fn () => app(EarningsSummary::class)->for($live->id)) : null,
+            'grants' => $live ? $this->safely(static fn () => PointsGrant::summaryFor($live, 10)) : null,
         ]);
     }
 

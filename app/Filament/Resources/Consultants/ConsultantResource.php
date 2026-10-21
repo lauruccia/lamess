@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Consultants;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
+use App\Domain\Ledger\PointsGrant;
 use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\Iban;
@@ -203,6 +204,7 @@ class ConsultantResource extends Resource
             Tabs::make('Scheda')->persistTabInQueryString('tab')->columnSpanFull()->tabs([
                 Tab::make('Riepilogo')->visible(fn (): bool => Feature::enabled('consultant360.tab.overview'))->schema([
                     View::make('partials.career-progress')->viewData(fn (Consultant $record) => ['p' => $career($record)]),
+                    View::make('partials.granted-points')->viewData(fn (Consultant $record): array => ['g' => PointsGrant::summaryFor($record), 'admin' => true]),
                 ]),
                 $tab('profile', 'Anagrafica'),
                 $tab('network', 'Rete'),

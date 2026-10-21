@@ -143,6 +143,26 @@ final class PointsGrant
         return $movement;
     }
 
+    /**
+     * Punti assegnati a un incaricato, per la sua scheda (admin) e per la sua area.
+     *
+     * @return array{total: string, count: int, rows: list<array{id:int, date:string, points:string, reason:string, effect:string, client:?string, cancelled:bool}>}
+     */
+    public static function summaryFor(Consultant $c, int $limit = 15): array
+    {
+        $all = PvMovement::query()->where('consultant_id', $c->id)->where('type', self::TYPE);
+        $total = (clone $all)->where('status', '<>', 'cancelled')->sum('pv');
+        $rows = (clone $all)->orderByDesc('event_at')->orderByDesc('id')->limit($limit)->get()->map(static fn (PvMovement $m): array => [
+            'id' => $m->id, 'date' => $m->event_at->setTimezone(new \DateTimeZone('Europe/Rome'))->format('d/m/Y'),
+            'points' => number_format((float) $m->pv, fmod((float) $m->pv, 1.0) === 0.0 ? 0 : 2, ',', '.'),
+            'reason' => (string) $m->note, 'effect' => self::effectOf($m),
+            'client' => $m->client_user_id === null ? null : User::withoutGlobalScopes()->find($m->client_user_id)?->name,
+            'cancelled' => $m->status === 'cancelled',
+        ])->all();
+
+        return ['total' => number_format((float) $total, fmod((float) $total, 1.0) === 0.0 ? 0 : 2, ',', '.'), 'count' => (clone $all)->count(), 'rows' => $rows];
+    }
+
     /** Descrizione breve dell'effetto di un movimento «grant». */
     public static function effectOf(PvMovement $m): string
     {

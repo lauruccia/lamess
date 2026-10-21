@@ -153,4 +153,23 @@ final class PointsAndCustomersAdminTest extends TestCase
 
         Livewire::test(ListPointGrants::class)->assertActionHidden('grantPoints');
     }
+
+    public function test_the_granted_points_show_in_the_admin_card_and_in_the_consultants_area(): void
+    {
+        $this->openIncaricati();
+        $socio = $this->consultant('LM00002', $this->activeSponsor());
+        $me = User::factory()->create(['name' => $socio->name]);
+        $socio->update(['user_id' => $me->id]);
+        $other = $this->buyer();
+        app(PointsGrant::class)->grant($socio, '40', 'Quota consorzio Kadeo', PointsGrant::EFFECT_CLIENT, $other, at: now());
+        app(PointsGrant::class)->grant($socio, '5', 'Premio in cancelleria', at: now());
+
+        $this->actingAs(User::factory()->role()->create());
+        $this->get('/admin/consultants/'.$socio->id)->assertOk()
+            ->assertSee('Punti assegnati dall\'azienda', false)->assertSee('Quota consorzio Kadeo')->assertSee('Premio in cancelleria')->assertSee($other->name);
+
+        $this->actingAs($me);
+        $this->get('/area')->assertOk()->assertSee('Punti assegnati')->assertSee('Quota consorzio Kadeo')->assertSee('45')
+            ->assertDontSee($other->name, false);
+    }
 }

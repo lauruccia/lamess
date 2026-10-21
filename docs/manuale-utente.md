@@ -41,6 +41,9 @@ Se nella tua area compaiono ancora voci come PV o PR, riguardano il **piano prec
 
 L'amministrazione può **chiederti dei documenti** mancanti: ricevi una email e in *Onboarding* trovi il riquadro «L'amministrazione ti ha chiesto dei documenti», con eventuale messaggio e scadenza (di norma 7 giorni, con promemoria dopo 3 e 6 giorni). La richiesta si chiude da sola quando hai caricato tutto. L'amministrazione può anche **inviarti documenti** per email: lettera, certificato di firma, tesserino, estratti conto e ricevute.
 
+## Punti assegnati dall'azienda
+Se l'azienda ti riconosce dei punti senza un acquisto (per esempio per la quota del consorzio), nella panoramica trovi il riquadro **Punti assegnati**: il totale e, per ogni assegnazione, data, causale e punti. Il riquadro compare solo quando ne hai.
+
 ## Tesserino per la vendita porta a porta
 - È il tesserino di **«Incaricato alle Vendite a Domicilio»**, con foto, nome, codice e validità. Lo stampi dalla panoramica (*Tesserino, PDF da stampare*); può stamparlo anche l'amministrazione. Si stampa solo se l'incarico è attivo e la lettera è stata accettata.
 - Il **retro** riporta i dati dell'impresa e un **QR code di verifica pubblica**: chi lo inquadra vede se il tesserino è valido (nome, codice, validità) e può confrontarlo con il tuo documento. Se il tesserino è scaduto o l'incarico non è più in essere, la pagina di verifica lo segnala.

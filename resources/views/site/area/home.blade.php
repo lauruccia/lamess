@@ -166,6 +166,19 @@
      <div class="pg-actions"><a class="btn ghost" href="/area/referral">QR code</a><a class="btn ghost" href="/area/clienti">I miei clienti</a></div>
     </div>
    </section>
+   @if(! empty($grants) && $grants['count'] > 0)
+   <section class="panel">
+    <header><h2>Punti assegnati</h2></header>
+    <div class="panel-body">
+     <p class="muted" style="margin:0 0 10px">Punti riconosciuti dall'azienda: <b>{{ $grants['total'] }}</b> in totale.</p>
+     <dl class="dl">
+      @foreach($grants['rows'] as $r)
+       <dt>{{ $r['date'] }}</dt><dd>@if($r['cancelled'])<s>@endif<b>{{ $r['points'] }}</b> · {{ $r['reason'] }}@if($r['cancelled'])</s> (annullata)@endif</dd>
+      @endforeach
+     </dl>
+    </div>
+   </section>
+   @endif
    <section class="panel">
     <header><h2>Compensi e documenti</h2></header>
     <div class="list">

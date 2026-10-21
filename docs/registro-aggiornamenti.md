@@ -406,3 +406,4 @@
   ALTER TABLE `credit_notes` ADD COLUMN `easyfatt_exported_at` TIMESTAMP NULL DEFAULT NULL;
   INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_08_110000_easyfatt_exported_at', MAX(`batch`) FROM `migrations`;
   ```
+- **Punti assegnati visibili**: nella scheda incaricato (admin, Riepilogo) e nella panoramica dell'area dell'incaricato (riquadro «Punti assegnati», solo se ne ha; l'incaricato non vede il nome del cliente indicato). Nel form «Assegna punti» il cliente predefinito è il beneficiario stesso.

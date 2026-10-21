@@ -389,3 +389,9 @@
 - **Motore**: `SnapshotBuilder` legge ora anche i movimenti senza ordine che hanno un cliente indicato (`pv_movements.client_user_id`) per l'identità del cliente, le validità e il primo acquisto; i movimenti con ordine si calcolano come prima.
 - **Tesserino**: documentato cosa vi finisce (nome, codice, foto, validità e sponsor dalla lettera; niente indirizzo, codice fiscale o IBAN).
 - Migrazione nuova: `2026_11_08_100000` (cliente dei movimenti senza ordine). Test: `PointsGrantTest`, `PointsAndCustomersAdminTest`.
+- **SQL per phpMyAdmin** (sul sito online non si lancia `migrate`; da eseguire *prima* del deploy, non rompe il codice vecchio):
+  ```sql
+  ALTER TABLE `pv_movements` ADD COLUMN `client_user_id` BIGINT UNSIGNED NULL;
+  ALTER TABLE `pv_movements` ADD CONSTRAINT `pv_movements_client_user_id_foreign` FOREIGN KEY (`client_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_08_100000_pv_movements_client_user', MAX(`batch`) FROM `migrations`;
+  ```

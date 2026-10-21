@@ -17,6 +17,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -38,6 +39,7 @@ final class GrantPointsAction
             ->modalDescription('Dai punti a un incaricato senza che serva l\'acquisto di una box o di un kit (per esempio per la quota del consorzio). Resta tutto nel registro e nel log di audit.')
             ->schema([
                 Select::make('consultant_id')->label('Beneficiario (incaricato)')->required()->searchable()->live()
+                    ->afterStateUpdated(fn (Get $get, Set $set) => $set('client_user_id', Consultant::find($get('consultant_id'))?->user_id))
                     ->getSearchResultsUsing(fn (string $search): array => Consultant::query()->where('status', '<>', 'terminated')
                         ->where(fn ($w) => $w->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))
                         ->orderBy('code')->limit(30)->get()->mapWithKeys(fn (Consultant $c): array => [$c->id => $consultantLabel($c)])->all())
@@ -50,11 +52,12 @@ final class GrantPointsAction
                 Textarea::make('reason')->label('Causale')->required()->maxLength(255)->rows(2)
                     ->placeholder('Per esempio: quota consorzio Kadeo versata dal socio'),
                 Select::make('effect')->label('Effetto sul piano compensi')->native(false)->required()->live()
+                    ->afterStateUpdated(fn (Get $get, Set $set) => blank($get('client_user_id')) ? $set('client_user_id', Consultant::find($get('consultant_id'))?->user_id) : null)
                     ->default(PointsGrant::EFFECT_SCORE)->options(PointsGrant::EFFECTS)
                     ->helperText('Con «solo punteggio» i punti si registrano e basta. Gli altri due fanno valere una persona come cliente del beneficiario per i mesi indicati.'),
                 Select::make('client_user_id')->label('Chi vale come cliente')->searchable()
                     ->visible($isClientEffect)->required($isClientEffect)
-                    ->helperText('La persona (cliente o incaricato) che il piano conta come cliente del beneficiario, diversa dal beneficiario.')
+                    ->helperText('La persona (cliente o incaricato) che il piano conta come cliente del beneficiario. Di default è il beneficiario stesso: cambiala se il cliente è un altro (per esempio il socio, quando il beneficiario è il suo sponsor).')
                     ->getSearchResultsUsing(fn (string $search): array => User::query()
                         ->where(fn ($w) => $w->whereHas('customer')->orWhereHas('consultant'))
                         ->where(fn ($w) => $w->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))

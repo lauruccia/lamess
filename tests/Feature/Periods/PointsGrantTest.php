@@ -97,6 +97,17 @@ final class PointsGrantTest extends TestCase
         $this->assertSame('100.00', number_format((float) $direct->base_amount, 2, '.', ''), 'V.A.P. del piano: 150 € → base 100 €');
     }
 
+    public function test_the_beneficiary_can_be_his_own_client(): void
+    {
+        $socio = $this->consultant('LM00002', $this->sponsor);
+        $user = $this->buyer();
+        $socio->update(['user_id' => $user->id]);
+
+        $m = $this->grant()->grant($socio, '5', 'Quota socio', PointsGrant::EFFECT_CLIENT, $user, at: $this->when());
+
+        $this->assertSame($user->id, $m->client_user_id);
+    }
+
     public function test_two_grants_for_two_clients_count_as_two_distinct_clients(): void
     {
         $this->grant()->grant($this->sponsor, '1', 'Uno', PointsGrant::EFFECT_CLIENT, $this->buyer(), at: $this->when());
@@ -119,15 +130,11 @@ final class PointsGrantTest extends TestCase
 
     public function test_invalid_requests_are_refused(): void
     {
-        $client = $this->buyer();
-        $own = $this->sponsor;
-        $own->update(['user_id' => $client->id]);
         $cases = [
             'causale mancante' => fn () => $this->grant()->grant($this->sponsor, '5', '  ', at: $this->when()),
             'punti a zero' => fn () => $this->grant()->grant($this->sponsor, '0', 'x', at: $this->when()),
             'punti non numerici' => fn () => $this->grant()->grant($this->sponsor, 'abc', 'x', at: $this->when()),
             'cliente mancante' => fn () => $this->grant()->grant($this->sponsor, '5', 'x', PointsGrant::EFFECT_CLIENT, at: $this->when()),
-            'cliente = beneficiario' => fn () => $this->grant()->grant($this->sponsor, '5', 'x', PointsGrant::EFFECT_CLIENT, $client, at: $this->when()),
             'acquisto senza importo' => fn () => $this->grant()->grant($this->sponsor, '5', 'x', PointsGrant::EFFECT_PURCHASE, $this->buyer(), at: $this->when()),
             'mesi fuori limite' => fn () => $this->grant()->grant($this->sponsor, '5', 'x', PointsGrant::EFFECT_CLIENT, $this->buyer(), months: 0, at: $this->when()),
             'effetto sconosciuto' => fn () => $this->grant()->grant($this->sponsor, '5', 'x', 'altro', at: $this->when()),

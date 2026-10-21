@@ -90,9 +90,6 @@ final class PointsGrant
             if ($client === null) {
                 throw new InvalidArgumentException('Indica la persona che vale come cliente.');
             }
-            if ($beneficiary->user_id !== null && $client->id === $beneficiary->user_id) {
-                throw new InvalidArgumentException('Il cliente deve essere una persona diversa dal beneficiario: i suoi acquisti non servono, conta già come cliente dello sponsor.');
-            }
             if ($months < 1 || $months > 120) {
                 throw new InvalidArgumentException('I mesi di validità vanno da 1 a 120.');
             }

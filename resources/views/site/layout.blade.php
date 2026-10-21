@@ -65,7 +65,7 @@
     $isConsultant ? ['/area/rete', 'Il mio ramo', fn ($p) => str_starts_with($p, 'area/rete')] : null,
     $isConsultant ? ['/area/clienti', 'I miei clienti', fn ($p) => str_starts_with($p, 'area/clienti')] : null,
     $isConsultant ? ['/area/statini', 'Statini', fn ($p) => str_starts_with($p, 'area/statini')] : null,
-    $isConsultant && \App\Domain\Wallet\WithdrawalService::enabled() ? ['/area/wallet', 'Wallet', fn ($p) => str_starts_with($p, 'area/wallet')] : null,
+    $isConsultant && \App\Domain\Wallet\WithdrawalService::enabled() ? ['/area/wallet', 'Tasca', fn ($p) => str_starts_with($p, 'area/wallet')] : null,
     $isConsultant && (config('lamess.fiscal.receipts_enabled') || \App\Models\CommissionReceipt::where('consultant_id', $me->consultant->id)->exists()) ? ['/area/ricevute', 'Ricevute', fn ($p) => str_starts_with($p, 'area/ricevute')] : null,
     ['/area/ordini', 'Ordini', fn ($p) => str_starts_with($p, 'area/ordini')],
     ['/area/abbonamenti', 'Abbonamenti', fn ($p) => str_starts_with($p, 'area/abbonamenti')],

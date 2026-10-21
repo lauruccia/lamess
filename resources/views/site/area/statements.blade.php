@@ -8,7 +8,7 @@
     $toPay = $rows->filter(fn ($r) => $r->status !== 'paid')->sum(fn ($r) => (float) $r->accrued);
     $open = $statements->filter(fn ($s) => in_array($s->status, ['published', 'disputed'], true))->count();
 @endphp
-<div class="pg-head"><div><h1>I miei statini</h1><p class="sub">Ogni mese chiuso ha il suo statino: importi, origine e motivo di ogni riga. Gli importi sotto la soglia minima si cumulano.</p></div></div>
+<div class="pg-head"><div><h1>I miei statini</h1><p class="sub">Ogni mese chiuso ha il suo statino: importi, origine e motivo di ogni riga. Gli importi sotto la soglia minima si cumulano.</p></div><div class="pg-actions"><a class="btn" href="/area/statini-bonus">Statini bonus settimanali</a></div></div>
 @if($rows->isEmpty())
  <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'euro'])</span><div><strong>Ancora nessuno statino</strong><p>Compare alla chiusura del primo mese con provvigioni. Nel frattempo puoi far crescere la rete con il tuo link referral.</p><a class="btn accent" href="/area/referral">Condividi il tuo link</a></div></div></section>
 @else

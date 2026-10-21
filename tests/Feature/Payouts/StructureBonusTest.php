@@ -7,7 +7,10 @@ namespace Tests\Feature\Payouts;
 use App\Domain\Access\Roles;
 use App\Domain\Engine\Plan\PlanLoader;
 use App\Domain\Orders\OrderService;
+use App\Domain\Payouts\BonusStatementService;
 use App\Domain\Payouts\ReceiptService;
+use App\Domain\Wallet\WalletService;
+use App\Models\WalletTransaction;
 use App\Domain\Payouts\StructureBonusService;
 use App\Domain\Periods\PeriodAutomation;
 use App\Domain\Periods\PeriodService;
@@ -41,10 +44,11 @@ final class StructureBonusTest extends TestCase
 
     private Consultant $x;
 
-    private function network(): void
+    private function network(string $mode = 'monthly_auto'): void
     {
         $data = json_decode((string) file_get_contents(base_path('config/lamess/'.PlanLoader::INCARICATI_FILE)), true);
         $data['policies'] = ['activity_month_rule' => 'current_or_previous', 'kosmos_rank_maintenance' => 'none'];
+        $data['settings']['payout_mode'] = $mode;
         $plan = CompPlanVersion::createFromArray('Incaricati', $data, CompPlanVersion::ACTIVE);
         $month = now('Europe/Rome')->format('Y-m');
         $this->period = $this->openPeriod($month, $plan);
@@ -211,5 +215,53 @@ final class StructureBonusTest extends TestCase
         $this->assertSame(0, $r['paid']);
         $this->assertArrayHasKey('C', $r['skipped']);
         $this->assertSame(StructureBonus::CONFIRMED, StructureBonus::findOrFail($id)->status);
+    }
+
+    public function test_with_the_tasca_a_confirmed_bonus_is_credited_once_and_shows_in_the_weekly_statement(): void
+    {
+        $this->network('on_request');
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+        $svc = app(StructureBonusService::class);
+        $svc->syncOpenPeriods();
+        $id = StructureBonus::firstOrFail()->id;
+
+        $this->assertSame(1, $svc->confirm([$id]));
+        $b = StructureBonus::findOrFail($id);
+        $this->assertSame(StructureBonus::PAID, $b->status);
+        $this->assertNotNull($b->wallet_credited_at);
+        $this->assertSame('Tasca', $b->payment_reference);
+        $this->assertNull($b->payout_id, 'nessun pagamento a parte: il prelievo lo chiede l\'incaricato');
+        $this->assertSame('60.00', (string) app(WalletService::class)->balance($this->crystal->id));
+
+        $svc->syncOpenPeriods();
+        $this->assertSame(0, $svc->confirm([$id]));
+        $this->assertSame(1, WalletTransaction::where('consultant_id', $this->crystal->id)->where('type', 'structure_bonus')->count(), 'accreditato una sola volta');
+
+        $stm = app(BonusStatementService::class);
+        $week = BonusStatementService::weekKey(now());
+        $this->assertSame([$week], $stm->weeks($this->crystal)->pluck('week')->all());
+        $s = $stm->build($this->crystal, $week);
+        $this->assertSame('60.00', $s['total']);
+        $this->assertCount(1, $s['lines']);
+        $this->assertSame('In Tasca', $s['lines'][0]['state']);
+        $this->assertStringStartsWith('%PDF', $stm->pdf($this->crystal, $week));
+        $this->assertSame('0.00', $stm->build($this->crystal, '2020-W01')['total']);
+    }
+
+    public function test_weekly_statement_pages_are_private_to_the_incaricato(): void
+    {
+        $this->network('on_request');
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+        app(StructureBonusService::class)->syncOpenPeriods();
+        app(StructureBonusService::class)->confirm([StructureBonus::firstOrFail()->id]);
+        $user = User::factory()->create();
+        $this->crystal->update(['user_id' => $user->id]);
+        $week = BonusStatementService::weekKey(now());
+
+        $this->actingAs($user)->get('/area/statini-bonus')->assertOk()->assertSee($week);
+        $this->actingAs($user)->get("/area/statini-bonus/{$week}")->assertOk()->assertSee('60,00');
+        $this->actingAs($user)->get("/area/statini-bonus/{$week}/pdf")->assertOk();
+        $this->actingAs($user)->get('/area/statini-bonus/abc')->assertNotFound();
+        $this->actingAs(User::factory()->create())->get('/area/statini-bonus')->assertNotFound();
     }
 }

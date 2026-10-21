@@ -99,6 +99,7 @@ final class StructureBonusService
             }
             $b->update(['status' => StructureBonus::CONFIRMED, 'confirmed_at' => now(), 'confirmed_by' => Auth::id()]);
             $n++;
+            $this->creditToTasca($b);
         }
         if ($n > 0) {
             AuditLog::record('structure_bonus.confirmed', "Confermati {$n} Bonus di Struttura", null, ['bonus' => $n]);
@@ -159,6 +160,34 @@ final class StructureBonusService
         }
 
         return $out;
+    }
+
+    /** True se i compensi vanno nella Tasca (pagamento «su richiesta»): i bonus confermati si accreditano lì invece di essere pagati a parte. */
+    public static function usesTasca(): bool
+    {
+        return \App\Domain\Wallet\WithdrawalService::enabled();
+    }
+
+    /**
+     * Con la Tasca attiva il bonus confermato diventa subito un accredito (una sola volta): il prelievo, con ritenuta e INPS, lo chiede poi l'incaricato.
+     * Il bonus risulta «pagato» con riferimento «Tasca»; blocchi (KYC, IBAN, sospensione) e soglia valgono al momento del prelievo.
+     */
+    private function creditToTasca(StructureBonus $b): void
+    {
+        if (! self::usesTasca() || $b->wallet_credited_at !== null) {
+            return;
+        }
+        $amount = Num::money((string) $b->amount);
+        $b->loadMissing(['beneficiary', 'source']);
+        DB::transaction(function () use ($b, $amount): void {
+            app(\App\Domain\Wallet\WalletService::class)->post(
+                $b->beneficiary, 'structure_bonus', $amount,
+                'Bonus di Struttura'.($b->source ? ' — '.$b->source->name.' ['.$b->source->code.']' : ''),
+                $b->period_id ? ['period_id' => $b->period_id] : [],
+            );
+            $now = now();
+            $b->update(['status' => StructureBonus::PAID, 'paid_at' => $now, 'paid_by' => Auth::id(), 'payment_reference' => 'Tasca', 'wallet_credited_at' => $now]);
+        });
     }
 
     /** @param list<int> $ids */

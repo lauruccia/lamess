@@ -15,7 +15,7 @@ class WalletTransaction extends Model
     /** @var array<string, string> */
     public const TYPES = [
         'commission_credit' => 'Provvigioni accreditate', 'clawback' => 'Recupero (storni)', 'withdrawal' => 'Prelievo', 'transfer_fee' => 'Commissione bonifico',
-        'withholding_tax' => 'Ritenuta d\'acconto', 'inps' => 'Contributo INPS (quota incaricato)', 'manual_adjustment' => 'Rettifica manuale', 'heir_liquidation' => 'Liquidazione agli eredi',
+        'withholding_tax' => 'Ritenuta d\'acconto', 'inps' => 'Contributo INPS (quota incaricato)', 'structure_bonus' => 'Bonus di Struttura', 'manual_adjustment' => 'Rettifica manuale', 'heir_liquidation' => 'Liquidazione agli eredi',
     ];
 
     protected function casts(): array

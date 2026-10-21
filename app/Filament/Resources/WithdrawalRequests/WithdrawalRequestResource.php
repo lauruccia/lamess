@@ -84,11 +84,15 @@ class WithdrawalRequestResource extends Resource
             TextColumn::make('status')->label('Stato')->badge()->color(fn (string $state) => match ($state) {
                 'paid' => 'success', 'rejected', 'cancelled' => 'gray', 'approved' => 'info', default => 'warning',
             }),
+            TextColumn::make('document_name')->label('Documento')->placeholder('— (da aggiungere)')->toggleable(),
             TextColumn::make('due_by')->label('Da pagare entro')->date('d/m/Y'),
             TextColumn::make('requested_at')->label('Richiesto il')->dateTime('d/m/Y H:i', 'Europe/Rome')->sortable(),
         ])->filters([
             SelectFilter::make('status')->label('Stato')->options(['requested' => 'Richiesto', 'approved' => 'Approvato', 'paid' => 'Pagato', 'rejected' => 'Rifiutato', 'cancelled' => 'Annullato']),
         ])->recordActions([
+            Action::make('document')->label('Documento')->iconButton()->tooltip('Scarica il documento fiscale')->icon('heroicon-o-document-arrow-down')
+                ->visible(fn (WithdrawalRequest $r) => $r->document_path !== null)
+                ->action(fn (WithdrawalRequest $record) => \Illuminate\Support\Facades\Storage::disk('local')->download($record->document_path, $record->document_name ?: 'documento')),
             Action::make('approve')->authorize('payouts.manage')->label('Approva')->iconButton()->tooltip('Approva')->icon('heroicon-o-check')->color('success')
                 ->visible(fn (WithdrawalRequest $r) => $r->status === WithdrawalRequest::REQUESTED)->requiresConfirmation()
                 ->modalDescription('Ricalcola le trattenute e crea il pagamento «da pagare»: poi compare in Pagamenti e nel file SEPA.')

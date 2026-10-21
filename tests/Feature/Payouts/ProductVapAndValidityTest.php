@@ -71,8 +71,8 @@ final class ProductVapAndValidityTest extends TestCase
 
         $m = PvMovement::where('order_id', $orderId)->firstOrFail();
         $this->assertSame('80.00', (string) $m->vap_amount);
-        $this->assertSame(3, (int) $m->validity_months);
-        $this->assertSame(5, (int) $m->client_count);
+        $this->assertSame(6, (int) $m->validity_months, '2 pezzi × 3 mesi: i pezzi moltiplicano i mesi');
+        $this->assertSame(5, (int) $m->client_count, 'i clienti restano una volta per ordine');
 
         $p->update(['vap_value' => '10.00', 'customer_validity_months' => 1]);
         $item = OrderItem::where('order_id', $orderId)->firstOrFail();
@@ -155,5 +155,25 @@ final class ProductVapAndValidityTest extends TestCase
         $counts = KosmosCalculator::clientCounts($plan, $key, [], [], [], $coverage);
 
         $this->assertSame(7, $counts['7'], 'c1 vale 1, c2 è scaduto, l’acquisto proprio vale 1 (politica attiva), c3 è un prodotto da 5 clienti');
+    }
+
+    public function test_pieces_multiply_the_months_unless_the_product_switch_is_off(): void
+    {
+        $this->setUpPlan();
+        $on = $this->product('ON', '100.00', ['customer_validity_months' => 2]);
+        $off = $this->product('OFF', '100.00', ['customer_validity_months' => 2, 'months_per_piece' => false]);
+
+        $this->assertSame(6, (int) PvMovement::where('order_id', $this->order([$on->id => 3]))->firstOrFail()->validity_months);
+        $this->assertSame(2, (int) PvMovement::where('order_id', $this->order([$off->id => 3]))->firstOrFail()->validity_months);
+        $this->assertSame(2, (int) PvMovement::where('order_id', $this->order([$on->id => 1]))->firstOrFail()->validity_months);
+    }
+
+    public function test_a_second_box_in_the_same_month_adds_one_more_month(): void
+    {
+        $at = new \DateTimeImmutable('2026-10-05 10:00:00');
+        $oct = KosmosCalculator::monthIndex($at);
+        $this->assertSame([[$oct + 1, $oct + 1, 1], [$oct + 2, $oct + 2, 1]], KosmosCalculator::coverageIntervals([
+            ['at' => $at, 'months' => 1], ['at' => $at->modify('+7 days'), 'months' => 1],
+        ]));
     }
 }

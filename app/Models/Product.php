@@ -28,7 +28,7 @@ class Product extends Model
             'promo_rank_double_cv' => 'boolean', 'is_kit' => 'boolean', 'active' => 'boolean', 'countries' => 'array',
             'compare_at_net' => 'decimal:8', 'images' => 'array', 'featured' => 'boolean', 'allow_backorder' => 'boolean', 'stock_qty' => 'integer',
             'options' => 'array', 'variant_options' => 'array',
-            'vap_value' => 'decimal:4', 'customer_validity_months' => 'integer', 'customer_count' => 'integer', 'makes_client' => 'boolean',
+            'vap_value' => 'decimal:4', 'customer_validity_months' => 'integer', 'customer_count' => 'integer', 'makes_client' => 'boolean', 'months_per_piece' => 'boolean',
         ];
     }
 
@@ -400,6 +400,17 @@ class Product extends Model
         }
 
         return 1;
+    }
+
+    /**
+     * Mesi di validità di una riga d'ordine da $qty pezzi: con l'interruttore «months_per_piece» (acceso di default,
+     * la variante eredita dal padre) i pezzi moltiplicano i mesi, altrimenti vale la durata del prodotto una volta sola.
+     */
+    public function customerValidityMonthsFor(int $qty): int
+    {
+        $perPiece = $this->parent !== null ? ($this->months_per_piece ?? $this->parent->months_per_piece ?? true) : ($this->months_per_piece ?? true);
+
+        return $this->customerValidityMonths() * ($perPiece ? max(1, $qty) : 1);
     }
 
     /** Quanti clienti vale l'acquisto di questo prodotto per l'incaricato (vuoto = 1). */

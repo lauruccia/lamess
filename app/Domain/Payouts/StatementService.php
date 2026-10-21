@@ -47,6 +47,7 @@ final class StatementService
                 'source' => $r->source_code ? "{$r->source_name} [{$r->source_code}]" : '—',
                 'level' => $hide ? null : $r->level, 'base' => (string) $r->base_amount, 'pct' => $r->pct === null ? null : Num::pctLabel(BigDecimal::of((string) $r->pct)),
                 'amount' => (string) $r->amount, 'held' => $r->engine_status === 'held', 'why' => $hide ? '' : ($expl['formula'] ?? $r->reason),
+                'extended' => ! $hide && $r->bonus_type === 'indirect_ext',
             ];
             if ($r->engine_status === 'held') {
                 $g['held'] = $g['held']->plus((string) $r->amount);
@@ -71,11 +72,36 @@ final class StatementService
         unset($g);
 
         return [
-            'period' => $period, 'consultant' => $c, 'groups' => $groups,
+            'period' => $period, 'consultant' => $c, 'groups' => $groups, 'sections' => self::sections($groups), 'total' => (string) Num::money($accrued),
             'accrued' => (string) Num::money($accrued), 'held' => (string) Num::money($held),
             'carried' => (string) Num::money($carried), 'settlement' => $settlement, 'payout' => $settlement?->payout,
             'min_payout' => (string) $period->planVersion->plan()->minPayout, 'seller' => config('lamess.seller'),
         ];
+    }
+
+    /**
+     * Voci dello statino mensile nell'ordine: Dirette, Indirette (con gli estesi dentro), poi eventuali altre voci.
+     * Il Bonus di Struttura non è nel mese: ha il suo statino settimanale.
+     *
+     * @param  array<string,array<string,mixed>>  $groups
+     * @return list<array{key:string,label:string,lines:list<array<string,mixed>>,accrued:string,held:string}>
+     */
+    public static function sections(array $groups): array
+    {
+        $out = [];
+        foreach ($groups as $key => $g) {
+            $sk = $key === 'indirect_ext' ? 'indirect' : (string) $key;
+            $label = ['direct' => 'Dirette', 'indirect' => 'Indirette'][$sk] ?? $g['label'];
+            $cur = $out[$sk] ?? ['key' => $sk, 'label' => $label, 'lines' => [], 'accrued' => '0.00', 'held' => '0.00'];
+            $cur['lines'] = array_merge($cur['lines'], $g['lines']);
+            $cur['accrued'] = (string) Num::money(BigDecimal::of($cur['accrued'])->plus($g['accrued']));
+            $cur['held'] = (string) Num::money(BigDecimal::of($cur['held'])->plus($g['held']));
+            $out[$sk] = $cur;
+        }
+        $rank = ['direct' => 0, 'indirect' => 1];
+        uksort($out, static fn ($a, $b) => ($rank[$a] ?? 9) <=> ($rank[$b] ?? 9));
+
+        return array_values($out);
     }
 
     public function pdf(Period $period, Consultant $c): string

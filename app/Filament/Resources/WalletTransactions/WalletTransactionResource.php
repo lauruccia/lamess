@@ -53,9 +53,9 @@ class WalletTransactionResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Compensi';
 
-    protected static ?string $modelLabel = 'movimento del wallet';
+    protected static ?string $modelLabel = 'movimento della Tasca';
 
-    protected static ?string $pluralModelLabel = 'Movimenti wallet';
+    protected static ?string $pluralModelLabel = 'Movimenti Tasca';
 
     protected static ?int $navigationSort = 6;
 

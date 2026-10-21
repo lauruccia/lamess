@@ -10,7 +10,7 @@
     "rank_bonus_installments": "12",
     "rank_bonus_hold_months": "3",
     "fsb_enabled": "false",
-    "payout_mode": "monthly_auto",
+    "payout_mode": "on_request",
     "payout_day": "15",
     "min_payout": "15",
     "scn_threshold": "5000",

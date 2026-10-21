@@ -183,7 +183,7 @@
     <header><h2>Compensi e documenti</h2></header>
     <div class="list">
      <a class="item" href="/area/statini"><span class="ico">@include('site.area._i', ['n' => 'euro'])</span><span class="main"><span class="t">I miei statini</span><span class="m">Importi e motivi di ogni riga</span></span></a>
-     @if($walletOn)<a class="item" href="/area/wallet"><span class="ico">@include('site.area._i', ['n' => 'wallet'])</span><span class="main"><span class="t">Wallet e prelievi</span><span class="m">Saldo e richieste di prelievo</span></span></a>@endif
+     @if($walletOn)<a class="item" href="/area/wallet"><span class="ico">@include('site.area._i', ['n' => 'wallet'])</span><span class="main"><span class="t">Tasca</span><span class="m">I tuoi documenti, saldo e prelievi</span></span></a>@endif
      <a class="item" href="/area/rete"><span class="ico">@include('site.area._i', ['n' => 'tree'])</span><span class="main"><span class="t">Il mio ramo</span><span class="m">{{ $x['network'] }} persone nella tua rete</span></span></a>
      <a class="item" href="/area/materiali"><span class="ico">@include('site.area._i', ['n' => 'download'])</span><span class="main"><span class="t">Materiali</span><span class="m">Documenti e presentazioni da scaricare</span></span></a>
      @if($contract?->pdf_path)<a class="item" href="/area/file/lettera"><span class="ico">@include('site.area._i', ['n' => 'doc'])</span><span class="main"><span class="t">Lettera d'incarico</span><span class="m">PDF firmato{{ $contract->expires_at ? ' · in vigore fino al '.\App\Support\Ui::date($contract->expires_at) : '' }}</span></span></a>@endif

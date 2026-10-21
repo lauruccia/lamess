@@ -22,6 +22,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TransferController;
+use App\Http\Controllers\BonusStatementController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WebhookController;
 use App\Models\CommissionReceipt;
@@ -89,6 +90,9 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/indirizzi/{address}', [AreaController::class, 'updateAddress'])->middleware('throttle:20,1');
     Route::post('/indirizzi/{address}/{action}', [AreaController::class, 'addressAction'])->whereIn('action', ['elimina', 'predefinito'])->middleware('throttle:20,1');
     Route::post('/profilo/password', [AreaController::class, 'savePassword'])->middleware('throttle:6,1');
+    Route::get('/statini-bonus', [BonusStatementController::class, 'index']);
+    Route::get('/statini-bonus/{week}', [BonusStatementController::class, 'show']);
+    Route::get('/statini-bonus/{week}/pdf', [BonusStatementController::class, 'pdf']);
     Route::get('/statini', [AreaController::class, 'statements']);
     Route::get('/statini/{period}', [AreaController::class, 'statement']);
     Route::get('/statini/{period}/pdf', [AreaController::class, 'statementPdf']);
@@ -117,6 +121,8 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/referral/inviti/{invite}/ricorda', [ContentController::class, 'inviteRemind'])->middleware('throttle:20,1');
     Route::get('/wallet', [WalletController::class, 'wallet']);
     Route::post('/wallet/prelievo', [WalletController::class, 'withdraw'])->middleware('throttle:10,1');
+    Route::post('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'addDocument'])->middleware('throttle:10,1');
+    Route::get('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'document']);
     Route::post('/wallet/prelievo/{withdrawal}/annulla', [WalletController::class, 'cancelWithdrawal'])->middleware('throttle:10,1');
     Route::get('/ricevute', [WalletController::class, 'receipts']);
     Route::get('/ricevute/{receipt}', [WalletController::class, 'receipt']);

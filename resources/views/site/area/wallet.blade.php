@@ -1,9 +1,9 @@
 @extends('site.layout')
-@section('title','Wallet — Lamèss')
+@section('title','Tasca — Lamèss')
 @section('width','area')
 @section('content')
 @php($eur = fn ($v) => \App\Support\Money::eur($v))
-<div class="pg-head"><div><h1>Il mio wallet</h1><p class="sub">Le provvigioni accreditate dopo la chiusura di ogni mese e le richieste di prelievo.</p></div></div>
+<div class="pg-head"><div><h1>Tasca</h1><p class="sub">I tuoi documenti · compensi mensili e Bonus di Struttura accreditati, richieste di prelievo.</p></div></div>
 @if(session('status'))<div class="note note-ok"><div>{{ session('status') }}</div></div>@endif
 @if((float) $s['blocked'] != 0)
  <div class="note"><div><strong>€ {{ $eur($s['blocked']) }} bloccati</strong>{{ implode(', ', $s['reasons']) }}</div><a class="btn" href="/area/onboarding">Completa i dati</a></div>
@@ -27,6 +27,12 @@
       <div class="item">
        <span class="main"><span class="t">€ {{ $eur($r->gross) }} <span class="st st-{{ in_array($r->status, ['paid','approved'], true) ? 'ok' : ($r->status === 'rejected' ? 'err' : 'warn') }}">{{ \App\Support\StatusLabels::label($r->status) }}</span></span>
         <span class="m">Richiesta il {{ \App\Support\Ui::date($r->requested_at) }} · netto previsto € {{ $eur($r->net) }}@if((float) $r->withholding) (ritenuta € {{ $eur($r->withholding) }})@endif · pagamento entro il {{ $r->due_by->format('d/m/Y') }}@if($r->status === 'rejected') · motivo: {{ $r->rejection_reason }}@endif</span></span>
+       <span class="end" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        @if($r->document_path)<a href="/area/wallet/prelievo/{{ $r->id }}/documento">Documento: {{ $r->document_name }}</a>
+        @elseif(in_array($r->status, ['requested','approved','paid'], true))
+         <form method="post" action="/area/wallet/prelievo/{{ $r->id }}/documento" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center">@csrf<input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required aria-label="Documento fiscale"><button class="btn ghost" style="padding:7px 14px;font-size:13.5px">Aggiungi documento</button></form>
+        @endif
+       </span>
        @if($r->status === 'requested')<span class="end"><form method="post" action="/area/wallet/prelievo/{{ $r->id }}/annulla" onsubmit="return confirm('Annullare questa richiesta di prelievo?')">@csrf<button class="btn ghost" style="padding:7px 14px;font-size:13.5px">Annulla</button></form></span>@endif
       </div>
      @endforeach
@@ -36,7 +42,7 @@
   <section class="panel">
    <header><h2>Movimenti</h2></header>
    @if($transactions->isEmpty())
-    <div class="empty"><span class="ico">@include('site.area._i', ['n' => 'euro'])</span><div><strong>Nessun movimento ancora</strong><p>Gli accrediti compaiono dopo la chiusura del mese.</p></div></div>
+    <div class="empty"><span class="ico">@include('site.area._i', ['n' => 'euro'])</span><div><strong>Nessun movimento ancora</strong><p>Gli accrediti compaiono dopo la chiusura del mese e alla conferma di ogni Bonus di Struttura.</p></div></div>
    @else
     <div class="tbl-wrap"><table class="tbl cards">
      <thead><tr><th>Data</th><th>Descrizione</th><th class="num">Importo</th><th class="num">Saldo</th></tr></thead>
@@ -49,12 +55,23 @@
   </section>
  </div>
  <aside class="stack">
+  <section class="panel">
+   <header><h2>I tuoi documenti</h2></header>
+   <div class="list">
+    <a class="item" href="/area/statini"><span class="main"><span class="t">Statini mensili</span><span class="m">Totale, Dirette e Indirette</span></span></a>
+    <a class="item" href="/area/statini-bonus"><span class="main"><span class="t">Statini bonus settimanali</span><span class="m">Bonus di Struttura</span></span></a>
+    <a class="item" href="/area/ricevute"><span class="main"><span class="t">Ricevute</span><span class="m">Emesse per ogni prelievo pagato</span></span></a>
+   </div>
+  </section>
   @if($enabled)
-   <form method="post" action="/area/wallet/prelievo" class="panel accent">@csrf
+   <form method="post" action="/area/wallet/prelievo" class="panel accent" enctype="multipart/form-data">@csrf
     <header><h2>Chiedi un prelievo</h2></header>
     <div class="panel-body">
      <label for="w-amount">Importo lordo (€)</label><input id="w-amount" name="amount" inputmode="decimal" value="{{ old('amount') }}" placeholder="0,00">
      @error('amount')<p class="err">{{ $message }}</p>@enderror
+     <label for="w-doc" style="margin-top:10px">Fattura o ricevuta (facoltativa)</label><input id="w-doc" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png">
+     @error('document')<p class="err">{{ $message }}</p>@enderror
+     <p class="muted" style="margin:6px 0 0;font-size:13px">Puoi allegarla ora oppure aggiungerla dopo dalla richiesta. Non è obbligatoria per prelevare.</p>
      <p class="muted" style="margin:10px 0 0;font-size:13px">Minimo € 15,00. Dal prelievo si detraggono la commissione bonifico di € {{ $eur($fee) }} e le eventuali trattenute fiscali, indicate nella ricevuta. Il bonifico parte entro 5 giorni lavorativi dall'approvazione.</p>
      <div class="form-actions"><button>Invia la richiesta</button></div>
     </div>

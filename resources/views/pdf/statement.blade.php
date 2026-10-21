@@ -10,11 +10,12 @@ table{width:100%;border-collapse:collapse;margin-top:6px}th{background:#FCF6F3;t
 <h1>Statino provvigionale {{ $period->code }}</h1>
 <div class="muted">{{ $consultant->name }} [{{ $consultant->code }}] · emesso per conto di {{ $seller['name'] ?? 'Lamèss' }}</div>
 
-@forelse($groups as $g)
+<table style="width:100%;margin:12px 0 0"><tr class="total"><td style="font-size:15px">Totale del mese</td><td class="r" style="font-size:15px">€ {{ $eur($total) }}</td></tr></table>
+@forelse($sections as $g)
 <h2>{{ $g['label'] }}</h2>
 <table><tr><th>Origine</th><th class="r">Base €</th><th class="r">%</th><th>Perché</th><th class="r">Importo €</th></tr>
 @foreach($g['lines'] as $l)
-<tr class="{{ $l['held'] ? 'held' : '' }}"><td>{{ $l['source'] }}@if($l['level']) · livello {{ $l['level'] }}@endif</td><td class="r">{{ $eur($l['base']) }}</td><td class="r">{{ $l['pct'] ?? '' }}</td><td>{{ $l['why'] }}@if($l['held']) (trattenuto)@endif</td><td class="r">{{ $eur($l['amount']) }}</td></tr>
+<tr class="{{ $l['held'] ? 'held' : '' }}"><td>{{ $l['source'] }}@if($l['level']) · livello {{ $l['level'] }}@endif @if($l['extended'] ?? false)(esteso)@endif</td><td class="r">{{ $eur($l['base']) }}</td><td class="r">{{ $l['pct'] ?? '' }}</td><td>{{ $l['why'] }}@if($l['held']) (trattenuto)@endif</td><td class="r">{{ $eur($l['amount']) }}</td></tr>
 @endforeach
 <tr class="total"><td colspan="4">Totale {{ $g['label'] }}</td><td class="r">{{ $eur($g['accrued']) }}</td></tr></table>
 @empty
@@ -30,6 +31,7 @@ table{width:100%;border-collapse:collapse;margin-top:6px}th{background:#FCF6F3;t
 <p class="muted">
 @if($payout?->status === 'paid')Pagato il {{ $payout->paid_at->timezone('Europe/Rome')->format('d/m/Y') }} (rif. {{ $payout->reference }}).
 @elseif($payout)Pagamento in preparazione per € {{ $eur($payout->amount) }}.
+@elseif(\App\Domain\Wallet\WithdrawalService::enabled())Il totale del mese è accreditato nella Tasca alla chiusura del mese; il prelievo avviene su richiesta.
 @else Il pagamento avviene quando il saldo raggiunge € {{ $eur($min_payout) }} e l'onboarding è completo; sotto soglia gli importi si cumulano.@endif
 </p>
 <p class="note">Importi in euro, IVA esclusa dove dovuta. Eventuali contestazioni circostanziate vanno inviate entro 10 giorni dalla pubblicazione tramite il servizio di assistenza (Reg. 5.2).

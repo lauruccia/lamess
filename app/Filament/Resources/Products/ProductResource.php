@@ -121,7 +121,7 @@ class ProductResource extends Resource
         $eur = static fn (string $n): string => number_format((float) $n, 2, ',', '.').' €';
         $clients = max(1, (int) $get('customer_count'));
         $months = max(1, (int) $get('customer_validity_months'));
-        $validity = $clients.($clients === 1 ? ' cliente' : ' clienti').' per '.$months.($months === 1 ? ' mese' : ' mesi').($get('makes_client') ? ', sempre (anche sotto l\'importo minimo).' : ' (se l\'ordine raggiunge l\'importo minimo del piano).');
+        $validity = $clients.($clients === 1 ? ' cliente' : ' clienti').' per '.$months.($months === 1 ? ' mese' : ' mesi').($get('makes_client') ? ', sempre (anche sotto l\'importo minimo).' : ' (se l\'ordine raggiunge l\'importo minimo del piano).').($get('months_per_piece') === false ? ' La durata non cambia con i pezzi.' : ' I pezzi moltiplicano i mesi.');
 
         if (in_array($mode, [Product::VAP_PERCENT, Product::VAP_FIXED], true) && is_numeric($value)) {
             if ($mode === Product::VAP_FIXED) {
@@ -345,6 +345,8 @@ class ProductResource extends Resource
                                 ->prefix(fn (Get $get) => $get('vap_mode') === Product::VAP_FIXED ? '€' : null)->suffix(fn (Get $get) => $get('vap_mode') === Product::VAP_PERCENT ? '%' : null)
                                 ->visible(fn (Get $get) => filled($get('vap_mode')))->required(fn (Get $get) => filled($get('vap_mode')))
                                 ->helperText('Percentuale: sul prezzo IVA inclusa già scontato. Importo fisso: moltiplicato per i pezzi acquistati.'),
+                            Toggle::make('months_per_piece')->label('I pezzi moltiplicano i mesi')->default(true)->live()->columnSpanFull()
+                                ->helperText('Acceso: 2 pezzi nella stessa riga d\'ordine valgono il doppio dei mesi (la durata × i pezzi). Spento: la durata resta quella del prodotto, qualunque sia il numero di pezzi. I clienti restano quelli indicati sopra, una volta per ordine.'),
                             Toggle::make('makes_client')->label('Rende cliente a prescindere dall\'importo')->live()->columnSpanFull()
                                 ->helperText('Spento (normale): chi compra diventa cliente solo se il totale dell\'ordine raggiunge l\'importo minimo del piano, qualunque siano i prodotti. Acceso: chi compra questo prodotto è sempre cliente, anche sotto l\'importo minimo.'),
                             Text::make(fn (Get $get): string => self::commissionSummary($get))->color('gray')->columnSpanFull(),

@@ -13,7 +13,7 @@
 </div>
 
 <div class="kpis">
- <div class="kpi"><small>Maturato nel mese</small><strong>€ {{ $eur($s['accrued']) }}</strong><span>{{ count($s['groups']) }} {{ count($s['groups']) === 1 ? 'voce' : 'voci' }} di compenso</span></div>
+ <div class="kpi"><small>Totale del mese</small><strong>€ {{ $eur($s['total']) }}</strong><span>{{ count($s['sections']) }} {{ count($s['sections']) === 1 ? 'voce' : 'voci' }} di compenso</span></div>
  <div class="kpi"><small>Trattenuto</small><strong>€ {{ $eur($s['held']) }}</strong><span>Non erogato in questo mese</span></div>
  <div class="kpi"><small>Residuo precedente</small><strong>€ {{ $eur($s['carried']) }}</strong><span>Cumulato da mesi passati</span></div>
  <div class="kpi {{ $paid ? 'k-ok' : '' }}"><small>Pagamento</small><strong>{{ $paid ? 'Pagato' : ($s['payout'] ? 'In preparazione' : 'Non ancora') }}</strong><span>@if($paid)Il {{ \App\Support\Ui::date($s['payout']->paid_at) }}@elseif($s['payout'])€ {{ $eur($s['payout']->amount) }}@else Da € {{ $eur($s['min_payout']) }} con onboarding completo @endif</span></div>
@@ -21,13 +21,13 @@
 
 <div class="split">
  <div class="stack">
-  @forelse($s['groups'] as $g)
+  @forelse($s['sections'] as $g)
    <section class="panel">
     <header><h2>{{ $g['label'] }}</h2><strong>€ {{ $eur($g['accrued']) }}</strong></header>
     <div class="list">
      @foreach($g['lines'] as $l)
       <div class="item">
-       <span class="main"><span class="t">{{ $l['source'] }}@if($l['level']) · livello {{ $l['level'] }}@endif @if($l['held'])<span class="st st-warn">trattenuto</span>@endif</span><span class="m">Base € {{ $eur($l['base']) }}@if($l['pct']) × {{ $l['pct'] }}%@endif — {{ $l['why'] }}</span></span>
+       <span class="main"><span class="t">{{ $l['source'] }}@if($l['level']) · livello {{ $l['level'] }}@endif @if($l['extended'] ?? false)<span class="st">esteso</span>@endif @if($l['held'])<span class="st st-warn">trattenuto</span>@endif</span><span class="m">Base € {{ $eur($l['base']) }}@if($l['pct']) × {{ $l['pct'] }}%@endif — {{ $l['why'] }}</span></span>
        <span class="end"><b>€ {{ $eur($l['amount']) }}</b></span>
       </div>
      @endforeach
@@ -53,7 +53,7 @@
      Per contestazioni circostanziate hai 10 giorni dalla pubblicazione (Reg. 5.2).
     @endif
     </p>
-    <p class="muted" style="margin:12px 0 0;font-size:13px">@if($paid)Pagato il {{ \App\Support\Ui::date($s['payout']->paid_at) }}.@elseif($s['payout'])Pagamento in preparazione per € {{ $eur($s['payout']->amount) }}.@else Il pagamento avviene da € {{ $eur($s['min_payout']) }} con onboarding completo; sotto soglia gli importi si cumulano.@endif</p>
+    <p class="muted" style="margin:12px 0 0;font-size:13px">@if($paid)Pagato il {{ \App\Support\Ui::date($s['payout']->paid_at) }}.@elseif($s['payout'])Pagamento in preparazione per € {{ $eur($s['payout']->amount) }}.@elseif(\App\Domain\Wallet\WithdrawalService::enabled())Il totale del mese è accreditato nella <a href="/area/wallet">Tasca</a> alla chiusura del mese: lo ritiri con una richiesta di prelievo.@else Il pagamento avviene da € {{ $eur($s['min_payout']) }} con onboarding completo; sotto soglia gli importi si cumulano.@endif</p>
    </div>
   </section>
   @if($doc && $doc->canBeDisputed())

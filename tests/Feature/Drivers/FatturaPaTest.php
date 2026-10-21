@@ -73,6 +73,22 @@ final class FatturaPaTest extends TestCase
         $this->assertSame(3, substr_count($f['xml'], '<DettaglioLinee>'), 'due prodotti + spedizione');
     }
 
+    public function test_order_number_is_referenced_in_invoice_and_credit_note(): void
+    {
+        $o = $this->paidOrder();
+        $f = app(FatturaPaBuilder::class)->build($o->invoice);
+        $this->assertValidFatturaPa($f['xml']);
+        $this->assertStringContainsString('<DatiOrdineAcquisto>', $f['xml']);
+        $this->assertStringContainsString('<IdDocumento>'.$o->number.'</IdDocumento>', $f['xml']);
+        $this->assertLessThan(strpos($f['xml'], '<DatiBeniServizi>'), strpos($f['xml'], '<DatiOrdineAcquisto>'));
+
+        $note = app(InvoiceService::class)->issueCreditNote($o->load('items', 'invoice'), [$o->items->last()->id => 1], 'Reso');
+        $n = app(FatturaPaBuilder::class)->build($note);
+        $this->assertValidFatturaPa($n['xml']);
+        $this->assertLessThan(strpos($n['xml'], '<DatiFattureCollegate>'), strpos($n['xml'], '<DatiOrdineAcquisto>'), 'ordine prima delle fatture collegate, come vuole lo schema');
+        $this->assertStringContainsString('<IdDocumento>'.$o->number.'</IdDocumento>', $n['xml']);
+    }
+
     public function test_company_invoice_uses_sdi_code_vat_and_transfer_payment(): void
     {
         $o = $this->paidOrder(['type' => 'company', 'company_name' => 'Acme & Figli S.p.A.', 'vat_number' => 'IT09876543210', 'tax_code' => '', 'sdi_code' => 'ABC1234', 'first_name' => '', 'last_name' => ''], 'transfer');

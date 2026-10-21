@@ -69,6 +69,13 @@ final class FatturaPaBuilder
             $this->text($w, 'Causale', $doc->reason, 200);
         }
         $w->endElement();
+        $orderNumber = trim((string) ($doc->order?->number ?? ''));
+        if ($orderNumber !== '') {
+            // Riferimento d'ordine (blocco 2.1.2): senza RiferimentoNumeroLinea vale per tutte le righe del documento.
+            $w->startElement('DatiOrdineAcquisto');
+            $this->text($w, 'IdDocumento', $orderNumber, 20);
+            $w->endElement();
+        }
         if ($isCredit) {
             $w->startElement('DatiFattureCollegate');
             $this->text($w, 'IdDocumento', $doc->invoice->number, 20);
@@ -143,7 +150,7 @@ final class FatturaPaBuilder
         return $exempt->isGreaterThan(Num::of('77.47'));
     }
 
-    private static function natureReference(string $nature): string
+    public static function natureReference(string $nature): string
     {
         return match ($nature) {
             'N3.1' => 'Operazione non imponibile - esportazione (art. 8 DPR 633/72)',

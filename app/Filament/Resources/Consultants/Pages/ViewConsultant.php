@@ -92,6 +92,9 @@ class ViewConsultant extends ViewRecord
             ->getOptionLabelUsing(fn ($value) => ($c = Consultant::find($value)) ? "{$c->code} — {$c->name}" : '');
 
         return [
+            Action::make('editData')->label('Modifica dati')->icon('heroicon-o-pencil-square')->color('primary')
+                ->visible(fn () => ConsultantResource::canEdit($this->record))
+                ->url(fn () => ConsultantResource::getUrl('edit', ['record' => $this->record])),
             KycRequestAction::forPage(fn () => $this->record),
             SendDocumentsAction::forPage(fn () => $this->record),
             ...ConsultantAccessAction::forPage(fn () => $this->record),

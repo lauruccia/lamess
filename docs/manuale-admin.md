@@ -50,6 +50,8 @@ Permessi particolari: `network.restructure` (spostare rami, riassegnare clienti,
 
 **Password dimenticata**: dalla pagina di accesso. Le email partono solo se «Invio email attivo» è acceso nelle Impostazioni di sistema. Per mandare il link a nome della persona, anche a molti insieme, vedi *Reset password* in Rete → Clienti (FAN).
 
+**Modifica incaricato** (admin con `network.manage` e super_admin): pagina a sezioni — Anagrafica, Contatti e residenza, Pagamenti e fisco, Iscrizione e stato, Piano e compensi — descritta in *Scheda incaricato → Modifica dati*. Sponsor e stato si cambiano solo dalla scheda; il codice attività solo dal super_admin; l'IBAN resta mascherato.
+
 **Modifica diretta del super_admin**: le pagine di modifica generiche hanno etichette in italiano, menu a tendina ricercabili per le relazioni, menu per stati e tipi, righe prodotto/quantità dove servono, date nel fuso di Roma e suffissi €/%. Ogni salvataggio scrive nel log i valori prima e dopo.
 
 ## Il Piano Incaricati (compensi)

@@ -28,6 +28,15 @@ In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sos
 
 **Apertura della scheda**: registrata nel log di audit (una volta ogni 10 minuti per la stessa coppia utente/incaricato).
 
+**Modifica dati** (pulsante in alto a destra nella scheda, o «Modifica dati» nel menu ⋮ dell'elenco; per chi ha il permesso `network.manage` e per il super_admin): una pagina a sezioni, con in alto il riepilogo (stato, qualifica, KYC) e il pulsante **Salva modifiche** sempre visibile in fondo. Le sezioni:
+- **Anagrafica**: nome, cognome, codice fiscale, data e luogo di nascita (solo maggiorenni).
+- **Contatti e residenza**: email di accesso, telefono, PEC, indirizzo, città, CAP, provincia, nazione. Se l'incaricato non ha ancora un accesso, scrivendo l'email lo si crea (con l'interruttore per inviare subito l'invito); data di nascita e recapiti si possono salvare solo insieme all'email.
+- **Pagamenti e fisco**: IBAN (mostrato mascherato: per cambiarlo si scrive il nuovo, quello vecchio non viene mai mostrato per intero), intestatario, regime fiscale (ritenuta o partita IVA), verifica KYC (con il permesso `kyc.manage`).
+- **Iscrizione e stato**: codice attività (**solo il super_admin lo cambia**), codice referral, date di firma e di ingresso in rete, onboarding completato, tesserino. Sponsor e stato si **vedono ma non si cambiano qui**: sospendere, riattivare, cessare e spostare lo sponsor restano nella scheda, con il loro motivo registrato.
+- **Piano e compensi**: compensi bloccati, founder, qualifica massima consentita, «Mantieni qualifica» (data o fino a revoca, con motivo) e, solo per il super_admin con il piano precedente visibile, la qualifica del piano precedente.
+
+Ogni salvataggio scrive nel log di audit i campi cambiati con i valori prima e dopo (l'IBAN solo mascherato).
+
 **Sposta / cambia sponsor**: solo super_admin, in casi estremi (motivo obbligatorio, finisce nel log). L'admin non lo vede, nemmeno con il permesso «ristrutturare la rete».
 
 ## L'elenco incaricati (Rete → Incaricati)

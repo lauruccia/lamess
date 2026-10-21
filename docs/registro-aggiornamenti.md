@@ -407,3 +407,10 @@
   INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_08_110000_easyfatt_exported_at', MAX(`batch`) FROM `migrations`;
   ```
 - **Punti assegnati visibili**: nella scheda incaricato (admin, Riepilogo) e nella panoramica dell'area dell'incaricato (riquadro «Punti assegnati», solo se ne ha; l'incaricato non vede il nome del cliente indicato). Nel form «Assegna punti» il cliente predefinito è il beneficiario stesso.
+
+## 2026-10-21 — Nuova pagina «Modifica incaricato»
+- La pagina di modifica dell'incaricato era un modulo generato dalle colonne del database (solo super_admin, nomi tecnici come «Chiave anagrafica», senza recapiti né IBAN). Ora è una **scheda a sezioni** (Anagrafica · Contatti e residenza · Pagamenti e fisco · Iscrizione e stato · Piano e compensi) con intestazione riassuntiva, date in formato italiano e pulsante «Salva modifiche» sempre visibile.
+- **Aperta anche agli admin** con il permesso `network.manage` (prima solo il super_admin); pulsante «Modifica dati» nella scheda e nel menu ⋮ dell'elenco.
+- Salva in un colpo solo i dati di incaricato, utente di accesso e profilo (email, nome, codice fiscale, recapiti). Senza accesso, scrivere l'email lo crea.
+- Restano protetti: sponsor e stato (si cambiano dalla scheda), codice attività (solo super_admin), IBAN (mascherato; per cambiarlo si scrive il nuovo). Log di audit con valori prima e dopo.
+- Nessuna migrazione, nessun SQL da eseguire. Test: `EditConsultantTest`.

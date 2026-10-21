@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Consultants;
 
+use App\Domain\Access\Superadmin;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Consultants\Consultant360;
 use App\Domain\Features\Feature;
@@ -154,7 +155,7 @@ class ConsultantResource extends Resource
     }
 
     /** Nazioni proposte nel modulo (codice ISO a 2 lettere). */
-    private const COUNTRIES = [
+    public const COUNTRIES = [
         'IT' => 'Italia', 'ES' => 'Spagna', 'DE' => 'Germania', 'NL' => 'Olanda', 'FR' => 'Francia', 'IE' => 'Irlanda',
         'PT' => 'Portogallo', 'AT' => 'Austria', 'BE' => 'Belgio', 'CH' => 'Svizzera', 'GB' => 'Regno Unito', 'PA' => 'Panama',
     ];
@@ -314,6 +315,9 @@ class ConsultantResource extends Resource
                 PasswordResetAction::bulk(),
             ])->recordActions([
                 ActionGroup::make([
+                    Action::make('editData')->label('Modifica dati')->icon('heroicon-o-pencil-square')->color('gray')
+                        ->visible(fn (Consultant $record): bool => ! Superadmin::is() && static::canEdit($record))
+                        ->url(fn (Consultant $record): string => static::getUrl('edit', ['record' => $record])),
                     KycRequestAction::forRow(),
                     PasswordResetAction::forRow(),
                     ...ConsultantAccessAction::forRow(),

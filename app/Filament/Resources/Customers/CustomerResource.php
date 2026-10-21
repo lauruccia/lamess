@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Customers;
 
+use App\Domain\Access\Superadmin;
 use App\Domain\Network\ConsultantConversion;
 use App\Domain\Network\NetworkException;
 use App\Domain\Network\TreeOperations;
@@ -63,7 +64,7 @@ class CustomerResource extends Resource
     }
 
     /** @return list<Component> */
-    private static function reassignForm(): array
+    public static function reassignForm(): array
     {
         return [
             Select::make('consultant_id')->label('Nuovo incaricato')->searchable()->placeholder('— nessuno —')
@@ -74,7 +75,7 @@ class CustomerResource extends Resource
     }
 
     /** @param iterable<Customer> $customers */
-    private static function reassign(iterable $customers, array $data): void
+    public static function reassign(iterable $customers, array $data): void
     {
         try {
             $n = app(TreeOperations::class)->reassignCustomers($customers, $data['consultant_id'] ? Consultant::findOrFail($data['consultant_id']) : null, $data['reason']);
@@ -139,6 +140,9 @@ class CustomerResource extends Resource
                 TernaryFilter::make('no_consultant')->label('Assegnazione')->placeholder('Tutti')->trueLabel('Senza incaricato')->falseLabel('Con incaricato')
                     ->queries(true: fn ($q) => $q->whereNull('assigned_consultant_id'), false: fn ($q) => $q->whereNotNull('assigned_consultant_id'), blank: fn ($q) => $q),
             ])->recordActions([
+                Action::make('editData')->label('Modifica dati')->iconButton()->tooltip('Modifica dati')->icon('heroicon-o-pencil-square')
+                    ->visible(fn (Customer $record): bool => ! Superadmin::is() && static::canEdit($record))
+                    ->url(fn (Customer $record): string => static::getUrl('edit', ['record' => $record])),
                 Action::make('promote')->label('Promuovi a incaricato')->iconButton()->tooltip('Promuovi a incaricato')->icon('heroicon-o-arrow-up-circle')->authorize('network.manage')
                     ->visible(fn (Customer $record) => $record->user?->profile?->type !== 'company' && ! Consultant::where('user_id', $record->user_id)->where('status', '!=', 'terminated')->exists())
                     ->modalDescription('Il cliente entra subito nell\'albero come incaricato attivo, con codice e link referral nuovi. Lettera d\'incarico e KYC si completano dopo.')

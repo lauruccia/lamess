@@ -15,6 +15,7 @@ use App\Domain\Onboarding\Iban;
 use App\Domain\Onboarding\OnboardingException;
 use App\Domain\Onboarding\OnboardingService;
 use App\Domain\Plan\LegacyPlan;
+use App\Filament\Concerns\SavesWithAuditDiff;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\ConsultantAccessAction;
 use App\Filament\Support\RankHoldAction;
@@ -25,7 +26,6 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Support\StatusLabels;
 use Closure;
-use DateTimeInterface;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -61,6 +61,8 @@ use Throwable;
  */
 class EditConsultant extends EditRecord
 {
+    use SavesWithAuditDiff;
+
     protected static string $resource = ConsultantResource::class;
 
     /** Il pulsante «Salva modifiche» resta visibile in fondo allo schermo anche con la scheda lunga. */
@@ -484,34 +486,6 @@ class EditConsultant extends EditRecord
         }
 
         return [];
-    }
-
-    /**
-     * Salva il modello e restituisce i campi cambiati, con il nome in italiano, per il log.
-     *
-     * @param  array<string, string>  $labels
-     * @return array<string, array{prima: mixed, dopo: mixed}>
-     */
-    private function saveWithDiff(Model $model, array $labels): array
-    {
-        $changes = [];
-        foreach ($model->getDirty() as $field => $new) {
-            $changes[$labels[$field] ?? $field] = ['prima' => $this->plain($model->getOriginal($field)), 'dopo' => $this->plain($model->getAttribute($field))];
-        }
-        if ($model->isDirty() || ! $model->exists) {
-            $model->save();
-        }
-
-        return $changes;
-    }
-
-    private function plain(mixed $value): mixed
-    {
-        return match (true) {
-            $value instanceof DateTimeInterface => $value->format('Y-m-d H:i'),
-            is_bool($value) => $value ? 'sì' : 'no',
-            default => $value,
-        };
     }
 
     protected function getHeaderActions(): array

@@ -419,3 +419,9 @@
 - Il tesserino (numero e validità) ora nasce **alla firma della lettera d'incarico**, non più all'accettazione dell'admin; vale e si stampa subito. Anche per gli incaricati iscritti dall'admin (la data di firma vale come firma). Se la generazione del PDF fallisce, la firma o l'iscrizione non si bloccano: l'errore va nei log.
 - Per chi era già iscritto senza tesserino: si genera al primo «Salva modifiche» nella pagina di modifica.
 - Nessuna migrazione. Test aggiornati: `CustomersAndIvdTest`, `SitePagesTest`, `ConsultantAccessTest`, `EditConsultantTest`.
+
+## 2026-10-21 — Nuova pagina «Modifica cliente»
+- Stessa impostazione della pagina incaricato: **scheda a sezioni** (Anagrafica · Contatti e residenza · Registrazione) con intestazione riassuntiva (tipo, incaricato, ordini pagati e spesa, abbonamenti attivi) e pulsante «Salva modifiche» sempre visibile.
+- **Aperta agli admin** con `network.manage` (prima solo il super_admin); pulsante «Modifica dati» sulla riga dell'elenco.
+- Privato o azienda: per l'azienda servono ragione sociale e partita IVA. L'email deve essere unica. Salva insieme utente, profilo e cliente; log `customer.updated` con valori prima e dopo.
+- L'incaricato assegnato non si cambia da qui: c'è **Riassegna** in alto (permesso `network.restructure`, con motivo). Nessuna migrazione. Test: `EditCustomerTest`.

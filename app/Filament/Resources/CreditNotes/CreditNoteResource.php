@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\CreditNotes;
 
+use App\Domain\Billing\EasyfattXmlBuilder;
 use App\Domain\Billing\InvoiceService;
 use App\Filament\Concerns\GatedByPermission;
-use App\Filament\Resources\CreditNotes\Pages\ListCreditNotes;
 use App\Filament\Resources\CreditNotes\Pages\EditCreditNote;
+use App\Filament\Resources\CreditNotes\Pages\ListCreditNotes;
 use App\Models\CreditNote;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -16,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -66,11 +68,22 @@ class CreditNoteResource extends Resource
                     'sent' => 'success', 'error' => 'danger', default => 'warning'
                 })
                 ->tooltip(fn (CreditNote $record) => $record->sink_error),
+            TextColumn::make('easyfatt_exported_at')->label('Easyfatt')->badge()
+                ->state(fn (CreditNote $record) => $record->easyfatt_exported_at !== null)
+                ->formatStateUsing(fn (bool $state) => $state ? 'Esportata' : 'Da esportare')
+                ->color(fn (bool $state) => $state ? 'success' : 'gray')
+                ->tooltip(fn (CreditNote $record) => $record->easyfatt_exported_at?->setTimezone('Europe/Rome')->format('d/m/Y H:i')),
         ])->filters([
+            TernaryFilter::make('easyfatt_exported_at')->label('Easyfatt')->nullable()->placeholder('Tutte')->trueLabel('Esportate')->falseLabel('Da esportare'),
             SelectFilter::make('sink_status')->label('Consegna')->options(['pending' => 'Da inviare', 'sent' => 'Inviata', 'error' => 'Errore']),
         ])->recordActions([
             Action::make('pdf')->label('PDF')->iconButton()->tooltip('PDF')->icon('heroicon-o-document')->color('gray')->url(fn (CreditNote $record) => url('/admin-files/credit-note/'.$record->id))->openUrlInNewTab(),
             Action::make('xml')->label('XML')->iconButton()->tooltip('XML')->icon('heroicon-o-code-bracket')->color('gray')->visible(fn (CreditNote $record) => true)->url(fn (CreditNote $record) => url('/admin-files/credit-note/'.$record->id.'/xml')),
+            Action::make('easyfattToggle')->authorize('orders.manage')->iconButton()
+                ->label(fn (CreditNote $record) => $record->easyfatt_exported_at ? 'Rimetti da esportare per Easyfatt' : 'Segna come esportata per Easyfatt')
+                ->tooltip(fn (CreditNote $record) => $record->easyfatt_exported_at ? 'Rimetti da esportare per Easyfatt' : 'Segna come esportata per Easyfatt')
+                ->icon(fn (CreditNote $record) => $record->easyfatt_exported_at ? 'heroicon-o-arrow-uturn-left' : 'heroicon-o-check-circle')->color('gray')
+                ->action(fn (CreditNote $record) => app(EasyfattXmlBuilder::class)->markExported([], [$record->id], $record->easyfatt_exported_at === null)),
             Action::make('resend')->authorize('orders.manage')->label('Reinvia')->iconButton()->tooltip('Reinvia')->icon('heroicon-o-paper-airplane')
                 ->visible(fn (CreditNote $record) => $record->sink_status !== 'sent')
                 ->action(function (CreditNote $record): void {

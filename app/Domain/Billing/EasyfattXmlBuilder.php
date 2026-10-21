@@ -21,23 +21,41 @@ final class EasyfattXmlBuilder
      * Fatture e note di credito emesse tra due date (giorni di calendario italiani, estremi inclusi).
      * Le ricevute dei privati non sono fatture: restano fuori, a meno che non si chiedano (allora entrano come fattura).
      *
-     * @return array{xml: string, count: int, invoices: int, credit_notes: int, receipts_skipped: int}
+     * Con $onlyNew restano fuori i documenti già esportati in precedenza.
+     *
+     * @return array{xml: string, count: int, invoices: int, credit_notes: int, receipts_skipped: int, invoice_ids: array<int,int>, credit_note_ids: array<int,int>}
      */
-    public function forPeriod(string $from, string $until, bool $includeReceipts = false): array
+    public function forPeriod(string $from, string $until, bool $includeReceipts = false, bool $onlyNew = false): array
     {
         $start = CarbonImmutable::parse($from, 'Europe/Rome')->startOfDay()->setTimezone((string) config('app.timezone'));
         $end = CarbonImmutable::parse($until, 'Europe/Rome')->endOfDay()->setTimezone((string) config('app.timezone'));
 
-        $invoices = Invoice::whereBetween('issued_at', [$start, $end])->orderBy('issued_at')->orderBy('id')->get();
+        $invoices = Invoice::whereBetween('issued_at', [$start, $end])->when($onlyNew, fn ($q) => $q->whereNull('easyfatt_exported_at'))->orderBy('issued_at')->orderBy('id')->get();
         $skipped = $includeReceipts ? 0 : $invoices->where('type', '!=', 'invoice')->count();
         $invoices = $includeReceipts ? $invoices : $invoices->where('type', 'invoice')->values();
 
-        $notes = CreditNote::with('invoice')->whereBetween('issued_at', [$start, $end])->orderBy('issued_at')->orderBy('id')->get();
+        $notes = CreditNote::with('invoice')->whereBetween('issued_at', [$start, $end])->when($onlyNew, fn ($q) => $q->whereNull('easyfatt_exported_at'))->orderBy('issued_at')->orderBy('id')->get();
         $notes = $includeReceipts ? $notes : $notes->filter(fn (CreditNote $n) => $n->invoice?->type === 'invoice')->values();
 
         $built = $this->build($invoices->concat($notes));
 
-        return $built + ['invoices' => $invoices->count(), 'credit_notes' => $notes->count(), 'receipts_skipped' => $skipped];
+        return $built + [
+            'invoices' => $invoices->count(), 'credit_notes' => $notes->count(), 'receipts_skipped' => $skipped,
+            'invoice_ids' => $invoices->pluck('id')->all(), 'credit_note_ids' => $notes->pluck('id')->all(),
+        ];
+    }
+
+    /**
+     * Segna i documenti come esportati per Easyfatt (o, con $exported = false, di nuovo da esportare).
+     *
+     * @param  array<int,int>  $invoiceIds
+     * @param  array<int,int>  $creditNoteIds
+     */
+    public function markExported(array $invoiceIds, array $creditNoteIds, bool $exported = true): void
+    {
+        $value = $exported ? now() : null;
+        Invoice::whereIn('id', $invoiceIds)->update(['easyfatt_exported_at' => $value]);
+        CreditNote::whereIn('id', $creditNoteIds)->update(['easyfatt_exported_at' => $value]);
     }
 
     /**

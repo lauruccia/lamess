@@ -14,7 +14,7 @@ class CreditNote extends Model
 
     protected function casts(): array
     {
-        return ['net' => 'decimal:2', 'vat' => 'decimal:2', 'total' => 'decimal:2', 'issued_at' => 'immutable_datetime', 'buyer' => 'array'];
+        return ['net' => 'decimal:2', 'vat' => 'decimal:2', 'total' => 'decimal:2', 'issued_at' => 'immutable_datetime', 'buyer' => 'array', 'easyfatt_exported_at' => 'immutable_datetime'];
     }
 
     public function order(): BelongsTo

@@ -395,3 +395,14 @@
   ALTER TABLE `pv_movements` ADD CONSTRAINT `pv_movements_client_user_id_foreign` FOREIGN KEY (`client_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
   INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_08_100000_pv_movements_client_user', MAX(`batch`) FROM `migrations`;
   ```
+
+## 2026-10-21 — Segno «Easyfatt» sulle fatture e note di credito
+- **Elenco Fatture e Note di credito**: nuova colonna **Easyfatt** (verde «Esportata» con data nel suggerimento, grigio «Da esportare»), filtro *Tutte / Esportate / Da esportare* e azione di riga per segnare o rimettere da esportare a mano.
+- **Esporta per Easyfatt**: ora ha tre interruttori. «Solo i documenti non ancora esportati» (acceso), «Includi le ricevute» (spento), «Segna i documenti come esportati» (acceso: spegnilo per una prova). Il segno si mette quando il file viene scaricato; l'operazione finisce nel log di audit (`export.easyfatt`).
+- Migrazione nuova: `2026_11_08_110000` (`invoices.easyfatt_exported_at` e `credit_notes.easyfatt_exported_at`). Test: `EasyfattXmlTest`.
+- **SQL per phpMyAdmin** (da eseguire *prima* del deploy: la colonna è facoltativa e il codice vecchio non la usa):
+  ```sql
+  ALTER TABLE `invoices` ADD COLUMN `easyfatt_exported_at` TIMESTAMP NULL DEFAULT NULL;
+  ALTER TABLE `credit_notes` ADD COLUMN `easyfatt_exported_at` TIMESTAMP NULL DEFAULT NULL;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_08_110000_easyfatt_exported_at', MAX(`batch`) FROM `migrations`;
+  ```

@@ -7,9 +7,11 @@ namespace Tests\Feature\Drivers;
 use App\Domain\Billing\EasyfattXmlBuilder;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Orders\OrderService;
+use App\Filament\Resources\CreditNotes\Pages\ListCreditNotes;
 use App\Filament\Resources\Invoices\Pages\ListInvoices;
 use App\Models\AuditEntry;
 use App\Models\Order;
+use App\Models\ShippingRate;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +48,7 @@ final class EasyfattXmlTest extends TestCase
     {
         config(['lamess.shop_countries' => ['IT', $country]]);
         $this->plan();
-        \App\Models\ShippingRate::create(['country_code' => $country, 'amount_net' => '0.00', 'vat_rate' => $vat]);
+        ShippingRate::create(['country_code' => $country, 'amount_net' => '0.00', 'vat_rate' => $vat]);
         $p = $this->product('FX'.$country, '100.00', ['vat_rate' => $vat]);
         $orders = app(OrderService::class);
         $o = $orders->place($this->buyer($this->activeSponsor()), [$p->id => 1], $country, 'card', $this->billing($billing));
@@ -213,5 +215,79 @@ final class EasyfattXmlTest extends TestCase
 
         $this->assertTrue(AuditEntry::where('action', 'export.easyfatt')->exists());
         $this->assertNotNull($o->invoice);
+    }
+
+    public function test_export_marks_documents_and_a_second_export_skips_them(): void
+    {
+        $o = $this->paidOrder();
+        $day = CarbonImmutable::now('Europe/Rome')->toDateString();
+        $this->actingAs(User::factory()->role()->create());
+        $this->assertNull($o->invoice->easyfatt_exported_at);
+
+        Livewire::test(ListInvoices::class)->callAction('easyfatt', ['from' => $day, 'until' => $day, 'only_new' => true, 'receipts' => false, 'mark' => true])->assertFileDownloaded();
+        $this->assertNotNull($o->invoice->refresh()->easyfatt_exported_at);
+
+        Livewire::test(ListInvoices::class)->callAction('easyfatt', ['from' => $day, 'until' => $day, 'only_new' => true, 'receipts' => false, 'mark' => true])
+            ->assertNotified('Nessun documento da esportare nel periodo');
+
+        Livewire::test(ListInvoices::class)->callAction('easyfatt', ['from' => $day, 'until' => $day, 'only_new' => false, 'receipts' => false, 'mark' => true])->assertFileDownloaded();
+    }
+
+    public function test_a_trial_export_without_marking_leaves_documents_to_export(): void
+    {
+        $o = $this->paidOrder();
+        $day = CarbonImmutable::now('Europe/Rome')->toDateString();
+        $this->actingAs(User::factory()->role()->create());
+
+        Livewire::test(ListInvoices::class)->callAction('easyfatt', ['from' => $day, 'until' => $day, 'only_new' => true, 'receipts' => false, 'mark' => false])->assertFileDownloaded();
+
+        $this->assertNull($o->invoice->refresh()->easyfatt_exported_at);
+    }
+
+    public function test_only_new_leaves_out_documents_already_exported_including_credit_notes(): void
+    {
+        $o = $this->paidOrder();
+        $note = app(InvoiceService::class)->issueCreditNote($o->load('items', 'invoice'), [$o->items->last()->id => 1], 'Reso');
+        $day = CarbonImmutable::now('Europe/Rome')->toDateString();
+        $builder = app(EasyfattXmlBuilder::class);
+
+        $builder->markExported([$o->invoice->id], []);
+        $r = $builder->forPeriod($day, $day, false, true);
+
+        $this->assertSame(0, $r['invoices']);
+        $this->assertSame([$note->id], $r['credit_note_ids']);
+        $this->assertSame(2, $builder->forPeriod($day, $day)['count'], 'senza il filtro entrano entrambi');
+    }
+
+    public function test_row_action_marks_and_unmarks_a_document_by_hand(): void
+    {
+        $o = $this->paidOrder();
+        $this->actingAs(User::factory()->role()->create());
+
+        Livewire::test(ListInvoices::class)->callTableAction('easyfattToggle', $o->invoice);
+        $this->assertNotNull($o->invoice->refresh()->easyfatt_exported_at);
+
+        Livewire::test(ListInvoices::class)->callTableAction('easyfattToggle', $o->invoice);
+        $this->assertNull($o->invoice->refresh()->easyfatt_exported_at);
+    }
+
+    public function test_list_filter_separates_exported_from_to_export(): void
+    {
+        $o = $this->paidOrder();
+        $this->actingAs(User::factory()->role()->create());
+        app(EasyfattXmlBuilder::class)->markExported([$o->invoice->id], []);
+
+        Livewire::test(ListInvoices::class)->filterTable('easyfatt_exported_at', true)->assertCanSeeTableRecords([$o->invoice])
+            ->filterTable('easyfatt_exported_at', false)->assertCanNotSeeTableRecords([$o->invoice]);
+    }
+
+    public function test_credit_notes_list_has_the_same_easyfatt_mark(): void
+    {
+        $o = $this->paidOrder();
+        $note = app(InvoiceService::class)->issueCreditNote($o->load('items', 'invoice'), [$o->items->last()->id => 1], 'Reso');
+        $this->actingAs(User::factory()->role()->create());
+
+        Livewire::test(ListCreditNotes::class)->callTableAction('easyfattToggle', $note)->filterTable('easyfatt_exported_at', true)->assertCanSeeTableRecords([$note]);
+        $this->assertNotNull($note->refresh()->easyfatt_exported_at);
     }
 }

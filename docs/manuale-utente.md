@@ -44,6 +44,7 @@ L'amministrazione può **chiederti dei documenti** mancanti: ricevi una email e 
 ## Tesserino per la vendita porta a porta
 - È il tesserino di **«Incaricato alle Vendite a Domicilio»**, con foto, nome, codice e validità. Lo stampi dalla panoramica (*Tesserino, PDF da stampare*); può stamparlo anche l'amministrazione. Si stampa solo se l'incarico è attivo e la lettera è stata accettata.
 - Il **retro** riporta i dati dell'impresa e un **QR code di verifica pubblica**: chi lo inquadra vede se il tesserino è valido (nome, codice, validità) e può confrontarlo con il tuo documento. Se il tesserino è scaduto o l'incarico non è più in essere, la pagina di verifica lo segnala.
+- **Cosa ci finisce**: il tesserino lo compone il portale, non lo compili tu. Nome e codice sono quelli della tua anagrafica; la **foto** è quella che carichi in *Onboarding* (documento «foto del tesserino»: se viene rifiutata devi caricarne un'altra); **validità** e data di emissione dipendono dalla tua Lettera di Incarico. Indirizzo, codice fiscale, IBAN e documenti d'identità servono all'amministrazione ma **non** compaiono sul tesserino. Se cambi la foto o la lettera, la stampa successiva è già aggiornata.
 - Il tesserino è personale e va esibito su richiesta del cliente.
 
 ## Canone annuale

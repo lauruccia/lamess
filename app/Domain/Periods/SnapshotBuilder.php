@@ -81,7 +81,8 @@ final class SnapshotBuilder
     }
 
     /**
-     * Cliente acquirente di ciascun movimento pvf legato a un ordine (destinatario della riga, altrimenti chi ha ordinato).
+     * Cliente di ciascun movimento pvf: legato a un ordine (destinatario della riga, altrimenti chi ha ordinato) oppure indicato a mano
+     * in un'assegnazione libera di punti (client_user_id).
      *
      * @param  list<int>  $movementIds
      * @return array<int, string>
@@ -91,10 +92,11 @@ final class SnapshotBuilder
         $out = [];
         foreach (array_chunk($movementIds, 500) as $chunk) {
             $rows = DB::table('pv_movements as pm')
-                ->join('orders as o', 'o.id', '=', 'pm.order_id')
+                ->leftJoin('orders as o', 'o.id', '=', 'pm.order_id')
                 ->leftJoin('order_items as oi', 'oi.id', '=', 'pm.order_item_id')
                 ->whereIn('pm.id', $chunk)->where('pm.kind', 'pvf')
-                ->selectRaw('pm.id as id, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
+                ->whereRaw('coalesce(oi.recipient_user_id, o.buyer_user_id, pm.client_user_id) is not null')
+                ->selectRaw('pm.id as id, coalesce(oi.recipient_user_id, o.buyer_user_id, pm.client_user_id) as customer')
                 ->get();
             foreach ($rows as $r) {
                 $out[(int) $r->id] = (string) $r->customer;
@@ -118,23 +120,25 @@ final class SnapshotBuilder
             return [];
         }
         $rows = PvMovement::query()
-            ->join('orders as o', 'o.id', '=', 'pv_movements.order_id')
+            ->leftJoin('orders as o', 'o.id', '=', 'pv_movements.order_id')
             ->leftJoin('order_items as oi', 'oi.id', '=', 'pv_movements.order_item_id')
             ->where('pv_movements.status', 'confirmed')->where('pv_movements.pv', '>', 0)
             ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $period->ends_at)
+            ->where(fn ($q) => $q->whereNotNull('pv_movements.order_id')->orWhereNotNull('pv_movements.client_user_id'))
             ->where(fn ($q) => $q->whereNull('oi.id')->orWhereColumn('oi.qty_refunded', '<', 'oi.qty'))
             ->orderBy('pv_movements.event_at')->orderBy('pv_movements.id')
-            ->selectRaw('pv_movements.consultant_id, pv_movements.kind, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.validity_months, pv_movements.client_count, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
+            ->selectRaw('pv_movements.id as movement_id, pv_movements.consultant_id, pv_movements.kind, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.validity_months, pv_movements.client_count, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id, pv_movements.client_user_id) as customer')
             ->get();
-        /** @var array<string, array<string, array<int, array{0:BigDecimal,1:DateTimeImmutable,2:int,3:int}>>> $orders */
+        /** @var array<string, array<string, array<string, array{0:BigDecimal,1:DateTimeImmutable,2:int,3:int}>>> $orders */
         $orders = [];
         foreach ($rows as $r) {
             $key = $r->kind === 'pvf' ? (string) $r->customer : 'self:'.$r->consultant_id;
             $value = Num::money($r->amount !== null ? Num::of((string) $r->amount) : Num::of((string) $r->pv)->multipliedBy($plan->commissionBasePerPv));
             $months = max(1, (int) ($r->validity_months ?? 1));
             $clients = max(1, (int) ($r->client_count ?? 1));
-            [$sum, $at, $maxMonths, $maxClients, $byProduct] = $orders[(string) $r->consultant_id][$key][(int) $r->order_id] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), 1, 1, false];
-            $orders[(string) $r->consultant_id][$key][(int) $r->order_id] = [$sum->plus($value), $at, max($maxMonths, $months), max($maxClients, $clients), $byProduct || (bool) $r->makes_client];
+            $orderKey = $r->order_id === null ? 'm:'.$r->movement_id : (string) $r->order_id;
+            [$sum, $at, $maxMonths, $maxClients, $byProduct] = $orders[(string) $r->consultant_id][$key][$orderKey] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), 1, 1, false];
+            $orders[(string) $r->consultant_id][$key][$orderKey] = [$sum->plus($value), $at, max($maxMonths, $months), max($maxClients, $clients), $byProduct || (bool) $r->makes_client];
         }
         $out = [];
         foreach ($orders as $owner => $customers) {
@@ -163,20 +167,22 @@ final class SnapshotBuilder
     private static function firstPurchases(Period $period, PlanConfig $plan): array
     {
         $rows = PvMovement::query()
-            ->join('orders as o', 'o.id', '=', 'pv_movements.order_id')
+            ->leftJoin('orders as o', 'o.id', '=', 'pv_movements.order_id')
             ->leftJoin('order_items as oi', 'oi.id', '=', 'pv_movements.order_item_id')
             ->where('pv_movements.status', 'confirmed')->where('pv_movements.kind', 'pvf')->where('pv_movements.pv', '>', 0)
             ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $period->ends_at)
+            ->where(fn ($q) => $q->whereNotNull('pv_movements.order_id')->orWhereNotNull('pv_movements.client_user_id'))
             ->orderBy('pv_movements.event_at')->orderBy('pv_movements.id')
-            ->selectRaw('pv_movements.consultant_id, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id) as customer')
+            ->selectRaw('pv_movements.id as movement_id, pv_movements.consultant_id, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id, pv_movements.client_user_id) as customer')
             ->get();
         $cfg = $plan->kosmos;
-        /** @var array<string, array<string, array<int, array{0:BigDecimal,1:DateTimeImmutable}>>> $orders */
+        /** @var array<string, array<string, array<string, array{0:BigDecimal,1:DateTimeImmutable}>>> $orders */
         $orders = [];
         foreach ($rows as $r) {
             $value = Num::money($r->amount !== null ? Num::of((string) $r->amount) : Num::of((string) $r->pv)->multipliedBy($plan->commissionBasePerPv));
-            [$sum, $at, $byProduct] = $orders[(string) $r->consultant_id][(string) $r->customer][(int) $r->order_id] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), false];
-            $orders[(string) $r->consultant_id][(string) $r->customer][(int) $r->order_id] = [$sum->plus($value), $at, $byProduct || (bool) $r->makes_client];
+            $orderKey = $r->order_id === null ? 'm:'.$r->movement_id : (string) $r->order_id;
+            [$sum, $at, $byProduct] = $orders[(string) $r->consultant_id][(string) $r->customer][$orderKey] ?? [Num::zero(), $r->event_at->toDateTimeImmutable(), false];
+            $orders[(string) $r->consultant_id][(string) $r->customer][$orderKey] = [$sum->plus($value), $at, $byProduct || (bool) $r->makes_client];
         }
         $out = [];
         foreach ($orders as $owner => $customers) {

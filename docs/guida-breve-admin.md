@@ -10,7 +10,7 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 - **Admin** (il cliente): fa solo ciò che gli è stato concesso e vede solo le voci di menu scelte per lui; non vede né tocca i superadmin.
 
 ## Il menu in alto
-- **Rete**: Incaricati, Albero della rete, Elenco per livelli, Domande IVD, Documenti KYC, Canoni annuali, Clienti (FAN).
+- **Rete**: Incaricati, Albero della rete, Elenco per livelli, Domande IVD, Documenti KYC, Canoni annuali, Clienti (FAN, con il pulsante «Nuovo cliente»).
 - **Compensi**: Piano compensi, Periodi, Liquidazioni, Pagamenti, Bonus di Struttura, Simulazione incaricati (prova «cosa succede se» su rete e qualifiche, senza scrivere nulla: all'apertura vedi la rete di oggi come albero o come elenco per livelli, con cosa manca a ciascuno per salire).
 - **Vendite**: Ordini, Abbonamenti, Prodotti, Sconti, Spedizioni, Fatture, Note di credito.
 - **Assistenza**: Ticket e reclami, Novità, Materiali, Eventi, Casi di conformità, Sanzioni.

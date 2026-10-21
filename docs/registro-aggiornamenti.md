@@ -383,3 +383,9 @@
 - **Annullo ordini in sospeso alla chiusura del mese**: `PeriodService::close()` annulla da solo gli ordini ancora «in attesa di pagamento» creati fino a fine mese (o con righe PV in attesa nel mese): righe PV annullate, magazzino e sconti liberati, quota KMoney già incassata riaccreditata, evento sull'ordine e riga nel registro audit. Un ordine non annullabile resta e blocca la chiusura come prima.
 - **Ancora aperto (commercialista)**: quale IVA applicare ai clienti UE/extra-UE (oggi si applica l'aliquota del prodotto) e OSS; scelta della Natura per i casi diversi da quelli sopra.
 
+## 2026-10-21 — Nuovo cliente da admin e assegnazione libera dei punti
+- **Nuovo cliente**: pulsante in *Rete → Clienti (FAN)* per admin (permesso `network.manage`) e super_admin. Privato o azienda, stessi controlli della registrazione (`CustomerService::createByAdmin`), incaricato di riferimento facoltativo, password facoltativa (altrimenti casuale + invio del link per sceglierla). Log `customer.created_by_admin`.
+- **Punti assegnati**: nuova voce *Compensi → Punti assegnati* e azione **Assegna punti** (permesso `periods.manage`). Beneficiario, punti, data, causale e, a scelta, solo punteggio / cliente valido per N mesi senza compensi / come un acquisto; opzione per assegnare anche allo sponsor. Movimento «grant» nel registro (`PointsGrant`), annullabile con motivo finché il periodo è aperto. Log `points.granted` e `points.cancelled`.
+- **Motore**: `SnapshotBuilder` legge ora anche i movimenti senza ordine che hanno un cliente indicato (`pv_movements.client_user_id`) per l'identità del cliente, le validità e il primo acquisto; i movimenti con ordine si calcolano come prima.
+- **Tesserino**: documentato cosa vi finisce (nome, codice, foto, validità e sponsor dalla lettera; niente indirizzo, codice fiscale o IBAN).
+- Migrazione nuova: `2026_11_08_100000` (cliente dei movimenti senza ordine). Test: `PointsGrantTest`, `PointsAndCustomersAdminTest`.

@@ -20,6 +20,8 @@ final class PvLedger
      * @param  string  $kind  pvf (clienti) | pvc (acquisti degli incaricati)
      * @param  string|null  $cv  default = pv (OPEN-19)
      * @param  string|null  $amount  importo in euro IVA inclusa (piano Incaricati); vuoto = non noto
+     * @param  string|null  $note  causale (assegnazione libera di punti)
+     * @param  int|null  $clientUserId  cliente di un movimento senza ordine (assegnazione libera di punti)
      */
     public static function record(
         Period $period,
@@ -38,6 +40,8 @@ final class PvLedger
         ?int $validityMonths = null,
         ?int $clientCount = null,
         bool $makesClient = false,
+        ?string $note = null,
+        ?int $clientUserId = null,
     ): PvMovement {
         if ($period->isClosed()) {
             throw new PeriodStateException("Il periodo {$period->code} è chiuso: registrare il movimento nel periodo aperto (rettifica).");
@@ -58,6 +62,7 @@ final class PvLedger
             'cv' => (string) Num::points($cv ?? $pv), 'amount' => $amount === null ? null : (string) Num::money($amount), 'reverses_movement_id' => $reverses?->id,
             'excluded_from_bonus' => $excluded, 'external_ref' => $externalRef,
             'vap_amount' => $vapAmount === null ? null : (string) Num::money($vapAmount), 'validity_months' => $validityMonths, 'client_count' => $clientCount, 'makes_client' => $makesClient,
+            'note' => $note, 'client_user_id' => $clientUserId,
         ]);
     }
 }

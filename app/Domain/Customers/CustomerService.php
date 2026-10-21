@@ -8,6 +8,7 @@ use App\Models\Consultant;
 use App\Models\Customer;
 use App\Models\Profile;
 use App\Models\User;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /** Registrazione gratuita di FAN (privati) e Clienti Azienda (RF-001/002). */
@@ -54,6 +55,33 @@ final class CustomerService
         if ($invite !== null) {
             $this->invites->markRegistered($invite, $user);
         }
+
+        return $customer;
+    }
+
+    /**
+     * Nuovo cliente inserito dall'amministrazione (admin e super admin): stessi controlli della registrazione, ma senza
+     * referral e con l'incaricato di riferimento facoltativo (senza, vale l'incaricato «casa» dell'azienda, se c'è). Senza password se ne genera una casuale, che nessuno conosce:
+     * la persona sceglie la sua dal link di «password dimenticata» (o dall'invio che parte subito dal pannello).
+     *
+     * @param  array<string,mixed>  $data  email, type (private|company), dati anagrafici, password facoltativa
+     */
+    public function createByAdmin(array $data, ?Consultant $assignTo = null): Customer
+    {
+        $email = trim((string) ($data['email'] ?? ''));
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Serve un indirizzo email valido.');
+        }
+        if (User::withoutGlobalScopes()->where('email', $email)->exists()) {
+            throw new InvalidArgumentException('Esiste già una persona con questa email.');
+        }
+        if ($assignTo !== null && $assignTo->status === 'terminated') {
+            throw new InvalidArgumentException("L'incaricato {$assignTo->code} è cessato: non può avere clienti.");
+        }
+        $password = filled($data['password'] ?? null) ? (string) $data['password'] : Str::password(24);
+
+        $customer = $this->register(['email' => $email, 'password' => $password] + $data);
+        $customer->update($assignTo !== null ? ['assigned_consultant_id' => $assignTo->id, 'source' => 'manual'] : ['source' => 'manual']);
 
         return $customer;
     }

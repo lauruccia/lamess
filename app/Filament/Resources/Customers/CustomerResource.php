@@ -30,7 +30,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use UnitEnum;
 
-/** Clienti / FAN registrati (sola lettura). */
+/** Clienti / FAN registrati; il nuovo cliente lo inserisce l'amministrazione con l'azione «Nuovo cliente» dell'elenco. */
 class CustomerResource extends Resource
 {
     use GatedByPermission;

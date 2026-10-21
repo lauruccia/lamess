@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Customers\Pages;
 use App\Domain\Access\PasswordResetLinks;
 use App\Filament\Pages\Base\SuperadminListRecords;
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Support\NewCustomerAction;
 use App\Filament\Support\PasswordResetAction;
 
 class ListCustomers extends SuperadminListRecords
@@ -15,6 +16,6 @@ class ListCustomers extends SuperadminListRecords
 
     protected function getHeaderActions(): array
     {
-        return [PasswordResetAction::all(PasswordResetLinks::AUDIENCE_CUSTOMERS)];
+        return [PasswordResetAction::all(PasswordResetLinks::AUDIENCE_CUSTOMERS), NewCustomerAction::make()];
     }
 }

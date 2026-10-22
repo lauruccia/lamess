@@ -20,11 +20,19 @@ final class NightlyRecalculation
 {
     public const CACHE_KEY = 'lamess.nightly_recalc.last';
 
+    /** Se falso, l'esito non finisce nello stato «ultimo ricalcolo notturno» (ricalcoli lanciati a mano). */
+    private bool $record = true;
+
     public function __construct(private readonly PeriodService $periods) {}
 
-    /** @return array{action:string, period:?string, message:string} */
-    public function run(): array
+    /**
+     * @param  bool  $record  scrive l'esito nello stato del ricalcolo notturno; si passa false per i ricalcoli a richiesta
+     *                        (per esempio dopo «Assegna punti»), che non devono sostituire l'esito della notte
+     * @return array{action:string, period:?string, message:string}
+     */
+    public function run(bool $record = true): array
     {
+        $this->record = $record;
         $period = Period::where('status', '!=', Period::CLOSED)->orderBy('code')->first();
         if ($period === null) {
             return $this->done('none', null, 'Nessun mese da ricalcolare.');
@@ -56,7 +64,9 @@ final class NightlyRecalculation
     /** @return array{action:string, period:?string, message:string} */
     private function done(string $action, ?string $code, string $message): array
     {
-        Cache::forever(self::CACHE_KEY, ['at' => now()->toIso8601String(), 'action' => $action, 'period' => $code, 'message' => $message]);
+        if ($this->record) {
+            Cache::forever(self::CACHE_KEY, ['at' => now()->toIso8601String(), 'action' => $action, 'period' => $code, 'message' => $message]);
+        }
 
         return ['action' => $action, 'period' => $code, 'message' => $message];
     }

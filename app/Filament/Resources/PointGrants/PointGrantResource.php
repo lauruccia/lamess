@@ -7,6 +7,7 @@ namespace App\Filament\Resources\PointGrants;
 use App\Domain\Ledger\PointsGrant;
 use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\PointGrants\Pages\ListPointGrants;
+use App\Filament\Support\GrantPointsAction;
 use App\Models\PvMovement;
 use App\Models\User;
 use BackedEnum;
@@ -109,6 +110,7 @@ class PointGrantResource extends Resource
                         try {
                             app(PointsGrant::class)->cancel($m, (string) $data['reason']);
                             Notification::make()->title('Assegnazione annullata')->success()->send();
+                            GrantPointsAction::refreshCalculation();
                         } catch (InvalidArgumentException $e) {
                             Notification::make()->title('Non annullata')->body($e->getMessage())->danger()->send();
                         }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Support;
 
 use App\Domain\Ledger\PointsGrant;
+use App\Domain\Periods\NightlyRecalculation;
 use App\Domain\Periods\PeriodStateException;
 use App\Models\Consultant;
 use App\Models\User;
@@ -108,5 +109,28 @@ final class GrantPointsAction
         }
 
         Notification::make()->title($n === 2 ? 'Punti assegnati al beneficiario e al suo sponsor' : 'Punti assegnati')->success()->send();
+        self::refreshCalculation();
+    }
+
+    /**
+     * Dopo un'assegnazione (o un annullamento) ricalcola il mese aperto, così schede, «cosa manca» e qualifiche vedono subito i punti
+     * invece di aspettare il ricalcolo notturno. I punti sono già nel registro: se il calcolo non riesce (per esempio ne è in corso un altro)
+     * l'operazione resta valida e si avvisa che l'aggiornamento arriverà con il ricalcolo della notte.
+     */
+    public static function refreshCalculation(): void
+    {
+        try {
+            $r = app(NightlyRecalculation::class)->run(false);
+        } catch (\Throwable $e) {
+            report($e);
+            $r = ['action' => 'failed', 'message' => $e->getMessage()];
+        }
+        if ($r['action'] === 'calculated') {
+            Notification::make()->title('Calcolo aggiornato')->body('Le schede e i requisiti tengono già conto dei punti.')->success()->send();
+
+            return;
+        }
+        Notification::make()->title('Calcolo non aggiornato')
+            ->body('I punti sono registrati, ma le schede li mostreranno dopo il prossimo ricalcolo (stanotte). '.$r['message'])->warning()->send();
     }
 }

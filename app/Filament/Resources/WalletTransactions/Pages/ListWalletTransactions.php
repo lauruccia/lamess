@@ -26,7 +26,8 @@ class ListWalletTransactions extends SuperadminListRecords
                 ->modalDescription('Aggiunge (importo positivo) o toglie (negativo) un importo dal wallet. Il motivo è obbligatorio e finisce nel log.')
                 ->schema([
                     Select::make('consultant_id')->label('Incaricato')->required()->searchable()
-                        ->getSearchResultsUsing(fn (string $search) => Consultant::where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%")->limit(20)->get()->mapWithKeys(fn ($c) => [$c->id => "{$c->name} [{$c->code}]"])->all()),
+                        ->getSearchResultsUsing(fn (string $search) => Consultant::where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%")->limit(20)->get()->mapWithKeys(fn ($c) => [$c->id => "{$c->name} [{$c->code}]"])->all())
+                        ->getOptionLabelUsing(fn ($value) => ($c = Consultant::find($value)) ? "{$c->name} [{$c->code}]" : null),
                     TextInput::make('amount')->label('Importo € (con segno)')->required()->numeric(),
                     Textarea::make('reason')->label('Motivo')->required(),
                 ])

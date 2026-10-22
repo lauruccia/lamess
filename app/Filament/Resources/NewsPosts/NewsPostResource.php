@@ -8,6 +8,7 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\NewsPosts\Pages\CreateNewsPost;
 use App\Filament\Resources\NewsPosts\Pages\EditNewsPost;
 use App\Filament\Resources\NewsPosts\Pages\ListNewsPosts;
+use App\Filament\Support\FormSection;
 use App\Models\NewsPost;
 use BackedEnum;
 use Filament\Forms\Components\DateTimePicker;
@@ -54,15 +55,19 @@ class NewsPostResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('title')->label('Titolo')->required()->maxLength(190)->live(onBlur: true)
-                ->afterStateUpdated(fn ($state, $set, $get) => $get('slug') ? null : $set('slug', Str::slug((string) $state))),
-            TextInput::make('slug')->label('Indirizzo (slug)')->required()->alphaDash()->unique(ignoreRecord: true),
-            TextInput::make('excerpt')->label('Anteprima')->maxLength(300),
-            Textarea::make('body')->label('Testo')->required()->rows(10)->columnSpanFull(),
-            Select::make('audience')->label('A chi è rivolta')->options(NewsPost::AUDIENCES)->default('all')->required(),
-            Select::make('status')->label('Stato')->options(['draft' => 'Bozza', 'published' => 'Pubblicata'])->default('draft')->required(),
-            DateTimePicker::make('published_at')->label('Pubblica dal')->seconds(false)->helperText('Vuoto: subito, appena è pubblicata.'),
-            Toggle::make('pinned')->label('In evidenza'),
+            FormSection::make('Contenuto', 'Titolo, anteprima e testo della notizia.', [
+                TextInput::make('title')->label('Titolo')->required()->maxLength(190)->live(onBlur: true)
+                    ->afterStateUpdated(fn ($state, $set, $get) => $get('slug') ? null : $set('slug', Str::slug((string) $state))),
+                TextInput::make('slug')->label('Indirizzo (slug)')->required()->alphaDash()->unique(ignoreRecord: true),
+                TextInput::make('excerpt')->label('Anteprima')->maxLength(300)->columnSpanFull(),
+                Textarea::make('body')->label('Testo')->required()->rows(10)->columnSpanFull(),
+            ]),
+            FormSection::make('Pubblicazione', 'Chi la legge e da quando.', [
+                Select::make('audience')->label('A chi è rivolta')->options(NewsPost::AUDIENCES)->default('all')->required(),
+                Select::make('status')->label('Stato')->options(['draft' => 'Bozza', 'published' => 'Pubblicata'])->default('draft')->required(),
+                DateTimePicker::make('published_at')->label('Pubblica dal')->native(false)->displayFormat('d/m/Y H:i')->seconds(false)->helperText('Vuoto: subito, appena è pubblicata.'),
+                Toggle::make('pinned')->label('In evidenza'),
+            ]),
         ]);
     }
 

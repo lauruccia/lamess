@@ -9,6 +9,7 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\Downloads\Pages\CreateDownload;
 use App\Filament\Resources\Downloads\Pages\EditDownload;
 use App\Filament\Resources\Downloads\Pages\ListDownloads;
+use App\Filament\Support\FormSection;
 use App\Models\CompPlanVersion;
 use App\Models\Download;
 use BackedEnum;
@@ -69,16 +70,20 @@ class DownloadResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('title')->label('Titolo')->required()->maxLength(190),
-            TextInput::make('category')->label('Categoria')->maxLength(60)->datalist(fn () => Download::query()->whereNotNull('category')->distinct()->pluck('category')->all()),
-            Textarea::make('description')->label('Descrizione')->columnSpanFull(),
-            FileUpload::make('file_path')->label('File')->required()->disk(DownloadService::DISK)->directory('downloads')->visibility('private')
-                ->storeFileNamesIn('original_name')->maxSize(51200)->helperText('Filigrana su PDF, JPG e PNG. Gli altri formati escono senza.'),
-            Select::make('audience')->label('Chi può scaricarlo')->options(Download::AUDIENCES)->default('consultants')->required(),
-            Select::make('min_rank_code')->label('Qualifica minima')->placeholder('Nessuna')
-                ->options(fn () => collect(CompPlanVersion::inForce()?->data['ranks'] ?? [])->sortBy('sequence')->mapWithKeys(fn ($r) => [$r['code'] => $r['name']])->all()),
-            Toggle::make('watermark')->label('Filigrana col nome di chi scarica')->default(true),
-            Toggle::make('active')->label('Disponibile')->default(true),
+            FormSection::make('Il documento', 'Titolo, categoria e file da caricare.', [
+                TextInput::make('title')->label('Titolo')->required()->maxLength(190),
+                TextInput::make('category')->label('Categoria')->maxLength(60)->datalist(fn () => Download::query()->whereNotNull('category')->distinct()->pluck('category')->all()),
+                Textarea::make('description')->label('Descrizione')->rows(3)->columnSpanFull(),
+                FileUpload::make('file_path')->label('File')->required()->disk(DownloadService::DISK)->directory('downloads')->visibility('private')
+                    ->storeFileNamesIn('original_name')->maxSize(51200)->helperText('Filigrana su PDF, JPG e PNG. Gli altri formati escono senza.')->columnSpanFull(),
+            ]),
+            FormSection::make('Chi può scaricarlo', 'Pubblico e qualifica minima richiesta.', [
+                Select::make('audience')->label('Chi può scaricarlo')->options(Download::AUDIENCES)->default('consultants')->required(),
+                Select::make('min_rank_code')->label('Qualifica minima')->placeholder('Nessuna')
+                    ->options(fn () => collect(CompPlanVersion::inForce()?->data['ranks'] ?? [])->sortBy('sequence')->mapWithKeys(fn ($r) => [$r['code'] => $r['name']])->all()),
+                Toggle::make('watermark')->label('Filigrana col nome di chi scarica')->default(true),
+                Toggle::make('active')->label('Disponibile')->default(true),
+            ]),
         ]);
     }
 

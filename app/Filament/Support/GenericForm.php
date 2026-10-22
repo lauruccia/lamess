@@ -16,6 +16,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Section;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -84,8 +85,8 @@ final class GenericForm
                 $isJson => self::json($name, $model->getAttribute($name), $nullable),
                 $relation !== null => self::relationSelect($name, $relation),
                 $options !== null => self::optionSelect($name, $options),
-                str_contains($cast, 'datetime') || in_array($type, ['datetime', 'timestamp'], true) => DateTimePicker::make($name)->seconds(false)->timezone(self::TIMEZONE),
-                str_contains($cast, 'date') || $type === 'date' => DatePicker::make($name),
+                str_contains($cast, 'datetime') || in_array($type, ['datetime', 'timestamp'], true) => DateTimePicker::make($name)->native(false)->displayFormat('d/m/Y H:i')->seconds(false)->timezone(self::TIMEZONE),
+                str_contains($cast, 'date') || $type === 'date' => DatePicker::make($name)->native(false)->displayFormat('d/m/Y'),
                 $isText => Textarea::make($name)->rows(4)->columnSpanFull(),
                 $isInteger => self::number($name, true),
                 $isDecimal => self::number($name, false),
@@ -96,6 +97,44 @@ final class GenericForm
         }
 
         return $fields;
+    }
+
+    /**
+     * Raggruppa i campi in sezioni con un titolo (stesso stile delle schede incaricato e cliente): al posto di un
+     * elenco unico di caselle, chi modifica trova prima i dati principali, poi i collegamenti, gli importi, lo stato.
+     *
+     * @param  list<Component>  $fields
+     * @return list<Section>
+     */
+    public static function sections(array $fields): array
+    {
+        $groups = ['main' => [], 'links' => [], 'amounts' => [], 'status' => [], 'notes' => []];
+        foreach ($fields as $field) {
+            $key = match (true) {
+                $field instanceof Textarea, $field instanceof KeyValue, $field instanceof TagsInput, $field instanceof Repeater => 'notes',
+                $field instanceof Toggle, $field instanceof DateTimePicker, $field instanceof DatePicker => 'status',
+                $field instanceof Select => str_ends_with((string) $field->getName(), '_id') ? 'links' : 'status',
+                $field instanceof TextInput && $field->isNumeric() => 'amounts',
+                default => 'main',
+            };
+            $groups[$key][] = $field;
+        }
+        $titles = [
+            'main' => ['Dati principali', 'I dati che identificano il record.'],
+            'links' => ['Collegamenti', 'Persone e record a cui questo dato è legato: scrivi per cercare.'],
+            'amounts' => ['Importi e quantità', 'Cifre e conteggi.'],
+            'status' => ['Stato e date', 'In che fase si trova e quando è successo.'],
+            'notes' => ['Note e dettagli', 'Testi liberi e dati di dettaglio.'],
+        ];
+        $divider = ['style' => 'border-bottom:1px solid rgba(187,180,175,.35);padding-bottom:1.25rem'];
+        $sections = [];
+        foreach ($groups as $key => $group) {
+            if ($group !== []) {
+                $sections[] = Section::make($titles[$key][0])->description($titles[$key][1])->aside()->contained(false)->extraAttributes($divider)->columns(2)->columnSpanFull()->schema($group);
+            }
+        }
+
+        return $sections;
     }
 
     /**

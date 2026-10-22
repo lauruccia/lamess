@@ -153,6 +153,7 @@ final class GenericFormVocabulary
         'orders.payment_method' => ['card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney'],
         'orders.kmoney_rest_method' => ['card' => 'Carta', 'transfer' => 'Bonifico'],
         'orders.buyer_type' => ['customer' => 'Cliente', 'consultant' => 'Incaricato'],
+        'settlements.status' => ['open' => 'Aperta', 'credited' => 'Accreditata sul portafoglio', 'paid' => 'Pagata'],
         'payouts.status' => ['to_pay' => 'Da pagare', 'paid' => 'Pagato', 'cancelled' => 'Annullato'],
         'tickets.status' => ['open' => 'Da rispondere', 'answered' => 'Risposto', 'closed' => 'Chiuso'],
         'tickets.category' => Ticket::CATEGORIES,

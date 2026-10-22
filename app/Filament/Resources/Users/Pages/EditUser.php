@@ -6,12 +6,15 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Domain\Access\Roles;
 use App\Domain\Access\UserAdministration;
+use App\Filament\Pages\Base\StyledEditPage;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
 class EditUser extends EditRecord
 {
+    use StyledEditPage;
+
     protected static string $resource = UserResource::class;
 
     protected function mutateFormDataBeforeFill(array $data): array

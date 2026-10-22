@@ -8,6 +8,7 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\BundleRules\Pages\CreateBundleRule;
 use App\Filament\Resources\BundleRules\Pages\EditBundleRule;
 use App\Filament\Resources\BundleRules\Pages\ListBundleRules;
+use App\Filament\Support\FormSection;
 use App\Models\BundleRule;
 use App\Models\Product;
 use BackedEnum;
@@ -55,14 +56,20 @@ class BundleRuleResource extends Resource
         $products = fn () => Product::whereDoesntHave('variants')->orderBy('name')->pluck('name', 'id');
 
         return $schema->components([
-            Select::make('trigger_product_id')->label('Prodotto che attiva')->options($products)->required()->searchable(),
-            TextInput::make('trigger_qty')->label('Quantità da acquistare (N)')->numeric()->minValue(1)->required(),
-            Select::make('gift_product_id')->label('Prodotto omaggio')->options($products)->required()->searchable(),
-            TextInput::make('gift_qty')->label('Quantità omaggio (M)')->numeric()->minValue(1)->default(1)->required(),
-            Toggle::make('repeatable')->label('Si ripete a ogni multiplo di N')->default(true),
-            DatePicker::make('active_from')->label('Valida dal'),
-            DatePicker::make('active_to')->label('Valida fino al'),
-            Toggle::make('active')->label('Attiva')->default(true),
+            FormSection::make('Quando scatta', 'Quale prodotto, e quanti pezzi, fanno partire l\'omaggio.', [
+                Select::make('trigger_product_id')->label('Prodotto che attiva')->options($products)->required()->searchable(),
+                TextInput::make('trigger_qty')->label('Quantità da acquistare (N)')->numeric()->minValue(1)->required(),
+                Toggle::make('repeatable')->label('Si ripete a ogni multiplo di N')->default(true),
+            ]),
+            FormSection::make('Cosa si regala', 'Il prodotto omaggio e quanti pezzi.', [
+                Select::make('gift_product_id')->label('Prodotto omaggio')->options($products)->required()->searchable(),
+                TextInput::make('gift_qty')->label('Quantità omaggio (M)')->numeric()->minValue(1)->default(1)->required(),
+            ]),
+            FormSection::make('Validità', 'Fuori da queste date, o se disattivata, la regola non si applica.', [
+                DatePicker::make('active_from')->label('Valida dal')->native(false)->displayFormat('d/m/Y'),
+                DatePicker::make('active_to')->label('Valida fino al')->native(false)->displayFormat('d/m/Y'),
+                Toggle::make('active')->label('Attiva')->default(true),
+            ]),
         ]);
     }
 

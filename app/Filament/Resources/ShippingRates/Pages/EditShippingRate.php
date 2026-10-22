@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ShippingRates\Pages;
 
+use App\Filament\Pages\Base\StyledEditPage;
 use App\Filament\Resources\ShippingRates\ShippingRateResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditShippingRate extends EditRecord
 {
+    use StyledEditPage;
+
     protected static string $resource = ShippingRateResource::class;
 
     protected function getHeaderActions(): array

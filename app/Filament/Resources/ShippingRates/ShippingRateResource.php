@@ -8,14 +8,15 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\ShippingRates\Pages\CreateShippingRate;
 use App\Filament\Resources\ShippingRates\Pages\EditShippingRate;
 use App\Filament\Resources\ShippingRates\Pages\ListShippingRates;
+use App\Filament\Support\FormSection;
 use App\Models\ShippingRate;
 use BackedEnum;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -53,18 +54,24 @@ class ShippingRateResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('name')->label('Nome (facoltativo)')->maxLength(80)->placeholder('Es. Corriere espresso'),
-            TextInput::make('country_code')->label('Paese (codice 2 lettere, * = resto del mondo)')->required()->maxLength(2)->helperText('Puoi inserire più tariffe per lo stesso paese con fasce di peso diverse.')->dehydrateStateUsing(fn ($state) => strtoupper((string) $state)),
-            TextInput::make('amount_gross')->label('Costo di spedizione (IVA inclusa)')->prefix('€')->numeric()->required()->minValue(0)->dehydrated(false)->live(onBlur: true)
-                ->afterStateHydrated(fn (TextInput $c, $record) => $c->state($record ? number_format((float) $record->amount_net * (1 + (float) $record->vat_rate / 100), 2, '.', '') : null))
-                ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', round((float) $state / (1 + (float) ($get('vat_rate') ?: 22) / 100), 2)))
-                ->helperText('È la tariffa generale: si può cambiare per singolo prodotto dalla sua scheda.'),
-            Hidden::make('amount_net')->required(),
-            TextInput::make('vat_rate')->label('IVA (%)')->numeric()->required()->default(22)->live(onBlur: true)
-                ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', round((float) $get('amount_gross') / (1 + (float) ($state ?: 22) / 100), 2))),
-            TextInput::make('min_weight_g')->label('Peso minimo (g)')->numeric()->integer()->minValue(0)->default(0)->required(),
-            TextInput::make('max_weight_g')->label('Peso massimo (g)')->numeric()->integer()->minValue(0)->gte('min_weight_g')->placeholder('nessun limite')->helperText('Il peso del carrello è la somma dei pesi dei prodotti (campo «Peso» nella scheda prodotto).'),
-            Toggle::make('active')->label('Attiva')->default(true),
+            FormSection::make('Dove', 'Paese di destinazione ed eventuale nome della tariffa.', [
+                TextInput::make('name')->label('Nome (facoltativo)')->maxLength(80)->placeholder('Es. Corriere espresso'),
+                TextInput::make('country_code')->label('Paese (codice 2 lettere, * = resto del mondo)')->required()->maxLength(2)->helperText('Puoi inserire più tariffe per lo stesso paese con fasce di peso diverse.')->dehydrateStateUsing(fn ($state) => strtoupper((string) $state)),
+            ]),
+            FormSection::make('Costo', 'Si inserisce IVA inclusa: l\'importo IVA esclusa si calcola da solo.', [
+                TextInput::make('amount_gross')->label('Costo di spedizione (IVA inclusa)')->prefix('€')->numeric()->required()->minValue(0)->dehydrated(false)->live(onBlur: true)
+                    ->afterStateHydrated(fn (TextInput $c, $record) => $c->state($record ? number_format((float) $record->amount_net * (1 + (float) $record->vat_rate / 100), 2, '.', '') : null))
+                    ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', round((float) $state / (1 + (float) ($get('vat_rate') ?: 22) / 100), 2)))
+                    ->helperText('È la tariffa generale: si può cambiare per singolo prodotto dalla sua scheda.'),
+                Hidden::make('amount_net')->required(),
+                TextInput::make('vat_rate')->label('IVA (%)')->numeric()->required()->default(22)->live(onBlur: true)
+                    ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', round((float) $get('amount_gross') / (1 + (float) ($state ?: 22) / 100), 2))),
+            ]),
+            FormSection::make('Fascia di peso', 'La tariffa vale per i carrelli in questa fascia.', [
+                TextInput::make('min_weight_g')->label('Peso minimo (g)')->numeric()->integer()->minValue(0)->default(0)->required(),
+                TextInput::make('max_weight_g')->label('Peso massimo (g)')->numeric()->integer()->minValue(0)->gte('min_weight_g')->placeholder('nessun limite')->helperText('Il peso del carrello è la somma dei pesi dei prodotti (campo «Peso» nella scheda prodotto).'),
+                Toggle::make('active')->label('Attiva')->default(true),
+            ]),
         ]);
     }
 

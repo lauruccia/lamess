@@ -9,6 +9,7 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\CorporateEvents\Pages\CreateCorporateEvent;
 use App\Filament\Resources\CorporateEvents\Pages\EditCorporateEvent;
 use App\Filament\Resources\CorporateEvents\Pages\ListCorporateEvents;
+use App\Filament\Support\FormSection;
 use App\Models\CorporateEvent;
 use App\Models\EventRegistration;
 use BackedEnum;
@@ -55,17 +56,25 @@ class CorporateEventResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('title')->label('Titolo')->required()->maxLength(190),
-            Select::make('kind')->label('Tipo')->options(CorporateEvent::KINDS)->default('event')->required(),
-            Textarea::make('description')->label('Descrizione')->columnSpanFull(),
-            DateTimePicker::make('starts_at')->label('Inizio')->seconds(false)->required(),
-            DateTimePicker::make('ends_at')->label('Fine')->seconds(false)->after('starts_at'),
-            TextInput::make('location')->label('Luogo'),
-            TextInput::make('online_url')->label('Collegamento online')->url()->helperText('Lo vede solo chi è iscritto.'),
-            TextInput::make('capacity')->label('Posti')->numeric()->minValue(1)->helperText('Vuoto: illimitati. Oltre il limite si va in lista d\'attesa.'),
-            DateTimePicker::make('registration_deadline')->label('Iscrizioni entro')->seconds(false),
-            Select::make('audience')->label('A chi è rivolto')->options(['all' => 'Tutti', 'consultants' => 'Solo incaricati', 'fans' => 'Solo clienti e FAN'])->default('all')->required(),
-            Select::make('status')->label('Stato')->options(['draft' => 'Bozza', 'published' => 'Pubblicato', 'cancelled' => 'Annullato'])->default('draft')->required(),
+            FormSection::make('L\'evento', 'Come si chiama e di cosa si tratta.', [
+                TextInput::make('title')->label('Titolo')->required()->maxLength(190),
+                Select::make('kind')->label('Tipo')->options(CorporateEvent::KINDS)->default('event')->required(),
+                Textarea::make('description')->label('Descrizione')->rows(4)->columnSpanFull(),
+            ]),
+            FormSection::make('Quando e dove', 'Date, luogo e, se serve, il collegamento online.', [
+                DateTimePicker::make('starts_at')->label('Inizio')->native(false)->displayFormat('d/m/Y H:i')->seconds(false)->required(),
+                DateTimePicker::make('ends_at')->label('Fine')->native(false)->displayFormat('d/m/Y H:i')->seconds(false)->after('starts_at'),
+                TextInput::make('location')->label('Luogo'),
+                TextInput::make('online_url')->label('Collegamento online')->url()->helperText('Lo vede solo chi è iscritto.'),
+            ]),
+            FormSection::make('Iscrizioni', 'Chi può partecipare e quanti posti ci sono.', [
+                Select::make('audience')->label('A chi è rivolto')->options(['all' => 'Tutti', 'consultants' => 'Solo incaricati', 'fans' => 'Solo clienti e FAN'])->default('all')->required(),
+                TextInput::make('capacity')->label('Posti')->numeric()->minValue(1)->helperText('Vuoto: illimitati. Oltre il limite si va in lista d\'attesa.'),
+                DateTimePicker::make('registration_deadline')->label('Iscrizioni entro')->native(false)->displayFormat('d/m/Y H:i')->seconds(false),
+            ]),
+            FormSection::make('Pubblicazione', 'Una bozza non la vede nessuno.', [
+                Select::make('status')->label('Stato')->options(['draft' => 'Bozza', 'published' => 'Pubblicato', 'cancelled' => 'Annullato'])->default('draft')->required(),
+            ]),
         ]);
     }
 

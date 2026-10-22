@@ -425,3 +425,9 @@
 - **Aperta agli admin** con `network.manage` (prima solo il super_admin); pulsante «Modifica dati» sulla riga dell'elenco.
 - Privato o azienda: per l'azienda servono ragione sociale e partita IVA. L'email deve essere unica. Salva insieme utente, profilo e cliente; log `customer.updated` con valori prima e dopo.
 - L'incaricato assegnato non si cambia da qui: c'è **Riassegna** in alto (permesso `network.restructure`, con motivo). Nessuna migrazione. Test: `EditCustomerTest`.
+
+## 2026-10-22 — Tutte le pagine «Modifica» con lo stesso aspetto
+- Le pagine di modifica generate dalla struttura del database (periodi, liquidazioni, pagamenti, ordini, fatture, note di credito, abbonamenti, ticket, sanzioni, ecc., riservate al super_admin) ora hanno: **intestazione riassuntiva** (nome o numero, stato in chiaro, date di creazione e ultima modifica), campi **raggruppati in sezioni** (Dati principali · Collegamenti · Importi e quantità · Stato e date · Note e dettagli), date in formato italiano, «Salva modifiche» sempre visibile, «Annulla» e «Torna all'elenco».
+- Le liquidazioni mostrano lo stato in italiano (Aperta, Accreditata sul portafoglio, Pagata) invece del codice.
+- Le pagine già curate (omaggi, eventi, news, download, spedizioni) sono divise in sezioni con spiegazione; tutte le pagine di modifica hanno i pulsanti fissi in basso e tornano all'elenco dopo il salvataggio.
+- Nessuna migrazione. Il comportamento dei dati non cambia.

@@ -6,6 +6,7 @@ namespace App\Filament\Resources\CompPlanVersions\Pages;
 
 use App\Domain\Plan\PlanFormMapper;
 use App\Domain\Plan\PlanVersionService;
+use App\Filament\Pages\Base\StyledEditPage;
 use App\Filament\Resources\CompPlanVersions\CompPlanVersionResource;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 /** Modifica di una BOZZA del piano. Le versioni attive o archiviate non si modificano. */
 class EditCompPlanVersion extends EditRecord
 {
+    use StyledEditPage;
+
     protected static string $resource = CompPlanVersionResource::class;
 
     protected function mutateFormDataBeforeFill(array $data): array

@@ -9,9 +9,13 @@ use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\KMoneySubscriptionSync;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
+use App\Domain\Orders\PaymentProvider;
+use App\Domain\Orders\StripeCheckoutProvider;
 use App\Models\Order;
+use App\Models\OrderEvent;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\SubscriptionCardExpiring;
 use App\Notifications\SubscriptionChargeFailed;
 use App\Notifications\SubscriptionChargeReminder;
 use Carbon\CarbonImmutable;
@@ -34,6 +38,9 @@ final class SubscriptionService
     private const NOT_LINKED = 'Per pagare con KMoney collega prima il tuo conto KMoney dalla tua area.';
 
     private const BLOCKED = 'Hai bloccato questo abbonamento su KMoney: sbloccalo su KMoney e poi riprendilo da qui.';
+
+    /** Stato «in attesa della conferma del cliente su KMoney»: l'ordine del mese resta in sospeso e lo chiude il webhook di KMoney. */
+    public const CONFIRM = 'KMoney chiede la tua conferma per questo addebito: usa il pulsante nell\'email che ti abbiamo inviato.';
 
     public function __construct(private readonly OrderService $orders) {}
 
@@ -140,6 +147,47 @@ final class SubscriptionService
     }
 
     /**
+     * Avvisa il cliente quando la carta salvata scade entro card_expiry_days o prima del prossimo addebito. Una sola email per carta;
+     * serve Stripe (la scadenza si legge da lì, con una piccola cache). @return int email inviate
+     */
+    public function sendCardExpiryNotices(?DateTimeImmutable $now = null): int
+    {
+        $days = (int) config('lamess.subscription.card_expiry_days');
+        $stripe = app(PaymentProvider::class);
+        if ($days <= 0 || ! $stripe instanceof StripeCheckoutProvider) {
+            return 0;
+        }
+        $now = CarbonImmutable::instance($now ?? CarbonImmutable::now());
+        $sent = 0;
+        $subs = Subscription::where('status', Subscription::ACTIVE)->where('payment_method', Subscription::METHOD_CARD)
+            ->whereNotNull('stripe_payment_method_id')->orderBy('id')->get();
+        foreach ($subs as $sub) {
+            $pm = (string) $sub->stripe_payment_method_id;
+            $done = "subscription-card-expiry-notified:{$sub->id}:{$pm}";
+            if (Cache::has($done)) {
+                continue;
+            }
+            $exp = Cache::remember("stripe-card-expiry:{$pm}", 3 * 86400, fn () => $stripe->cardExpiry($pm));
+            if (! is_array($exp)) {
+                continue;
+            }
+            $end = CarbonImmutable::create($exp['year'], $exp['month'], 1, 0, 0, 0, 'Europe/Rome')->endOfMonth();
+            if (! ($end->lessThanOrEqualTo($now->addDays($days)) || ($sub->next_run_at !== null && $end->lessThanOrEqualTo($sub->next_run_at->addDay())))) {
+                continue;
+            }
+            try {
+                $sub->user?->notify(new SubscriptionCardExpiring($sub, $exp['month'], $exp['year'], $end->lessThan($now)));
+                Cache::put($done, 1, 25 * 86400);
+                $sent++;
+            } catch (Throwable $e) {
+                AuditLog::record('subscription.notify_failed', "Abbonamento #{$sub->id}: avviso carta in scadenza non inviato", $sub, ['errore' => $e->getMessage()]);
+            }
+        }
+
+        return $sent;
+    }
+
+    /**
      * Promemoria prima dell'addebito: per ogni abbonamento attivo con scadenza entro reminder_days giorni, una sola email per scadenza.
      * Se l'email non parte (errore di posta) non si segna come inviata e si riprova al prossimo passaggio.
      *
@@ -172,8 +220,12 @@ final class SubscriptionService
         return $sent;
     }
 
-    /** Un ciclo: ordine + addebito. @return 'paid'|'failed'|'paused' */
-    public function runCycle(Subscription $sub, ?DateTimeImmutable $now = null): string
+    /**
+     * Un ciclo: ordine + addebito. @return 'paid'|'failed'|'paused'
+     *
+     * @param  bool  $manual  rilancio dell'admin: se non riesce non consuma tentativi e non sposta le scadenze
+     */
+    public function runCycle(Subscription $sub, ?DateTimeImmutable $now = null, bool $manual = false): string
     {
         $now ??= CarbonImmutable::now();
         $lock = Cache::lock("subscription:{$sub->id}", 120);
@@ -184,6 +236,12 @@ final class SubscriptionService
             $sub->refresh();
             if ($sub->status !== Subscription::ACTIVE) {
                 return 'failed';
+            }
+            // Il cliente ha confermato su KMoney e il webhook ha già chiuso l'ordine del mese: niente da addebitare, si fa solo avanzare il calendario.
+            if ($sub->last_error !== null && $sub->orders()->whereIn('status', Order::PAID_STATES)->count() > $sub->cycles_done) {
+                $this->completeCycle($sub, CarbonImmutable::instance($now), $sub->orders()->whereIn('status', Order::PAID_STATES)->count());
+
+                return 'paid';
             }
             $order = null;
             $kmoney = $sub->payment_method === Subscription::METHOD_KMONEY;
@@ -199,7 +257,7 @@ final class SubscriptionService
                         throw new OrderException(match (true) {
                             $r->error === 'subscription_blocked' => self::BLOCKED,
                             $r->error === 'not_linked' => self::NOT_LINKED,
-                            $r->redirectUrl !== null => 'KMoney chiede una conferma del cliente: un addebito automatico non è possibile.',
+                            $r->redirectUrl !== null => throw new ConfirmationRequired(self::CONFIRM, $r->redirectUrl),
                             default => $r->error ?: 'Addebito KMoney non riuscito: saldo insufficiente o servizio non raggiungibile.',
                         });
                     }
@@ -212,8 +270,12 @@ final class SubscriptionService
                     throw new OrderException($this->orders->lastCardError ?: 'Addebito sulla carta non riuscito.');
                 }
             } catch (Throwable $e) {
+                // In attesa della conferma del cliente su KMoney l'ordine NON si annulla: la conferma arriva dal webhook di KMoney,
+                // che chiude solo gli ordini ancora in sospeso (se fosse annullato il cliente pagherebbe senza che il portale lo sappia).
+                $waiting = $e instanceof ConfirmationRequired;
                 // Si annulla solo un ordine senza incassi: se la quota KMoney è già stata addebitata resta in attesa del resto.
-                if ($order instanceof Order && $order->refresh()->status === 'pending_payment' && ! $order->payments()->where('status', 'paid')->exists()) {
+                if (! $waiting && $order instanceof Order && $order->refresh()->status === 'pending_payment' && ! $order->payments()->where('status', 'paid')->exists()) {
+                    OrderEvent::log($order, 'charge_failed', 'Addebito dell\'abbonamento non riuscito: '.$e->getMessage(), true);
                     $this->orders->cancel($order);
                 }
 
@@ -222,25 +284,64 @@ final class SubscriptionService
                     return $this->pauseBlocked($sub);
                 }
 
-                return $this->fail($sub, $e->getMessage(), $now);
+                return $this->fail($sub, $e->getMessage(), $now, $waiting ? $e->url : null, $manual);
             }
-            $done = $sub->cycles_done + 1;
-            $skipped = $sub->skip_months;
-            $anchor = CarbonImmutable::instance($sub->started_at);
-            $iv = $sub->intervalMonths();
-            $next = $anchor->addMonthsNoOverflow(($done + $skipped) * $iv);
-            // Dopo una pausa lunga le scadenze passate non si recuperano: si salta alla prima scadenza futura.
-            while ($next->lessThanOrEqualTo($now)) {
-                $skipped++;
-                $next = $anchor->addMonthsNoOverflow(($done + $skipped) * $iv);
-            }
-            $sub->update(['cycles_done' => $done, 'retry_count' => 0, 'last_error' => null, 'skip_months' => $skipped, 'next_run_at' => $next]);
-            $this->syncKMoney($sub);
+            $this->completeCycle($sub, $now);
 
             return 'paid';
         } finally {
             $lock->release();
         }
+    }
+
+    /** Il mese è pagato: registra il ciclo e porta il calendario alla prossima scadenza futura. */
+    private function completeCycle(Subscription $sub, DateTimeImmutable $now, ?int $paidCycles = null): void
+    {
+        $done = $paidCycles ?? $sub->cycles_done + 1;
+        $skipped = $sub->skip_months;
+        $anchor = CarbonImmutable::instance($sub->started_at);
+        $iv = $sub->intervalMonths();
+        $next = $anchor->addMonthsNoOverflow(($done + $skipped) * $iv);
+        // Dopo una pausa lunga le scadenze passate non si recuperano: si salta alla prima scadenza futura.
+        while ($next->lessThanOrEqualTo($now)) {
+            $skipped++;
+            $next = $anchor->addMonthsNoOverflow(($done + $skipped) * $iv);
+        }
+        $sub->update(['cycles_done' => $done, 'retry_count' => 0, 'last_error' => null, 'skip_months' => $skipped, 'next_run_at' => $next]);
+        $this->syncKMoney($sub);
+    }
+
+    /**
+     * Un ordine di un abbonamento è stato incassato fuori dal ciclo (webhook KMoney dopo la conferma del cliente):
+     * se il mese era in attesa si chiude subito, senza aspettare il passaggio notturno.
+     */
+    public function afterOrderSettled(Order $order): void
+    {
+        $sub = $order->subscription_id ? Subscription::find($order->subscription_id) : null;
+        if ($sub !== null && $sub->status === Subscription::ACTIVE && $sub->last_error !== null) {
+            $this->runCycle($sub);
+        }
+    }
+
+    /**
+     * Rilancio dell'admin: riprova l'addebito KMoney e, se serve ancora la conferma, rimanda al cliente l'email col pulsante.
+     * Non consuma tentativi e non sposta le scadenze. @return 'paid'|'failed'|'paused'
+     */
+    public function requestConfirmation(Subscription $sub, ?DateTimeImmutable $now = null): string
+    {
+        if ($sub->payment_method !== Subscription::METHOD_KMONEY || $sub->status !== Subscription::ACTIVE) {
+            throw new OrderException('Si può rimandare la conferma solo per un abbonamento attivo pagato con KMoney.');
+        }
+
+        return $this->runCycle($sub, $now, true);
+    }
+
+    /** @return list<int> giorni di attesa dopo il 1°, 2°, 3°… addebito non riuscito (l'ultimo vale anche per i successivi) */
+    private function retryDays(): array
+    {
+        $v = array_values(array_filter(array_map('intval', (array) config('lamess.subscription.retry_days')), fn (int $d) => $d > 0));
+
+        return $v !== [] ? $v : [1];
     }
 
     /**
@@ -378,30 +479,41 @@ final class SubscriptionService
     }
 
     /** @return 'failed'|'paused' */
-    private function fail(Subscription $sub, string $error, DateTimeImmutable $now): string
+    private function fail(Subscription $sub, string $error, DateTimeImmutable $now, ?string $confirmUrl = null, bool $manual = false): string
     {
+        // Rilancio dell'admin: si registra l'esito e si rimanda l'email, ma tentativi e scadenze restano come sono.
+        if ($manual) {
+            $sub->update(['last_error' => $error]);
+            $this->syncKMoney($sub);
+            $this->notifyChargeFailed($sub, false, 0, $confirmUrl);
+
+            return 'failed';
+        }
         $tries = $sub->retry_count + 1;
         if ($tries >= (int) config('lamess.subscription.max_retries')) {
             $sub->update(['status' => Subscription::PAUSED, 'paused_at' => now(), 'retry_count' => $tries, 'last_error' => $error, 'next_run_at' => null]);
             $this->releasePendingOrders($sub);
             AuditLog::record('subscription.paused', "Abbonamento #{$sub->id} in pausa dopo {$tries} addebiti non riusciti", $sub, ['errore' => $error]);
             $this->syncKMoney($sub);
-            $this->notifyChargeFailed($sub, true);
+            $this->notifyChargeFailed($sub, true, 0, $confirmUrl);
 
             return 'paused';
         }
-        $sub->update(['retry_count' => $tries, 'last_error' => $error, 'next_run_at' => CarbonImmutable::instance($now)->addDays((int) config('lamess.subscription.retry_days'))]);
+        // Tentativi distanziati (es. dopo 1, 3 e 5 giorni): ogni avviso è diverso, l'ultimo avvisa che segue la pausa.
+        $days = $this->retryDays();
+        $wait = $days[min($tries, count($days)) - 1];
+        $sub->update(['retry_count' => $tries, 'last_error' => $error, 'next_run_at' => CarbonImmutable::instance($now)->addDays($wait)]);
         $this->syncKMoney($sub);
-        $this->notifyChargeFailed($sub, false);
+        $this->notifyChargeFailed($sub, false, $wait, $confirmUrl);
 
         return 'failed';
     }
 
     /** Email al cliente: un errore di posta non deve mai fermare il ciclo di addebiti. */
-    private function notifyChargeFailed(Subscription $sub, bool $paused): void
+    private function notifyChargeFailed(Subscription $sub, bool $paused, int $retryDays = 0, ?string $confirmUrl = null): void
     {
         try {
-            $sub->user?->notify(new SubscriptionChargeFailed($sub, $paused, (int) config('lamess.subscription.retry_days')));
+            $sub->user?->notify(new SubscriptionChargeFailed($sub, $paused, $retryDays, $confirmUrl, (int) $sub->retry_count, (int) config('lamess.subscription.max_retries')));
         } catch (Throwable $e) {
             AuditLog::record('subscription.notify_failed', "Abbonamento #{$sub->id}: email di addebito non riuscito non inviata", $sub, ['errore' => $e->getMessage()]);
         }

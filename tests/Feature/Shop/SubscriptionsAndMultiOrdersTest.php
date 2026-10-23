@@ -236,10 +236,11 @@ final class SubscriptionsAndMultiOrdersTest extends TestCase
         $this->assertSame(0, $sub->cycles_done);
         $this->assertSame(0, PvMovement::where('status', 'pending_payment')->count(), 'l\'ordine non pagato viene annullato e non lascia punti in sospeso');
 
-        $this->travelTo(now()->addDay());
-        $this->subs()->runDue();
-        $this->travelTo(now()->addDay());
-        $this->assertSame(1, $this->subs()->runDue()['paused']);
+        foreach ([1, 3, 5] as $days) {
+            $this->travelTo(now()->addDays($days));
+            $paused = $this->subs()->runDue()['paused'];
+        }
+        $this->assertSame(1, $paused);
         $this->assertSame('paused', $sub->refresh()->status);
 
         $this->cardWorks = true;
@@ -304,7 +305,7 @@ final class SubscriptionsAndMultiOrdersTest extends TestCase
         $p = $this->product('A', '10.00');
         $sub = $this->subs()->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 12);
 
-        $this->actingAs($u)->get('/area/abbonamenti')->assertOk()->assertSee('spedizione gratuita')->assertSee('Prodotto A');
+        $this->actingAs($u)->get('/area/abbonamenti')->assertOk()->assertSee('Spedizione gratuita')->assertSee('Prodotto A');
         $this->actingAs($u)->post("/area/abbonamenti/{$sub->id}/pausa")->assertRedirect('/area/abbonamenti');
         $this->assertSame('paused', $sub->refresh()->status);
 

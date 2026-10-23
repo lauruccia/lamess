@@ -83,6 +83,27 @@ class SubscriptionResource extends Resource
                 ->visible(fn (Subscription $record) => $record->status === Subscription::PAUSED)
                 ->requiresConfirmation()
                 ->action(fn (Subscription $record) => self::run(fn () => app(SubscriptionService::class)->resume($record))),
+            Action::make('kmoneyConfirm')->authorize('orders.manage')->label('Invia email di conferma KMoney')->iconButton()->tooltip('Rimanda al cliente l\'email per confermare l\'addebito su KMoney')->icon('heroicon-o-envelope')->color('warning')
+                ->visible(fn (Subscription $record) => $record->payment_method === Subscription::METHOD_KMONEY && $record->status === Subscription::ACTIVE && $record->last_error !== null)
+                ->requiresConfirmation()
+                ->modalDescription('Riprova ora l\'addebito su KMoney: se serve ancora la conferma del cliente, gli arriva di nuovo l\'email con il pulsante «Conferma l\'addebito». Non consuma tentativi e non sposta le scadenze.')
+                ->action(function (Subscription $record): void {
+                    try {
+                        $esito = app(SubscriptionService::class)->requestConfirmation($record);
+                    } catch (OrderException $e) {
+                        Notification::make()->title($e->getMessage())->danger()->send();
+
+                        return;
+                    }
+                    $record->refresh();
+                    if ($esito === 'paid') {
+                        Notification::make()->title('Addebito riuscito: il mese è stato pagato')->success()->send();
+                    } elseif ($record->last_error === SubscriptionService::CONFIRM) {
+                        Notification::make()->title('Email di conferma inviata a '.($record->user?->email ?? 'cliente'))->success()->send();
+                    } else {
+                        Notification::make()->title('Addebito non riuscito')->body((string) $record->last_error)->warning()->persistent()->send();
+                    }
+                }),
             Action::make('cancel')->authorize('orders.manage')->label('Annulla')->iconButton()->tooltip('Annulla')->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (Subscription $record) => $record->status !== Subscription::CANCELLED)
                 ->schema([Textarea::make('reason')->label('Motivo')->required()])

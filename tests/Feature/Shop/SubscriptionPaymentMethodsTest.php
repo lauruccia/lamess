@@ -130,10 +130,12 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->assertSame(1, $sub->retry_count);
         $this->assertSame('saldo insufficiente', $sub->last_error);
 
-        $this->travelTo(now()->addDay());
-        $this->subs()->runDue();
-        $this->travelTo(now()->addDay());
-        $this->assertSame(1, $this->subs()->runDue()['paused']);
+        // Tentativi dopo 1, 3 e 5 giorni; al 4° addebito fallito l'abbonamento va in pausa.
+        foreach ([1, 3, 5] as $days) {
+            $this->travelTo(now()->addDays($days));
+            $paused = $this->subs()->runDue()['paused'];
+        }
+        $this->assertSame(1, $paused);
 
         $this->km->funds = true;
         $this->subs()->resume($sub->refresh());
@@ -232,9 +234,11 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $sub = $this->subs()->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 0, [], null, 'kmoney');
         $order = Order::where('subscription_id', $sub->id)->firstOrFail();
         $this->assertSame(0, $this->km->refunds, 'ai primi tentativi la quota resta addebitata');
-        $this->travelTo($start->addDay());
+        $this->travelTo($start->addDays(1));
         $this->subs()->runDue();
-        $this->travelTo($start->addDays(2));
+        $this->travelTo($start->addDays(4));
+        $this->subs()->runDue();
+        $this->travelTo($start->addDays(9));
         $this->assertSame(1, $this->subs()->runDue()['paused']);
 
         $this->assertSame('paused', $sub->refresh()->status);
@@ -394,8 +398,8 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->assertSame(0, Order::where('subscription_id', $sub->id)->where('status', 'pending_payment')->count(), 'nessun ordine in sospeso');
         Notification::assertSentTo($u, SubscriptionChargeFailed::class, fn ($n) => ! $n->paused);
 
-        // Terzo tentativo fallito: l'abbonamento va in pausa e il cliente lo sa.
-        $sub->update(['retry_count' => 2, 'next_run_at' => now()]);
+        // Ultimo tentativo fallito: l'abbonamento va in pausa e il cliente lo sa.
+        $sub->update(['retry_count' => 3, 'next_run_at' => now()]);
         $this->subs()->runDue();
         Notification::assertSentTo($u, SubscriptionChargeFailed::class, fn ($n) => $n->paused);
     }

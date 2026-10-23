@@ -176,6 +176,12 @@ final class KMoneyController extends Controller
         } catch (OrderException $e) {
             Log::warning('KMoney: conferma ordine non riuscita', ['order' => $order->number, 'error' => $e->getMessage()]);
         }
+        // Mese di un abbonamento confermato dal cliente su KMoney: il calendario avanza subito, senza aspettare il passaggio notturno.
+        try {
+            app(\App\Domain\Subscriptions\SubscriptionService::class)->afterOrderSettled($order->refresh());
+        } catch (\Throwable $e) {
+            Log::warning('KMoney: abbonamento non aggiornato dopo la conferma', ['order' => $order->number, 'error' => $e->getMessage()]);
+        }
 
         return response('ok', 200);
     }

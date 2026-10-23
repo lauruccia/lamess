@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -69,6 +70,12 @@ class Subscription extends Model
     public function commitmentCycles(): int
     {
         return (int) ceil((int) $this->commitment_months / $this->intervalMonths());
+    }
+
+    /** Data del prossimo addebito quando i cicli pagati sono $done (calendario ancorato all'avvio, mesi saltati compresi). */
+    public function nextChargeAfter(int $done): CarbonImmutable
+    {
+        return CarbonImmutable::instance($this->started_at)->addMonthsNoOverflow(($done + (int) $this->skip_months) * $this->intervalMonths());
     }
 
     public function user(): BelongsTo

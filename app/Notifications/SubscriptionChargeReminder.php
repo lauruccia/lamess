@@ -42,6 +42,12 @@ class SubscriptionChargeReminder extends Notification implements ShouldQueueAfte
             ? 'Controlla che la carta salvata sia valida e abbia disponibilità sufficiente, così l\'addebito va a buon fine.'
             : 'Controlla che sul tuo conto KMoney ci sia saldo sufficiente e che il conto sia ancora collegato.');
 
+        // Con questo ordine si completa l'impegno (es. 12 mesi): da qui l'abbonamento prosegue finché il cliente non lo interrompe.
+        $sub = $this->subscription;
+        if ((int) $sub->commitment_months > 0 && (int) $sub->cycles_done === $sub->commitmentCycles()) {
+            $mail->line("Hai completato i {$sub->commitment_months} mesi di abbonamento, grazie! L'abbonamento prosegue ".$sub->cadenceLabel().' e puoi interromperlo quando vuoi, senza costi.');
+        }
+
         return $mail->line('Se vuoi saltare questo mese, cambiare indirizzo o carta, o mettere in pausa l\'abbonamento, puoi farlo prima della data di addebito.')
             ->action('Gestisci il tuo abbonamento', url('/area/abbonamenti'));
     }

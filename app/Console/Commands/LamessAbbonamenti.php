@@ -17,7 +17,8 @@ class LamessAbbonamenti extends Command
     {
         $reminders = $svc->sendReminders();
         $r = $svc->runDue();
-        $this->info("Abbonamenti: {$r['paid']} ordini pagati, {$r['failed']} addebiti da ripetere, {$r['paused']} messi in pausa, {$reminders} promemoria inviati.");
+        $cards = $svc->sendCardExpiryNotices();
+        $this->info("Abbonamenti: {$r['paid']} ordini pagati, {$r['failed']} addebiti da ripetere, {$r['paused']} messi in pausa, {$reminders} promemoria inviati, {$cards} avvisi di carta in scadenza.");
 
         return self::SUCCESS;
     }

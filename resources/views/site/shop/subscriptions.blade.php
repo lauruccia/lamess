@@ -4,6 +4,8 @@
 @section('content')
 @php
     $active = $subs->where('status', 'active');
+    $rd = array_values(array_filter(array_map('intval', (array) config('lamess.subscription.retry_days')), fn ($d) => $d > 0)) ?: [1];
+    $retryText = (count($rd) > 1 ? implode(', ', array_slice($rd, 0, -1)).' e '.end($rd) : $rd[0]).' '.(end($rd) === 1 ? 'giorno' : 'giorni');
     $next = $active->pluck('next_run_at')->filter()->sort()->first();
     $live = $subs->where('status', '!=', 'cancelled');
     $old = $subs->where('status', 'cancelled');
@@ -102,7 +104,7 @@
      <li><strong>In vacanza?</strong> Salta il prossimo mese, oppure metti in pausa e riprendi senza perdere i cicli fatti.</li>
      <li><strong>Indirizzo.</strong> Cambialo quando vuoi (uno dei tuoi indirizzi salvati o uno nuovo): vale dal prossimo ordine.</li>
      <li><strong>Spedizione gratuita</strong> su ogni riordino. Puoi annullare quando vuoi.</li>
-     <li><strong>Addebito non riuscito?</strong> Carta rifiutata o saldo KMoney insufficiente: riproviamo dopo un giorno, fino a 3 volte; poi l'abbonamento va in pausa e lo riprendi da qui.</li>
+     <li><strong>Addebito non riuscito?</strong> Carta rifiutata o saldo KMoney insufficiente: riproviamo dopo {{ $retryText }} e ti avvisiamo ogni volta; se anche l'ultimo tentativo non riesce, l'abbonamento va in pausa e lo riprendi da qui. Se KMoney chiede la tua conferma, usa il pulsante nell'email.</li>
     </ul>
    </div>
   </section>

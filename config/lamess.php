@@ -124,9 +124,11 @@ return [
     'subscription' => [
         'monthly_enabled' => true,   // il cliente può attivare l'abbonamento mensile (nuove sottoscrizioni; quelli già attivi proseguono)
         'bimonthly_enabled' => true, // il cliente può attivare l'abbonamento bimestrale
-        'retry_days' => 1,         // giorni tra un tentativo di addebito e il successivo
+        'retry_days' => [1, 3, 5], // giorni di attesa dopo il 1°, 2°, 3° addebito fallito (l'ultimo valore vale per i successivi); un numero solo = sempre uguale
         'reminder_days' => 7,      // giorni prima dell'addebito in cui parte il promemoria al cliente (0 = nessun promemoria)
-        'max_retries' => 3,        // dopo l'ultimo tentativo fallito l'abbonamento va in pausa
+        'max_retries' => 4,        // addebiti falliti dopo i quali l'abbonamento va in pausa (1° addebito + 3 nuovi tentativi)
+        'card_expiry_days' => 30,  // avviso al cliente quando la carta salvata scade entro questi giorni o prima del prossimo addebito (0 = nessun avviso)
+        'admin_mail_to' => env('LAMESS_ABBONAMENTI_MAIL_TO', ''), // destinatari del riepilogo giornaliero (virgole); vuoto = utenti admin e super admin
         'max_skip_ahead_months' => 3, // il cliente può saltare mesi finché il prossimo addebito non supera questo orizzonte
     ],
     // OPEN-41: a chi si può ordinare "per conto di" in un ordine multiplo (clienti assegnati e incaricati diretti)

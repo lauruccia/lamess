@@ -36,6 +36,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -155,6 +156,10 @@ class OrderResource extends Resource
             TextColumn::make('paid_at')->label('Pagato il')->dateTime('d/m/Y H:i', 'Europe/Rome')->placeholder('—')->sortable(),
             TextColumn::make('tracking_code')->label('Tracking')->placeholder('—'),
         ])->filters([
+            // Ogni addebito mensile fallito lascia un ordine annullato: di default si nascondono (il primo ordine dell'abbonamento resta sempre visibile).
+            Filter::make('hide_failed_cycles')->label('Nascondi i tentativi di addebito non riusciti degli abbonamenti')->toggle()->default(true)
+                ->query(fn ($query) => $query->whereNot(fn ($w) => $w->where('orders.status', 'cancelled')->whereNotNull('orders.subscription_id')
+                    ->whereRaw('orders.id > (select min(o2.id) from orders o2 where o2.subscription_id = orders.subscription_id)'))),
             SelectFilter::make('status')->label('Stato')->options(self::STATUS),
             TernaryFilter::make('subscription_id')->label('Abbonamento')->nullable()->placeholder('Tutti')->trueLabel('Solo abbonamenti')->falseLabel('Solo ordini singoli'),
             SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico']),

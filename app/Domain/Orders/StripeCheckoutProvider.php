@@ -112,6 +112,27 @@ final class StripeCheckoutProvider implements RedirectPaymentProvider, RefundsCa
         return new PaymentResult(false, null, (string) ($r->json('error.message') ?? 'Rimborso rifiutato da Stripe.'));
     }
 
+    /**
+     * Scadenza della carta salvata (serve ad avvisare il cliente prima che l'addebito fallisca).
+     *
+     * @return array{month:int,year:int}|null
+     */
+    public function cardExpiry(string $paymentMethodId): ?array
+    {
+        if (! str_starts_with($paymentMethodId, 'pm_')) {
+            return null;
+        }
+        try {
+            $r = Http::withToken($this->secretKey)->timeout(15)->get('https://api.stripe.com/v1/payment_methods/'.rawurlencode($paymentMethodId));
+        } catch (Throwable) {
+            return null;
+        }
+        $m = (int) $r->json('card.exp_month');
+        $y = (int) $r->json('card.exp_year');
+
+        return $r->successful() && $m >= 1 && $m <= 12 && $y >= 2000 ? ['month' => $m, 'year' => $y] : null;
+    }
+
     /** Metodo di pagamento usato in un pagamento di Stripe (serve per salvare la carta dopo il primo ordine dell'abbonamento). */
     public function paymentMethodOf(string $paymentIntentId): ?string
     {

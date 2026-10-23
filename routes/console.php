@@ -17,6 +17,7 @@ Schedule::command('lamess:fatture')->hourly()->withoutOverlapping(120);
 Schedule::command('lamess:fatture --tutte')->monthlyOn(1, '08:30')->timezone('Europe/Rome')->withoutOverlapping(120)->when(fn () => \App\Domain\Billing\InvoiceService::batchMode());
 Schedule::call(fn () => app(PlanVersionService::class)->promoteDue())->name('lamess:piano-in-vigore')->dailyAt('00:10')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:abbonamenti')->dailyAt('04:00')->timezone('Europe/Rome')->withoutOverlapping(120);
+Schedule::command('lamess:abbonamenti-riepilogo')->dailyAt('08:15')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::command('lamess:pagamenti')->dailyAt('05:00')->timezone('Europe/Rome')->withoutOverlapping(120);
 Schedule::call(fn () => Cache::forever('lamess.scheduler.heartbeat', now()->toIso8601String()))->name('lamess:heartbeat')->everyMinute();
 Schedule::command('lamess:ricalcolo-notturno')->dailyAt('02:45')->timezone('Europe/Rome')->withoutOverlapping(120);

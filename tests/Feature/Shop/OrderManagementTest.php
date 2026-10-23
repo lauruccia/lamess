@@ -8,8 +8,8 @@ use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\PaymentResult;
-use App\Domain\Orders\RefundService;
 use App\Domain\Orders\RefundsCardPayments;
+use App\Domain\Orders\RefundService;
 use App\Domain\Orders\ReturnService;
 use App\Filament\Pages\ShopSettingsPage;
 use App\Filament\Resources\Orders\Pages\ListOrders;
@@ -169,7 +169,7 @@ final class OrderManagementTest extends TestCase
                 return 'test';
             }
 
-            public function charge(\App\Models\Order $order, array $details = []): PaymentResult
+            public function charge(Order $order, array $details = []): PaymentResult
             {
                 return new PaymentResult(true, 'CH-1');
             }
@@ -204,7 +204,7 @@ final class OrderManagementTest extends TestCase
         $this->post('/area/checkout', [
             'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
             'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',
-            'payment_method' => 'transfer', 'privacy' => '1',
+            'payment_method' => 'transfer', 'privacy' => '1', 'subscribe' => 'none',
         ])->assertSessionHasErrors('order');
         $this->assertSame(0, Order::count());
     }

@@ -51,8 +51,9 @@
   <section class="card">
    <h2><span class="step">3</span> Pagamento</h2>
    @php($methods = $methods ?? ['card' => true, 'transfer' => true, 'kmoney' => true])
-   @php($pay = old('payment_method', $methods['card'] ? 'card' : ($methods['transfer'] ? 'transfer' : 'kmoney')))
-   @php($sub = old('subscribe', empty($codes) ? (array_key_first($cadences) ?? 'none') : 'none')) {{-- abbonamento preselezionato (non con codici sconto nel carrello: valgono solo sugli ordini singoli) --}}
+   @php($pay = old('payment_method', '')) {{-- nessun metodo preselezionato: ogni cliente sceglie --}}
+   @php($sub = old('subscribe', '')) {{-- nessuna scelta preselezionata --}}
+   @php($subOn = in_array($sub, array_keys($cadences), true))
    <fieldset class="choice">
     <legend>Come vuoi pagare</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
@@ -65,8 +66,8 @@
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">Consigliato</em></label>
      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>
-      <span data-sum-single @if($sub !== 'none') hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY dal tuo conto KMoney, in un clic. Se l'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.@if($priced->kmoneyRest()->isPositive()) Poi scegli come pagare il resto, € {{ \App\Support\Money::eur($priced->kmoneyRest()) }}, con carta o bonifico.@endif</span>
-      <span data-sum-sub @if($sub === 'none') hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($pricedSub->kmoneyShare()) }} KY dal tuo conto KMoney.@if($pricedSub->kmoneyRest()->isPositive()) Il resto, € {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}, si addebita in automatico sulla carta.@endif Lo stesso a ogni addebito.</span>
+      <span data-sum-single @if($subOn) hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY dal tuo conto KMoney, in un clic. Se l'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.@if($priced->kmoneyRest()->isPositive()) Poi scegli come pagare il resto, € {{ \App\Support\Money::eur($priced->kmoneyRest()) }}, con carta o bonifico.@endif</span>
+      <span data-sum-sub @if(! $subOn) hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($pricedSub->kmoneyShare()) }} KY dal tuo conto KMoney.@if($pricedSub->kmoneyRest()->isPositive()) Il resto, € {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}, si addebita in automatico sulla carta.@endif Lo stesso a ogni addebito.</span>
      </p>
      @if(! $kmLinked)
       <div class="warn km-connect" data-km-only data-km-connect @if($pay !== 'kmoney') hidden @endif>
@@ -78,19 +79,6 @@
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
    </fieldset>
-   @if($cadences !== [])
-   <fieldset class="choice" data-subscribe-box>
-    <legend>Come vuoi riceverla</legend>
-    <label class="opt-card"><input type="radio" name="subscribe" value="none" @checked($sub === 'none')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
-    @isset($cadences['monthly'])
-    <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
-    @endisset
-    @isset($cadences['bimonthly'])
-    <label class="opt-card" data-subscribe-monthly><input type="radio" name="subscribe" value="bimonthly" @checked($sub === 'bimonthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento bimestrale</b><small>Ricevi la box ogni 2 mesi, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
-    @endisset
-    <p class="muted small" data-subscribe-note @if($sub === 'none') style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
-   </fieldset>
-   @endif
   </section>
  </form>
 
@@ -104,13 +92,28 @@
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  <div data-sum-single @if($sub !== 'none') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
-  <div data-sum-sub @if($sub === 'none') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-single @if($subOn) hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-sub @if(! $subOn) hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div class="co-subscribe">
+   @if($cadences !== [])
+   <fieldset class="choice" data-subscribe-box>
+    <legend>Come vuoi riceverla</legend>
+    <label class="opt-card"><input type="radio" form="checkout-form" name="subscribe" value="none" @checked($sub === 'none')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
+    @isset($cadences['monthly'])
+    <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" form="checkout-form" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    @endisset
+    @isset($cadences['bimonthly'])
+    <label class="opt-card" data-subscribe-monthly><input type="radio" form="checkout-form" name="subscribe" value="bimonthly" @checked($sub === 'bimonthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento bimestrale</b><small>Ricevi la box ogni 2 mesi, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    @endisset
+    <p class="muted small" data-subscribe-note @if(! $subOn) style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
+   </fieldset>
+   @endif
+  </div>
   <div class="co-confirm">
   <label class="chk"><input type="checkbox" name="privacy" value="1" form="checkout-form" @checked(old('privacy'))><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
   @error('privacy')<div class="err">{{ $message }}</div>@enderror
-  <button class="btn accent wide cta-lock" form="checkout-form" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [])><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($sub !== 'none') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if($sub === 'none') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
-  <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === []) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
+  <button class="btn accent wide cta-lock" form="checkout-form" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
+  <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === [] && $pay !== '' && ($cadences === [] || $sub !== '')) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
   <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
   </div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>

@@ -183,10 +183,11 @@
       var missing = btn.dataset.billingMissing === '1' || dirty;
       var pm = $('input[name=payment_method]:checked');
       var needLink = btn.dataset.kmNeedsLink === '1' && pm && pm.value === 'kmoney';
-      btn.disabled = missing || needLink;
+      var needChoice = !pm || ($('input[name=subscribe]') && !$('input[name=subscribe]:checked'));
+      btn.disabled = missing || needLink || needChoice;
       if (hint) {
-        hint.hidden = !(missing || needLink);
-        hint.textContent = missing ? 'Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».' : 'Collega prima il tuo conto KMoney (pulsante «Collega KMoney») per attivare «Conferma ordine».';
+        hint.hidden = !(missing || needLink || needChoice);
+        hint.textContent = missing ? 'Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».' : (needChoice ? 'Scegli come vuoi pagare e come vuoi riceverla per attivare «Conferma ordine».' : 'Collega prima il tuo conto KMoney (pulsante «Collega KMoney») per attivare «Conferma ordine».');
       }
       if (dirty && state) state.innerHTML = 'Hai modificato i dati: <b>salvali</b> per poter confermare l\'ordine.';
     }
@@ -194,7 +195,7 @@
       var el = form.elements[n]; if (!el || el.readOnly) return;
       ['input', 'change'].forEach(function (ev) { el.addEventListener(ev, function () { dirty = true; sync(); }); });
     });
-    $$('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    $$('input[name=payment_method], input[name=subscribe]').forEach(function (r) { r.addEventListener('change', sync); });
     sync();
   }
 

@@ -647,8 +647,8 @@ class ShopController extends Controller
             'tax_code' => [Rule::requiredIf(fn () => $r->input('type') === 'private' && ($r->input('country') ?: 'IT') === 'IT')],
             'sdi_code' => 'nullable', 'pec' => 'nullable|email',
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
-            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => ['nullable', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
-        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento']);
+            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => [Subscription::offeredCadences() === [] ? 'nullable' : 'required', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
+        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento', 'subscribe' => 'modalità di consegna']);
         // I dati di fatturazione si salvano prima («Salva i dati»): l'ordine usa quelli salvati e l'indirizzo di fatturazione non si cambia da qui.
         $saved = $r->user()->profile;
         $unsaved = BillingData::missing($saved);

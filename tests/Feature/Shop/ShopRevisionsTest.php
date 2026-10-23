@@ -227,10 +227,10 @@ final class ShopRevisionsTest extends TestCase
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
 
-        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'monthly']])->get('/area/checkout')->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression('/<div data-sum-sub\s*>.*?Gratuita.*?€ 122,00/su', $html, 'con l\'abbonamento la spedizione è gratuita e il totale è solo il prodotto');
-        $this->assertMatchesRegularExpression('/<div data-sum-single\s+hidden\s*>/', $html, 'l\'abbonamento è preselezionato');
+        $this->assertMatchesRegularExpression('/<div data-sum-single\s+hidden\s*>/', $html, 'l\'abbonamento scelto nasconde il riepilogo dell\'ordine singolo');
         $this->assertStringNotContainsString('data-km-rest', $html, 'con tutto in KMoney non c\'è nessun resto da scegliere');
     }
 

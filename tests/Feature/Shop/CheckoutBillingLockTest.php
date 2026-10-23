@@ -115,4 +115,29 @@ final class CheckoutBillingLockTest extends TestCase
         $this->assertStringContainsString('value="Via Mare 5"', $html);
         $this->assertMatchesRegularExpression('/name="privacy" value="1" form="checkout-form" checked/', $html);
     }
+
+    public function test_nothing_is_preselected_and_the_delivery_choice_sits_in_the_sidebar(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00');
+
+        $html = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+
+        $this->assertDoesNotMatchRegularExpression('/name="payment_method"[^>]*checked/', $html);
+        $this->assertDoesNotMatchRegularExpression('/name="subscribe"[^>]*checked/', $html);
+        $this->assertMatchesRegularExpression('/id="confirm-order"[^>]*disabled/', $html);
+        $this->assertGreaterThan(strpos($html, '<aside class="summary card">'), strpos($html, 'Come vuoi riceverla'));
+        $this->assertLessThan(strpos($html, 'id="confirm-order"'), strpos($html, 'Come vuoi riceverla'));
+    }
+
+    public function test_the_order_needs_an_explicit_delivery_choice(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00');
+        $form = $this->form();
+        unset($form['subscribe']);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $form)->assertSessionHasErrors('subscribe');
+        $this->assertSame(0, Order::count());
+    }
 }

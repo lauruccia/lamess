@@ -7,6 +7,7 @@ namespace Tests\Feature\Shop;
 use App\Models\BundleRule;
 use App\Models\Order;
 use App\Models\PvMovement;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -23,7 +24,7 @@ final class ShopPagesTest extends TestCase
         return $over + [
             'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
             'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',
-            'payment_method' => 'card', 'privacy' => '1',
+            'payment_method' => 'card', 'privacy' => '1', 'subscribe' => 'none',
         ];
     }
 
@@ -114,7 +115,7 @@ final class ShopPagesTest extends TestCase
         $this->actingAs($this->buyer())->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
         $this->post('/area/checkout', $this->form(['tax_code' => '', 'payment_method' => 'card', 'subscribe' => 'monthly']))->assertSessionHasErrors('tax_code');
         $this->assertSame(0, Order::count());
-        $this->assertSame(0, \App\Models\Subscription::count());
+        $this->assertSame(0, Subscription::count());
     }
 
     public function test_orders_and_invoices_are_private_to_the_buyer(): void

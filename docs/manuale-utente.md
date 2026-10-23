@@ -134,7 +134,7 @@ Prima di usare materiali promozionali tuoi (volantini, post, video) **proponili 
 ## Checkout e KMoney: cosa cambia
 I **dati di fatturazione** sono quelli con cui sei registrata e nel checkout sono tutti bloccati (tipo, nome, codice fiscale, azienda, indirizzo): la fattura è intestata così. Per cambiarli vai su «I miei dati». Se nel profilo mancano dei dati, li compili e li salvi con «Salva i dati»: solo dopo si abilita «Conferma ordine». Per pagare con KMoney devi prima **collegare KMoney** (massimale di 1500 KY per il pagamento automatico a un clic); tornando dal collegamento trovi il carrello e le scelte fatte intatte.
 
-Nel riquadro «Il tuo ordine», sopra «Conferma ordine», scegli **come vuoi riceverla** (ordine singolo, abbonamento mensile o bimestrale). Né il metodo di pagamento né questa scelta sono preselezionati: «Conferma ordine» si attiva solo quando hai scelto entrambi, salvato i dati (se mancavano) e accettato la privacy.
+Il checkout è in **4 passi**, uno alla volta, con «Avanti» e «Indietro» (i dati restano): **1 Fatturazione**, **2 Spedizione**, **3 Pagamento e consegna** (come paghi e come vuoi riceverla: ordine singolo, abbonamento mensile o bimestrale), **4 Riepilogo e conferma**. Nulla è preselezionato: si va avanti solo dopo aver scelto; «Conferma ordine» è nell'ultimo passo e si attiva con dati salvati, scelte fatte e privacy accettata. Il riquadro «Il tuo ordine» a destra mostra sempre i totali.
 
 ## I miei clienti (incaricati)
 Il primo cliente in elenco sei tu (i tuoi acquisti). Scegli il mese in alto: **verde** chi dà il punto nel mese, **arancione** chi sta per scadere, **grigio** chi non ha ordini (vale 0).

@@ -16,7 +16,7 @@
 @if(! empty($pendingOrder))<div class="warn">Hai un ordine in attesa di pagamento ({{ $pendingOrder->number }}): <a href="/area/ordini/{{ $pendingOrder->id }}">completa il pagamento</a>. Se invece riordini da qui, quell'ordine in sospeso viene annullato.</div>@endif
 <div class="cart-grid checkout">
  <form method="post" action="/area/checkout" class="co-form" id="checkout-form">@csrf
-  <section class="card">
+  <section class="card co-step" data-step="1" data-step-title="Fatturazione">
    <h2><span class="step">1</span> Fatturazione</h2>
    <p class="muted small" style="margin:0 0 8px">I campi con <b class="req">*</b> sono obbligatori.</p>
    <label @if($billingMissing === []) hidden @endif>Fattura intestata a</label>
@@ -43,13 +43,15 @@
     <span class="muted small" data-billing-state>@if($billingMissing === [])<b class="ok">✓ Dati salvati.</b> Se li modifichi, salvali di nuovo prima di confermare.@else Salva i dati di fatturazione per poter confermare l'ordine.@endif</span>
    </div>
    @foreach(['first_name','last_name','company_name','tax_code','vat_number','sdi_code','address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
+   <div class="co-nav"><button type="button" class="btn accent" data-next>Avanti →</button></div>
   </section>
-  <section class="card">
+  <section class="card co-step" data-step="2" data-step-title="Spedizione">
    <h2><span class="step">2</span> Spedizione</h2>
    @include('site.shop._ship_picker', ['addresses' => $addresses, 'max' => $maxAddresses])
+   <div class="co-nav"><button type="button" class="ghostbtn" data-prev>← Indietro</button><button type="button" class="btn accent" data-next>Avanti →</button></div>
   </section>
-  <section class="card">
-   <h2><span class="step">3</span> Pagamento</h2>
+  <section class="card co-step" data-step="3" data-step-title="Pagamento e consegna">
+   <h2><span class="step">3</span> Pagamento e consegna</h2>
    @php($methods = $methods ?? ['card' => true, 'transfer' => true, 'kmoney' => true])
    @php($pay = old('payment_method', '')) {{-- nessun metodo preselezionato: ogni cliente sceglie --}}
    @php($sub = old('subscribe', '')) {{-- nessuna scelta preselezionata --}}
@@ -79,6 +81,32 @@
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
    </fieldset>
+   @if($cadences !== [])
+   <fieldset class="choice" data-subscribe-box>
+    <legend>Come vuoi riceverla</legend>
+    <label class="opt-card"><input type="radio" form="checkout-form" name="subscribe" value="none" @checked($sub === 'none')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
+    @isset($cadences['monthly'])
+    <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" form="checkout-form" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    @endisset
+    @isset($cadences['bimonthly'])
+    <label class="opt-card" data-subscribe-monthly><input type="radio" form="checkout-form" name="subscribe" value="bimonthly" @checked($sub === 'bimonthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento bimestrale</b><small>Ricevi la box ogni 2 mesi, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
+    @endisset
+    <p class="muted small" data-subscribe-note @if(! $subOn) style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
+   </fieldset>
+   @endif
+   <div class="co-nav"><button type="button" class="ghostbtn" data-prev>← Indietro</button><button type="button" class="btn accent" data-next>Avanti →</button></div>
+  </section>
+  <section class="card co-step" data-step="4" data-step-title="Riepilogo e conferma">
+   <h2><span class="step">4</span> Riepilogo e conferma</h2>
+   <dl class="co-review" data-review></dl>
+  <div class="co-confirm">
+  <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy'))><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
+  @error('privacy')<div class="err">{{ $message }}</div>@enderror
+  <button class="btn accent wide cta-lock" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
+  <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === [] && $pay !== '' && ($cadences === [] || $sub !== '')) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
+  <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
+  </div>
+   <div class="co-nav" data-nav-last><button type="button" class="ghostbtn" data-prev>← Indietro</button></div>
   </section>
  </form>
 
@@ -94,28 +122,6 @@
   @include('site.shop._code', ['uid' => 'co'])
   <div data-sum-single @if($subOn) hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
   <div data-sum-sub @if(! $subOn) hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
-  <div class="co-subscribe">
-   @if($cadences !== [])
-   <fieldset class="choice" data-subscribe-box>
-    <legend>Come vuoi riceverla</legend>
-    <label class="opt-card"><input type="radio" form="checkout-form" name="subscribe" value="none" @checked($sub === 'none')><span class="dot"></span><span class="oc-text"><b>Ordine singolo</b><small>Spedizione a pagamento</small></span></label>
-    @isset($cadences['monthly'])
-    <label class="opt-card opt-featured" data-subscribe-monthly><input type="radio" form="checkout-form" name="subscribe" value="monthly" @checked($sub === 'monthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento mensile</b><small>Ripeti questo ordine ogni mese, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
-    @endisset
-    @isset($cadences['bimonthly'])
-    <label class="opt-card" data-subscribe-monthly><input type="radio" form="checkout-form" name="subscribe" value="bimonthly" @checked($sub === 'bimonthly')><span class="dot"></span><span class="oc-text"><b>Abbonamento bimestrale</b><small>Ricevi la box ogni 2 mesi, con carta o KMoney. Lo interrompi quando vuoi.</small></span><em class="oc-tag oc-tag-accent">Spedizione gratuita</em></label>
-    @endisset
-    <p class="muted small" data-subscribe-note @if(! $subOn) style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
-   </fieldset>
-   @endif
-  </div>
-  <div class="co-confirm">
-  <label class="chk"><input type="checkbox" name="privacy" value="1" form="checkout-form" @checked(old('privacy'))><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
-  @error('privacy')<div class="err">{{ $message }}</div>@enderror
-  <button class="btn accent wide cta-lock" form="checkout-form" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
-  <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === [] && $pay !== '' && ($cadences === [] || $sub !== '')) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
-  <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
-  </div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>

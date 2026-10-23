@@ -113,10 +113,10 @@ final class CheckoutBillingLockTest extends TestCase
         $this->assertMatchesRegularExpression('/name="payment_method" value="kmoney" checked/', $html);
         $this->assertMatchesRegularExpression('/name="subscribe" value="monthly" checked/', $html);
         $this->assertStringContainsString('value="Via Mare 5"', $html);
-        $this->assertMatchesRegularExpression('/name="privacy" value="1" form="checkout-form" checked/', $html);
+        $this->assertMatchesRegularExpression('/name="privacy" value="1" checked/', $html);
     }
 
-    public function test_nothing_is_preselected_and_the_delivery_choice_sits_in_the_sidebar(): void
+    public function test_nothing_is_preselected_and_the_checkout_runs_in_four_steps(): void
     {
         $user = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00');
@@ -126,8 +126,11 @@ final class CheckoutBillingLockTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/name="payment_method"[^>]*checked/', $html);
         $this->assertDoesNotMatchRegularExpression('/name="subscribe"[^>]*checked/', $html);
         $this->assertMatchesRegularExpression('/id="confirm-order"[^>]*disabled/', $html);
-        $this->assertGreaterThan(strpos($html, '<aside class="summary card">'), strpos($html, 'Come vuoi riceverla'));
-        $this->assertLessThan(strpos($html, 'id="confirm-order"'), strpos($html, 'Come vuoi riceverla'));
+        foreach (['Fatturazione', 'Spedizione', 'Pagamento e consegna', 'Riepilogo e conferma'] as $n => $title) {
+            $this->assertStringContainsString('data-step="'.($n + 1).'" data-step-title="'.$title.'"', $html);
+        }
+        $this->assertLessThan(strpos($html, 'data-step="4"'), strpos($html, 'Come vuoi riceverla'), 'la scelta della consegna sta nel passo 3');
+        $this->assertGreaterThan(strpos($html, 'data-step="4"'), strpos($html, 'id="confirm-order"'), 'la conferma sta nell\'ultimo passo');
     }
 
     public function test_the_order_needs_an_explicit_delivery_choice(): void

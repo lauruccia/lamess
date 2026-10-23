@@ -133,7 +133,8 @@ return [
         'max_skip_ahead_months' => 3, // il cliente può saltare mesi finché il prossimo addebito non supera questo orizzonte
     ],
     // OPEN-41: a chi si può ordinare "per conto di" in un ordine multiplo (clienti assegnati e incaricati diretti)
-    'order_for_others' => true,
+    // Spento di default (nascosto dal carrello): il codice resta e si riaccende con LAMESS_ORDER_FOR_OTHERS=true
+    'order_for_others' => (bool) env('LAMESS_ORDER_FOR_OTHERS', false),
     // Ricevute provvigionali e trattenute (Reg. 5.1). VALORI PROVVISORI: vanno validati col commercialista prima dell'uso.
     // Spenti di default: finché sono spenti il bonifico è pari al lordo e non si emettono ricevute.
     // Cessione account (Reg. 9.1) ed eredi (Reg. 9.2)

@@ -35,6 +35,7 @@ final class SubscriptionsAndMultiOrdersTest extends TestCase
     {
         parent::setUp();
         Notification::fake();
+        config(['lamess.order_for_others' => true]);
         $this->plan();
         $this->shipping('10.00');
         $this->openPeriod(now('Europe/Rome')->format('Y-m'));
@@ -310,6 +311,17 @@ final class SubscriptionsAndMultiOrdersTest extends TestCase
         $this->assertSame('paused', $sub->refresh()->status);
 
         $this->actingAs($this->buyer())->post("/area/abbonamenti/{$sub->id}/annulla")->assertNotFound();
+    }
+
+    public function test_order_for_others_is_off_by_default_and_hidden_from_the_cart(): void
+    {
+        [, $meUser, $c1] = $this->team();
+        $p = $this->product('A', '123.00');
+        $this->actingAs($meUser)->get('/carrello')->assertOk();
+
+        config(['lamess.order_for_others' => false]);
+        $this->actingAs($meUser)->post('/area/carrello/per-altri', ['recipient_id' => $c1->id, 'product_id' => $p->id, 'qty' => 1])->assertForbidden();
+        $this->actingAs($meUser)->withSession(['cart' => [$p->id => 1]])->get('/carrello')->assertOk()->assertDontSee('Ordine per altri');
     }
 
     public function test_cart_for_others_flow_and_checkout_subscription(): void

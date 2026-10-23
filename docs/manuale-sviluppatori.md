@@ -213,3 +213,6 @@ I manuali sono in `docs/` (elenco nel `README.md`). `php artisan lamess:parametr
 
 ## Checkout: dati di fatturazione
 `App\Domain\Customers\BillingData`; `ShopController::saveBilling`/`checkoutConnectKMoney`; massimale KMoney `lamess.kmoney.mandate_limit_ky` (`KMONEY_MANDATE_LIMIT_KY`).
+
+## Checkout a passi e «Ordine per altri»
+Il checkout è una sola pagina con quattro sezioni `.co-step` mostrate una alla volta da `checkoutSteps()` in `public/js/lamess-shop.js` (senza JavaScript restano tutte visibili; il server valida comunque). «Ordine per altri» è spento di default: `lamess.order_for_others` (`LAMESS_ORDER_FOR_OTHERS`), il codice e le rotte restano.

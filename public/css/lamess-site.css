@@ -70,6 +70,12 @@ button:hover,.btn:hover{background:#2A241E;color:var(--lm-on-chrome);box-shadow:
 form.card button[type=submit],form.card>button:last-of-type{min-width:9rem}
 .err{color:var(--err);font-size:13.5px;margin:6px 0 0}
 .req{color:var(--err);font-weight:700}
+.form-errors{background:#fdecea;border:2px solid var(--err);color:#8a1c14;border-radius:12px;padding:14px 18px;margin:14px 0;scroll-margin-top:90px}
+.form-errors b{display:block;font-size:16px;margin-bottom:6px}
+.form-errors ul{margin:0;padding-left:20px}
+.form-errors:focus{outline:none}
+input.is-invalid,select.is-invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(180,35,24,.18)}
+.chk.is-invalid{outline:2px solid var(--err);outline-offset:4px;border-radius:8px}
 .ok{background:var(--lm-ok-bg);color:var(--ok);padding:12px 16px;border-radius:12px;margin:14px 0;border:1px solid rgb(47 111 79/.18)}
 .warn{background:var(--lm-warn-bg);border:1px solid var(--sand);padding:12px 16px;border-radius:12px;margin:14px 0}
 .badge{display:inline-block;padding:3px 12px;border-radius:99px;font-size:12.5px;font-weight:600;background:rgb(194 102 58/.14);color:var(--lm-brown)}

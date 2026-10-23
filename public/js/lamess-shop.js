@@ -111,6 +111,22 @@
     $$('[data-req-company]').forEach(function (el) { el.required = co; });
   }
 
+  // Checkout: con errori di validazione si porta in vista il riepilogo in cima e si evidenziano i campi da correggere
+  function formErrors() {
+    var box = $('#checkout-errors'); if (!box) return;
+    var keys = []; try { keys = JSON.parse(box.getAttribute('data-fields') || '[]'); } catch (e) {}
+    var first = null;
+    keys.forEach(function (k) {
+      var el = $('[name="' + k + '"]'); if (!el) return;
+      (el.type === 'checkbox' ? (el.closest('.chk') || el) : el).classList.add('is-invalid');
+      if (!first && el.type !== 'checkbox') first = el;
+      el.addEventListener('input', function () { el.classList.remove('is-invalid'); });
+      el.addEventListener('change', function () { (el.closest('.chk') || el).classList.remove('is-invalid'); });
+    });
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    box.focus({ preventScroll: true });
+  }
+
   // Checkout: l'abbonamento (mensile o bimestrale) si paga solo con carta o KMoney
   function subscription() {
     var box = $('[data-subscribe-box]'); if (!box) return;
@@ -210,6 +226,7 @@
     var sel = $('#type'); if (sel) { sel.addEventListener('change', company); company(); }
     subscription();
     kmoneyRest(); kmoneyAmounts();
+    formErrors();
   });
 })();
 

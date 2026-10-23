@@ -58,6 +58,8 @@ Route::get('/termini', [LegalController::class, 'show'])->defaults('page', 'term
 Route::get('/politiche-di-reso', [LegalController::class, 'show'])->defaults('page', 'politiche-di-reso');
 Route::get('/piano-compensi', [LegalController::class, 'show'])->defaults('page', 'piano-compensi');
 Route::get('/regolamento', [LegalController::class, 'show'])->defaults('page', 'regolamento');
+Route::get('/lettera-di-incarico', [LegalController::class, 'show'])->defaults('page', 'lettera-di-incarico');
+Route::get('/liberatoria-foto', [LegalController::class, 'show'])->defaults('page', 'liberatoria-foto');
 Route::redirect('/terms', '/termini', 301);
 Route::get('/r/{code}', [SiteController::class, 'referral'])->name('referral');
 Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware('throttle:30,1');

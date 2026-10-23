@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Onboarding;
 
+use App\Domain\Onboarding\IvdAcceptances;
 use App\Models\Consultant;
 use App\Models\IvdContract;
 use App\Models\User;
@@ -24,6 +25,17 @@ final class SitePagesTest extends TestCase
             'type' => 'private', 'first_name' => 'Anna', 'last_name' => 'Bianchi', 'email' => 'anna@example.test',
             'password' => 'una-password-lunga', 'password_confirmation' => 'una-password-lunga', 'privacy' => '1',
         ];
+    }
+
+    /** Dichiarazioni (art. 12) e accettazioni della schermata di firma, tutte compilate. */
+    private function signForm(string $otp, array $over = []): array
+    {
+        $form = ['otp' => $otp, 'income_over_threshold' => 'no', 'other_social_security' => 'no', 'multi_principal' => 'no'];
+        foreach (IvdAcceptances::requiredKeys() as $key) {
+            $form['accept_'.$key] = '1';
+        }
+
+        return $over + $form;
     }
 
     public function test_referral_link_sets_15_day_cookie_and_assigns_customer(): void
@@ -89,8 +101,8 @@ final class SitePagesTest extends TestCase
         preg_match('/note-info"><div>[^<]*?(\d{6})/', $page->getContent(), $m); // il codice è nel riquadro informativo, non nei numeri di versione dei file CSS/JS
         $this->assertNotEmpty($m, 'Il codice OTP di prova deve comparire nel riquadro informativo');
 
-        $this->post('/area/diventa-incaricato/firma', ['otp' => '999999'])->assertSessionHasErrors('otp');
-        $this->post('/area/diventa-incaricato/firma', ['otp' => $m[1]])->assertRedirect('/area');
+        $this->post('/area/diventa-incaricato/firma', $this->signForm('999999'))->assertSessionHasErrors('otp');
+        $this->post('/area/diventa-incaricato/firma', $this->signForm($m[1]))->assertRedirect('/area');
         $this->get('/area')->assertSee('in attesa di accettazione')->assertSee('Onboarding da completare');
 
         $contract = IvdContract::firstOrFail();

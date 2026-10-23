@@ -14,6 +14,7 @@ use App\Domain\Engine\Calc\KosmosCalculator;
 use App\Domain\Ledger\PointsGrant;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
+use App\Domain\Onboarding\IvdAcceptances;
 use App\Domain\Onboarding\IvdService;
 use App\Domain\Onboarding\KycService;
 use App\Domain\Onboarding\OnboardingException;
@@ -541,11 +542,36 @@ class AreaController extends Controller
 
     public function sign(Request $request, IvdService $ivd): RedirectResponse
     {
-        $request->validate(['otp' => 'required'], SiteController::MESSAGES);
+        // Come sulla lettera cartacea: prima le dichiarazioni (art. 12) e le accettazioni, poi la firma. Le caselle obbligatorie bloccano la firma.
+        $rules = [
+            'otp' => 'required',
+            'income_over_threshold' => 'required|in:yes,no', 'other_social_security' => 'required|in:yes,no',
+            'is_pensioner' => 'nullable|boolean', 'multi_principal' => 'required|in:yes,no',
+            'multi_principal_names' => 'required_if:multi_principal,yes|nullable|string|max:255',
+        ];
+        $messages = SiteController::MESSAGES + [
+            'income_over_threshold.required' => 'Art. 12.1: indica se hai superato o no il reddito di 5.000 €.',
+            'other_social_security.required' => 'Art. 12.1: indica se hai un\'altra posizione previdenziale obbligatoria.',
+            'multi_principal.required' => 'Art. 12.2: indica se sei mono o plurimandatario.',
+            'multi_principal_names.required_if' => 'Art. 12.2: scrivi per quali imprese operi.',
+        ];
+        foreach (IvdAcceptances::items() as $key => $item) {
+            $rules['accept_'.$key] = $item['required'] ? 'accepted' : 'nullable|boolean';
+            if ($item['required']) {
+                $messages['accept_'.$key.'.accepted'] = 'Per firmare devi spuntare: '.rtrim(mb_substr($item['label'], 0, 90), ' .,:;').'…';
+            }
+        }
+        $request->validate($rules, $messages);
+        $declarations = [
+            'income_over_threshold' => (string) $request->input('income_over_threshold'), 'other_social_security' => (string) $request->input('other_social_security'),
+            'is_pensioner' => $request->boolean('is_pensioner'), 'multi_principal' => (string) $request->input('multi_principal'),
+            'multi_principal_names' => $request->input('multi_principal') === 'yes' ? trim((string) $request->input('multi_principal_names')) : null,
+        ];
+        $accepted = collect(IvdAcceptances::items())->map(fn (array $i, string $key): bool => $request->boolean('accept_'.$key))->all();
         $contract = $this->contract($request);
         try {
             abort_if($contract === null, 404);
-            $ivd->sign($contract, (string) $request->input('otp'), $request->ip(), (string) $request->userAgent());
+            $ivd->sign($contract, (string) $request->input('otp'), $request->ip(), (string) $request->userAgent(), $declarations, $accepted);
         } catch (OnboardingException $e) {
             return back()->withErrors(['otp' => $e->getMessage()]);
         }

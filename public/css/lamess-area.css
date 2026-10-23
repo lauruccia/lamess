@@ -120,6 +120,7 @@ a.item:hover{background:rgb(194 102 58/.05);color:inherit}
 .panel-body .hint,.panel-body .muted.s{margin:6px 0 0}
 .panel-body label:first-child{margin-top:0}
 .panel-body .chk{margin-top:12px}
+.panel-body .chk input[type=radio]{width:auto;margin:3px 10px 0 0;accent-color:var(--lm-terracotta)}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
 .form-grid .full{grid-column:1/-1}
 .form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:18px}

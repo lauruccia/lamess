@@ -13,6 +13,8 @@ class LegalController extends Controller
         'politiche-di-reso' => ['title' => 'Politiche di Reso', 'view' => 'site.legal.resi'],
         'piano-compensi' => ['title' => 'Il piano compensi', 'view' => 'site.legal.piano-compensi'],
         'regolamento' => ['title' => 'Principi generali e Regolamento', 'view' => 'site.legal.regolamento'],
+        'lettera-di-incarico' => ['title' => 'Lettera di Incarico', 'view' => 'site.legal.lettera-incarico'],
+        'liberatoria-foto' => ['title' => 'Liberatoria foto e video', 'view' => 'site.legal.liberatoria-foto'],
     ];
 
     public function show(string $page)

@@ -27,6 +27,23 @@ table{width:100%;border-collapse:collapse}td,th{padding:3px 6px;vertical-align:t
 <tr><td class="l">Metodo di firma</td><td>OTP · provider {{ $e['provider'] ?? $c->signature_provider }} · rif. {{ $e['reference'] ?? $c->signature_ref }}</td></tr>
 <tr><td class="l">IP e browser alla firma</td><td>{{ $e['ip'] ?? '—' }} · {{ $e['user_agent'] ?? '—' }}</td></tr>
 </table>
+@php
+ $acc = (array) ($e['acceptances']['items'] ?? []);
+ $decl = (array) ($e['declarations'] ?? []);
+ $yn = fn ($v) => $v === 'yes' ? 'Sì' : ($v === 'no' ? 'No' : '—');
+@endphp
+@if($acc !== [])
+<h2>Dichiarazioni e accettazioni prima della firma</h2>
+<table>
+@foreach(\App\Domain\Onboarding\IvdAcceptances::items() as $key => $item)
+<tr><td class="l">{{ ($acc[$key] ?? false) ? '☒ Accettato' : '☐ Non accettato' }}</td><td>{{ $item['label'] }}</td></tr>
+@endforeach
+<tr><td class="l">Art. 12.1</td><td>Reddito netto oltre 5.000 €: {{ $yn($decl['income_over_threshold'] ?? null) }} · altra posizione previdenziale obbligatoria: {{ $yn($decl['other_social_security'] ?? null) }} · pensionato: {{ ! empty($decl['is_pensioner']) ? 'Sì' : 'No' }}</td></tr>
+<tr><td class="l">Art. 12.2</td><td>Plurimandatario: {{ $yn($decl['multi_principal'] ?? null) }}{{ ! empty($decl['multi_principal_names']) ? ' — '.$decl['multi_principal_names'] : '' }}</td></tr>
+<tr><td class="l">Documenti</td><td>Lettera modello {{ $e['acceptances']['documents']['letter'] ?? $c->template_version }} · Regolamento v{{ $e['acceptances']['documents']['regolamento'] ?? '—' }} · Piano compensi: {{ $e['acceptances']['documents']['piano_compensi'] ?? '—' }} · Liberatoria foto v{{ $e['acceptances']['documents']['photo_release'] ?? '—' }}</td></tr>
+</table>
+<p class="small">Spunte registrate alle {{ $fmt($e['acceptances']['accepted_at'] ?? $c->signed_at) }} (ora italiana).</p>
+@endif
 <h2>Registro accessi</h2>
 <table>
 <tr><th>Evento</th><th>Fase</th><th>Data (ora italiana)</th><th>IP</th></tr>

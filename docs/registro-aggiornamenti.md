@@ -1,5 +1,13 @@
 # Registro aggiornamenti
 
+## 2026-10-23 — Lettera di Incarico «Definitiva» Kadeo Group, dichiarazioni e accettazioni
+- Testo: la lettera del Consorzio (16 articoli, premesse, art. 12 dichiarazioni, art. 13 privacy e immagine) sostituisce il riassunto di una pagina. Un solo testo (`resources/views/legal/ivd-letter-body.blade.php`) per la pagina pubblica `/lettera-di-incarico`, la schermata di firma e il PDF. Modello versione `2026-2`.
+- Refusi del file Word corretti nel portale: indirizzi `kadeogrou.it`, `kadeogropu.it`, `kadeogroup/support` → `www.kadeogroup.it`, «Conorzio» → «Consorzio», «Via G. ferraris» → «Via G. Ferraris». Il canone dell'art. 2 si legge dall'impostazione del portale (non più «19,90» fisso) e, se spento, la frase cambia in «senza alcun canone annuale».
+- Firma: nella schermata di firma, prima dell'OTP, ci sono le dichiarazioni dell'art. 12 (reddito, previdenza, pensione, mono/plurimandatario) e le accettazioni del blocco finale della lettera (lettera, artt. 1341-1342 della lettera, Regolamento, artt. 1341-1342 del Regolamento, Piano compensi, informativa GDPR). Obbligatorie: senza, la firma non parte. Facoltativa la liberatoria foto/video (pagina `/liberatoria-foto`, testo inglese del Consorzio).
+- Prove: dichiarazioni e accettazioni (con versioni dei documenti e orario) restano in `evidence` del contratto; il PDF le riporta con ☒/☐ e la firma del Consorzio (`public/img/firma-consorzio.png`); il certificato di firma le elenca. Nessuna migrazione.
+- Regolamento: resta la v2.0 (stessa numerazione della v1.1 allegata, ma con «Incaricato» e Piano Incaricati); gli articoli citati nelle caselle 1341-1342 coincidono.
+- Test: `IvdLetterAcceptancesTest` (6) e adeguati `SitePagesTest` e `KycAndFeesTest`.
+
 ## 2026-10-23 — Indirizzo di consegna incompleto
 - Causa: un ordine con indirizzo di spedizione «Piano 1» (senza via) stampava l'etichetta senza via; il portale salvava quanto scritto senza controlli.
 - `AddressCheck`: serve via e numero civico (o «snc»); usato da rubrica indirizzi, checkout (nuovo indirizzo, indirizzo salvato, «come la fatturazione») e modifica indirizzo.

@@ -37,7 +37,7 @@ return [
     'consultant_code_width' => 5,
 
     // Lettera di Incarico IVD
-    'ivd_template_version' => env('LAMESS_IVD_TEMPLATE', '2026-1'),
+    'ivd_template_version' => env('LAMESS_IVD_TEMPLATE', '2026-2'),
     'ivd_term_months' => 12,
     'adult_age' => 18,
 

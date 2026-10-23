@@ -7,6 +7,7 @@ namespace App\Domain\Onboarding;
 use App\Domain\Customers\CustomerService;
 use App\Domain\Network\NetworkException;
 use App\Domain\Network\NetworkService;
+use App\Models\CompPlanVersion;
 use App\Models\Consultant;
 use App\Models\IvdContract;
 use App\Models\IvdContractEvent;
@@ -101,15 +102,20 @@ final class IvdService
         return $req;
     }
 
-    /** Firma con OTP: crea il PDF, l'identità di Incaricato (attiva) e i riferimenti di firma. */
-    public function sign(IvdContract $c, string $otp, ?string $ip = null, ?string $userAgent = null): IvdContract
+    /**
+     * Firma con OTP: crea il PDF, l'identità di Incaricato (attiva) e i riferimenti di firma.
+     *
+     * @param  array<string,mixed>  $declarations  dichiarazioni dell'art. 12 (reddito, previdenza, plurimandato)
+     * @param  array<string,bool>  $accepted  caselle di accettazione spuntate (chiavi di {@see IvdAcceptances::items()})
+     */
+    public function sign(IvdContract $c, string $otp, ?string $ip = null, ?string $userAgent = null, array $declarations = [], array $accepted = []): IvdContract
     {
         $this->assertStatus($c, 'awaiting_signature');
         if ($c->signature_ref === null || ! $this->signature->verify($c->signature_ref, $otp)) {
             throw new OnboardingException('Codice OTP non valido o scaduto.');
         }
 
-        $signed = DB::transaction(function () use ($c, $ip, $userAgent): IvdContract {
+        $signed = DB::transaction(function () use ($c, $ip, $userAgent, $declarations, $accepted): IvdContract {
             $now = new DateTimeImmutable;
             $user = $c->user()->with('profile')->firstOrFail();
             $profile = $user->profile;
@@ -121,9 +127,12 @@ final class IvdService
                     'person_key' => mb_strtoupper($profile->tax_code), 'user_id' => $user->id,
                 ], $c->sponsor, $now);
 
+            $planName = CompPlanVersion::inForce()?->name;
+            $acceptances = IvdAcceptances::evidence($accepted, $planName, $now);
             $pdf = Pdf::loadView('pdf.ivd-letter', [
                 'contract' => $c, 'profile' => $profile, 'consultant' => $consultant, 'sponsor' => $c->sponsor, 'signedAt' => $now,
-                'feeAmount' => config('lamess.annual_fee_amount'), 'firstPaidYear' => config('lamess.annual_fee_first_paid_year'),
+                'feeAmount' => config('lamess.annual_fee_amount'), 'feeEnabled' => (bool) config('lamess.annual_fee_enabled', true),
+                'decl' => $declarations, 'acceptances' => $acceptances, 'planName' => $planName,
             ])->output();
             $path = "contracts/{$c->id}.pdf";
             Storage::put($path, $pdf);
@@ -137,6 +146,7 @@ final class IvdService
                     'provider' => $c->signature_provider, 'reference' => $c->signature_ref, 'ip' => $ip, 'user_agent' => $userAgent, 'signed_at' => $now->format(DATE_ATOM), 'document_sha256' => $hash,
                     'signer_email' => $user->email, 'signer_email_verified_at' => $user->email_verified_at?->format(DATE_ATOM),
                     'created_at' => $c->created_at?->format(DATE_ATOM), 'template_version' => $c->template_version,
+                    'declarations' => $declarations, 'acceptances' => $acceptances,
                 ],
             ]);
             $this->logEvent($c->refresh(), 'signed', $ip, $userAgent);

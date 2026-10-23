@@ -46,7 +46,7 @@ final class PageHelp
                 'nota' => 'Chi si registra dal link generico o dal QR, senza invito personale, non compare qui: è nell\'elenco Clienti (Origine).'],
             'IvdContractResource' => ['scopo' => 'Domande di chi vuole diventare incaricato: lettera d\'incarico firmata da accettare o rifiutare.',
                 'colonne' => ['Stato' => 'In attesa di firma, firmata (da esaminare), accettata, rifiutata o scaduta.', 'Scade il' => 'Fine di validità dell\'incarico.'],
-                'azioni' => ['Accetta' => 'Attiva l\'account come incaricato.', 'Rifiuta' => 'L\'account torna Cliente; i punti maturati nel frattempo restano allo sponsor proposto.', 'Lettera firmata' => 'Apre il PDF della lettera.']],
+                'azioni' => ['Accetta' => 'Attiva l\'account come incaricato.', 'Rifiuta' => 'L\'account torna Cliente; i punti maturati nel frattempo restano allo sponsor proposto.', 'Lettera firmata' => 'Apre il PDF della lettera, con dichiarazioni dell\'incaricato, caselle di accettazione e firma del Consorzio.']],
             'KycDocumentResource' => ['scopo' => 'Documenti d\'identità caricati dagli incaricati. Senza verifica approvata non si possono pagare i compensi.',
                 'azioni' => ['Apri' => 'Mostra il documento caricato.', 'Approva' => 'L’incaricato risulta verificato.', 'Rifiuta' => 'L’incaricato dovrà caricare di nuovo il documento.'],
                 'nota' => 'I documenti sono dati personali: aprili solo per la verifica.'],

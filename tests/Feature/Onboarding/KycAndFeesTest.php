@@ -14,6 +14,7 @@ use App\Domain\Onboarding\OnboardingService;
 use App\Models\AnnualFee;
 use App\Models\Customer;
 use App\Models\IvdContract;
+use App\Models\Profile;
 use App\Notifications\ContractTerminated;
 use App\Notifications\FeeReminder;
 use App\Notifications\KycReviewed;
@@ -120,8 +121,8 @@ final class KycAndFeesTest extends TestCase
         $r = $svc->process($c->expires_at->modify('-29 days'));
         $this->assertSame(0, $r['fees_created'], 'nessun canone con l\'interruttore spento');
         $this->assertSame(0, AnnualFee::count());
-        $this->assertStringContainsString('Non è previsto alcun canone', (string) view('pdf.ivd-letter', [
-            'contract' => $c, 'profile' => $c->user->profile ?? new \App\Models\Profile(['first_name' => 'A', 'last_name' => 'B']), 'consultant' => $c->consultant, 'sponsor' => null,
+        $this->assertStringContainsString('senza alcun canone annuale', (string) view('pdf.ivd-letter', [
+            'contract' => $c, 'profile' => $c->user->profile ?? new Profile(['first_name' => 'A', 'last_name' => 'B']), 'consultant' => $c->consultant, 'sponsor' => null,
             'signedAt' => new \DateTimeImmutable, 'feeAmount' => '19.00', 'firstPaidYear' => 2,
         ])->render());
     }
@@ -130,10 +131,10 @@ final class KycAndFeesTest extends TestCase
     {
         $c = $this->acceptedConsultant();
         $html = (string) view('pdf.ivd-letter', [
-            'contract' => $c, 'profile' => $c->user->profile ?? new \App\Models\Profile(['first_name' => 'A', 'last_name' => 'B']), 'consultant' => $c->consultant, 'sponsor' => null,
+            'contract' => $c, 'profile' => $c->user->profile ?? new Profile(['first_name' => 'A', 'last_name' => 'B']), 'consultant' => $c->consultant, 'sponsor' => null,
             'signedAt' => new \DateTimeImmutable, 'feeAmount' => '19.00', 'firstPaidYear' => 2,
         ])->render();
-        $this->assertStringContainsString('19,00 € (IVA compresa)', $html);
+        $this->assertStringContainsString('Euro 19,00 (IVA compresa)', $html);
     }
 
     public function test_reminders_sent_once_per_threshold_then_paid_renews(): void

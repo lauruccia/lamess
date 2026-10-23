@@ -50,7 +50,7 @@
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
       <span class="km-link">
        @unless($kmLinked)
-        Per pagare col tuo saldo <a href="/area/profilo#kmoney">collega il tuo conto KMoney dal profilo</a>. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
+        Per pagare col tuo saldo <a href="/area/kmoney/collega">collega il tuo conto KMoney</a>: al termine torni qui al checkout. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">Consigliato</em></label>
      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>

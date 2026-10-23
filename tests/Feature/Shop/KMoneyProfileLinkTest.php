@@ -29,7 +29,13 @@ final class KMoneyProfileLinkTest extends TestCase
         $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
 
         $this->actingAs($user)->get('/area/profilo')->assertOk()->assertSee('Conto KMoney')->assertSee('/area/kmoney/collega?da=profilo', false);
-        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('/area/profilo#kmoney', false);
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('href="/area/kmoney/collega"', false)->assertDontSee('collega il tuo conto KMoney dal profilo');
+    }
+
+    public function test_connecting_from_the_checkout_returns_to_the_checkout(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $this->actingAs($user)->get('/area/kmoney/collega')->assertRedirect('/area/checkout');
     }
 
     public function test_connecting_from_the_profile_returns_to_the_profile_and_checkout_shows_it_linked(): void
@@ -41,7 +47,7 @@ final class KMoneyProfileLinkTest extends TestCase
         $this->assertTrue(KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists());
 
         $this->actingAs($user)->get('/area/profilo')->assertOk()->assertSee('collegato')->assertSee('Scollega il conto');
-        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertDontSee('collega il tuo conto KMoney dal profilo');
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertDontSee('href="/area/kmoney/collega"', false);
     }
 
     public function test_user_can_disconnect_the_account(): void

@@ -70,12 +70,33 @@ final class CheckoutBillingLockTest extends TestCase
         $this->assertSame('Via Roma 1', $user->profile->refresh()->address);
     }
 
-    public function test_changed_but_unsaved_data_block_the_order(): void
+    public function test_with_complete_registration_data_all_billing_fields_are_locked_and_the_invoice_uses_them(): void
     {
         $user = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00');
+        $saved = $user->profile->refresh();
 
-        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['last_name' => 'Verdi']))->assertSessionHasErrors('order');
+        $html = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/<select name="type"[^>]*disabled/', $html);
+        $this->assertMatchesRegularExpression('/<input[^>]*readonly[^>]*name="first_name"/', $html);
+        $this->assertMatchesRegularExpression('/<input[^>]*readonly[^>]*name="tax_code"/', $html);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['type' => 'company', 'last_name' => 'Verdi', 'tax_code' => 'FALSO', 'company_name' => 'Finta Srl', 'vat_number' => '01234567890']))->assertRedirect();
+
+        $billing = Order::firstOrFail()->billing;
+        $this->assertSame($saved->last_name, $billing['last_name']);
+        $this->assertSame($saved->tax_code, $billing['tax_code']);
+        $this->assertSame('private', $billing['type']);
+        $this->assertSame($saved->last_name, $user->profile->refresh()->last_name);
+    }
+
+    public function test_incomplete_data_must_be_saved_before_the_order(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $user->profile->update(['tax_code' => null]);
+        $p = $this->product('A', '100.00');
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->form(['tax_code' => 'RSSMRA80A01H501U']))->assertSessionHasErrors('order');
         $this->assertSame(0, Order::count());
     }
 

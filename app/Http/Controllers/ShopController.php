@@ -594,6 +594,11 @@ class ShopController extends Controller
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
         ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP']);
         $profile = $r->user()->profile ?? new Profile(['user_id' => $r->user()->id]);
+        if (BillingData::missing($profile) === []) {
+            $this->keepDraft($r);
+
+            return redirect('/area/checkout')->with('status', 'I dati di fatturazione sono già quelli della tua registrazione: per modificarli vai su «I miei dati».');
+        }
         if (BillingData::addressLocked($profile)) {
             $d = array_merge($d, array_intersect_key(BillingData::lockedAddress($profile), array_flip(BillingData::ADDRESS)));
         } else {
@@ -647,10 +652,11 @@ class ShopController extends Controller
         // I dati di fatturazione si salvano prima («Salva i dati»): l'ordine usa quelli salvati e l'indirizzo di fatturazione non si cambia da qui.
         $saved = $r->user()->profile;
         $unsaved = BillingData::missing($saved);
-        if ($unsaved !== [] || ! BillingData::matchesSaved($saved, $d)) {
+        if ($unsaved !== []) {
             return back()->withInput()->withErrors($unsaved + ['order' => 'Prima salva i dati di fatturazione con il pulsante «Salva i dati»: poi potrai confermare l\'ordine.']);
         }
-        $d = array_merge($d, BillingData::lockedAddress($saved));
+        // Dati completi nel profilo: la fattura è intestata come sono registrati, nulla di quanto arriva dal modulo li cambia.
+        $d = array_merge($d, BillingData::lockedData($saved));
         $subscribe = $d['subscribe'] ?? 'none';
         if (! ($orders->enabledMethods()[$d['payment_method']] ?? false)) {
             return back()->withInput()->withErrors(['order' => 'Questo metodo di pagamento non è disponibile al momento: scegline un altro.']);

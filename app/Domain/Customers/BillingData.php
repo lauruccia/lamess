@@ -84,4 +84,19 @@ final class BillingData
             'country' => (string) ($profile->country_code ?: 'IT'),
         ];
     }
+
+    /**
+     * Tutti i dati di fatturazione salvati (anagrafica, fiscali e indirizzo): con il profilo completo valgono questi, non quelli del modulo.
+     *
+     * @return array<string,mixed>
+     */
+    public static function lockedData(Profile $profile): array
+    {
+        $data = self::lockedAddress($profile);
+        foreach (self::EDITABLE as $field) {
+            $data[$field] = $profile->{$field} ?? ($field === 'type' ? 'private' : null);
+        }
+
+        return $data;
+    }
 }

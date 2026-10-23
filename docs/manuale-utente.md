@@ -132,7 +132,7 @@ Prima di usare materiali promozionali tuoi (volantini, post, video) **proponili 
 
 
 ## Checkout e KMoney: cosa cambia
-Nel checkout compili e salvi i **dati di fatturazione** con «Salva i dati»: solo dopo si abilita «Conferma ordine». L'indirizzo di fatturazione salvato non si cambia qui ma da «I miei dati». Per pagare con KMoney devi prima **collegare KMoney** (massimale di 1500 KY per il pagamento automatico a un clic); tornando dal collegamento trovi il carrello e le scelte fatte intatte.
+I **dati di fatturazione** sono quelli con cui sei registrata e nel checkout sono tutti bloccati (tipo, nome, codice fiscale, azienda, indirizzo): la fattura è intestata così. Per cambiarli vai su «I miei dati». Se nel profilo mancano dei dati, li compili e li salvi con «Salva i dati»: solo dopo si abilita «Conferma ordine». Per pagare con KMoney devi prima **collegare KMoney** (massimale di 1500 KY per il pagamento automatico a un clic); tornando dal collegamento trovi il carrello e le scelte fatte intatte.
 
 ## I miei clienti (incaricati)
 Il primo cliente in elenco sei tu (i tuoi acquisti). Scegli il mese in alto: **verde** chi dà il punto nel mese, **arancione** chi sta per scadere, **grigio** chi non ha ordini (vale 0).

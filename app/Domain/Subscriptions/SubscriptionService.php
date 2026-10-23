@@ -103,6 +103,13 @@ final class SubscriptionService
             $this->cancel($sub, 'Conto KMoney non collegato');
             throw new OrderException(self::NOT_LINKED);
         }
+        // Primo addebito non riuscito (dati mancanti, saldo, carta…): l'abbonamento non parte e nessun «pagato» al cliente.
+        // Unica eccezione: KMoney attende la conferma del cliente (email già inviata), che chiuderà il primo ordine.
+        if ($sub->cycles_done === 0 && $sub->last_error !== null && $sub->last_error !== self::CONFIRM) {
+            $error = (string) $sub->last_error;
+            $this->cancel($sub, 'Primo addebito non riuscito: '.$error);
+            throw new OrderException($error);
+        }
 
         return $sub;
     }

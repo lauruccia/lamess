@@ -101,8 +101,20 @@ final class ShopPagesTest extends TestCase
         $p = $this->product('A', '100.00');
         $this->actingAs($this->buyer())->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
         $this->post('/area/checkout', $this->form(['address' => '', 'privacy' => '']))->assertSessionHasErrors(['address', 'privacy']);
-        $this->post('/area/checkout', $this->form(['tax_code' => '']))->assertSessionHasErrors('order');
+        $this->post('/area/checkout', $this->form(['tax_code' => '']))->assertSessionHasErrors('tax_code');
+        $this->post('/area/checkout', $this->form(['first_name' => '', 'last_name' => '']))->assertSessionHasErrors(['first_name', 'last_name']);
+        $this->post('/area/checkout', $this->form(['type' => 'company', 'company_name' => '', 'vat_number' => '']))->assertSessionHasErrors(['company_name', 'vat_number']);
         $this->assertSame(0, Order::count());
+    }
+
+    public function test_subscription_without_tax_code_creates_neither_subscription_nor_order(): void
+    {
+        $this->plan();
+        $p = $this->product('A', '100.00');
+        $this->actingAs($this->buyer())->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
+        $this->post('/area/checkout', $this->form(['tax_code' => '', 'payment_method' => 'card', 'subscribe' => 'monthly']))->assertSessionHasErrors('tax_code');
+        $this->assertSame(0, Order::count());
+        $this->assertSame(0, \App\Models\Subscription::count());
     }
 
     public function test_orders_and_invoices_are_private_to_the_buyer(): void

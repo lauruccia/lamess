@@ -597,11 +597,15 @@ class ShopController extends Controller
     public function checkout(Request $r, OrderService $orders, SubscriptionService $subs)
     {
         $d = $r->validate([
-            'type' => 'required|in:private,company', 'first_name' => 'nullable', 'last_name' => 'nullable', 'company_name' => 'nullable',
-            'tax_code' => 'nullable', 'vat_number' => 'nullable', 'sdi_code' => 'nullable', 'pec' => 'nullable|email',
+            'type' => 'required|in:private,company',
+            // Dati obbligatori per la fattura: senza non si crea né l'ordine né l'abbonamento.
+            'first_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')], 'last_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')],
+            'company_name' => [Rule::requiredIf(fn () => $r->input('type') === 'company')], 'vat_number' => [Rule::requiredIf(fn () => $r->input('type') === 'company')],
+            'tax_code' => [Rule::requiredIf(fn () => $r->input('type') === 'private' && ($r->input('country') ?: 'IT') === 'IT')],
+            'sdi_code' => 'nullable', 'pec' => 'nullable|email',
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
             'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => ['nullable', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
-        ], SiteController::MESSAGES);
+        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento']);
         $subscribe = $d['subscribe'] ?? 'none';
         if (! ($orders->enabledMethods()[$d['payment_method']] ?? false)) {
             return back()->withInput()->withErrors(['order' => 'Questo metodo di pagamento non è disponibile al momento: scegline un altro.']);
@@ -633,6 +637,17 @@ class ShopController extends Controller
         // L'ordine è venduto e spedito nella nazione dell'indirizzo di spedizione scelto (Italia se non indicata).
         $country = (string) $d['shipping']['country_code'];
         $r->session()->put('checkout_country', $country);
+        // Dati di fatturazione obbligatori: con la nazione di spedizione definitiva si ricontrollano prima di creare qualsiasi ordine o abbonamento.
+        $missing = [];
+        if ($d['type'] === 'private' && $country === 'IT' && blank($d['tax_code'] ?? null)) {
+            $missing['tax_code'] = 'Il campo «codice fiscale» è obbligatorio.';
+        }
+        if ($d['type'] === 'company' && $country === 'IT' && blank($d['sdi_code'] ?? null) && blank($d['pec'] ?? null)) {
+            $missing['sdi_code'] = 'Per le aziende italiane serve il codice SDI o la PEC.';
+        }
+        if ($missing !== []) {
+            return back()->withInput()->withErrors($missing + ['order' => 'Completa i campi obbligatori (*) per confermare l\'ordine.']);
+        }
 
         // Un ordine rimasto in attesa (pagina di pagamento abbandonata, poi «torna al carrello») si chiude prima di crearne uno nuovo: la merce non resta bloccata.
         if (($stale = PendingCart::pending($r)) !== null) {
@@ -665,9 +680,15 @@ class ShopController extends Controller
                     return $this->toCardCheckout($first, $orders);
                 }
             }
+            // «Pagato» solo se il primo ordine lo è davvero (cicli fatti ≥ 1).
+            if ($sub->status === 'active' && $sub->cycles_done >= 1) {
+                PendingCart::clear($r);
+
+                return redirect('/area/abbonamenti')->with('status', 'Abbonamento attivato: primo ordine pagato.');
+            }
             PendingCart::clear($r);
 
-            return redirect('/area/abbonamenti')->with('status', $sub->status === 'active' ? 'Abbonamento attivato: primo ordine pagato.' : 'Abbonamento creato ma il primo addebito non è riuscito: puoi riprovare da qui.');
+            return redirect('/area/abbonamenti')->with('status', 'Abbonamento creato: attendiamo la tua conferma su KMoney per il primo addebito (ti abbiamo inviato l\'email col pulsante).');
         }
         try {
             $order = $orders->place($r->user(), $this->cart($r), $country, $d['payment_method'], $d, forOthers: $this->others($r), discountCodes: $this->codes($r), kmoneyRest: $d['kmoney_rest'] ?? null);

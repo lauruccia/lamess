@@ -69,6 +69,7 @@ button:hover,.btn:hover{background:#2A241E;color:var(--lm-on-chrome);box-shadow:
 .btn.ghost{background:transparent;color:var(--link);border:1px solid var(--line);box-shadow:none;padding:11px 20px;margin-top:10px}.btn.ghost:hover{background:rgb(194 102 58/.08);border-color:var(--lm-terracotta);color:var(--lm-brown)}
 form.card button[type=submit],form.card>button:last-of-type{min-width:9rem}
 .err{color:var(--err);font-size:13.5px;margin:6px 0 0}
+.req{color:var(--err);font-weight:700}
 .ok{background:var(--lm-ok-bg);color:var(--ok);padding:12px 16px;border-radius:12px;margin:14px 0;border:1px solid rgb(47 111 79/.18)}
 .warn{background:var(--lm-warn-bg);border:1px solid var(--sand);padding:12px 16px;border-radius:12px;margin:14px 0}
 .badge{display:inline-block;padding:3px 12px;border-radius:99px;font-size:12.5px;font-weight:600;background:rgb(194 102 58/.14);color:var(--lm-brown)}

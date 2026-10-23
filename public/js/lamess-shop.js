@@ -103,7 +103,12 @@
   // Checkout: i campi aziendali compaiono solo per le aziende
   function company() {
     var sel = $('#type'); if (!sel) return;
-    $$('[data-company]').forEach(function (el) { el.style.display = sel.value === 'company' ? '' : 'none'; });
+    var co = sel.value === 'company';
+    $$('[data-company]').forEach(function (el) { el.style.display = co ? '' : 'none'; });
+    $$('[data-private]').forEach(function (el) { el.style.display = co ? 'none' : ''; });
+    // «required» del browser solo sui campi che servono al tipo di fattura scelto
+    $$('[data-req-private]').forEach(function (el) { el.required = !co; });
+    $$('[data-req-company]').forEach(function (el) { el.required = co; });
   }
 
   // Checkout: l'abbonamento (mensile o bimestrale) si paga solo con carta o KMoney

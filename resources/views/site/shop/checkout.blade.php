@@ -14,18 +14,20 @@
  <form method="post" action="/area/checkout" class="co-form" id="checkout-form">@csrf
   <section class="card">
    <h2><span class="step">1</span> Fatturazione</h2>
+   <p class="muted small" style="margin:0 0 8px">I campi con <b class="req">*</b> sono obbligatori.</p>
    <label>Fattura intestata a</label>
    <select name="type" id="type"><option value="private" @selected(old('type', $profile?->type ?? 'private')==='private')>Privato</option><option value="company" @selected(old('type', $profile?->type)==='company')>Azienda</option></select>
-   <div class="row"><div><label>Nome</label><input name="first_name" value="{{ old('first_name', $profile?->first_name) }}" autocomplete="given-name"></div><div><label>Cognome</label><input name="last_name" value="{{ old('last_name', $profile?->last_name) }}" autocomplete="family-name"></div></div>
-   <div data-company><label>Ragione sociale (aziende)</label><input name="company_name" value="{{ old('company_name', $profile?->company_name) }}" autocomplete="organization"></div>
-   <div class="row"><div><label>Codice fiscale</label><input name="tax_code" value="{{ old('tax_code', $profile?->tax_code) }}"></div><div data-company><label>Partita IVA (aziende)</label><input name="vat_number" value="{{ old('vat_number', $profile?->vat_number) }}"></div></div>
-   <div class="row" data-company><div><label>Codice SDI (aziende)</label><input name="sdi_code" value="{{ old('sdi_code', $profile?->sdi_code) }}"></div><div><label>PEC (aziende)</label><input name="pec" value="{{ old('pec', $profile?->pec) }}"></div></div>
-   <label>Indirizzo di fatturazione</label><input name="address" value="{{ old('address', $profile?->address) }}" autocomplete="street-address">
-   <div class="row"><div><label>Città</label><input name="city" value="{{ old('city', $profile?->city) }}" autocomplete="address-level2"></div><div><label>CAP</label><input name="zip" value="{{ old('zip', $profile?->zip) }}" autocomplete="postal-code" inputmode="numeric"></div></div>
+   <div class="row"><div><label>Nome <b class="req" data-private title="Obbligatorio">*</b></label><input name="first_name" data-req-private value="{{ old('first_name', $profile?->first_name) }}" autocomplete="given-name"></div><div><label>Cognome <b class="req" data-private title="Obbligatorio">*</b></label><input name="last_name" data-req-private value="{{ old('last_name', $profile?->last_name) }}" autocomplete="family-name"></div></div>
+   <div data-company><label>Ragione sociale (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="company_name" data-req-company value="{{ old('company_name', $profile?->company_name) }}" autocomplete="organization"></div>
+   <div class="row"><div><label>Codice fiscale <b class="req" data-private title="Obbligatorio">*</b></label><input name="tax_code" data-req-private value="{{ old('tax_code', $profile?->tax_code) }}"></div><div data-company><label>Partita IVA (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="vat_number" data-req-company value="{{ old('vat_number', $profile?->vat_number) }}"></div></div>
+   <p class="muted small req-note" data-company style="margin:0 0 4px">Per le aziende italiane serve il codice SDI oppure la PEC.</p>
+   <div class="row" data-company><div><label>Codice SDI (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="sdi_code" value="{{ old('sdi_code', $profile?->sdi_code) }}"></div><div><label>PEC (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="pec" value="{{ old('pec', $profile?->pec) }}"></div></div>
+   <label>Indirizzo di fatturazione <b class="req" title="Obbligatorio">*</b></label><input required name="address" value="{{ old('address', $profile?->address) }}" autocomplete="street-address">
+   <div class="row"><div><label>Città <b class="req" title="Obbligatorio">*</b></label><input required name="city" value="{{ old('city', $profile?->city) }}" autocomplete="address-level2"></div><div><label>CAP <b class="req" title="Obbligatorio">*</b></label><input required name="zip" value="{{ old('zip', $profile?->zip) }}" autocomplete="postal-code" inputmode="numeric"></div></div>
    <div class="row"><div><label>Provincia</label><input name="province" maxlength="3" value="{{ old('province', $profile?->province) }}"></div><div><label for="country">Nazione</label><select name="country" id="country" data-country-reload>@foreach($countries as $code => $name)<option value="{{ $code }}" @selected(old('country', $country) === $code)>{{ $name }}</option>@endforeach</select></div></div>
    <input type="hidden" name="remember" value="0">
    <label class="chk"><input type="checkbox" name="remember" value="1" @checked(old('remember', '1') == '1')> Salva questi dati per i prossimi ordini (potrai cambiare l'indirizzo in ogni ordine)</label>
-   @foreach(['address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
+   @foreach(['first_name','last_name','company_name','tax_code','vat_number','sdi_code','address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
   </section>
   <section class="card">
    <h2><span class="step">2</span> Spedizione</h2>

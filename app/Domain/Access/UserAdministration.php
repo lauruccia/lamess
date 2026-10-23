@@ -169,6 +169,23 @@ final class UserAdministration
         return $password;
     }
 
+    /**
+     * Password temporanea per un incaricato o un cliente che non riceve l'email di reset: la imposta l'admin, la vede UNA volta
+     * e la consegna a mano. Chiude le sessioni aperte. Gli account del back-office restano fuori (per loro c'è «Nuova password» in Utenti).
+     */
+    public function setTemporaryPasswordForMember(User $user): string
+    {
+        if ($user->isBackoffice()) {
+            throw ValidationException::withMessages(['user' => 'Per gli account del back-office usa «Nuova password» in Utenti.']);
+        }
+        $password = self::generatePassword();
+        $user->update(['password' => $password]);
+        DB::table('sessions')->where('user_id', $user->getKey())->delete();
+        AuditLog::record('user.temporary_password_set_by_admin', "Password temporanea impostata dall'admin: {$user->email}", $user);
+
+        return $password;
+    }
+
     /** Azzera la 2FA (telefono perso): al prossimo accesso il pannello chiede di collegarla di nuovo. */
     public function resetTwoFactor(User $user): void
     {

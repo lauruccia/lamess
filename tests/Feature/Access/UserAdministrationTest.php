@@ -83,6 +83,25 @@ final class UserAdministrationTest extends TestCase
         $this->assertSame(1, DB::table('audit_logs')->where('action', 'user.password_reset_by_admin')->count());
     }
 
+    public function test_temporary_password_for_member_changes_it_and_never_logs_it(): void
+    {
+        $member = User::factory()->create(['email' => 'incaricato@example.test']);
+        $old = $member->password;
+        $new = $this->svc->setTemporaryPasswordForMember($member);
+
+        $this->assertNotSame($old, $member->fresh()->password);
+        $this->assertTrue(Hash::check($new, $member->fresh()->password));
+        $this->assertStringNotContainsString($new, DB::table('audit_logs')->get()->map(fn ($r) => json_encode($r))->implode('|'));
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'user.temporary_password_set_by_admin')->count());
+    }
+
+    public function test_temporary_password_for_member_refuses_backoffice_accounts(): void
+    {
+        $admin = $this->svc->createAdmin('A', 'a@example.test', [])['user'];
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->svc->setTemporaryPasswordForMember($admin);
+    }
+
     public function test_reset_two_factor_clears_secret(): void
     {
         $u = $this->svc->createAdmin('A', 'a@example.test', [])['user'];

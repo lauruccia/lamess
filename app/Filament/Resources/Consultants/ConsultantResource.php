@@ -320,6 +320,7 @@ class ConsultantResource extends Resource
                         ->url(fn (Consultant $record): string => static::getUrl('edit', ['record' => $record])),
                     KycRequestAction::forRow(),
                     PasswordResetAction::forRow(),
+                    PasswordResetAction::temporaryForRow(),
                     ...ConsultantAccessAction::forRow(),
                     RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
                     FounderAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated'),

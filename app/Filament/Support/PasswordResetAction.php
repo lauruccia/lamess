@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Support;
 
 use App\Domain\Access\PasswordResetLinks;
+use App\Domain\Access\UserAdministration;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 /**
  * «Invia reset password»: l'admin manda il link per scegliere una nuova password a un account, a quelli selezionati
@@ -41,6 +43,30 @@ final class PasswordResetAction
             ->modalDescription('La persona riceve una email con un link (valido per un tempo limitato). La password attuale resta valida finché non ne sceglie una nuova.')
             ->modalSubmitActionLabel('Invia')
             ->action(fn (Model $record) => self::run([self::userId($record)], false));
+    }
+
+    /** «Imposta password temporanea»: per chi non riceve l'email. La password è mostrata una sola volta all'admin. */
+    public static function temporaryForRow(): Action
+    {
+        return Action::make('setTemporaryPassword')->authorize('network.manage')->label('Imposta password temporanea')->icon('heroicon-o-lock-closed')->color('gray')
+            ->visible(fn (Model $record): bool => self::userId($record) !== null && ! ($record instanceof User && $record->isBackoffice()))
+            ->requiresConfirmation()->modalHeading('Imposta una password temporanea')
+            ->modalDescription('Il sistema genera una nuova password, la mostra una sola volta a te (copiala subito e consegnala alla persona) e chiude le sue sessioni aperte. La password attuale smette di funzionare.')
+            ->modalSubmitActionLabel('Imposta')
+            ->action(function (Model $record): void {
+                $user = User::withoutGlobalScopes()->find(self::userId($record));
+                if ($user === null) {
+                    return;
+                }
+                try {
+                    $password = app(UserAdministration::class)->setTemporaryPasswordForMember($user);
+                } catch (ValidationException $e) {
+                    Notification::make()->title('Password non impostata')->body(collect($e->errors())->flatten()->implode(' '))->danger()->send();
+
+                    return;
+                }
+                Notification::make()->title('Password temporanea per '.$user->email)->body($password)->persistent()->success()->send();
+            });
     }
 
     /** Azione sulle righe selezionate. */

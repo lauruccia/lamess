@@ -177,28 +177,23 @@
   // Checkout: «Conferma ordine» si attiva solo con i dati di fatturazione salvati (e, pagando con KMoney, con il conto collegato)
   function confirmGate() {
     var btn = $('#confirm-order'), form = $('#checkout-form'); if (!btn || !form) return;
-    var dirty = false, hint = $('[data-confirm-hint]'), state = $('[data-billing-state]');
-    var fields = ['type', 'first_name', 'last_name', 'company_name', 'tax_code', 'vat_number', 'sdi_code', 'pec', 'address', 'city', 'zip', 'province'];
+    var hint = $('[data-confirm-hint]');
+    // Ultimo passo: metodo e consegna arrivano dai passi precedenti (campi nascosti); i radio esistono solo se la pagina li mostra.
+    function chosen(name) { var r = $('input[type=radio][name=' + name + ']:checked'), h = $('input[type=hidden][name=' + name + ']', form); return r ? r.value : (h ? h.value : ''); }
     function sync() {
-      var missing = btn.dataset.billingMissing === '1' || dirty;
-      var pm = $('input[name=payment_method]:checked');
-      var needLink = btn.dataset.kmNeedsLink === '1' && pm && pm.value === 'kmoney';
-      var needChoice = $('input[name=payment_method]') ? (!pm || ($('input[name=subscribe]') && !$('input[name=subscribe]:checked'))) : btn.dataset.needChoice === '1';
+      var missing = btn.dataset.billingMissing === '1';
+      var pm = chosen('payment_method');
+      var needLink = btn.dataset.kmNeedsLink === '1' && pm === 'kmoney';
+      var needChoice = !pm;
       btn.disabled = missing || needLink || needChoice;
       if (hint) {
         hint.hidden = !(missing || needLink || needChoice);
-        hint.textContent = missing ? 'Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».' : (needChoice ? 'Scegli come vuoi pagare e come vuoi riceverla per attivare «Conferma ordine».' : 'Collega prima il tuo conto KMoney (pulsante «Collega KMoney») per attivare «Conferma ordine».');
+        hint.textContent = missing ? 'Completa i dati di fatturazione per attivare «Conferma ordine».' : (needChoice ? 'Scegli come vuoi pagare e come vuoi riceverla per attivare «Conferma ordine».' : 'Collega prima il tuo conto KMoney (pagina «Pagamento e consegna») per attivare «Conferma ordine».');
       }
-      if (dirty && state) state.innerHTML = 'Hai modificato i dati: <b>salvali</b> per poter confermare l\'ordine.';
     }
-    fields.forEach(function (n) {
-      var el = form.elements[n]; if (!el || el.readOnly) return;
-      ['input', 'change'].forEach(function (ev) { el.addEventListener(ev, function () { dirty = true; sync(); }); });
-    });
-    $$('input[name=payment_method], input[name=subscribe]').forEach(function (r) { r.addEventListener('change', sync); });
+    $$('input[type=radio][name=payment_method], input[type=radio][name=subscribe]').forEach(function (r) { r.addEventListener('change', sync); });
     sync();
   }
-
 
   // Varianti: formato, taglia, colore. Le pillole scelgono la variante; il menu nascosto resta come alternativa senza JavaScript.
   function variants() {

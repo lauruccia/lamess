@@ -222,7 +222,7 @@ class OrderResource extends Resource
                 }),
             Action::make('label')->authorize('orders.manage')->label('Stampa etichetta')->icon('heroicon-o-printer')->color('gray')
                 ->visible(fn (Order $record) => app(ShippingLabelService::class)->isPrintable($record))
-                ->url(fn (Order $record) => url('/admin-files/orders/etichette?formato=singola&ids='.$record->id), shouldOpenInNewTab: true),
+                ->url(fn (Order $record) => url('/admin-files/orders/etichette?ids='.$record->id), shouldOpenInNewTab: true),
             Action::make('processing')->authorize('orders.manage')->label('In preparazione')->icon('heroicon-o-cube')->color('gray')
                 ->visible(fn (Order $record) => $record->status === 'paid')
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->startProcessing($record), 'Ordine in preparazione')),

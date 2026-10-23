@@ -9,10 +9,14 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
 
 /**
- * Etichette di spedizione: una per ordine, stampabili singole o in blocco su fogli A4 (2 colonne × 4 righe = 8 etichette per foglio).
+ * Etichette di spedizione: una per ordine, sempre dello stesso formato (foglio A4, 2 colonne × 4 righe = 8 etichette per foglio):
+ * un ordine solo occupa la prima casella del foglio, con le stesse dimensioni di quando se ne stampano 8.
  */
 final class ShippingLabelService
 {
+    /** Etichette per foglio A4: il formato è sempre questo, anche per un ordine solo. */
+    public const PER_SHEET = 8;
+
     /** Stati per cui ha senso preparare un pacco. */
     public const PRINTABLE = ['paid', 'processing', 'shipped', 'delivered', 'partially_refunded'];
 
@@ -50,12 +54,12 @@ final class ShippingLabelService
     }
 
     /** @param  Collection<int,Order>  $orders */
-    public function pdf(Collection $orders, bool $sheet = true): string
+    public function pdf(Collection $orders): string
     {
         $labels = $orders->filter(fn (Order $o) => $this->isPrintable($o))->map(fn (Order $o) => $this->label($o))->values()->all();
         abort_if($labels === [], 422, 'Nessun ordine pronto da spedire tra quelli scelti.');
 
-        return Pdf::loadView('pdf.shipping-labels', ['labels' => $labels, 'perPage' => $sheet ? 8 : 1])
-            ->setPaper($sheet ? 'a4' : [0, 0, 297.6, 420.9], 'portrait')->output();
+        return Pdf::loadView('pdf.shipping-labels', ['labels' => $labels, 'perPage' => self::PER_SHEET])
+            ->setPaper('a4', 'portrait')->output();
     }
 }

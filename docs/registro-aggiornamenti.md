@@ -5,6 +5,7 @@
 - `AddressCheck`: serve via e numero civico (o «snc»); usato da rubrica indirizzi, checkout (nuovo indirizzo, indirizzo salvato, «come la fatturazione») e modifica indirizzo.
 - Indirizzi già salvati e incompleti: si fermano al momento dell'ordine con il messaggio di correggerli in «I miei dati».
 - Azione admin «Modifica indirizzo di consegna» sugli ordini non ancora spediti, con nota in cronologia.
+- Etichette: formato unico, quello di 8 per foglio A4; l'etichetta singola occupa la prima casella (prima era una pagina A6 con caratteri grandi).
 - Test: `DeliveryAddressTest` (14). Nota: 9 test su abbonamenti e audit dei prodotti falliscono anche senza queste modifiche (già presenti).
 
 ## 2026-10-01 — E1/E2/E3: motore di calcolo

@@ -54,7 +54,24 @@ final class ShippingLabelsTest extends TestCase
         $r = $this->actingAs($admin)->get("/admin-files/orders/etichette?ids={$a->id},{$b->id},{$c->id}")->assertOk();
         $this->assertStringStartsWith('%PDF', $r->getContent());
         $this->assertSame('application/pdf', $r->headers->get('Content-Type'));
-        $this->actingAs($admin)->get("/admin-files/orders/etichette?formato=singola&ids={$c->id}")->assertStatus(422);
+        $this->actingAs($admin)->get("/admin-files/orders/etichette?ids={$c->id}")->assertStatus(422);
+    }
+
+    public function test_a_single_label_has_the_same_a4_format_as_the_sheet_of_eight(): void
+    {
+        $a = $this->order('ORD-L6');
+        $b = $this->order('ORD-L7');
+        $admin = User::factory()->role('super_admin')->create();
+
+        $single = $this->actingAs($admin)->get("/admin-files/orders/etichette?ids={$a->id}")->assertOk()->getContent();
+        $sheet = $this->actingAs($admin)->get("/admin-files/orders/etichette?ids={$a->id},{$b->id}")->assertOk()->getContent();
+
+        foreach ([$single, $sheet] as $pdf) {
+            $this->assertSame(1, preg_match('/MediaBox\s*\[\s*[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)\s*\]/', $pdf, $m));
+            $this->assertEqualsWithDelta(595.28, (float) $m[1], 0.5);
+            $this->assertEqualsWithDelta(841.89, (float) $m[2], 0.5);
+        }
+        $this->assertSame(8, ShippingLabelService::PER_SHEET);
     }
 
     public function test_customers_cannot_print_labels(): void

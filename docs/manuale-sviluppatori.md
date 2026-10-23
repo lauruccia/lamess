@@ -209,7 +209,7 @@ I manuali sono in `docs/` (elenco nel `README.md`). `php artisan lamess:parametr
 `App\Domain\Access\Impersonation` (sessione `impersonator_id`), azione Filament `ImpersonateAction`, middleware `impersonation.safe` (`BlockWhileImpersonating`) sulle rotte di pagamento/password/firma/IBAN/prelievi/KMoney, rotta `POST /area/torna-admin`. `SiteClosed` lascia passare durante l'accesso; `AuditLog::actor()` aggiunge il super_admin. Test: `ImpersonationTest`.
 
 ## Etichette di spedizione
-`App\Domain\Orders\ShippingLabelService` + vista `pdf/shipping-labels`; rotta `GET /admin-files/orders/etichette?ids=1,2&formato=singola`; azioni in `OrderResource`. Test: `ShippingLabelsTest`.
+`App\Domain\Orders\ShippingLabelService` + vista `pdf/shipping-labels`; rotta `GET /admin-files/orders/etichette?ids=1,2 (sempre foglio A4 con 8 caselle, anche per un ordine solo)`; azioni in `OrderResource`. Test: `ShippingLabelsTest`.
 
 ## Checkout: dati di fatturazione
 `App\Domain\Customers\BillingData`; `ShopController::saveBilling`/`checkoutConnectKMoney`; massimale KMoney `lamess.kmoney.mandate_limit_ky` (`KMONEY_MANDATE_LIMIT_KY`).

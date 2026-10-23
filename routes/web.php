@@ -188,7 +188,7 @@ Route::middleware(['auth'])->prefix('admin-files')->group(function () {
         $orders = Order::with('items', 'buyer')->whereIn('id', $ids)->orderBy('id')->get();
         AuditLog::record('order.labels_printed', 'Stampate le etichette di spedizione: '.$orders->count().' ordini', null, ['ordini' => $orders->pluck('number')->all()]);
 
-        return response(app(ShippingLabelService::class)->pdf($orders, $request->query('formato') !== 'singola'), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="etichette-spedizione.pdf"']);
+        return response(app(ShippingLabelService::class)->pdf($orders), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="etichette-spedizione.pdf"']);
     });
     Route::get('/badge/{consultant}', function (Consultant $consultant) {
         abort_unless(auth()->user()->can('network.manage'), 403);

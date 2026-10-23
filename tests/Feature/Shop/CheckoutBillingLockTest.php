@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Shop;
 
+use App\Domain\Customers\ShippingAddressBook;
 use App\Models\Order;
 use App\Models\Profile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,5 +162,25 @@ final class CheckoutBillingLockTest extends TestCase
 
         $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $form)->assertSessionHasErrors('subscribe');
         $this->assertSame(0, Order::count());
+    }
+
+    public function test_the_shipping_step_accepts_a_saved_address_and_a_new_one_and_refuses_bad_choices(): void
+    {
+        $user = $this->buyer($this->activeSponsor());
+        $other = $this->buyer();
+        $p = $this->product('A', '100.00');
+        $mine = app(ShippingAddressBook::class)->add($user, ['address' => 'Via Mare 5', 'city' => 'Scilla', 'zip' => '89058', 'country_code' => 'IT']);
+        $foreign = app(ShippingAddressBook::class)->add($other, ['address' => 'Via Altrui 1', 'city' => 'Roma', 'zip' => '00100', 'country_code' => 'IT']);
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]]);
+
+        $this->post('/area/checkout/passo/2', ['ship_to' => (string) $mine->id])->assertRedirect('/area/checkout/pagamento')->assertSessionHasNoErrors();
+        $this->post('/area/checkout/passo/2', ['ship_to' => (string) $foreign->id])->assertRedirect('/area/checkout/spedizione')->assertSessionHasErrors('ship_to');
+        $this->post('/area/checkout/passo/2', ['ship_to' => 'new', 'ship_address' => 'Via Nuova 2'])->assertRedirect('/area/checkout/spedizione')->assertSessionHasErrors(['ship_city', 'ship_zip']);
+        $this->post('/area/checkout/passo/2', ['ship_to' => 'new', 'ship_address' => 'Via Nuova 2', 'ship_city' => 'Reggio', 'ship_zip' => '89100'])->assertRedirect('/area/checkout/pagamento');
+        $this->get('/area/checkout/spedizione')->assertOk();
+
+        $this->post('/area/checkout/passo/2', ['ship_to' => (string) $mine->id]);
+        $this->post('/area/checkout/passo/3', ['payment_method' => 'transfer', 'subscribe' => 'none'])->assertRedirect('/area/checkout/riepilogo');
+        $this->get('/area/checkout/riepilogo')->assertOk()->assertSee('Via Mare 5')->assertSee('name="ship_to" value="'.$mine->id.'"', false);
     }
 }

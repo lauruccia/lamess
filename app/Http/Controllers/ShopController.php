@@ -27,6 +27,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Profile;
+use App\Models\ShippingAddress;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Money;

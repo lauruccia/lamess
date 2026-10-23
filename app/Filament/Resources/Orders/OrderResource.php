@@ -20,6 +20,7 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Models\CreditNote;
 use App\Models\Order;
+use App\Models\OrderEvent;
 use App\Models\Refund;
 use App\Models\ReturnRequest;
 use App\Models\Subscription;
@@ -178,6 +179,13 @@ class OrderResource extends Resource
                 ->modalDescription('Chiede a Stripe se il cliente ha pagato. Se sì, l\'ordine viene confermato; la carta si conferma solo così, mai a mano.')
                 ->action(function (Order $record): void {
                     $esito = app(StripeWebhook::class)->reconcile($record, app(PaymentProvider::class));
+                    if (in_array($esito, ['not_paid', 'no_session'], true)) {
+                        $perche = app(StripeWebhook::class)->explainPending($record, app(PaymentProvider::class));
+                        OrderEvent::log($record, 'stripe_check', 'Verifica su Stripe: '.$perche, true);
+                        Notification::make()->title('Pagamento non completato')->body($perche)->warning()->persistent()->send();
+
+                        return;
+                    }
                     $msg = match ($esito) {
                         'paid' => ['Pagamento trovato su Stripe: ordine confermato', 'success'],
                         'already_processed' => ['L\'ordine risulta già lavorato', 'info'],

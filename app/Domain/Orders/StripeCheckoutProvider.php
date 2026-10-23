@@ -33,13 +33,14 @@ final class StripeCheckoutProvider implements RedirectPaymentProvider, RefundsCa
      *
      * @return array<string,mixed>|null
      */
-    public function retrieveCheckoutSession(string $sessionId): ?array
+    public function retrieveCheckoutSession(string $sessionId, bool $withIntent = false): ?array
     {
         if (! str_starts_with($sessionId, 'cs_')) {
             return null;
         }
         try {
-            $r = Http::withToken($this->secretKey)->timeout(15)->get('https://api.stripe.com/v1/checkout/sessions/'.rawurlencode($sessionId));
+            // Con $withIntent il pagamento tentato arriva già letto (serve a spiegare un rifiuto o un 3D Secure non completato).
+            $r = Http::withToken($this->secretKey)->timeout(15)->get('https://api.stripe.com/v1/checkout/sessions/'.rawurlencode($sessionId), $withIntent ? ['expand' => ['payment_intent']] : []);
         } catch (Throwable) {
             return null;
         }

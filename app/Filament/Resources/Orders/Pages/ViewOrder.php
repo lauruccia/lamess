@@ -123,6 +123,9 @@ class ViewOrder extends ViewRecord
         foreach ($r->payments()->get() as $p) {
             $lines[] = sprintf('Pagamento %s · %s · %s%s', OrderService::methodLabel($p->method), self::eur($p->amount), $p->status, $p->provider_ref ? ' · rif. '.$p->provider_ref : '');
         }
+        if ($r->status === 'pending_payment' && $r->paysByCard()) {
+            $lines[] = "\nIN ATTESA: il cliente non ha ancora concluso il pagamento con carta su Stripe. Cause più comuni: pagina chiusa o mai aperta, carta rifiutata, conferma della banca (3D Secure) non completata, pagina scaduta. Con «Verifica su Stripe» vedi il motivo preciso, che resta scritto nella Cronologia.";
+        }
         foreach ($r->refunds()->get() as $f) {
             $lines[] = sprintf('Rimborso %s · %s · %s%s', OrderService::methodLabel($f->method), self::eur($f->amount), match ($f->status) {
                 'done' => 'eseguito', 'failed' => 'NON RIUSCITO', default => 'da eseguire'

@@ -102,6 +102,56 @@ final class StripeWebhook
         return $this->handle(['type' => 'checkout.session.completed', 'data' => ['object' => $session]]);
     }
 
+    /**
+     * Perché un ordine con carta è ancora in attesa, in parole semplici: legge lo stato reale della pagina di Stripe.
+     * Non conferma né cambia nulla: serve solo all'admin per capire cosa è successo.
+     */
+    public function explainPending(Order $order, StripeCheckoutProvider $stripe): string
+    {
+        $ref = (string) $order->payments()->where('provider', 'stripe')->latest('id')->value('provider_ref');
+        if (! str_starts_with($ref, 'cs_')) {
+            return 'Il cliente non ha mai aperto la pagina di pagamento di Stripe: ha lasciato il checkout prima di arrivarci.';
+        }
+        $s = $stripe->retrieveCheckoutSession($ref, true);
+        if ($s === null) {
+            return 'Stripe non risponde: impossibile leggere lo stato del pagamento, riprova tra poco.';
+        }
+        $pi = is_array($s['payment_intent'] ?? null) ? $s['payment_intent'] : [];
+        $err = is_array($pi['last_payment_error'] ?? null) ? $pi['last_payment_error'] : [];
+        $code = (string) ($err['decline_code'] ?? $err['code'] ?? '');
+
+        if ($err !== []) {
+            $why = match ($code) {
+                'insufficient_funds' => 'fondi insufficienti sulla carta',
+                'expired_card' => 'carta scaduta',
+                'incorrect_cvc', 'invalid_cvc' => 'codice di sicurezza (CVC) errato',
+                'incorrect_number', 'invalid_number' => 'numero di carta errato',
+                'lost_card', 'stolen_card', 'pickup_card' => 'carta bloccata dalla banca',
+                'authentication_required', 'authentication_not_handled' => 'autenticazione 3D Secure richiesta dalla banca e non riuscita',
+                'card_velocity_exceeded', 'withdrawal_count_limit_exceeded' => 'limite di operazioni o di spesa della carta superato',
+                default => 'carta rifiutata dalla banca'.($code !== '' ? " ({$code})" : ''),
+            };
+
+            return 'Il cliente ha provato a pagare ma il pagamento è stato respinto: '.$why.'. Il cliente deve riprovare con un\'altra carta oppure contattare la sua banca.';
+        }
+        if (($pi['status'] ?? '') === 'requires_action') {
+            return 'Il cliente ha inserito la carta ma non ha completato la conferma della banca (3D Secure, per esempio la notifica sull\'app o il codice SMS). Deve riaprire il pagamento e confermare.';
+        }
+        if (($s['status'] ?? '') === 'expired') {
+            $when = isset($s['expires_at']) ? ' il '.\Illuminate\Support\Carbon::createFromTimestamp((int) $s['expires_at'], 'Europe/Rome')->format('d/m/Y H:i') : '';
+
+            return 'La pagina di pagamento è scaduta'.$when.' senza che il cliente pagasse. L\'ordine non verrà mai pagato: annullalo e fai rifare l\'ordine al cliente.';
+        }
+        if (($s['status'] ?? '') === 'open') {
+            return 'La pagina di pagamento è ancora aperta ma il cliente non ha concluso il pagamento e non risultano tentativi con la carta. Può ancora completarlo fino alla scadenza della pagina.';
+        }
+        if (($s['payment_status'] ?? '') === 'paid') {
+            return 'Su Stripe il pagamento risulta incassato: usa di nuovo «Verifica su Stripe» per confermare l\'ordine (il webhook non è arrivato).';
+        }
+
+        return 'Stripe non segnala un pagamento riuscito e non indica un motivo preciso: controlla la sessione '.$ref.' nella dashboard di Stripe.';
+    }
+
     /** Il cliente ha cambiato la carta dell'abbonamento. @param array<string,mixed> $obj */
     private function handleCardUpdate(array $obj): string
     {

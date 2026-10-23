@@ -139,7 +139,15 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
             return new PaymentResult(true, (string) ($res->json('transfer_uuid') ?? 'kmoney'));
         }
         if ($res->status() === 402) {
-            return new PaymentResult(false, null, (string) ($res->json('reason') ?? 'confirmation_required'), $res->json('confirmation_url'));
+            // Il motivo della richiesta di conferma resta scritto: nei log e nella cronologia (nota interna) dell'ordine.
+            $reason = (string) ($res->json('reason') ?? 'confirmation_required');
+            Log::warning('KMoney: addebito con conferma richiesta (402)', [
+                'order' => $order->number, 'user' => $buyer->id, 'mandate' => $mandate, 'amount_cents' => $cents,
+                'subscription' => $order->subscription_id, 'reason' => $reason, 'message' => $res->json('message'),
+            ]);
+            \App\Models\OrderEvent::log($order, 'kmoney_confirmation', 'KMoney chiede la conferma del cliente (402) · motivo: '.$reason.($res->json('message') ? ' · '.$res->json('message') : '').' · mandato '.$mandate.' · importo € '.number_format($cents / 100, 2, ',', '.'), true);
+
+            return new PaymentResult(false, null, $reason, $res->json('confirmation_url'));
         }
         // Il cliente ha bloccato questo abbonamento su KMoney: non è un errore da ritentare né una conferma da chiedere.
         if ($res->status() === 403 && $res->json('reason') === 'subscription_blocked') {

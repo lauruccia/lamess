@@ -290,22 +290,27 @@ final class SubscriptionConfirmationTest extends TestCase
         $this->assertSame(0, $this->subs()->sendCardExpiryNotices());
     }
 
-    public function test_order_list_filter_hides_failed_cycles_but_not_the_first_order(): void
+    public function test_order_list_filter_hides_failed_attempts_of_a_live_subscription(): void
     {
         $this->start();
         $this->km->funds = false;
         [, $sub] = $this->kmoneySub();
         $first = Order::where('subscription_id', $sub->id)->orderBy('id')->firstOrFail();
         $this->assertSame('cancelled', $first->status, 'il primo tentativo fallito lascia un ordine annullato');
+        $this->assertSame('active', $sub->refresh()->status);
         $this->travelTo($sub->refresh()->next_run_at);
         $this->subs()->runDue();
         $second = Order::where('subscription_id', $sub->id)->orderByDesc('id')->firstOrFail();
         $this->assertNotSame($first->id, $second->id);
         $this->assertTrue($second->events()->where('type', 'charge_failed')->exists(), 'il motivo resta nella cronologia');
 
-        $visible = Order::query()->whereNot(fn ($w) => $w->where('orders.status', 'cancelled')->whereNotNull('orders.subscription_id')
-            ->whereRaw('orders.id > (select min(o2.id) from orders o2 where o2.subscription_id = orders.subscription_id)'))->pluck('id')->all();
-        $this->assertContains($first->id, $visible);
-        $this->assertNotContains($second->id, $visible);
+        $filter = fn () => Order::query()->whereNot(fn ($w) => $w->where('orders.status', 'cancelled')->whereNotNull('orders.subscription_id')
+            ->whereIn('orders.subscription_id', fn ($q) => $q->select('id')->from('subscriptions')->whereIn('status', ['active', 'paused'])))->pluck('id')->all();
+        $this->assertNotContains($first->id, $filter());
+        $this->assertNotContains($second->id, $filter());
+
+        // Abbonamento disdetto: i suoi ordini annullati tornano visibili.
+        $this->subs()->cancel($sub->refresh(), 'prova');
+        $this->assertContains($first->id, $filter());
     }
 }

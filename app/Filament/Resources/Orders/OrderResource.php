@@ -156,10 +156,11 @@ class OrderResource extends Resource
             TextColumn::make('paid_at')->label('Pagato il')->dateTime('d/m/Y H:i', 'Europe/Rome')->placeholder('—')->sortable(),
             TextColumn::make('tracking_code')->label('Tracking')->placeholder('—'),
         ])->filters([
-            // Ogni addebito mensile fallito lascia un ordine annullato: di default si nascondono (il primo ordine dell'abbonamento resta sempre visibile).
+            // Ogni addebito fallito di un abbonamento ancora vivo (attivo o in pausa) lascia un ordine annullato: di default si nascondono.
+            // Restano visibili gli ordini annullati degli abbonamenti disdetti o mai partiti (pagina di Stripe abbandonata).
             Filter::make('hide_failed_cycles')->label('Nascondi i tentativi di addebito non riusciti degli abbonamenti')->toggle()->default(true)
                 ->query(fn ($query) => $query->whereNot(fn ($w) => $w->where('orders.status', 'cancelled')->whereNotNull('orders.subscription_id')
-                    ->whereRaw('orders.id > (select min(o2.id) from orders o2 where o2.subscription_id = orders.subscription_id)'))),
+                    ->whereIn('orders.subscription_id', fn ($q) => $q->select('id')->from('subscriptions')->whereIn('status', ['active', 'paused'])))),
             SelectFilter::make('status')->label('Stato')->options(self::STATUS),
             TernaryFilter::make('subscription_id')->label('Abbonamento')->nullable()->placeholder('Tutti')->trueLabel('Solo abbonamenti')->falseLabel('Solo ordini singoli'),
             SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico']),

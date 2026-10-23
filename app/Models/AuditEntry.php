@@ -29,6 +29,15 @@ class AuditEntry extends Model
     /** @return array<string, mixed>|null */
     public function changesArray(): ?array
     {
-        return $this->changes === null ? null : json_decode((string) $this->changes, true);
+        $raw = $this->changes;
+        if ($raw === null) {
+            return null;
+        }
+        if (is_array($raw)) {
+            return $raw;
+        }
+        $decoded = json_decode((string) $raw, true);
+
+        return is_array($decoded) ? $decoded : ['valore' => $decoded];
     }
 }

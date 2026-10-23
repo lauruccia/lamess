@@ -24,5 +24,7 @@ final readonly class PeriodInput
         public array $customerFirstPurchase = [],
         /** @var array<string, array<string, list<array{0:int,1:int,2:int}>>> incaricato => cliente => tratti [primo mese, ultimo mese, quanti clienti vale] (mesi = anno*12+mese-1) in cui il cliente è valido per i prodotti acquistati (piano Incaricati) */
         public array $customerCoverage = [],
+        /** @var array<string, array<string, int>> incaricato => codice qualifica => quanti agenti virtuali regalati (piano Incaricati): contano solo per i requisiti della qualifica */
+        public array $rankHelps = [],
     ) {}
 }

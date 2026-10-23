@@ -11,6 +11,7 @@ use App\Domain\Engine\Model\PartnerStat;
 use App\Domain\Engine\Model\PeriodInput;
 use App\Domain\Engine\Model\PeriodResult;
 use App\Domain\Engine\Model\RankAchievementResult;
+use App\Domain\Engine\Plan\PlanConfig;
 use App\Domain\Engine\Support\Canonical;
 use App\Domain\Engine\Support\Num;
 use Brick\Math\BigDecimal;
@@ -43,6 +44,27 @@ final class PeriodCalculator
             'suspended' => [false, 'Posizione sospesa', null],
             default => [true, 'Il piano Incaricati non prevede lo stato attivo', null],
         };
+    }
+
+    /**
+     * Agenti regalati: da codice qualifica a sequenza. Le qualifiche sconosciute al piano si ignorano.
+     *
+     * @param  array<string, array<string, int>>  $helps
+     * @return array<string, array<int, int>>
+     */
+    private static function helpsBySeq(PlanConfig $plan, array $helps): array
+    {
+        $out = [];
+        foreach ($helps as $owner => $byCode) {
+            foreach ($byCode as $code => $count) {
+                if ($count > 0 && $plan->hasCode((string) $code)) {
+                    $seq = $plan->rank((string) $code)->sequence;
+                    $out[(string) $owner][$seq] = ($out[(string) $owner][$seq] ?? 0) + (int) $count;
+                }
+            }
+        }
+
+        return $out;
     }
 
     public static function calculate(PeriodInput $input): PeriodResult
@@ -83,6 +105,7 @@ final class PeriodCalculator
         if ($plan->kosmos !== null) {
             $clients = KosmosCalculator::clientCounts($plan, $period, $movements, $closedReversals, $input->customerFirstPurchase, $input->customerCoverage);
             $career->clientCounts = $clients;
+            $career->rankHelps = self::helpsBySeq($plan, $input->rankHelps);
         }
         $career->run($period, $movements);
 
@@ -124,7 +147,7 @@ final class PeriodCalculator
             $protected[(string) $id] = ($node->previousRank !== null && $plan->kosmos?->ranksProtectedIn($period->end())) || $node->rankHeldIn($period->end());
         }
         if ($plan->kosmos !== null && $plan->policies->is('kosmos_rank_maintenance', 'requirements')) {
-            $eff = RankMaintenance::apply($plan, $tree, $eff, $clients, $protected);
+            $eff = RankMaintenance::apply($plan, $tree, $eff, $clients, $protected, $career->rankHelps);
         }
         foreach ($tree->nodes as $id => $node) {
             $id = (string) $id;
@@ -219,7 +242,7 @@ final class PeriodCalculator
                     }
                 }
                 $stats[$id]->nextRank['personal_clients'] = $clients[$id] ?? 0;
-                $stats[$id]->nextRank['pearl_first_level_now'] = $pearlNow;
+                $stats[$id]->nextRank['pearl_first_level_now'] = $pearlNow + $career->helpedPearls($id, $pearlSeq);
                 $curSeq = $career->highest[$id] ?? 0;
                 if ($curSeq > 0 && $plan->hasSeq($curSeq)) {
                     // Requisiti della qualifica che l'incaricato ha oggi, con l'esito attuale (per la scheda «i miei requisiti»).

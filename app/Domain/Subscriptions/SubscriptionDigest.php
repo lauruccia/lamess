@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Subscriptions;
 
 use App\Domain\Access\Roles;
+use App\Domain\Orders\OrderService;
+use App\Domain\Orders\RefundService;
+use App\Models\Order;
+use App\Models\OrderEvent;
+use App\Models\Refund;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\SubscriptionsAdminDigest;
@@ -43,6 +48,16 @@ final class SubscriptionDigest
             'In attesa del primo pagamento da oltre 48 ore' => Subscription::where('status', Subscription::PENDING)->where('created_at', '<=', $now->subHours(48))->with('user')->orderBy('id')->get()
                 ->map(fn (Subscription $s) => $row($s, 'creato il '.$when($s->created_at).' · verifica su Stripe dal dettaglio ordine'))->all(),
         ];
+
+        // Pagamenti: rimborsi fatti fuori dal portale e contestazioni della banca.
+        $sections['Rimborsi fatti fuori dal portale da regolarizzare (fattura e compensi da stornare)'] = Refund::where('status', Refund::DONE)->whereNull('credit_note_id')->where('reason', 'like', RefundService::EXTERNAL.'%')
+            ->with('order.buyer')->orderBy('id')->get()
+            ->map(fn (Refund $f) => ['cliente' => (string) ($f->order?->buyer?->name ?? '—'), 'metodo' => OrderService::methodLabel($f->method), 'dettaglio' => 'ordine '.($f->order?->number ?? '—').' · € '.number_format((float) $f->amount, 2, ',', '.').' · rimborsato il '.$when($f->refunded_at)])->all();
+        $sections['Contestazioni della banca (chargeback) nelle ultime 24 ore'] = OrderEvent::where('type', 'dispute')->where('created_at', '>=', $day)->with('order.buyer')->orderBy('id')->get()
+            ->map(fn (OrderEvent $e) => ['cliente' => (string) ($e->order?->buyer?->name ?? '—'), 'metodo' => 'Carta', 'dettaglio' => 'ordine '.($e->order?->number ?? '—').' · '.$e->message])->all();
+        $sections['Abbonamenti ancora attivi con un ordine reso per intero nelle ultime 24 ore'] = Order::where('status', 'refunded')->whereNotNull('subscription_id')->where('updated_at', '>=', $day)
+            ->whereIn('subscription_id', Subscription::where('status', Subscription::ACTIVE)->select('id'))->with('buyer')->orderBy('id')->get()
+            ->map(fn (Order $o) => ['cliente' => (string) ($o->buyer?->name ?? '—'), 'metodo' => OrderService::methodLabel((string) $o->payment_method), 'dettaglio' => 'ordine '.$o->number.' · abbonamento #'.$o->subscription_id.' ancora attivo: valuta pausa o disdetta'])->all();
 
         return array_filter($sections, fn (array $rows) => $rows !== []);
     }

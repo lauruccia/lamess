@@ -163,6 +163,17 @@ final class KMoneyController extends Controller
         $event = json_decode($payload, true);
         $name = (string) ($r->header('X-KMoney-Event') ?: (is_array($event) ? ($event['event'] ?? '') : ''));
         $data = is_array($event) ? (array) ($event['payload'] ?? $event['data'] ?? $event) : [];
+        // Storni, rimborsi o contestazioni comunicati da KMoney: il portale non cambia nulla da solo, lascia una nota e un avviso.
+        if (preg_match('/refund|revers|chargeback|dispute/i', $name) === 1) {
+            $ref = (string) ($data['external_order_uuid'] ?? $data['external_reference'] ?? '');
+            $order = $ref !== '' ? Order::where('number', $ref)->first() : null;
+            Log::warning('KMoney: storno o contestazione comunicati', ['event' => $name, 'order' => $ref]);
+            if ($order !== null) {
+                \App\Models\OrderEvent::log($order, 'kmoney_external', "KMoney ha comunicato «{$name}» per questo ordine: verifica su KMoney se i soldi sono stati restituiti al cliente; poi usa «Regolarizza rimborso» o «Reso e rimborso» per stornare fattura e compensi.", true);
+            }
+
+            return response('ok', 200);
+        }
         if ($name !== 'payment_request.paid') {
             return response('ignorato', 200);
         }

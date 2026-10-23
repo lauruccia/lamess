@@ -8,9 +8,12 @@ use App\Domain\Engine\Plan\PlanLoader;
 use App\Domain\Ledger\PointsGrant;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\PointGrants\Pages\ListPointGrants;
+use App\Filament\Resources\RankHelps\Pages\ListRankHelps;
+use App\Filament\Support\GrantPointsAction;
 use App\Models\CompPlanVersion;
 use App\Models\Customer;
 use App\Models\PvMovement;
+use App\Models\RankHelp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -119,7 +122,7 @@ final class PointsAndCustomersAdminTest extends TestCase
         Livewire::test(ListPointGrants::class)
             ->callAction('grantPoints', [
                 'consultant_id' => $sponsor->id, 'points' => '10', 'event_at' => now()->toDateTimeString(), 'reason' => 'Cliente Kadeo',
-                'effect' => PointsGrant::EFFECT_CLIENT, 'client_user_id' => $client->id, 'months' => 1, 'clients' => 1,
+                'effect' => PointsGrant::EFFECT_CLIENT, 'client_user_id' => $client->id, 'valid_until' => now()->addMonth()->endOfMonth()->toDateString(), 'clients' => 1,
             ])->assertHasNoActionErrors();
 
         $m = PvMovement::where('type', 'grant')->firstOrFail();
@@ -131,6 +134,28 @@ final class PointsAndCustomersAdminTest extends TestCase
         $this->assertSame('cancelled', $m->refresh()->status);
     }
 
+    public function test_gifted_agents_from_the_form_show_in_their_list_and_can_be_cancelled(): void
+    {
+        $this->openIncaricati();
+        $sponsor = $this->activeSponsor();
+        $this->actingAs(User::factory()->role('admin_finance')->create());
+
+        Livewire::test(ListPointGrants::class)
+            ->callAction('grantPoints', [
+                'consultant_id' => $sponsor->id, 'event_at' => now()->toDateTimeString(), 'reason' => 'Aiuto per Crystal',
+                'effect' => GrantPointsAction::EFFECT_AGENTS, 'agent_rank' => 'PEARL', 'agent_qty' => 2,
+            ])->assertHasNoActionErrors()->assertNotified('Agenti aggiunti');
+
+        $h = RankHelp::firstOrFail();
+        $this->assertSame([$sponsor->id, 'PEARL', 2], [$h->consultant_id, $h->rank_code, $h->quantity]);
+        $this->assertSame(0, PvMovement::count(), 'gli agenti regalati non sono movimenti di punti');
+
+        Livewire::test(ListRankHelps::class)
+            ->assertCanSeeTableRecords([$h])
+            ->callTableAction('cancelHelp', $h, ['reason' => 'doppione'])->assertNotified('Agenti annullati');
+        $this->assertSame('cancelled', $h->refresh()->status);
+    }
+
     public function test_invalid_grant_from_the_form_is_not_saved(): void
     {
         $this->openIncaricati();
@@ -140,7 +165,7 @@ final class PointsAndCustomersAdminTest extends TestCase
         Livewire::test(ListPointGrants::class)
             ->callAction('grantPoints', [
                 'consultant_id' => $sponsor->id, 'points' => '10', 'event_at' => now()->toDateTimeString(), 'reason' => 'Acquisto senza importo',
-                'effect' => PointsGrant::EFFECT_PURCHASE, 'client_user_id' => $this->buyer()->id, 'months' => 1, 'clients' => 1,
+                'effect' => PointsGrant::EFFECT_PURCHASE, 'client_user_id' => $this->buyer()->id, 'valid_until' => now()->addMonth()->endOfMonth()->toDateString(), 'clients' => 1,
             ])->assertHasActionErrors(['amount' => 'required']);
 
         $this->assertSame(0, PvMovement::count());

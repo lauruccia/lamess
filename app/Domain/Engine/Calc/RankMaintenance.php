@@ -20,9 +20,10 @@ final class RankMaintenance
      * @param  array<string, int>  $eff  qualifica efficace (sequenza) per incaricato, prima del mantenimento
      * @param  array<string, int>  $clients  clienti personali del mese
      * @param  array<string, bool>  $protected  incaricati la cui qualifica non si ribassa (protezione del piano o «Mantieni qualifica»)
+     * @param  array<string, array<int, int>>  $helps  agenti virtuali regalati: incaricato => sequenza qualifica => quanti
      * @return array<string, int>
      */
-    public static function apply(PlanConfig $plan, Tree $tree, array $eff, array $clients, array $protected): array
+    public static function apply(PlanConfig $plan, Tree $tree, array $eff, array $clients, array $protected, array $helps = []): array
     {
         $cfg = $plan->kosmos;
         if ($cfg === null) {
@@ -41,7 +42,7 @@ final class RankMaintenance
             if (! $tree->isMember($id)) {
                 $eff[$id] = $eff[$id] ?? 0;
             } elseif (! ($protected[$id] ?? false)) {
-                while ($eff[$id] > 0 && ! self::meets($plan, $tree, $plan->bySeq($eff[$id]), $id, $eff, $clients, $subClients, $subMax, $pearlSeq, $directOnly)) {
+                while ($eff[$id] > 0 && ! self::meets($plan, $tree, $plan->bySeq($eff[$id]), $id, $eff, $clients, $subClients, $subMax, $pearlSeq, $directOnly, $helps[$id] ?? [])) {
                     $eff[$id]--;
                 }
             }
@@ -61,7 +62,7 @@ final class RankMaintenance
      * @param  array<string, int>  $subClients
      * @param  array<string, int>  $subMax
      */
-    private static function meets(PlanConfig $plan, Tree $tree, RankDef $rank, string $id, array $eff, array $clients, array $subClients, array $subMax, int $pearlSeq, bool $directOnly): bool
+    private static function meets(PlanConfig $plan, Tree $tree, RankDef $rank, string $id, array $eff, array $clients, array $subClients, array $subMax, int $pearlSeq, bool $directOnly, array $help = []): bool
     {
         if ($rank->requires('clients') && $rank->minClients > 0 && ($clients[$id] ?? 0) < $rank->minClients) {
             return false;
@@ -71,6 +72,11 @@ final class RankMaintenance
             foreach ($tree->childrenOf($id) as $c) {
                 if ($tree->isMember($c) && ($eff[(string) $c] ?? 0) >= $pearlSeq) {
                     $n++;
+                }
+            }
+            foreach ($help as $helpSeq => $helpCount) {
+                if ($helpSeq >= $pearlSeq) {
+                    $n += $helpCount;
                 }
             }
             if ($n < $rank->minPearlFirstLevel) {
@@ -99,6 +105,11 @@ final class RankMaintenance
             $levels = [];
             foreach ($tree->lines($id) as $l) {
                 $levels[] = $directOnly ? ($tree->isMember($l) ? ($eff[(string) $l] ?? 0) : -1) : ($subMax[(string) $l] ?? -1);
+            }
+            foreach ($help as $helpSeq => $helpCount) {
+                for ($i = 0; $i < $helpCount; $i++) {
+                    $levels[] = $helpSeq;
+                }
             }
             rsort($levels);
             if (count($levels) < count($slots)) {

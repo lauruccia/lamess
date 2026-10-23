@@ -23,6 +23,7 @@ use App\Models\PvMovement;
 use App\Models\RankAchievement;
 use App\Models\RankAward;
 use App\Models\RankBonusInstallment;
+use App\Models\RankHelp;
 use Brick\Math\BigDecimal;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,26 @@ final class SnapshotBuilder
 
         $coverage = $plan->kosmos !== null ? self::customerCoverage($period, $plan) : [];
 
-        return new PeriodInput($key, $plan, $nodes, $movements, $prior, $firstPurchase, $coverage);
+        $helps = $plan->kosmos !== null ? self::rankHelps($period) : [];
+
+        return new PeriodInput($key, $plan, $nodes, $movements, $prior, $firstPurchase, $coverage, $helps);
+    }
+
+    /**
+     * Agenti regalati validi nel periodo: partiti entro la fine del mese e non scaduti prima del suo inizio.
+     *
+     * @return array<string, array<string, int>> incaricato => codice qualifica => quanti
+     */
+    private static function rankHelps(Period $period): array
+    {
+        $start = $period->starts_at->setTimezone('Europe/Rome')->format('Y-m-d');
+        $out = [];
+        foreach (RankHelp::query()->where('status', 'confirmed')->where('starts_at', '<=', $period->ends_at)
+            ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $start))->orderBy('id')->get() as $h) {
+            $out[(string) $h->consultant_id][$h->rank_code] = ($out[(string) $h->consultant_id][$h->rank_code] ?? 0) + $h->quantity;
+        }
+
+        return $out;
     }
 
     private static function movement(PvMovement $m, ?string $customerId = null): Movement

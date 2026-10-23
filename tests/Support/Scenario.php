@@ -46,6 +46,9 @@ final class Scenario
     /** @var array<string, string> */
     public array $firstActivity = [];
 
+    /** @var array<string, array<string, int>> agenti regalati: incaricato => codice qualifica => quanti */
+    public array $rankHelps = [];
+
     private int $seq = 0;
 
     /** @param array<string, string|bool> $policies */
@@ -107,7 +110,7 @@ final class Scenario
 
     public function input(array $priorOverrides = []): PeriodInput
     {
-        return new PeriodInput($this->period, $this->plan, array_values($this->nodes), $this->moves, $this->prior($priorOverrides));
+        return new PeriodInput($this->period, $this->plan, array_values($this->nodes), $this->moves, $this->prior($priorOverrides), rankHelps: $this->rankHelps);
     }
 
     public function run(array $priorOverrides = []): PeriodResult

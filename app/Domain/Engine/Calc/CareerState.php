@@ -41,6 +41,9 @@ final class CareerState
     /** @var array<string, int> clienti personali per incaricato (solo piano Incaricati) */
     public array $clientCounts = [];
 
+    /** @var array<string, array<int, int>> agenti virtuali regalati: incaricato => sequenza qualifica => quanti (solo requisiti di qualifica) */
+    public array $rankHelps = [];
+
     public function __construct(public readonly PlanConfig $plan, public readonly Tree $tree, PriorState $prior)
     {
         foreach ($prior->achievedRanks as $a) {
@@ -98,6 +101,19 @@ final class CareerState
         return $this->subtreeClientsMemo[$id] = $sum;
     }
 
+    /** Agenti regalati con qualifica Pearl o superiore (contano al 1° livello per i requisiti della qualifica). */
+    public function helpedPearls(string $id, int $pearlSeq): int
+    {
+        $n = 0;
+        foreach ($this->rankHelps[$id] ?? [] as $seq => $count) {
+            if ($seq >= $pearlSeq) {
+                $n += $count;
+            }
+        }
+
+        return $n;
+    }
+
     /** @return array{0:bool,1:array<string,mixed>} */
     public function qualification(string $id, RankDef $rank): array
     {
@@ -135,6 +151,11 @@ final class CareerState
                 : ($this->submax[$l] ?? -1);
         }
         $ordered = array_values($levels);
+        foreach ($this->rankHelps[$id] ?? [] as $helpSeq => $helpCount) {
+            for ($i = 0; $i < $helpCount; $i++) {
+                $ordered[] = $helpSeq; // ogni agente regalato è una colonna a sé al 1° livello
+            }
+        }
         rsort($ordered);
         $structOk = count($ordered) >= count($slots);
         if ($structOk) {
@@ -164,6 +185,7 @@ final class CareerState
                     $pearlCount++;
                 }
             }
+            $pearlCount += $this->helpedPearls($id, $pearlSeq);
             $pearlOk = $pearlCount >= $rank->minPearlFirstLevel;
         }
         $columnsOk = true;

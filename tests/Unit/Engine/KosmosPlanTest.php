@@ -442,6 +442,51 @@ final class KosmosPlanTest extends EngineTestCase
         $this->assertSame('CRYSTAL', $this->crystalNetwork($this->planWithCrystal($strict))->run()->stats['C']->achievedRank, 'clienti e Pearl disattivati');
     }
 
+    public function test_gifted_agents_help_the_rank_requirements_but_pay_and_count_for_nothing_else(): void
+    {
+        // C ha 6 clienti e un solo Pearl vero: con 1 Pearl regalato raggiunge Crystal
+        $build = function (array $helps): Scenario {
+            $s = $this->scenario();
+            $s->consultant('C');
+            foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $i) {
+                $this->buy($s, 'C', "C{$i}");
+            }
+            $s->consultant('P1', 'C');
+            foreach (['a', 'b', 'c'] as $i) {
+                $this->buy($s, 'P1', "P1{$i}");
+            }
+            $s->rankHelps = $helps;
+
+            return $s;
+        };
+        $this->assertSame('PEARL', $build([])->run()->stats['C']->achievedRank, 'senza aiuto manca un Pearl al 1° livello');
+        $helped = $build(['C' => ['PEARL' => 1]]);
+        $r = $helped->run();
+        $this->assertSame('CRYSTAL', $r->stats['C']->achievedRank, '1 Pearl vero + 1 regalato = 2 Pearl al 1° livello');
+        $this->assertSame(2, $r->stats['C']->nextRank['pearl_first_level_now'] ?? null, 'il conteggio mostrato include gli agenti regalati');
+        // un agente di livello più alto vale come Pearl
+        $this->assertSame('CRYSTAL', $build(['C' => ['RUBY' => 1]])->run()->stats['C']->achievedRank);
+        // gli agenti regalati non generano compensi a nessuno
+        $without = $this->totals($build([])->run(), 'indirect');
+        $with = $this->totals($helped->run(), 'indirect');
+        $this->assertSame($without, $with, 'nessun compenso indiretto in più per gli agenti regalati');
+    }
+
+    public function test_gifted_agents_fill_the_structure_slots_of_higher_ranks_in_separate_columns(): void
+    {
+        $s = $this->scenario();
+        $s->consultant('S', rank: 'CRYSTAL');
+        foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $i) {
+            $this->buy($s, 'S', "S{$i}");
+        }
+        foreach (['P1', 'P2', 'P3'] as $p) {
+            $s->consultant($p, 'S', rank: 'PEARL');
+        }
+        $this->assertSame('CRYSTAL', $s->run()->stats['S']->achievedRank, 'Sapphire chiede anche 2 Crystal su colonne diverse');
+        $s->rankHelps = ['S' => ['CRYSTAL' => 2]];
+        $this->assertSame('SAPPHIRE', $s->run()->stats['S']->achievedRank, '3 Pearl veri + 2 Crystal regalati = Sapphire');
+    }
+
     public function test_first_level_pearl_requirement_accepts_pearl_or_higher_ranks(): void
     {
         $s = $this->scenario();

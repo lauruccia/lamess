@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Ledger;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Engine\Calc\KosmosCalculator;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\PeriodResolver;
@@ -38,10 +39,18 @@ final class PointsGrant
 
     public const EFFECT_PURCHASE = 'purchase';
 
+    /** Etichette brevi, mostrate come scelte nella finestra «Assegna punti». */
     public const EFFECTS = [
-        self::EFFECT_SCORE => 'Solo punteggio (nessun effetto su qualifiche e compensi)',
-        self::EFFECT_CLIENT => 'Cliente valido per N mesi (conta per la qualifica, senza compensi)',
-        self::EFFECT_PURCHASE => 'Come un acquisto (cliente per N mesi e compensi sull\'importo)',
+        self::EFFECT_SCORE => 'Solo registro punti',
+        self::EFFECT_CLIENT => 'Vale come cliente',
+        self::EFFECT_PURCHASE => 'Vale come un acquisto',
+    ];
+
+    /** Cosa succede davvero con ciascuna scelta, in parole semplici. */
+    public const EFFECT_DESCRIPTIONS = [
+        self::EFFECT_SCORE => 'I punti restano nel registro e nella scheda dell\'incaricato. Non cambiano né i clienti, né la qualifica, né i compensi.',
+        self::EFFECT_CLIENT => 'La persona indicata conta come cliente del beneficiario per il numero di mesi scelto: serve per lo scaglione dei diretti, i requisiti e la qualifica. Non genera nessun compenso.',
+        self::EFFECT_PURCHASE => 'Come se la persona avesse fatto un ordine dell\'importo indicato: conta come cliente per i mesi scelti e genera anche i compensi (diretti e indiretti) su quell\'importo.',
     ];
 
     public function __construct(private readonly PeriodResolver $periods) {}
@@ -51,7 +60,8 @@ final class PointsGrant
      * @param  string  $reason  causale
      * @param  User|null  $client  la persona che il piano conta come cliente (solo per gli effetti «cliente» e «acquisto»)
      * @param  string|null  $amount  importo in euro IVA inclusa (obbligatorio per l'effetto «acquisto»)
-     * @param  int  $months  mesi di validità del cliente
+     * @param  int  $months  mesi di validità del cliente (ignorato se è indicata la scadenza)
+     * @param  DateTimeInterface|null  $validUntil  «valido fino al»: la validità conta a mesi interi e finisce con l'ultimo giorno del mese scelto
      * @param  int  $clients  quanti clienti vale l'assegnazione
      *
      * @throws InvalidArgumentException|PeriodStateException
@@ -67,6 +77,7 @@ final class PointsGrant
         int $clients = 1,
         ?DateTimeInterface $at = null,
         ?User $by = null,
+        ?DateTimeInterface $validUntil = null,
     ): PvMovement {
         $reason = trim($reason);
         if ($reason === '') {
@@ -86,6 +97,13 @@ final class PointsGrant
         }
 
         $isClient = $effect !== self::EFFECT_SCORE;
+        if ($isClient && $validUntil !== null) {
+            $from = DateTimeImmutable::createFromInterface($at ?? new DateTimeImmutable);
+            $months = KosmosCalculator::monthIndex(DateTimeImmutable::createFromInterface($validUntil)) - KosmosCalculator::monthIndex($from);
+            if ($months < 1) {
+                throw new InvalidArgumentException('Il cliente vale già nel mese della data indicata: scegli una scadenza in un mese successivo (la validità finisce con l\'ultimo giorno del mese scelto).');
+            }
+        }
         if ($isClient) {
             if ($client === null) {
                 throw new InvalidArgumentException('Indica la persona che vale come cliente.');
@@ -118,7 +136,7 @@ final class PointsGrant
 
         AuditLog::record(
             'points.granted', "Punti assegnati a {$beneficiary->code}: {$points} ({$reason})", $beneficiary,
-            ['movimento' => $movement->id, 'punti' => $points, 'effetto' => $effect, 'cliente' => $client?->email, 'importo' => $amount, 'mesi' => $isClient ? $months : null, 'assegnati_da' => $by?->email],
+            ['movimento' => $movement->id, 'punti' => $points, 'effetto' => $effect, 'cliente' => $client?->email, 'importo' => $amount, 'mesi' => $isClient ? $months : null, 'valido_fino_al' => $isClient ? $validUntil?->format('Y-m-d') : null, 'assegnati_da' => $by?->email],
             $reason,
         );
 

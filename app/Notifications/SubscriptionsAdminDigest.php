@@ -35,7 +35,7 @@ class SubscriptionsAdminDigest extends Notification implements ShouldQueueAfterC
     public function toMail(object $notifiable): MailMessage
     {
         $n = array_sum(array_map('count', $this->sections));
-        $mail = (new MailMessage)->subject("Abbonamenti Lamèss: {$n} da seguire")->greeting('Riepilogo abbonamenti');
+        $mail = (new MailMessage)->subject("Lamèss: {$n} da seguire tra abbonamenti e pagamenti")->greeting('Riepilogo giornaliero');
         foreach ($this->sections as $title => $rows) {
             $mail->line('**'.$title.' ('.count($rows).')**');
             foreach ($rows as $r) {

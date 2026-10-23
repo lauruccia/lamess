@@ -21,6 +21,21 @@ final class RefundService
 {
     private const ORDER = ['card' => 0, 'transfer' => 1, 'kmoney' => 2];
 
+    /** Inizio del motivo dei rimborsi registrati dal webhook perché eseguiti fuori dal portale (dashboard Stripe, KMoney…). */
+    public const EXTERNAL = 'Rimborso eseguito fuori dal portale';
+
+    /** Rimborsi già eseguiti fuori dal portale e non ancora collegati a una nota di credito: fattura e compensi non sono stati stornati. */
+    public static function externalPending(Order $order): \Illuminate\Support\Collection
+    {
+        return Refund::where('order_id', $order->id)->whereNull('credit_note_id')->where('status', Refund::DONE)->where('reason', 'like', self::EXTERNAL.'%')->get();
+    }
+
+    /** Il reso con nota di credito regolarizza i rimborsi esterni dell'ordine: da quel momento sono coperti da un documento. */
+    public static function adoptExternal(Order $order, CreditNote $note): int
+    {
+        return Refund::where('order_id', $order->id)->whereNull('credit_note_id')->where('status', Refund::DONE)->where('reason', 'like', self::EXTERNAL.'%')->update(['credit_note_id' => $note->id]);
+    }
+
     public function __construct(private readonly PaymentProvider $cards, private readonly KMoneyProvider $kmoney) {}
 
     /** @return list<Refund> uno per metodo di pagamento coinvolto */

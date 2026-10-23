@@ -59,6 +59,7 @@ final class ReturnService
 
         return DB::transaction(function () use ($order, $qtyByItem, $reason, $restock, $refundShipping): CreditNote {
             $note = $this->invoices->issueCreditNote($order, $qtyByItem, $reason, $refundShipping);
+            RefundService::adoptExternal($order, $note);
             if ($refundShipping) {
                 $order->increment('shipping_refunded_net', (float) $note->shipping_net);
             }

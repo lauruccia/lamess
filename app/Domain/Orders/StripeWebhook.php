@@ -6,6 +6,9 @@ namespace App\Domain\Orders;
 
 use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\Order;
+use App\Models\OrderEvent;
+use App\Models\Payment;
+use App\Models\Refund;
 use App\Models\Subscription;
 use Illuminate\Support\Facades\Log;
 
@@ -50,6 +53,12 @@ final class StripeWebhook
         $obj = $event['data']['object'] ?? [];
         if ($type === 'checkout.session.completed' && ($obj['mode'] ?? '') === 'setup') {
             return $this->handleCardUpdate($obj);
+        }
+        if ($type === 'charge.refunded') {
+            return $this->handleChargeRefunded($obj);
+        }
+        if (in_array($type, ['charge.dispute.created', 'charge.dispute.closed'], true)) {
+            return $this->handleDispute($type, $obj);
         }
         if (! in_array($type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
             return 'ignored';
@@ -150,6 +159,91 @@ final class StripeWebhook
         }
 
         return 'Stripe non segnala un pagamento riuscito e non indica un motivo preciso: controlla la sessione '.$ref.' nella dashboard di Stripe.';
+    }
+
+    /** Pagamento Stripe incassato dal portale a cui si riferisce un oggetto charge/dispute (per payment_intent). */
+    private function paymentOf(string $paymentIntent): ?Payment
+    {
+        return str_starts_with($paymentIntent, 'pi_') ? Payment::where('provider_ref', 'like', $paymentIntent.'%')->where('method', 'card')->latest('id')->first() : null;
+    }
+
+    /**
+     * Rimborso eseguito su Stripe (dashboard o API), anche parziale. Se il portale lo conosce già (reso fatto da qui) non fa nulla;
+     * altrimenti lo registra come «eseguito fuori dal portale» e avvisa nella cronologia: fattura e compensi vanno stornati con un reso.
+     *
+     * @param  array<string,mixed>  $charge
+     */
+    private function handleChargeRefunded(array $charge): string
+    {
+        $payment = $this->paymentOf((string) ($charge['payment_intent'] ?? ''));
+        if ($payment === null || $payment->order === null) {
+            Log::warning('Stripe: rimborso su un pagamento sconosciuto al portale', ['charge' => $charge['id'] ?? null]);
+
+            return 'unknown_payment';
+        }
+        $order = $payment->order;
+        $total = (int) ($charge['amount_refunded'] ?? 0);
+        $known = (int) round((float) Refund::where('payment_id', $payment->id)->where('status', '!=', Refund::FAILED)->sum('amount') * 100);
+        $extra = $total - $known;
+        if ($extra <= 0) {
+            return 'already_known';
+        }
+        $amount = number_format($extra / 100, 2, '.', '');
+        $last = $charge['refunds']['data'][0]['id'] ?? ($charge['id'] ?? null);
+        Refund::create([
+            'order_id' => $order->id, 'payment_id' => $payment->id, 'amount' => $amount, 'method' => 'card', 'status' => Refund::DONE,
+            'provider_ref' => is_string($last) ? $last : null, 'reason' => RefundService::EXTERNAL.' (Stripe)', 'refunded_at' => now(),
+        ]);
+        OrderEvent::log($order, 'refund_external', 'Rimborso di € '.number_format($extra / 100, 2, ',', '.').' eseguito direttamente su Stripe, fuori dal portale: fattura e compensi NON sono stati stornati. Usa «Regolarizza rimborso» (o «Reso e rimborso») per emettere la nota di credito.', true);
+        Log::warning('Stripe: rimborso eseguito fuori dal portale', ['order' => $order->number, 'amount' => $amount]);
+
+        return 'external_refund';
+    }
+
+    /**
+     * Contestazione della banca (chargeback). All'apertura: nota nella cronologia con scadenza per rispondere e, se l'ordine è di
+     * un abbonamento attivo, abbonamento in pausa (altri addebiti sulla stessa carta produrrebbero altre contestazioni).
+     *
+     * @param  array<string,mixed>  $dispute
+     */
+    private function handleDispute(string $type, array $dispute): string
+    {
+        $payment = $this->paymentOf((string) ($dispute['payment_intent'] ?? ''));
+        if ($payment === null || $payment->order === null) {
+            Log::warning('Stripe: contestazione su un pagamento sconosciuto al portale', ['dispute' => $dispute['id'] ?? null]);
+
+            return 'unknown_payment';
+        }
+        $order = $payment->order;
+        $id = (string) ($dispute['id'] ?? '');
+        $eur = number_format(((int) ($dispute['amount'] ?? 0)) / 100, 2, ',', '.');
+        if ($id !== '' && $order->events()->where('type', $type === 'charge.dispute.created' ? 'dispute' : 'dispute_closed')->where('message', 'like', '%'.$id.'%')->exists()) {
+            return 'already_known';
+        }
+        if ($type === 'charge.dispute.closed') {
+            $esito = match ((string) ($dispute['status'] ?? '')) {
+                'won' => 'VINTA: i soldi restano all\'azienda',
+                'lost' => 'PERSA: Stripe ha trattenuto € '.$eur.'; regolarizza con un reso se la merce non è dovuta',
+                default => 'chiusa ('.($dispute['status'] ?? 'esito sconosciuto').')',
+            };
+            OrderEvent::log($order, 'dispute_closed', "Contestazione {$id} {$esito}", true);
+
+            return 'dispute_closed';
+        }
+        $due = isset($dispute['evidence_details']['due_by']) ? ' · rispondere entro il '.\Illuminate\Support\Carbon::createFromTimestamp((int) $dispute['evidence_details']['due_by'], 'Europe/Rome')->format('d/m/Y H:i') : '';
+        OrderEvent::log($order, 'dispute', "CONTESTAZIONE su Stripe ({$id}) di € {$eur} · motivo: ".($dispute['reason'] ?? 'non indicato').$due.' · carica le prove dalla dashboard di Stripe', true);
+        Log::warning('Stripe: contestazione (chargeback)', ['order' => $order->number, 'dispute' => $id, 'amount' => $eur]);
+        $sub = $order->subscription_id ? Subscription::find($order->subscription_id) : null;
+        if ($sub !== null && $sub->status === Subscription::ACTIVE) {
+            try {
+                app(SubscriptionService::class)->pause($sub, 'Contestazione su Stripe');
+                OrderEvent::log($order, 'dispute_pause', "Abbonamento #{$sub->id} messo in pausa per la contestazione: riprendilo solo dopo averla chiarita col cliente", true);
+            } catch (\Throwable $e) {
+                Log::warning('Stripe: abbonamento non messo in pausa dopo la contestazione', ['subscription' => $sub->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return 'dispute';
     }
 
     /** Il cliente ha cambiato la carta dell'abbonamento. @param array<string,mixed> $obj */

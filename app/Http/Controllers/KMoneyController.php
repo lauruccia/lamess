@@ -32,12 +32,12 @@ final class KMoneyController extends Controller
                 'mandate_uuid' => 'FAKE-MANDATE', 'account_number' => 'KY-FAKE-'.str_pad((string) $r->user()->id, 6, '0', STR_PAD_LEFT),
             ]);
 
-            return redirect($fromProfile ? '/area/profilo#kmoney' : '/area/checkout')->with('status', 'KMoney collegato (simulazione di sviluppo).');
+            return redirect($fromProfile ? '/area/profilo#kmoney' : '/area/checkout/pagamento')->with('status', 'KMoney collegato (simulazione di sviluppo).');
         }
         if (! $kmoney instanceof KMoneyApiProvider || ! $kmoney->enabled()) {
             return $fromProfile
                 ? redirect('/area/profilo#kmoney')->withErrors(['kmoney' => 'Il collegamento a KMoney non è disponibile al momento.'])
-                : redirect('/area/checkout')->withErrors(['order' => 'Il collegamento a KMoney non è disponibile al momento.']);
+                : redirect('/area/checkout/pagamento')->withErrors(['order' => 'Il collegamento a KMoney non è disponibile al momento.']);
         }
         $auth = $kmoney->authorization();
         $r->session()->put('kmoney_oauth', ['state' => $auth['state'], 'verifier' => $auth['verifier']]);
@@ -137,7 +137,7 @@ final class KMoneyController extends Controller
             return redirect("/area/ordini/{$order->id}")->with('status', 'KMoney collegato. Premi «Paga con KMoney» per completare l\'ordine.');
         }
 
-        return redirect('/area/checkout')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
+        return redirect('/area/checkout/pagamento')->with('status', 'KMoney collegato: ora puoi pagare col tuo saldo.');
     }
 
     public function disconnect(Request $r, KMoneyProvider $kmoney)

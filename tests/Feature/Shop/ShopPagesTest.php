@@ -57,7 +57,7 @@ final class ShopPagesTest extends TestCase
             'type' => 'private', 'first_name' => 'Anna', 'last_name' => 'Bianchi', 'email' => 'anna@example.test',
             'password' => 'una-password-lunga', 'password_confirmation' => 'una-password-lunga', 'privacy' => '1',
         ])->assertRedirect('/area/checkout');
-        $this->get('/area/checkout')->assertOk()->assertSee('Conferma ordine');
+        $this->get('/area/checkout')->assertOk()->assertSee('Fatturazione');
     }
 
     public function test_full_purchase_flow_with_card_and_invoice_download(): void
@@ -70,7 +70,7 @@ final class ShopPagesTest extends TestCase
         $user = $this->buyer($sponsor);
 
         $this->actingAs($user)->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 2]);
-        $this->get('/area/checkout')->assertOk()->assertSee('Conferma ordine');
+        $this->get('/area/checkout')->assertOk()->assertSee('Fatturazione');
         $this->post('/area/checkout', $this->form())->assertRedirect();
 
         $order = Order::firstOrFail();

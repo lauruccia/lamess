@@ -66,7 +66,7 @@ final class ShopRevisionsTest extends TestCase
 
         $this->get('/carrello')->assertOk()->assertSee('Procedi al checkout')->assertSee('in attesa di pagamento');
         $this->assertSame([$p->id => 2], session('cart'));
-        $this->get('/area/checkout')->assertOk()->assertSee('Conferma ordine');
+        $this->get('/area/checkout')->assertOk()->assertSee('Fatturazione');
     }
 
     public function test_reordering_closes_the_unpaid_order_and_the_cart_empties_when_the_new_one_is_paid(): void

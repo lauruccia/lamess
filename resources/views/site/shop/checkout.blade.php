@@ -3,6 +3,11 @@
 @section('width', 'full')
 @section('header', 'minimal')
 @section('content')
+@php($__h = 0)
+@php($methods = $methods ?? ['card' => true, 'transfer' => true, 'kmoney' => true])
+@php($pay = old('payment_method', '')) {{-- nessun metodo preselezionato: ogni cliente sceglie --}}
+@php($sub = old('subscribe', '')) {{-- nessuna scelta preselezionata --}}
+@php($subOn = in_array($sub, array_keys($cadences), true))
 <header class="page-head"><h1>Checkout</h1>@include('site.shop._steps', ['current' => 2])</header>
 @if(session('kmoney_unlinked'))
 <div class="warn" role="alert">Per pagare con KMoney <a href="{{ session('kmoney_unlinked.connect') }}"><b>collega il tuo conto</b></a>. Se non sei registrato, <a href="{{ session('kmoney_unlinked.register') }}" target="_blank" rel="noopener"><b>clicca qui</b></a> per aprire un conto KMoney.</div>
@@ -15,8 +20,11 @@
 @endif
 @if(! empty($pendingOrder))<div class="warn">Hai un ordine in attesa di pagamento ({{ $pendingOrder->number }}): <a href="/area/ordini/{{ $pendingOrder->id }}">completa il pagamento</a>. Se invece riordini da qui, quell'ordine in sospeso viene annullato.</div>@endif
 <div class="cart-grid checkout">
- <form method="post" action="/area/checkout" class="co-form" id="checkout-form">@csrf
-  <section class="card co-step" data-step="1" data-step-title="Fatturazione">
+ <form method="post" action="{{ $step < 4 ? '/area/checkout/passo/'.$step : '/area/checkout' }}" class="co-form" id="checkout-form">@csrf
+  <input type="hidden" name="_step" value="{{ $step }}">
+  <ol class="co-progress" aria-label="Passi del checkout">@foreach(\App\Http\Controllers\ShopController::STEPS as $n => [$url, $title])<li class="{{ $n === $step ? 'on' : ($n < $step ? 'done' : '') }}">@if($n < $step)<a href="{{ $url }}"><span class="n">✓</span>{{ $title }}</a>@else<span class="lbl" @if($n === $step) aria-current="step" @endif><span class="n">{{ $n }}</span>{{ $title }}</span>@endif</li>@endforeach</ol>
+  @if($step === 1)
+  <section class="card co-step" data-step="1">
    <h2><span class="step">1</span> Fatturazione</h2>
    <p class="muted small" style="margin:0 0 8px">I campi con <b class="req">*</b> sono obbligatori.</p>
    <label @if($billingMissing === []) hidden @endif>Fattura intestata a</label>
@@ -43,19 +51,19 @@
     <span class="muted small" data-billing-state>@if($billingMissing === [])<b class="ok">✓ Dati salvati.</b> Se li modifichi, salvali di nuovo prima di confermare.@else Salva i dati di fatturazione per poter confermare l'ordine.@endif</span>
    </div>
    @foreach(['first_name','last_name','company_name','tax_code','vat_number','sdi_code','address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
-   <div class="co-nav"><button type="button" class="btn accent" data-next>Avanti →</button></div>
+   <div class="co-nav">@if($billingMissing === [])<button type="submit" class="btn accent">Avanti →</button>@endif</div>
   </section>
-  <section class="card co-step" data-step="2" data-step-title="Spedizione">
+  @endif
+  @if($step === 2)
+  <section class="card co-step" data-step="2">
    <h2><span class="step">2</span> Spedizione</h2>
    @include('site.shop._ship_picker', ['addresses' => $addresses, 'max' => $maxAddresses])
-   <div class="co-nav"><button type="button" class="ghostbtn" data-prev>← Indietro</button><button type="button" class="btn accent" data-next>Avanti →</button></div>
+   <div class="co-nav"><a class="ghostbtn" href="{{ \App\Http\Controllers\ShopController::STEPS[1][0] }}">← Indietro</a><button type="submit" class="btn accent">Avanti →</button></div>
   </section>
-  <section class="card co-step" data-step="3" data-step-title="Pagamento e consegna">
+  @endif
+  @if($step === 3)
+  <section class="card co-step" data-step="3">
    <h2><span class="step">3</span> Pagamento e consegna</h2>
-   @php($methods = $methods ?? ['card' => true, 'transfer' => true, 'kmoney' => true])
-   @php($pay = old('payment_method', '')) {{-- nessun metodo preselezionato: ogni cliente sceglie --}}
-   @php($sub = old('subscribe', '')) {{-- nessuna scelta preselezionata --}}
-   @php($subOn = in_array($sub, array_keys($cadences), true))
    <fieldset class="choice">
     <legend>Come vuoi pagare</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
@@ -94,20 +102,24 @@
     <p class="muted small" data-subscribe-note @if(! $subOn) style="display:none" @endif>Con l'abbonamento la box ti arriva ogni mese e l'importo viene addebitato in automatico sulla carta o sul tuo conto KMoney, secondo il metodo scelto.</p>
    </fieldset>
    @endif
-   <div class="co-nav"><button type="button" class="ghostbtn" data-prev>← Indietro</button><button type="button" class="btn accent" data-next>Avanti →</button></div>
+   <div class="co-nav"><a class="ghostbtn" href="{{ \App\Http\Controllers\ShopController::STEPS[2][0] }}">← Indietro</a><button type="submit" class="btn accent">Avanti →</button></div>
   </section>
-  <section class="card co-step" data-step="4" data-step-title="Riepilogo e conferma">
+  @endif
+  @if($step === 4)
+  <section class="card co-step" data-step="4">
    <h2><span class="step">4</span> Riepilogo e conferma</h2>
-   <dl class="co-review" data-review></dl>
+   @foreach($hidden as $hk => $hv)<input type="hidden" name="{{ $hk }}" value="{{ $hv }}">@endforeach
+   <dl class="co-review">@foreach($review as $rk => $rv)<dt>{{ $rk }}</dt><dd>{{ $rv }}</dd>@endforeach</dl>
   <div class="co-confirm">
   <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy'))><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
   @error('privacy')<div class="err">{{ $message }}</div>@enderror
-  <button class="btn accent wide cta-lock" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
+  <button class="btn accent wide cta-lock" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-need-choice="{{ ($pay === '' || ($cadences !== [] && $sub === '')) ? 1 : 0 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
   <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === [] && $pay !== '' && ($cadences === [] || $sub !== '')) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
   <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
   </div>
-   <div class="co-nav" data-nav-last><button type="button" class="ghostbtn" data-prev>← Indietro</button></div>
+   <div class="co-nav"><a class="ghostbtn" href="{{ \App\Http\Controllers\ShopController::STEPS[3][0] }}">← Indietro</a></div>
   </section>
+  @endif
  </form>
 
  <aside class="summary card">

@@ -516,7 +516,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $p = $this->product('A', '123.00', ['kmoney_percent' => 100]);
 
         // l'abbonamento mensile è preselezionato: l'ordine singolo si sceglie esplicitamente
-        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'none']])->get('/area/checkout')->assertOk()->getContent();
+        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1], '_old_input' => ['subscribe' => 'none']])->get('/area/checkout/pagamento')->assertOk()->getContent();
         $this->assertLessThan(strpos($html, 'value="card"'), strpos($html, 'value="kmoney"'), 'KMoney è la prima voce');
         $this->assertStringContainsString('Da pagare in KMoney', $html);
         $this->assertStringNotContainsString('Risparmia fino al', $html);
@@ -529,7 +529,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '150.00', ['kmoney_percent' => 100]);
 
-        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout/pagamento')->assertOk()->getContent();
         $this->assertStringNotContainsString('Ricarichi solo', $html);
         $this->assertStringNotContainsString('Addebito automatico', $html);
         $this->assertStringContainsString('Da pagare in KMoney', $html);
@@ -538,7 +538,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->assertStringNotContainsString('Ti chiederemo di collegare', $html);
 
         config(['lamess.kmoney_bonus_percent' => 0]);
-        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->assertSee('Da pagare in KMoney');
+        $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout/pagamento')->assertOk()->assertSee('Da pagare in KMoney');
     }
 
     public function test_kmoney_prompt_links_to_profile_and_register_with_the_real_provider(): void
@@ -549,10 +549,11 @@ final class SubscriptionPaymentMethodsTest extends TestCase
 
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '150.00', ['kmoney_percent' => 100]);
-        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout/pagamento')->assertOk()->getContent();
 
         $this->assertStringContainsString('formaction="/area/checkout/kmoney"', $html);
         $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Non hai un conto? Aprilo qui</a>', $html);
-        $this->assertStringContainsString('data-km-needs-link="1"', $html);
+        $this->actingAs($u)->post('/area/checkout/passo/3', ['payment_method' => 'kmoney', 'subscribe' => 'none'])
+            ->assertRedirect('/area/checkout/pagamento')->assertSessionHas('kmoney_unlinked');
     }
 }

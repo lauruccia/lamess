@@ -138,6 +138,10 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::get('/ricevute/{receipt}/pdf', [WalletController::class, 'receiptPdf']);
     Route::post('/ricevute/{receipt}/reclamo', [WalletController::class, 'disputeReceipt'])->middleware('throttle:6,1');
     Route::get('/checkout', [ShopController::class, 'checkoutForm']);
+    Route::get('/checkout/spedizione', [ShopController::class, 'checkoutShipping']);
+    Route::get('/checkout/pagamento', [ShopController::class, 'checkoutPayment']);
+    Route::get('/checkout/riepilogo', [ShopController::class, 'checkoutReview']);
+    Route::post('/checkout/passo/{step}', [ShopController::class, 'checkoutAdvance'])->whereNumber('step')->middleware('throttle:60,1');
     Route::post('/checkout', [ShopController::class, 'checkout'])->middleware('impersonation.safe')->middleware('throttle:20,1');
     Route::post('/checkout/dati', [ShopController::class, 'saveBilling'])->middleware('throttle:30,1');
     Route::post('/checkout/kmoney', [ShopController::class, 'checkoutConnectKMoney'])->middleware('impersonation.safe')->middleware('throttle:20,1');

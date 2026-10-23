@@ -520,7 +520,45 @@ class ShopController extends Controller
         return view('site.shop.cart', $data + ['notes' => $notes, 'pendingOrder' => $pendingOrder]);
     }
 
+    /** Passi del checkout, ognuno su una pagina propria: numero => [indirizzo, titolo]. */
+    public const STEPS = [
+        1 => ['/area/checkout', 'Fatturazione'],
+        2 => ['/area/checkout/spedizione', 'Spedizione'],
+        3 => ['/area/checkout/pagamento', 'Pagamento e consegna'],
+        4 => ['/area/checkout/riepilogo', 'Riepilogo e conferma'],
+    ];
+
     public function checkoutForm(Request $r)
+    {
+        if ($r->boolean('nuovo')) {
+            $r->session()->forget(self::DRAFT);
+        }
+
+        return $this->checkoutStep($r, 1);
+    }
+
+    public function checkoutShipping(Request $r)
+    {
+        return $this->checkoutStep($r, 2);
+    }
+
+    public function checkoutPayment(Request $r)
+    {
+        return $this->checkoutStep($r, 3);
+    }
+
+    public function checkoutReview(Request $r)
+    {
+        return $this->checkoutStep($r, 4);
+    }
+
+    /** Il modulo messo da parte finora (tutti i passi), senza i campi che non si portano avanti. */
+    private function draft(Request $r): array
+    {
+        return (array) $r->session()->get(self::DRAFT, []);
+    }
+
+    private function checkoutStep(Request $r, int $step)
     {
         PendingCart::pending($r);
         $this->tidyCart($r);
@@ -528,6 +566,16 @@ class ShopController extends Controller
             return redirect('/negozio');
         }
         $u = $r->user()->load('profile');
+        $saved = $u->profile;
+        $draft = $this->draft($r);
+        $cadences = Subscription::offeredCadences();
+        // Si arriva a un passo solo dopo aver completato i precedenti.
+        if ($step >= 2 && ($missing = BillingData::missing($saved)) !== []) {
+            return redirect(self::STEPS[1][0])->withErrors($missing);
+        }
+        if ($step >= 4 && (blank($draft['payment_method'] ?? null) || ($cadences !== [] && blank($draft['subscribe'] ?? null)))) {
+            return redirect(self::STEPS[3][0])->withErrors(['order' => 'Scegli come vuoi pagare e come vuoi riceverla per proseguire.']);
+        }
         // Dati del cliente già registrato: se nel profilo manca il nome, si parte da quello dell'account (senza salvare nulla).
         $profile = $u->profile ?? new Profile(['type' => 'private']);
         if (blank($profile->first_name) && blank($profile->last_name) && blank($profile->company_name) && filled($u->name)) {
@@ -537,13 +585,101 @@ class ShopController extends Controller
         }
 
         $book = app(ShippingAddressBook::class);
-        // Ritorno da un'uscita dal checkout (collegamento KMoney, salvataggio dei dati): si riprende il modulo com'era, senza perdere nulla.
-        if (($draft = $r->session()->pull(self::DRAFT)) !== null && ! $r->session()->hasOldInput()) {
-            $r->session()->now('_old_input', (array) $draft);
+        // Il modulo già compilato nei passi precedenti (o al ritorno da KMoney / dal salvataggio dei dati) si ritrova com'era.
+        if ($draft !== [] && ! $r->session()->hasOldInput()) {
+            $r->session()->now('_old_input', $draft);
         }
-        $saved = $u->profile;
+        $addresses = $book->list($u);
+        $hidden = [];
+        $review = [];
+        if ($step === 4) {
+            // Il passo finale reinvia in un colpo solo quanto scelto prima; i dati di fatturazione salvati nel profilo hanno la precedenza.
+            $locked = BillingData::lockedData($saved);
+            foreach (array_merge($draft, array_filter($locked, fn ($v) => $v !== null)) as $k => $v) {
+                if (is_scalar($v) && ! in_array($k, ['privacy', '_step', '_token'], true)) {
+                    $hidden[$k] = (string) $v;
+                }
+            }
+            $review = $this->review($u, $saved, $draft, $addresses);
+        }
 
-        return view('site.shop.checkout', ['billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => Subscription::offeredCadences()]);
+        return view('site.shop.checkout', ['step' => $step, 'hidden' => $hidden, 'review' => $review, 'billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $addresses, 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => $cadences]);
+    }
+
+    /**
+     * Le scelte fatte nei passi precedenti, in parole, per il riepilogo finale.
+     *
+     * @param  array<string,mixed>  $draft
+     * @param  iterable<mixed>  $addresses
+     * @return array<string,string>
+     */
+    private function review(User $u, ?Profile $saved, array $draft, iterable $addresses): array
+    {
+        $name = $saved?->type === 'company' ? (string) $saved->company_name : trim($saved?->first_name.' '.$saved?->last_name);
+        $ship = (string) ($draft['ship_to'] ?? 'billing');
+        $shipText = 'Allo stesso indirizzo della fatturazione';
+        if ($ship === 'new') {
+            $shipText = trim(($draft['ship_recipient'] ?? '').' — '.($draft['ship_address'] ?? '').', '.($draft['ship_zip'] ?? '').' '.($draft['ship_city'] ?? ''), ' —,');
+        } elseif (ctype_digit($ship)) {
+            foreach ($addresses as $a) {
+                if ((int) $a->id === (int) $ship) {
+                    $shipText = trim(($a->recipient ? $a->recipient.' — ' : '').$a->address.', '.$a->zip.' '.$a->city);
+                }
+            }
+        }
+        $pay = ['card' => 'Carta di credito o debito', 'transfer' => 'Bonifico bancario', 'kmoney' => 'KMoney'][$draft['payment_method'] ?? ''] ?? '—';
+        $cad = Subscription::offeredCadences();
+        $delivery = match ($draft['subscribe'] ?? 'none') {
+            'monthly' => 'Abbonamento mensile', 'bimonthly' => 'Abbonamento bimestrale', default => 'Ordine singolo',
+        };
+
+        return ['Fatturazione' => $name.' — '.$saved?->address.', '.$saved?->zip.' '.$saved?->city, 'Spedizione' => $shipText, 'Pagamento' => $pay, 'Consegna' => $cad === [] ? 'Ordine singolo' : $delivery];
+    }
+
+    /** «Avanti» dai passi 1-3: il passo si salva nel modulo messo da parte, si controlla e si passa al successivo. */
+    public function checkoutAdvance(Request $r, int $step)
+    {
+        abort_unless(in_array($step, [1, 2, 3], true), 404);
+        $this->keepDraft($r);
+        $saved = $r->user()->profile;
+        if ($step === 1 && ($missing = BillingData::missing($saved)) !== []) {
+            return redirect(self::STEPS[1][0])->withErrors($missing + ['order' => 'Salva i dati di fatturazione per proseguire.']);
+        }
+        if ($step === 2) {
+            $to = (string) $r->input('ship_to', 'billing');
+            if ($to === 'new') {
+                $err = [];
+                foreach (['ship_address' => 'indirizzo', 'ship_city' => 'città', 'ship_zip' => 'CAP'] as $f => $label) {
+                    if (blank($r->input($f))) {
+                        $err[$f] = "Per la spedizione serve: {$label}.";
+                    }
+                }
+                if ($err !== []) {
+                    return redirect(self::STEPS[2][0])->withErrors($err);
+                }
+            } elseif (ctype_digit($to) && ! ShippingAddress::where('user_id', $r->user()->id)->whereKey((int) $to)->exists()) {
+                return redirect(self::STEPS[2][0])->withErrors(['ship_to' => 'Indirizzo di spedizione non trovato.']);
+            }
+        }
+        if ($step === 3) {
+            $cadences = Subscription::offeredCadences();
+            $err = [];
+            if (! ($r->input('payment_method') && (app(OrderService::class)->enabledMethods()[$r->input('payment_method')] ?? false))) {
+                $err['payment_method'] = 'Scegli come vuoi pagare.';
+            }
+            if ($cadences !== [] && ! in_array($r->input('subscribe'), ['none', ...array_keys($cadences)], true)) {
+                $err['subscribe'] = 'Scegli come vuoi riceverla.';
+            }
+            if ($err !== []) {
+                return redirect(self::STEPS[3][0])->withErrors($err);
+            }
+            if ($r->input('payment_method') === 'kmoney' && $this->kmoneyNotLinked($r)) {
+                return redirect(self::STEPS[3][0])->withErrors(['order' => 'Per pagare con KMoney collega il tuo conto.'])
+                    ->with('kmoney_unlinked', ['connect' => url('/area/kmoney/collega'), 'register' => $this->kmoneyRegisterUrl()]);
+            }
+        }
+
+        return redirect(self::STEPS[$step + 1][0]);
     }
 
     /** @return array<string,string> codice => nome delle nazioni aperte nello shop */
@@ -560,15 +696,18 @@ class ShopController extends Controller
      */
     public function checkoutCountry(Request $r)
     {
-        $to = (string) $r->input('ship_to', 'billing');
+        $this->keepDraft($r);
+        $all = $this->draft($r);
+        $to = (string) ($all['ship_to'] ?? 'billing');
         if (ctype_digit($to)) {
             $c = ShippingAddress::where('user_id', $r->user()->id)->find((int) $to)?->country_code;
         } else {
-            $c = $to === 'new' ? $r->input('ship_country') : $r->input('country');
+            $c = $to === 'new' ? ($all['ship_country'] ?? null) : ($all['country'] ?? null);
         }
         $r->session()->put('checkout_country', app(ShippingAddressBook::class)->country($c));
+        $step = (int) $r->input('_step', 1);
 
-        return redirect('/area/checkout')->withInput($r->except(['_token', 'privacy']));
+        return redirect((self::STEPS[$step] ?? self::STEPS[1])[0]);
     }
 
     /** Chiave di sessione con il modulo del checkout messo da parte mentre il cliente esce (salva dati, collega KMoney). */
@@ -576,7 +715,7 @@ class ShopController extends Controller
 
     private function keepDraft(Request $r): void
     {
-        $r->session()->put(self::DRAFT, $r->except(['_token']));
+        $r->session()->put(self::DRAFT, array_merge($this->draft($r), $r->except(['_token', '_step', 'privacy'])));
     }
 
     /**
@@ -597,7 +736,7 @@ class ShopController extends Controller
         if (BillingData::missing($profile) === []) {
             $this->keepDraft($r);
 
-            return redirect('/area/checkout')->with('status', 'I dati di fatturazione sono già quelli della tua registrazione: per modificarli vai su «I miei dati».');
+            return redirect(self::STEPS[2][0])->with('status', 'I dati di fatturazione sono già quelli della tua registrazione: per modificarli vai su «I miei dati».');
         }
         if (BillingData::addressLocked($profile)) {
             $d = array_merge($d, array_intersect_key(BillingData::lockedAddress($profile), array_flip(BillingData::ADDRESS)));
@@ -614,7 +753,7 @@ class ShopController extends Controller
         }
         $this->keepDraft($r);
 
-        return redirect('/area/checkout')->with('status', 'Dati di fatturazione salvati: ora puoi confermare l\'ordine.');
+        return redirect(self::STEPS[2][0])->with('status', 'Dati di fatturazione salvati.');
     }
 
     /** Il cliente esce per collegare KMoney: il modulo resta in sessione e al ritorno ritrova tutto com'era. */
@@ -854,6 +993,7 @@ class ShopController extends Controller
 
     public function order(Request $r, Order $order)
     {
+        $r->session()->forget(self::DRAFT);
         $order = $this->own($r, $order);
         // Ritorno dalla pagina di pagamento a pagamento riuscito: gli articoli sono stati acquistati, il carrello si svuota.
         if ($r->query('da') === 'carta' && (int) $r->session()->get(PendingCart::KEY) === $order->id) {

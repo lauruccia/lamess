@@ -183,7 +183,7 @@
       var missing = btn.dataset.billingMissing === '1' || dirty;
       var pm = $('input[name=payment_method]:checked');
       var needLink = btn.dataset.kmNeedsLink === '1' && pm && pm.value === 'kmoney';
-      var needChoice = !pm || ($('input[name=subscribe]') && !$('input[name=subscribe]:checked'));
+      var needChoice = $('input[name=payment_method]') ? (!pm || ($('input[name=subscribe]') && !$('input[name=subscribe]:checked'))) : btn.dataset.needChoice === '1';
       btn.disabled = missing || needLink || needChoice;
       if (hint) {
         hint.hidden = !(missing || needLink || needChoice);
@@ -199,75 +199,6 @@
     sync();
   }
 
-
-  // Checkout a passi: 1 Fatturazione, 2 Spedizione, 3 Pagamento e consegna, 4 Riepilogo e conferma. Un passo alla volta, avanti e indietro senza perdere i dati.
-  function checkoutSteps() {
-    var form = $('#checkout-form'); if (!form) return;
-    var steps = $$('.co-step', form); if (steps.length < 2) return;
-    form.classList.add('is-stepped');
-    var key = 'lamess-co-step', cur = 1;
-    var billingOk = function () { var b = $('#confirm-order'); return b && b.dataset.billingMissing !== '1'; };
-    function val(n) { var e = form.elements[n]; return e ? String(e.value || '').trim() : ''; }
-    function label(input) { var l = input && input.closest('label'); return l ? (l.querySelector('b') ? l.querySelector('b').textContent : l.textContent).trim() : ''; }
-    function review() {
-      var dl = $('[data-review]', form); if (!dl) return;
-      var pm = $('input[name=payment_method]:checked'), sub = $('input[name=subscribe]:checked');
-      var name = val('type') === 'company' ? val('company_name') : (val('first_name') + ' ' + val('last_name')).trim();
-      var ship = form.elements['ship_to'], shipText = ship && ship.selectedOptions && ship.selectedOptions[0] ? ship.selectedOptions[0].textContent.trim() : 'Indirizzo di fatturazione';
-      var rows = [['Fatturazione', name + ' — ' + val('address') + ', ' + val('zip') + ' ' + val('city')], ['Spedizione', shipText], ['Pagamento', pm ? label(pm) : '—'], ['Consegna', sub ? label(sub) : '—']];
-      dl.innerHTML = '';
-      rows.forEach(function (r) { var dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = r[0]; dd.textContent = r[1]; dl.appendChild(dt); dl.appendChild(dd); });
-    }
-    function problem(n) {
-      if (n === 1 && !billingOk()) return 'Salva i dati di fatturazione («Salva i dati») per proseguire.';
-      if (n === 3) {
-        if (!$('input[name=payment_method]:checked')) return 'Scegli come vuoi pagare.';
-        if ($('input[name=subscribe]') && !$('input[name=subscribe]:checked')) return 'Scegli come vuoi riceverla.';
-      }
-      return '';
-    }
-    function warn(box, msg) {
-      var w = $('.co-warn', box);
-      if (!msg) { if (w) w.remove(); return; }
-      if (!w) { w = document.createElement('p'); w.className = 'co-warn err'; w.setAttribute('role', 'alert'); var nav = $('.co-nav', box); box.insertBefore(w, nav); }
-      w.textContent = msg;
-    }
-    function show(n, scroll) {
-      cur = Math.max(1, Math.min(steps.length, n));
-      steps.forEach(function (st, i) { st.hidden = i + 1 !== cur; });
-      try { sessionStorage.setItem(key, String(cur)); } catch (e) {}
-      $$('.co-progress li', form).forEach(function (li, i) { li.classList.toggle('on', i + 1 === cur); li.classList.toggle('done', i + 1 < cur); });
-      if (cur === steps.length) review();
-      if (scroll) window.scrollTo({ top: Math.max(0, form.getBoundingClientRect().top + window.scrollY - 90), behavior: 'smooth' });
-    }
-    var bar = document.createElement('ol'); bar.className = 'co-progress';
-    steps.forEach(function (st, i) {
-      var li = document.createElement('li'), b = document.createElement('button');
-      b.type = 'button'; b.innerHTML = '<span class="n">' + (i + 1) + '</span>' + st.dataset.stepTitle;
-      b.addEventListener('click', function () {
-        for (var k = 1; k < i + 1; k++) { var m = problem(k); if (m) { show(k, true); warn(steps[k - 1], m); return; } }
-        show(i + 1, true);
-      });
-      li.appendChild(b); bar.appendChild(li);
-    });
-    form.insertBefore(bar, form.firstChild);
-    steps.forEach(function (st, i) {
-      $$('[data-next]', st).forEach(function (b) { b.addEventListener('click', function () { var m = problem(i + 1); warn(st, m); if (!m) show(i + 2, true); }); });
-      $$('[data-prev]', st).forEach(function (b) { b.addEventListener('click', function () { warn(st, ''); show(i, true); }); });
-    });
-    $$('input, select', form).forEach(function (e) { e.addEventListener('change', function () { var st = e.closest('.co-step'); if (st) warn(st, ''); }); });
-    // Errori dal server: si apre il passo del primo campo in errore; altrimenti si riprende da dove si era (dopo «Salva i dati», cambio nazione, KMoney).
-    var start = 1, errs = $('#checkout-errors');
-    try { start = parseInt(sessionStorage.getItem(key) || '1', 10) || 1; } catch (e) {}
-    if (errs) {
-      var fields = []; try { fields = JSON.parse(errs.dataset.fields || '[]'); } catch (e) {}
-      var hit = 4;
-      fields.forEach(function (f) { var el = form.elements[f] || (f === 'privacy' ? $('[name=privacy]') : null); var st = el && el.closest ? el.closest('.co-step') : null; if (st) hit = Math.min(hit, +st.dataset.step); });
-      if (['payment_method', 'subscribe'].some(function (f) { return fields.indexOf(f) >= 0; })) hit = Math.min(hit, 3);
-      start = hit;
-    } else if (!billingOk()) { start = 1; }
-    show(start, false);
-  }
 
   // Varianti: formato, taglia, colore. Le pillole scelgono la variante; il menu nascosto resta come alternativa senza JavaScript.
   function variants() {
@@ -322,7 +253,6 @@
     subscription();
     kmoneyRest(); kmoneyAmounts();
     confirmGate();
-    checkoutSteps();
     formErrors();
   });
 })();

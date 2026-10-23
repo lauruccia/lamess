@@ -38,9 +38,9 @@ final class CheckoutCountryTest extends TestCase
         $user = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00');
 
-        $html = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $html = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout/spedizione')->assertOk()->getContent();
 
-        $this->assertStringContainsString('name="country"', $html);
+        $this->assertStringContainsString('name="ship_country"', $html);
         $this->assertMatchesRegularExpression('/<option value="IT" selected>Italia<\/option>/', $html);
         $this->assertStringContainsString('<option value="DE" >Germania</option>', $html);
     }
@@ -54,7 +54,7 @@ final class CheckoutCountryTest extends TestCase
             ->post('/area/checkout/nazione', ['country' => 'DE', 'ship_to' => 'billing', 'city' => 'Berlino'])
             ->assertRedirect('/area/checkout')
             ->assertSessionHas('checkout_country', 'DE')
-            ->assertSessionHasInput('city', 'Berlino');
+            ->assertSessionHas('checkout_draft.city', 'Berlino');
     }
 
     public function test_order_to_germany_uses_the_german_rate_and_country(): void

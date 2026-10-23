@@ -827,18 +827,15 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 
 #checkout-form label[hidden],#checkout-form select[hidden]{display:none!important}
 
-/* Checkout a passi */
-.co-form.is-stepped .co-step[hidden]{display:none}
+/* Checkout a passi, ognuno su una pagina */
 .co-progress{list-style:none;margin:0 0 18px;padding:0;display:flex;gap:8px;flex-wrap:wrap}
 .co-progress li{flex:1 1 140px}
-.co-progress button{width:100%;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--lm-line,#ddd5ca);border-radius:12px;background:#fff;color:var(--lm-ink);font:500 14px var(--lm-font-text);cursor:pointer;text-align:left}
+.co-progress a,.co-progress .lbl{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--lm-line,#ddd5ca);border-radius:12px;background:#fff;color:var(--lm-ink);font:500 14px var(--lm-font-text);text-decoration:none}
 .co-progress .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#e9e2d8;font-size:13px;font-weight:600}
-.co-progress li.on button{border-color:var(--lm-terracotta);background:#fbf5f1;font-weight:600}
+.co-progress li.on .lbl{border-color:var(--lm-terracotta);background:#fbf5f1;font-weight:600}
 .co-progress li.on .n,.co-progress li.done .n{background:var(--lm-terracotta);color:var(--lm-ink)}
 .co-nav{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-top:22px}
-.co-nav [data-next]{margin-left:auto}
-.co-warn{margin:14px 0 0}
+.co-nav .btn{margin-left:auto}
 .co-review{display:grid;grid-template-columns:130px 1fr;gap:8px 16px;margin:10px 0 4px}
 .co-review dt{font-weight:600}.co-review dd{margin:0}
-.co-form:not(.is-stepped) .co-nav,.co-form:not(.is-stepped) .co-review{display:none}
 @media (max-width:640px){.co-review{grid-template-columns:1fr}.co-progress li{flex-basis:100%}}

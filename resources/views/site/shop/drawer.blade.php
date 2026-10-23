@@ -16,7 +16,7 @@
  </div>
  <div class="drawer-foot">
   @include('site.shop._totals')
-  <a class="btn accent wide" href="/area/checkout">Procedi al checkout</a>
+  <a class="btn accent wide" href="/area/checkout?nuovo=1">Procedi al checkout</a>
   <a class="btn ghost wide" href="/carrello">Vedi il carrello</a>
  </div>
 @endif

@@ -200,7 +200,7 @@ final class OrderManagementTest extends TestCase
         config(['lamess.payments.transfer' => false]);
 
         $this->actingAs($user)->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
-        $this->get('/area/checkout')->assertOk()->assertSee('Carta di credito')->assertDontSee('Bonifico bancario');
+        $this->get('/area/checkout/pagamento')->assertOk()->assertSee('Carta di credito')->assertDontSee('Bonifico bancario');
         $this->post('/area/checkout', [
             'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
             'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',

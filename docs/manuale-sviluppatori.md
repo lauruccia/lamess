@@ -214,5 +214,5 @@ I manuali sono in `docs/` (elenco nel `README.md`). `php artisan lamess:parametr
 ## Checkout: dati di fatturazione
 `App\Domain\Customers\BillingData`; `ShopController::saveBilling`/`checkoutConnectKMoney`; massimale KMoney `lamess.kmoney.mandate_limit_ky` (`KMONEY_MANDATE_LIMIT_KY`).
 
-## Checkout a passi e «Ordine per altri»
-Il checkout è una sola pagina con quattro sezioni `.co-step` mostrate una alla volta da `checkoutSteps()` in `public/js/lamess-shop.js` (senza JavaScript restano tutte visibili; il server valida comunque). «Ordine per altri» è spento di default: `lamess.order_for_others` (`LAMESS_ORDER_FOR_OTHERS`), il codice e le rotte restano.
+## Checkout a passi (pagine separate) e «Ordine per altri»
+Quattro pagine, un'unica vista `site.shop.checkout` che mostra la sezione di `$step`: `GET /area/checkout` (fatturazione), `/spedizione`, `/pagamento`, `/riepilogo`; `POST /area/checkout/passo/{1..3}` salva il passo nel modulo di sessione (`checkout_draft`, che `keepDraft()` unisce senza perdere i passi precedenti), controlla e passa al successivo. Il passo 4 reinvia in un colpo solo la bozza (più i dati del profilo, che hanno la precedenza) a `POST /area/checkout`, che resta l'unico punto in cui si crea l'ordine. `ShopController::STEPS` elenca indirizzi e titoli; i passi non si saltano (redirect al primo incompleto). La bozza si azzera con `?nuovo=1` (link del carrello) e all'apertura della pagina ordine. «Ordine per altri» è spento di default: `lamess.order_for_others` (`LAMESS_ORDER_FOR_OTHERS`), codice e rotte restano.

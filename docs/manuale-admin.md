@@ -221,3 +221,6 @@ Da **Utenti**, **Clienti** e **Incaricati** il pulsante «Accedi come» (conferm
 
 ## Etichette di spedizione
 In **Vendite → Ordini**: dalla riga di un ordine pagato «Stampa etichetta» (una per pagina); selezionando più ordini «Stampa etichette (foglio A4)» ne mette 8 per foglio. Il destinatario è l'indirizzo di consegna dell'ordine (altrimenti la fatturazione); il mittente è la ragione sociale in `LAMESS_COMPANY_*`. Gli ordini non ancora pagati o annullati vengono saltati.
+
+**Correggere l'indirizzo di consegna di un ordine**: finché l'ordine non è spedito (in attesa di pagamento, pagato, in preparazione) dalla riga o dalla pagina dell'ordine scegli **«Modifica indirizzo di consegna»**. Cambia solo dove consegnare: la fatturazione e le fatture già emesse restano come sono. Il cambio (indirizzo vecchio → nuovo) resta scritto nella Cronologia come nota interna e l'etichetta, ristampata, usa subito il dato nuovo. Il modulo non accetta indirizzi senza la via (es. solo «Piano 1») o senza numero civico; se la strada non ha numero si scrive «snc».
+

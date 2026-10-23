@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Orders;
 
 use App\Domain\Billing\InvoiceService;
+use App\Domain\Customers\AddressCheck;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Ledger\PvLedger;
 use App\Domain\Periods\NightlyRecalculation;
@@ -474,6 +475,41 @@ final class OrderService
         return match ($method) {
             'card' => 'carta', 'kmoney' => 'KMoney', 'transfer' => 'bonifico', default => (string) $method,
         };
+    }
+
+    /** Stati in cui il pacco non è ancora partito: l'indirizzo di consegna si può ancora correggere. */
+    public const SHIPPING_EDITABLE = ['pending_payment', 'paid', 'processing'];
+
+    /**
+     * L'admin corregge dove consegnare un ordine non ancora spedito (es. indirizzo scritto senza la via). Cambia solo la consegna:
+     * la fatturazione e le fatture già emesse restano come sono. Il cambio resta scritto nella cronologia (nota interna).
+     *
+     * @param  array{recipient?:?string,address:string,zip:string,city:string,province?:?string,phone?:?string}  $data
+     */
+    public function updateShippingAddress(Order $order, array $data): Order
+    {
+        if (! in_array($order->status, self::SHIPPING_EDITABLE, true)) {
+            throw new OrderException('L\'indirizzo di consegna si cambia solo prima della spedizione.');
+        }
+        $clean = fn (mixed $v): ?string => ($v = trim((string) $v)) === '' ? null : $v;
+        $new = ['address' => $clean($data['address'] ?? null), 'zip' => $clean($data['zip'] ?? null), 'city' => $clean($data['city'] ?? null)];
+        if (in_array(null, $new, true)) {
+            throw new OrderException('Completa l\'indirizzo di consegna: servono indirizzo, città e CAP.');
+        }
+        if (($problem = AddressCheck::problem($new['address'])) !== null) {
+            throw new OrderException($problem);
+        }
+        $billing = (array) $order->billing;
+        $old = is_array($billing['shipping'] ?? null) ? $billing['shipping'] : [];
+        $billing['shipping'] = [
+            'label' => $old['label'] ?? null, 'recipient' => $clean($data['recipient'] ?? null), 'address' => $new['address'], 'city' => $new['city'], 'zip' => $new['zip'],
+            'province' => $clean($data['province'] ?? null), 'phone' => $clean($data['phone'] ?? null),
+        ];
+        $order->update(['billing' => $billing]);
+        $text = fn (array $a): string => trim((string) ($a['address'] ?? '—').', '.trim(($a['zip'] ?? '').' '.($a['city'] ?? '')));
+        OrderEvent::log($order, 'shipping_address', 'Indirizzo di consegna corretto da «'.$text($old).'» a «'.$text($billing['shipping']).'»', true);
+
+        return $order->refresh();
     }
 
     /** L'ordine pagato passa «in preparazione» (magazzino). */

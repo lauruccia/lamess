@@ -363,10 +363,11 @@ class AreaController extends Controller
     public function updateAddress(Request $request, ShippingAddress $address, ShippingAddressBook $book): RedirectResponse
     {
         $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'country_code' => 'nullable|string|size:2', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
+        abort_unless($address->user_id === $request->user()->id, 404);
         try {
             $book->update($request->user(), $address, $d);
         } catch (OrderException $e) {
-            abort(404);
+            return back()->withInput()->withErrors(['shipping' => $e->getMessage()]);
         }
 
         return back()->with('status', 'Indirizzo aggiornato. Gli ordini già fatti non cambiano.');

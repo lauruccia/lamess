@@ -148,7 +148,7 @@ php artisan lamess:audit-verifica                  # controlla la catena del log
 
 ```
 App\Domain\Customers     ReferralResolver (link → cookie → codice a mano → incaricato «casa» OPEN-20), CustomerService,
-                          ShippingAddressBook (fino a 10 indirizzi per utente: lamess.max_shipping_addresses)
+                          ShippingAddressBook (fino a 10 indirizzi per utente: lamess.max_shipping_addresses); AddressCheck::problem() rifiuta indirizzi di consegna senza via o senza numero civico (usato da rubrica, checkout e dall'azione admin OrderService::updateShippingAddress)
 App\Domain\Onboarding    IvdService (apply → requestSignature → sign → accept|reject), SignatureProvider (+ FakeSignatureProvider),
                           KycService, OnboardingService (missing()), BadgeService, FeeService (process / markPaid), Iban
 App\Domain\Orders        OrderService (place → payByCard|payByKMoney|markPaid → ship|cancel), CartPricer, PendingCart, ReturnService,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Billing\InvoiceService;
+use App\Domain\Customers\AddressCheck;
 use App\Domain\Customers\BillingData;
 use App\Domain\Customers\ShippingAddressBook;
 use App\Domain\Orders\CartPricer;
@@ -655,11 +656,23 @@ class ShopController extends Controller
                         $err[$f] = "Per la spedizione serve: {$label}.";
                     }
                 }
+                if (! isset($err['ship_address']) && ($problem = AddressCheck::problem((string) $r->input('ship_address'))) !== null) {
+                    $err['ship_address'] = $problem;
+                }
                 if ($err !== []) {
                     return redirect(self::STEPS[2][0])->withErrors($err);
                 }
-            } elseif (ctype_digit($to) && ! ShippingAddress::where('user_id', $r->user()->id)->whereKey((int) $to)->exists()) {
-                return redirect(self::STEPS[2][0])->withErrors(['ship_to' => 'Indirizzo di spedizione non trovato.']);
+            } elseif (ctype_digit($to)) {
+                $savedAddress = ShippingAddress::where('user_id', $r->user()->id)->find((int) $to);
+                if ($savedAddress === null) {
+                    return redirect(self::STEPS[2][0])->withErrors(['ship_to' => 'Indirizzo di spedizione non trovato.']);
+                }
+                if (($problem = AddressCheck::problem($savedAddress->address)) !== null) {
+                    return redirect(self::STEPS[2][0])->withErrors(['ship_to' => 'L\'indirizzo salvato «'.($savedAddress->label ?: $savedAddress->address).'» non è completo. '.$problem.' Correggilo in «I miei dati» oppure scegli un altro indirizzo.']);
+                }
+            }
+            if ($to === 'billing' && ($problem = AddressCheck::problem((string) $saved?->address)) !== null) {
+                return redirect(self::STEPS[2][0])->withErrors(['ship_to' => 'Spediamo allo stesso indirizzo della fatturazione, ma non è completo. '.$problem.' Correggilo nei dati di fatturazione oppure scegli «Un nuovo indirizzo».']);
             }
         }
         if ($step === 3) {

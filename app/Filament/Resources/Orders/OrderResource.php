@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders;
 
+use App\Domain\Customers\AddressCheck;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Domain\Orders\PaymentProvider;
@@ -42,6 +43,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use UnitEnum;
 
@@ -321,6 +323,24 @@ class OrderResource extends Resource
                         self::run(fn () => app(RefundService::class)->retry($refund), 'Rimborso ritentato: controlla la cronologia');
                     }
                 }),
+            Action::make('editShipping')->authorize('orders.manage')->label('Modifica indirizzo di consegna')->icon('heroicon-o-map-pin')->color('gray')
+                ->visible(fn (Order $record) => in_array($record->status, OrderService::SHIPPING_EDITABLE, true))
+                ->modalDescription('Cambia solo dove consegnare questo ordine: la fatturazione e le fatture non cambiano. Resta scritto nella cronologia.')
+                ->fillForm(fn (Order $record) => Arr::only((array) (((array) $record->billing)['shipping'] ?? []), ['recipient', 'address', 'zip', 'city', 'province', 'phone']))
+                ->schema([
+                    TextInput::make('recipient')->label('Destinatario (se diverso dal cliente)')->maxLength(190),
+                    TextInput::make('address')->label('Indirizzo (via e numero civico)')->required()->maxLength(190)
+                        ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail): void {
+                            if (($problem = AddressCheck::problem((string) $value)) !== null) {
+                                $fail($problem);
+                            }
+                        }),
+                    TextInput::make('zip')->label('CAP')->required()->maxLength(10),
+                    TextInput::make('city')->label('Città')->required()->maxLength(120),
+                    TextInput::make('province')->label('Provincia')->maxLength(3),
+                    TextInput::make('phone')->label('Telefono per il corriere')->maxLength(30),
+                ])
+                ->action(fn (Order $record, array $data) => self::run(fn () => app(OrderService::class)->updateShippingAddress($record, $data), 'Indirizzo di consegna aggiornato')),
             Action::make('note')->authorize('orders.manage')->label('Aggiungi nota')->icon('heroicon-o-pencil-square')->color('gray')
                 ->schema([Textarea::make('note')->label('Nota interna (il cliente non la vede)')->required()->rows(3)])
                 ->action(fn (Order $record, array $data) => self::run(fn () => app(OrderService::class)->addNote($record, (string) $data['note']), 'Nota aggiunta')),

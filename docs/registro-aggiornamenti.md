@@ -1,5 +1,12 @@
 # Registro aggiornamenti
 
+## 2026-10-23 — Indirizzo di consegna incompleto
+- Causa: un ordine con indirizzo di spedizione «Piano 1» (senza via) stampava l'etichetta senza via; il portale salvava quanto scritto senza controlli.
+- `AddressCheck`: serve via e numero civico (o «snc»); usato da rubrica indirizzi, checkout (nuovo indirizzo, indirizzo salvato, «come la fatturazione») e modifica indirizzo.
+- Indirizzi già salvati e incompleti: si fermano al momento dell'ordine con il messaggio di correggerli in «I miei dati».
+- Azione admin «Modifica indirizzo di consegna» sugli ordini non ancora spediti, con nota in cronologia.
+- Test: `DeliveryAddressTest` (14). Nota: 9 test su abbonamenti e audit dei prodotti falliscono anche senza queste modifiche (già presenti).
+
 ## 2026-10-01 — E1/E2/E3: motore di calcolo
 - Motore puro PHP in `App\Domain\Engine`, piano ufficiale prelancio in JSON, registro politiche D01–D12.
 - Test: 52 (carriera, bonus, scenari golden G01–G26 coperti salvo G21/G22/G24, proprietà), 1362 asserzioni, tutti verdi; Pint pulito.

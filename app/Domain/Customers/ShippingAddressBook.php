@@ -7,6 +7,7 @@ namespace App\Domain\Customers;
 use App\Domain\Orders\OrderException;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 
 /** Rubrica degli indirizzi di spedizione di un utente (massimo lamess.max_shipping_addresses) e scelta dell'indirizzo per un ordine o un abbonamento. */
 final class ShippingAddressBook
@@ -16,7 +17,7 @@ final class ShippingAddressBook
         return (int) config('lamess.max_shipping_addresses');
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, ShippingAddress> predefinito per primo */
+    /** @return Collection<int, ShippingAddress> predefinito per primo */
     public function list(User $user)
     {
         return ShippingAddress::where('user_id', $user->id)->orderByDesc('is_default')->orderBy('id')->get();
@@ -30,6 +31,7 @@ final class ShippingAddressBook
                 throw new OrderException('Completa l\'indirizzo di spedizione: servono indirizzo, città e CAP.');
             }
         }
+        $this->assertDeliverable($d['address']);
         $count = ShippingAddress::where('user_id', $user->id)->count();
         if ($count >= $this->max()) {
             throw new OrderException("Puoi salvare al massimo {$this->max()} indirizzi di spedizione: elimina quelli che non usi più.");
@@ -52,6 +54,7 @@ final class ShippingAddressBook
                 throw new OrderException('Completa l\'indirizzo di spedizione: servono indirizzo, città e CAP.');
             }
         }
+        $this->assertDeliverable($d['address']);
         $a->update([
             'label' => $this->clean($d['label'] ?? null, 60), 'recipient' => $this->clean($d['recipient'] ?? null, 190),
             'address' => $this->clean($d['address'], 190), 'city' => $this->clean($d['city'], 120), 'zip' => $this->clean($d['zip'], 10),
@@ -102,6 +105,7 @@ final class ShippingAddressBook
                     throw new OrderException('Completa l\'indirizzo di spedizione: servono indirizzo, città e CAP.');
                 }
             }
+            $this->assertDeliverable($data['address']);
 
             $data['country_code'] = $this->country($data['country_code']);
 
@@ -112,6 +116,9 @@ final class ShippingAddressBook
             if ($a === null) {
                 throw new OrderException('Indirizzo di spedizione non trovato.');
             }
+            if (($problem = AddressCheck::problem($a->address)) !== null) {
+                throw new OrderException('L\'indirizzo salvato «'.($a->label ?: $a->address).'» non è completo. '.$problem.' Correggilo in «I miei dati» oppure scegli un altro indirizzo.');
+            }
 
             return $this->toArray($a);
         }
@@ -119,6 +126,9 @@ final class ShippingAddressBook
             if (blank($billing[$f] ?? null)) {
                 throw new OrderException('Completa l\'indirizzo di fatturazione e spedizione.');
             }
+        }
+        if (($problem = AddressCheck::problem((string) $billing['address'])) !== null) {
+            throw new OrderException('Spediamo allo stesso indirizzo della fatturazione, ma non è completo. '.$problem.' Correggilo nei dati di fatturazione oppure scegli «Un nuovo indirizzo».');
         }
 
         return [
@@ -137,6 +147,14 @@ final class ShippingAddressBook
     {
         if ($a->user_id !== $user->id) {
             throw new OrderException('Indirizzo di spedizione non trovato.');
+        }
+    }
+
+    /** Un indirizzo senza via o senza numero civico non si consegna: meglio fermarsi prima dell'ordine che stampare un'etichetta vuota. */
+    private function assertDeliverable(mixed $address): void
+    {
+        if (($problem = AddressCheck::problem((string) $address)) !== null) {
+            throw new OrderException($problem);
         }
     }
 

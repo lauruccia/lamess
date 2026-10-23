@@ -19,8 +19,8 @@
   <section class="card">
    <h2><span class="step">1</span> Fatturazione</h2>
    <p class="muted small" style="margin:0 0 8px">I campi con <b class="req">*</b> sono obbligatori.</p>
-   <label>Fattura intestata a</label>
-   <select name="type" id="type" @disabled($billingMissing === [])><option value="private" @selected(old('type', $profile?->type ?? 'private')==='private')>Privato</option><option value="company" @selected(old('type', $profile?->type)==='company')>Azienda</option></select>
+   <label @if($billingMissing === []) hidden @endif>Fattura intestata a</label>
+   <select name="type" id="type" @disabled($billingMissing === []) @if($billingMissing === []) hidden @endif><option value="private" @selected(old('type', $profile?->type ?? 'private')==='private')>Privato</option><option value="company" @selected(old('type', $profile?->type)==='company')>Azienda</option></select>
    @if($billingMissing === [])<input type="hidden" name="type" value="{{ $profile?->type ?? 'private' }}">@endif
    <div class="row"><div><label>Nome <b class="req" data-private title="Obbligatorio">*</b></label><input @if($billingMissing === []) readonly class="locked" aria-readonly="true" @endif name="first_name" data-req-private value="{{ old('first_name', $profile?->first_name) }}" autocomplete="given-name"></div><div><label>Cognome <b class="req" data-private title="Obbligatorio">*</b></label><input @if($billingMissing === []) readonly class="locked" aria-readonly="true" @endif name="last_name" data-req-private value="{{ old('last_name', $profile?->last_name) }}" autocomplete="family-name"></div></div>
    <div data-company><label>Ragione sociale (aziende) <b class="req" title="Obbligatorio">*</b></label><input @if($billingMissing === []) readonly class="locked" aria-readonly="true" @endif name="company_name" data-req-company value="{{ old('company_name', $profile?->company_name) }}" autocomplete="organization"></div>

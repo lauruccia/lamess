@@ -824,3 +824,5 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 .co-form .km-connect-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px}
 .co-confirm button[disabled]{opacity:.5;cursor:not-allowed}
 .co-confirm .confirm-hint{margin:8px 0 0}
+
+#checkout-form label[hidden],#checkout-form select[hidden]{display:none!important}

@@ -77,7 +77,7 @@ final class CheckoutBillingLockTest extends TestCase
         $saved = $user->profile->refresh();
 
         $html = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
-        $this->assertMatchesRegularExpression('/<select name="type"[^>]*disabled/', $html);
+        $this->assertMatchesRegularExpression('/<select name="type"[^>]*disabled[^>]*hidden/', $html);
         $this->assertMatchesRegularExpression('/<input[^>]*readonly[^>]*name="first_name"/', $html);
         $this->assertMatchesRegularExpression('/<input[^>]*readonly[^>]*name="tax_code"/', $html);
 

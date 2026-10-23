@@ -33,6 +33,7 @@ class StatementReady extends Notification implements ShouldQueueAfterCommit
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)->subject("Il tuo statino di {$this->periodCode} è pronto")
+            ->greeting('Ciao!')
             ->line("Il mese {$this->periodCode} è stato chiuso e il tuo statino dei compensi è disponibile.")
             ->action('Vedi lo statino', url('/area/statini/'.$this->periodCode));
     }

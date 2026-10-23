@@ -115,6 +115,24 @@ final class SnapshotBuilder
      */
     private static function customerCoverage(Period $period, PlanConfig $plan): array
     {
+        $out = [];
+        foreach (self::qualifyingOrders($period->ends_at, $plan) as $owner => $customers) {
+            foreach ($customers as $customer => $valid) {
+                $out[$owner][$customer] = KosmosCalculator::coverageIntervals($valid);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Ordini che rendono cliente (piano Incaricati) per incaricato e cliente, fino a una data: quando, per quanti mesi e quanti clienti valgono.
+     * La chiave cliente è l'id utente; gli acquisti dell'incaricato per sé sono «self:{id incaricato}». Se indicato, solo per quell'incaricato.
+     *
+     * @return array<string, array<string, list<array{at: DateTimeImmutable, months: int, clients: int}>>>
+     */
+    public static function qualifyingOrders(\DateTimeInterface $endsAt, PlanConfig $plan, ?string $ownerId = null): array
+    {
         $cfg = $plan->kosmos;
         if ($cfg === null) {
             return [];
@@ -123,7 +141,8 @@ final class SnapshotBuilder
             ->leftJoin('orders as o', 'o.id', '=', 'pv_movements.order_id')
             ->leftJoin('order_items as oi', 'oi.id', '=', 'pv_movements.order_item_id')
             ->where('pv_movements.status', 'confirmed')->where('pv_movements.pv', '>', 0)
-            ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $period->ends_at)
+            ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $endsAt)
+            ->when($ownerId !== null, fn ($q) => $q->where('pv_movements.consultant_id', $ownerId))
             ->where(fn ($q) => $q->whereNotNull('pv_movements.order_id')->orWhereNotNull('pv_movements.client_user_id'))
             ->where(fn ($q) => $q->whereNull('oi.id')->orWhereColumn('oi.qty_refunded', '<', 'oi.qty'))
             ->orderBy('pv_movements.event_at')->orderBy('pv_movements.id')
@@ -150,7 +169,7 @@ final class SnapshotBuilder
                     }
                 }
                 if ($valid !== []) {
-                    $out[$owner][$customer] = KosmosCalculator::coverageIntervals($valid);
+                    $out[$owner][$customer] = $valid;
                 }
             }
         }

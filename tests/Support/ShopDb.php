@@ -6,6 +6,7 @@ namespace Tests\Support;
 
 use App\Models\Consultant;
 use App\Models\Product;
+use App\Models\Profile;
 use App\Models\ShippingRate;
 use App\Models\User;
 
@@ -34,6 +35,10 @@ trait ShopDb
 
     protected function buyer(?Consultant $sponsor = null): User
     {
-        return $this->fan($sponsor)->user;
+        $user = $this->fan($sponsor)->user;
+        // Il checkout usa i dati di fatturazione già salvati nel profilo (e blocca l'indirizzo): il cliente di prova li ha già inseriti.
+        Profile::updateOrCreate(['user_id' => $user->id], $this->billing() + ['country_code' => 'IT']);
+
+        return $user;
     }
 }

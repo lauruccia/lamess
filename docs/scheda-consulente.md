@@ -6,7 +6,7 @@ Aggiornato il 14/10/2026. Specifica di partenza: `Addendum_Scheda_Consulente_360
 
 In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sospeso, cessato), **qualifica** (solo il nome della pietra: Pearl, Crystal, Sapphire, Ruby, Emerald, Diamond), eventuale «Qualifica mantenuta fino al…», stato KYC, onboarding da completare, sponsor attuale (e originale, se diverso), **da pagare** (liquidazioni aperte). Il badge «Attività del mese» compare solo se il piano in vigore prevede lo stato attivo: nel Piano Incaricati non c'è.
 
-**Pulsanti-contatore** (Team 1° liv., Clienti, Ordini, Liquidazioni, Pagamenti, Contratti IVD, Documenti KYC, Canoni; «Movimenti PV» solo se il piano precedente è visibile): ogni pulsante apre la lista già filtrata su quell'incaricato. Compaiono solo se la lista è accesa nel registro funzionalità e se chi guarda ha il permesso di aprirla.
+**Pulsanti-contatore** (1° liv., Clienti, Ordini, Liquidazioni, Pagamenti, Contratti IVD, Documenti KYC, Canoni; «Movimenti PV» solo se il piano precedente è visibile): ogni pulsante apre la lista già filtrata su quell'incaricato. Compaiono solo se la lista è accesa nel registro funzionalità e se chi guarda ha il permesso di aprirla.
 
 **Azioni** (icone con descrizione al passaggio del mouse, ciascuna con il proprio permesso e interruttore):
 - **Richiedi documenti KYC** (permesso `kyc.manage`): l'incaricato riceve una email e vede il riquadro in *Onboarding*; la richiesta si chiude da sola al caricamento di tutto, con promemoria dopo 3 e 6 giorni. Si può fare anche dall'elenco e in massa.
@@ -19,7 +19,7 @@ In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sos
 **Tab**: Riepilogo · Anagrafica · Rete · Volumi e rank · Commissioni · Pagamenti · Ordini (con il piano precedente visibile: «Ordini e PV») · Documenti · Audit (solo super_admin). Ogni tab mostra i dati recenti e ha il link «Apri la lista…» per vedere tutto. Nel pannello «Funzionalità e viste» le stesse tab hanno nomi più descrittivi (es. «Riepilogo e carriera», «Liquidazioni e pagamenti»).
 
 - **Riepilogo**: avanzamento di carriera. Con il Piano Incaricati mostra la qualifica, **cosa manca per la prossima** e l'elenco «Cosa fare». I requisiti sono quelli del nuovo piano: **clienti personali** (x / y), **incaricati Pearl al 1° livello**, **colonne con almeno N clienti** (per Ruby) e struttura di qualifiche richiesta. Non ci sono PR, PV, Rank Bonus né Matching.
-- **Rete**: sponsor, storico sponsor, **«Team 1° liv.»** (gli incaricati sponsorizzati da lui; «Clienti diretti» sono invece i suoi clienti) con «Ordini del mese» e «Importo del mese» (ordini pagati nel mese, IVA inclusa) e i clienti diretti con gli stessi dati.
+- **Rete**: sponsor, storico sponsor, **«1° liv.»** (gli incaricati sponsorizzati da lui; «Clienti diretti» sono invece i suoi clienti) con «Ordini del mese» e «Importo del mese» (ordini pagati nel mese, IVA inclusa) e i clienti diretti con gli stessi dati.
 - **Documenti**: documenti KYC con stato di verifica, contratti IVD e canoni annuali (19 € IVA compresa, se il canone è attivo).
 
 **Storico** (colonna a destra): tutti gli eventi in ordine di data — cambi di stato, sponsor, qualifiche e premi, contratto, KYC, canoni, liquidazioni, pagamenti, ordini, clienti riassegnati — più le **note interne**. Le note fissate stanno in cima. Le note si aggiungono con «Aggiungi nota»; non si modificano né si cancellano. Il registro di audit non compare qui (contiene l'identità del super_admin): sta nella tab Audit.

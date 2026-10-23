@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Notifications\SubscriptionCardExpiring;
 use App\Notifications\SubscriptionChargeFailed;
 use App\Notifications\SubscriptionChargeReminder;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Support\Arr;
@@ -216,7 +217,7 @@ final class SubscriptionService
             }
             try {
                 $last = $sub->orders()->whereIn('status', ['paid', 'shipped', 'delivered', 'completed'])->latest('id')->first();
-                $sub->user?->notify(new SubscriptionChargeReminder($sub, $last !== null ? number_format((float) $last->total, 2, ',', '.') : null));
+                $sub->user?->notify(new SubscriptionChargeReminder($sub, $last === null ? null : ($last->payment_method === 'kmoney' ? Money::ky($last->kmoney_amount).' KY'.((float) $last->restDue() > 0.004 ? ' + € '.Money::eur($last->restDue()) : '') : '€ '.Money::eur($last->total))));
                 $sub->update(['reminded_for' => $sub->next_run_at]);
                 $sent++;
             } catch (Throwable $e) {

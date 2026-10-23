@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Consultants;
 
-use App\Domain\Plan\LegacyPlan;
 use App\Domain\Features\Feature;
 use App\Domain\Payouts\PayoutService;
+use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\AnnualFees\AnnualFeeResource;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Resources\Customers\CustomerResource;
@@ -61,7 +61,7 @@ final class Consultant360
     {
         $id = $this->c->id;
         $defs = [
-            ['directs', 'Team 1° liv.', ConsultantResource::class, fn () => Consultant::where('sponsor_id', $id)->count(), ['sponsor' => ['value' => $id]], null],
+            ['directs', '1° liv.', ConsultantResource::class, fn () => Consultant::where('sponsor_id', $id)->count(), ['sponsor' => ['value' => $id]], null],
             ['customers', 'Clienti', CustomerResource::class, fn () => Customer::where('assigned_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
             ['orders', 'Ordini', OrderResource::class, fn () => Order::where('beneficiary_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], LegacyPlan::hidden() ? 'a nome suo' : 'a nome suo (PV a lui)'],
             ['movements', 'Movimenti PV', PvMovementResource::class, fn () => PvMovement::where('consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
@@ -215,7 +215,7 @@ final class Consultant360
         $facts = [
             ['Sponsor attuale', $chain[0] ?? 'nessuno'], ['Sponsor originale', $orig ? "{$orig->code} — {$orig->name}" : '—'],
             ['Catena verso l\'alto', $chain === [] ? '—' : implode(' ← ', array_slice($chain, 0, 6))],
-            ['Team 1° liv.', (string) Consultant::where('sponsor_id', $this->c->id)->count()],
+            ['1° liv.', (string) Consultant::where('sponsor_id', $this->c->id)->count()],
             ['Clienti diretti', (string) Customer::where('assigned_consultant_id', $this->c->id)->count()],
         ];
 
@@ -241,7 +241,7 @@ final class Consultant360
 
         return ['facts' => $facts, 'tables' => [
             $this->table('Storico sponsor', ['Data', 'Da', 'A', 'Motivo', 'Nota'], $hist, 'Lo sponsor non è mai cambiato.'),
-            $this->table('Team 1° liv.', ['Codice', 'Nome', 'Ordini del mese', 'Importo del mese'], $directs, 'Nessun incaricato.', $this->link('Apri la lista del Team 1° liv.', ConsultantResource::class, ['sponsor' => ['value' => $this->c->id]])),
+            $this->table('1° liv.', ['Codice', 'Nome', 'Ordini del mese', 'Importo del mese'], $directs, 'Nessun incaricato.', $this->link('Apri la lista del 1° liv.', ConsultantResource::class, ['sponsor' => ['value' => $this->c->id]])),
             $this->table('Clienti diretti (ultimi 20)', ['Nome', 'Email', 'Registrato il', 'Ordini del mese', 'Importo del mese'], $customers, 'Nessun cliente.', $this->link('Apri la lista dei clienti', CustomerResource::class, ['consultant' => ['value' => $this->c->id]])),
         ]];
     }

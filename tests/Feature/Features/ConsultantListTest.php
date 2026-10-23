@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Features;
 
 use App\Domain\Features\Feature;
+use App\Domain\Network\ConsultantCodeGenerator;
 use App\Domain\Periods\PeriodService;
 use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Support\ConsultantList;
@@ -54,7 +55,7 @@ final class ConsultantListTest extends TestCase
     public function test_list_renders_with_useful_columns(): void
     {
         $this->get('/admin/consultants')->assertOk()
-            ->assertSee('Qualifica')->assertSee('Team 1° liv.')->assertSee('Da pagare')->assertSee('KYC')
+            ->assertSee('Qualifica')->assertSee('1° liv.')->assertSee('Da pagare')->assertSee('KYC')
             ->assertSee('Incaricato A')->assertSee('Crystal');
     }
 
@@ -71,7 +72,7 @@ final class ConsultantListTest extends TestCase
         $prefix = (string) config('lamess.consultant_code_prefix');
         Consultant::create(['code' => $prefix.'00143', 'name' => 'X', 'status' => 'active', 'since' => now()]);
         Consultant::create(['code' => 'K01004', 'name' => 'Y', 'status' => 'active', 'since' => now()]);
-        $this->assertSame($prefix.'00144', app(\App\Domain\Network\ConsultantCodeGenerator::class)->next());
+        $this->assertSame($prefix.'00144', app(ConsultantCodeGenerator::class)->next());
     }
 
     public function test_sponsor_name_and_directs_come_from_the_same_query(): void

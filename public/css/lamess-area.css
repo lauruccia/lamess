@@ -216,3 +216,25 @@ a.item:hover{background:rgb(194 102 58/.05);color:inherit}
  .sub-row>summary{grid-template-columns:minmax(0,1fr) auto 14px}
  .sr-next{grid-column:1/-1;grid-row:2;text-align:left;display:flex;gap:8px;align-items:baseline}
 }
+
+/* I miei clienti: come il piano conta ciascuno nel mese scelto (verde = conta, giallo = scade, rosso = vale 0) */
+.tbl tr.cl-ordered>td:first-child{box-shadow:inset 4px 0 0 #2f7d4f}
+.tbl tr.cl-covered>td:first-child{box-shadow:inset 4px 0 0 #7fb893}
+.tbl tr.cl-expiring>td:first-child{box-shadow:inset 4px 0 0 #d99a1e}
+.tbl tr.cl-zero>td:first-child{box-shadow:inset 4px 0 0 #c4493a}
+.tbl tr.cl-ordered{background:linear-gradient(90deg,rgba(47,125,79,.20),rgba(47,125,79,0) 75%)}
+.tbl tr.cl-covered{background:linear-gradient(90deg,rgba(127,184,147,.18),rgba(127,184,147,0) 75%)}
+.tbl tr.cl-expiring{background:linear-gradient(90deg,rgba(217,154,30,.24),rgba(217,154,30,0) 75%)}
+.tbl tr.cl-zero{background:linear-gradient(90deg,rgba(196,73,58,.16),rgba(196,73,58,0) 75%)}
+.tbl tr.cl-self>td:first-child b::after{content:""}
+.cl-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;background:#eee;color:#555}
+.cl-badge.cl-ordered{background:#2f7d4f;color:#fff}
+.cl-badge.cl-covered{background:#dcefe2;color:#235c3b}
+.cl-badge.cl-expiring{background:#f7e3b0;color:#7a5200}
+.cl-badge.cl-zero{background:#f6d3cd;color:#8a2b1f}
+.cl-legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 16px 4px}
+.cl-chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:4px 12px;border-radius:999px}
+.cl-chip i{width:10px;height:10px;border-radius:50%;background:currentColor;display:inline-block}
+.cl-chip.cl-ordered{background:rgba(47,125,79,.14);color:#235c3b}
+.cl-chip.cl-expiring{background:rgba(217,154,30,.2);color:#7a5200}
+.cl-chip.cl-zero{background:rgba(196,73,58,.14);color:#8a2b1f}

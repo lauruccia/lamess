@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Billing\InvoiceService;
+use App\Domain\Customers\BillingData;
 use App\Domain\Customers\ShippingAddressBook;
 use App\Domain\Orders\CartPricer;
 use App\Domain\Orders\KMoneyApiProvider;
@@ -536,8 +537,13 @@ class ShopController extends Controller
         }
 
         $book = app(ShippingAddressBook::class);
+        // Ritorno da un'uscita dal checkout (collegamento KMoney, salvataggio dei dati): si riprende il modulo com'era, senza perdere nulla.
+        if (($draft = $r->session()->pull(self::DRAFT)) !== null && ! $r->session()->hasOldInput()) {
+            $r->session()->now('_old_input', (array) $draft);
+        }
+        $saved = $u->profile;
 
-        return view('site.shop.checkout', ['addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => Subscription::offeredCadences()]);
+        return view('site.shop.checkout', ['billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $book->list($u), 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => Subscription::offeredCadences()]);
     }
 
     /** @return array<string,string> codice => nome delle nazioni aperte nello shop */
@@ -565,21 +571,53 @@ class ShopController extends Controller
         return redirect('/area/checkout')->withInput($r->except(['_token', 'privacy']));
     }
 
-    /**
-     * Salva dati e indirizzo del checkout nel profilo, così alla prossima volta sono già lì (anche se manca il profilo).
-     * Si può comunque cambiarli in un ordine successivo: ogni ordine conserva il proprio indirizzo.
-     *
-     * @param  array<string,mixed>  $d
-     */
-    private function rememberBilling(Request $r, array $d): void
+    /** Chiave di sessione con il modulo del checkout messo da parte mentre il cliente esce (salva dati, collega KMoney). */
+    private const DRAFT = 'checkout_draft';
+
+    private function keepDraft(Request $r): void
     {
-        if (! $r->boolean('remember', true)) {
-            return;
+        $r->session()->put(self::DRAFT, $r->except(['_token']));
+    }
+
+    /**
+     * «Salva i dati»: i dati di fatturazione vanno nel profilo prima di poter confermare l'ordine.
+     * Se l'indirizzo è già salvato non si cambia da qui (si cambia da «I miei dati»).
+     */
+    public function saveBilling(Request $r)
+    {
+        $d = $r->validate([
+            'type' => 'required|in:private,company',
+            'first_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')], 'last_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')],
+            'company_name' => [Rule::requiredIf(fn () => $r->input('type') === 'company')], 'vat_number' => [Rule::requiredIf(fn () => $r->input('type') === 'company')],
+            'tax_code' => [Rule::requiredIf(fn () => $r->input('type') === 'private' && ($r->input('country') ?: 'IT') === 'IT')],
+            'sdi_code' => 'nullable', 'pec' => 'nullable|email',
+            'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
+        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP']);
+        $profile = $r->user()->profile ?? new Profile(['user_id' => $r->user()->id]);
+        if (BillingData::addressLocked($profile)) {
+            $d = array_merge($d, array_intersect_key(BillingData::lockedAddress($profile), array_flip(BillingData::ADDRESS)));
+        } else {
+            $d['country_code'] = in_array($d['country'] ?? 'IT', array_keys((array) config('lamess.country_names')), true) ? ($d['country'] ?? 'IT') : 'IT';
         }
-        $fields = array_filter(array_intersect_key($d, array_flip([
-            'type', 'first_name', 'last_name', 'company_name', 'tax_code', 'vat_number', 'sdi_code', 'pec', 'address', 'city', 'zip', 'province',
-        ])), fn ($v) => filled($v));
-        Profile::updateOrCreate(['user_id' => $r->user()->id], $fields);
+        unset($d['country']);
+        $profile->fill(array_map(fn ($v) => $v === '' ? null : $v, $d))->save();
+        $missing = BillingData::missing($profile);
+        if ($missing !== []) {
+            $this->keepDraft($r);
+
+            return redirect('/area/checkout')->withErrors($missing);
+        }
+        $this->keepDraft($r);
+
+        return redirect('/area/checkout')->with('status', 'Dati di fatturazione salvati: ora puoi confermare l\'ordine.');
+    }
+
+    /** Il cliente esce per collegare KMoney: il modulo resta in sessione e al ritorno ritrova tutto com'era. */
+    public function checkoutConnectKMoney(Request $r)
+    {
+        $this->keepDraft($r);
+
+        return redirect('/area/kmoney/collega');
     }
 
     /** Con il driver reale: il cliente non ha ancora collegato il conto KMoney (o non ha concesso il mandato di pagamento). */
@@ -606,6 +644,13 @@ class ShopController extends Controller
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
             'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => ['nullable', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
         ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento']);
+        // I dati di fatturazione si salvano prima («Salva i dati»): l'ordine usa quelli salvati e l'indirizzo di fatturazione non si cambia da qui.
+        $saved = $r->user()->profile;
+        $unsaved = BillingData::missing($saved);
+        if ($unsaved !== [] || ! BillingData::matchesSaved($saved, $d)) {
+            return back()->withInput()->withErrors($unsaved + ['order' => 'Prima salva i dati di fatturazione con il pulsante «Salva i dati»: poi potrai confermare l\'ordine.']);
+        }
+        $d = array_merge($d, BillingData::lockedAddress($saved));
         $subscribe = $d['subscribe'] ?? 'none';
         if (! ($orders->enabledMethods()[$d['payment_method']] ?? false)) {
             return back()->withInput()->withErrors(['order' => 'Questo metodo di pagamento non è disponibile al momento: scegline un altro.']);
@@ -665,7 +710,6 @@ class ShopController extends Controller
         }
 
         if ($subscribe !== 'none') {
-            $this->rememberBilling($r, $d);
             try {
                 $sub = $subs->subscribe($r->user(), $this->cart($r), $country, $d, 12, $this->others($r), null, $d['payment_method'], $subscribe === 'bimonthly' ? 2 : 1);
             } catch (OrderException $e) {
@@ -695,7 +739,6 @@ class ShopController extends Controller
         } catch (OrderException $e) {
             return back()->withInput()->withErrors(['order' => $e->getMessage()]);
         }
-        $this->rememberBilling($r, $d);
         // Bonifico: l'ordine è registrato e il carrello si svuota. Carta o KMoney: il carrello resta finché l'ordine non risulta pagato.
         if ($d['payment_method'] === 'transfer') {
             PendingCart::clear($r);
@@ -717,8 +760,9 @@ class ShopController extends Controller
         }
 
         if ($d['payment_method'] === 'kmoney') {
-            // Nessun addebito automatico: il pagamento KMoney si conferma esplicitamente dalla pagina dell'ordine.
-            return redirect("/area/ordini/{$order->id}")->with('status', 'Ordine registrato. Conferma il pagamento con KMoney per completarlo.');
+            // «Conferma ordine» è già la conferma del cliente: con il conto collegato e il mandato concesso si addebita subito, in un clic.
+            // Se l'importo supera il tetto del mandato, KMoney chiede una sola conferma e si torna all'ordine.
+            return $this->payKMoneyOrder($r, $order, $orders);
         }
 
         return redirect("/area/ordini/{$order->id}")->with('status', 'Ordine registrato: segui le istruzioni per il bonifico.');
@@ -818,7 +862,14 @@ class ShopController extends Controller
             session()->now('status', 'Stiamo confermando il pagamento: l\'ordine si aggiorna entro pochi istanti.');
         }
 
-        return view('site.shop.order', ['order' => $order]);
+        // Dopo la conferma su KMoney l'esito arriva dal webhook: per qualche minuto non si rimostra «Conferma e paga» e la pagina si aggiorna da sola.
+        $confirming = (array) $r->session()->get('kmoney_confirming');
+        $kmoneyConfirming = $order->status === 'pending_payment' && ($confirming['id'] ?? null) === $order->id && time() - (int) ($confirming['at'] ?? 0) < 180;
+        if (! $kmoneyConfirming && $confirming !== [] && ($confirming['id'] ?? null) === $order->id) {
+            $r->session()->forget('kmoney_confirming');
+        }
+
+        return view('site.shop.order', ['order' => $order, 'kmoneyConfirming' => $kmoneyConfirming]);
     }
 
     /** Il cliente annulla un proprio ordine con bonifico non ancora pagato (carta e KMoney si chiudono da soli o con l'assistenza). */

@@ -10,6 +10,7 @@ use App\Domain\Career\NetworkOverview;
 use App\Domain\Career\NetworkTree;
 use App\Domain\Customers\ReferralResolver;
 use App\Domain\Customers\ShippingAddressBook;
+use App\Domain\Engine\Calc\KosmosCalculator;
 use App\Domain\Ledger\PointsGrant;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
@@ -25,6 +26,7 @@ use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Domain\Payouts\StatementLifecycle;
 use App\Domain\Payouts\StatementService;
+use App\Domain\Periods\SnapshotBuilder;
 use App\Domain\Support\SupportException;
 use App\Models\CalculationRun;
 use App\Models\CommissionStatement;
@@ -39,8 +41,8 @@ use App\Models\Profile;
 use App\Models\Settlement;
 use App\Models\ShippingAddress;
 use App\Models\User;
-use Brick\Math\BigDecimal;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -155,52 +157,154 @@ class AreaController extends Controller
 
     /** Filtri dell'elenco clienti dell'incaricato (chiave in query => etichetta). */
     public const CUSTOMER_FILTERS = [
-        'senza-ordini' => 'Senza ordini', 'contano' => 'Contano per il piano', 'non-contano' => 'Ordine sotto il minimo',
-        'mese' => 'Hanno ordinato questo mese', 'fermi' => 'Fermi da oltre 30 giorni',
+        'contano' => 'Contano nel mese', 'mese' => 'Hanno ordinato nel mese', 'scadono' => 'Scadono a fine mese', 'zero' => 'Valgono 0 nel mese',
+        'senza-ordini' => 'Senza ordini', 'fermi' => 'Fermi da oltre 30 giorni',
     ];
 
-    /** I clienti assegnati all’incaricato. */
+    /** Filtri che dipendono dal piano Incaricati (clienti validi mese per mese). */
+    private const CUSTOMER_PLAN_FILTERS = ['contano', 'scadono', 'zero'];
+
+    /**
+     * Stato di un cliente in un mese: come lo conta il piano.
+     * ordered = ordine fatto nel mese · covered = ancora valido per un ordine precedente · expiring = valido ma non lo sarà il mese dopo ·
+     * expired = non vale più · under = ha ordinato ma sotto il minimo · none = nessun ordine · before = diventerà cliente più avanti.
+     *
+     * @param  list<array{at: \DateTimeImmutable, months: int, clients: int}>  $valid  ordini che rendono cliente
+     * @return array{0:string,1:int} stato e quanti clienti vale nel mese
+     */
+    private function customerMonthState(array $valid, int $month, bool $hasPaidOrders): array
+    {
+        if ($valid === []) {
+            return [$hasPaidOrders ? 'under' : 'none', 0];
+        }
+        $segments = KosmosCalculator::coverageIntervals($valid);
+        $countsIn = static function (int $m) use ($valid, $segments): int {
+            $w = 0;
+            foreach ($valid as $o) {
+                if (KosmosCalculator::monthIndex($o['at']) === $m) {
+                    $w = max($w, (int) $o['clients']);
+                }
+            }
+            foreach ($segments as [$first, $last, $clients]) {
+                if ($first <= $m && $m <= $last) {
+                    $w = max($w, (int) $clients);
+                }
+            }
+
+            return $w;
+        };
+        $weight = $countsIn($month);
+        if ($weight > 0) {
+            $ordered = collect($valid)->contains(fn (array $o) => KosmosCalculator::monthIndex($o['at']) === $month);
+
+            return [$ordered ? 'ordered' : ($countsIn($month + 1) > 0 ? 'covered' : 'expiring'), $weight];
+        }
+        $firstMonth = min(array_map(static fn (array $o) => KosmosCalculator::monthIndex($o['at']), $valid));
+
+        return [$month < $firstMonth ? 'before' : 'expired', 0];
+    }
+
+    /** I clienti assegnati all’incaricato, preceduti da lui stesso. */
     public function customers(Request $request)
     {
         $me = $this->activeConsultant($request);
         $all = Customer::query()->where('assigned_consultant_id', $me->id)->with('user.profile')->orderByDesc('registered_at')->get();
-        $rows = $all;
-        $orders = DB::table('orders')->whereIn('buyer_user_id', $rows->pluck('user_id'))->where('status', 'paid')
-            ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
         $period = Period::query()->orderByDesc('code')->first();
-        $kosmos = $period?->planVersion->plan()->kosmos;
+        $plan = $period?->planVersion->plan();
+        $kosmos = $plan?->kosmos;
         $progress = $kosmos !== null ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($me->id)) : null;
+
+        // L'incaricato è il primo «cliente» dell'elenco: i suoi acquisti contano come clienti suoi (se il piano lo prevede).
+        $meUser = $me->user ?? $request->user();
+        $meUser->loadMissing('profile');
+        $self = new Customer(['user_id' => $meUser->id, 'assigned_consultant_id' => $me->id, 'source' => 'self', 'registered_at' => $meUser->created_at]);
+        $self->setRelation('user', $meUser);
+        $self->setAttribute('is_self', true);
+        $people = collect([$self])->concat($all);
+
+        $orders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->where('status', 'paid')
+            ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
+
+        // Mese scelto (ora italiana): di default quello in corso; dal passato più recente fino al prossimo, per vedere chi scade.
+        $nowRome = CarbonImmutable::now('Europe/Rome');
+        $month = preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', (string) $request->query('mese', '')) === 1
+            ? CarbonImmutable::createFromFormat('Y-m-d', $request->query('mese').'-01', 'Europe/Rome')->startOfMonth()
+            : $nowRome->startOfMonth();
+        $monthOptions = [];
+        for ($i = -11; $i <= 1; $i++) {
+            $d = $nowRome->startOfMonth()->addMonths($i);
+            $monthOptions[$d->format('Y-m')] = $d->locale('it')->translatedFormat('F Y');
+        }
+        $monthOptions[$month->format('Y-m')] ??= $month->locale('it')->translatedFormat('F Y');
+        krsort($monthOptions);
+        $monthIndex = KosmosCalculator::monthIndex($month->toDateTimeImmutable());
+
+        // Come il piano conta ciascuno nel mese scelto.
+        $states = [];
+        if ($kosmos !== null) {
+            $qualifying = SnapshotBuilder::qualifyingOrders(now(), $plan, (string) $me->id)[(string) $me->id] ?? [];
+            $ownCounts = $plan->policies->is('kosmos_own_purchase_as_client', 'on');
+            foreach ($people as $p) {
+                $isSelf = (bool) $p->getAttribute('is_self');
+                if ($isSelf && ! $ownCounts) {
+                    $states[$p->user_id] = ['own_off', 0];
+
+                    continue;
+                }
+                $valid = $qualifying[$isSelf ? 'self:'.$me->id : (string) $p->user_id] ?? [];
+                $states[$p->user_id] = $this->customerMonthState($valid, $monthIndex, isset($orders[$p->user_id]));
+            }
+        }
+        $tally = ['ordered' => 0, 'covered' => 0, 'expiring' => 0, 'zero' => 0];
+        foreach ($states as [$st]) {
+            $key = match ($st) {
+                'ordered', 'covered', 'expiring' => $st,
+                'own_off', 'before' => null,
+                default => 'zero',
+            };
+            if ($key !== null) {
+                $tally[$key]++;
+            }
+        }
 
         $search = trim((string) $request->query('q', ''));
         $state = (string) $request->query('stato', '');
+        $state = array_key_exists($state, self::CUSTOMER_FILTERS) && ($kosmos !== null || ! in_array($state, self::CUSTOMER_PLAN_FILTERS, true)) ? $state : '';
+        $filtered = $people;
         if ($search !== '') {
             $needle = mb_strtolower($search);
-            $rows = $rows->filter(fn ($r) => str_contains(mb_strtolower(trim(($r->user?->profile?->fullName() ?: (string) $r->user?->name).' '.$r->user?->email.' '.$r->user?->profile?->phone)), $needle));
+            $filtered = $filtered->filter(fn ($r) => str_contains(mb_strtolower(trim(($r->user?->profile?->fullName() ?: (string) $r->user?->name).' '.$r->user?->email.' '.$r->user?->profile?->phone)), $needle));
         }
-        if (array_key_exists($state, self::CUSTOMER_FILTERS)) {
-            $monthStart = now('UTC')->startOfMonth();
-            $rows = $rows->filter(function ($r) use ($orders, $kosmos, $state, $monthStart) {
+        if ($state !== '') {
+            $monthStart = $month->utc();
+            $monthEnd = $month->addMonth()->utc();
+            $filtered = $filtered->filter(function ($r) use ($orders, $state, $states, $monthStart, $monthEnd) {
                 $o = $orders[$r->user_id] ?? null;
-                $valid = $kosmos !== null && $o !== null && $kosmos->orderQualifies(BigDecimal::of((string) $o->biggest));
+                $st = $states[$r->user_id][0] ?? null;
 
                 return match ($state) {
                     'senza-ordini' => $o === null,
-                    'contano' => $valid,
-                    'non-contano' => $o !== null && ! $valid,
-                    'mese' => $o !== null && Carbon::parse($o->last_paid, 'UTC')->gte($monthStart),
+                    'contano' => in_array($st, ['ordered', 'covered', 'expiring'], true),
+                    'scadono' => $st === 'expiring',
+                    'zero' => in_array($st, ['expired', 'under', 'none'], true),
+                    'mese' => $o !== null && Carbon::parse($o->last_paid, 'UTC')->gte($monthStart) && Carbon::parse($o->last_paid, 'UTC')->lt($monthEnd),
                     'fermi' => $o !== null && Carbon::parse($o->last_paid, 'UTC')->lt(now('UTC')->subDays(30)),
                     default => true,
                 };
             });
         }
 
+        // L'incaricato sta sempre in cima alla prima pagina; la paginazione conta solo i clienti.
+        $selfRow = $filtered->first(fn ($r) => (bool) $r->getAttribute('is_self'));
+        $rows = $filtered->reject(fn ($r) => (bool) $r->getAttribute('is_self'))->values();
         $perPage = 50;
         $page = max(1, (int) $request->query('pagina', 1));
-        $rows = new LengthAwarePaginator($rows->values()->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'pageName' => 'pagina', 'query' => $request->except('pagina')]);
+        $rows = new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'pageName' => 'pagina', 'query' => $request->except('pagina')]);
 
         return view('site.area.customers', [
-            'rows' => $rows, 'all' => $all, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress,
-            'search' => $search, 'state' => array_key_exists($state, self::CUSTOMER_FILTERS) ? $state : '', 'filters' => self::CUSTOMER_FILTERS,
+            'rows' => $rows, 'selfRow' => $page === 1 ? $selfRow : null, 'all' => $all, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress,
+            'search' => $search, 'state' => $state, 'filters' => self::CUSTOMER_FILTERS, 'planFilters' => self::CUSTOMER_PLAN_FILTERS,
+            'month' => $month->format('Y-m'), 'monthLabel' => $month->locale('it')->translatedFormat('F Y'), 'monthOptions' => $monthOptions, 'states' => $states, 'tally' => $tally,
         ]);
     }
 

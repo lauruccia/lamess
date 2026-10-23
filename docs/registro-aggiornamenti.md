@@ -358,7 +358,7 @@
 
 
 ## 2026-10-19 — Revisione di documentazione e manuali
-- Allineati ai lavori del 16/10: **Team 1° liv.** al posto di «Diretti» (scheda 360° e manuale admin), elenco clienti dell'incaricato a 50 per pagina e blocco dell'accesso per troppi tentativi (manuale utente e guida breve), reinvio fatture a 200 per giro, `lamess:coda` e `withoutOverlapping` fra le operazioni pianificate (architettura), sezioni su sicurezza, prestazioni, email in coda e firma con codice nel manuale sviluppatori (§10).
+- Allineati ai lavori del 16/10: **1° liv.** al posto di «Diretti» (scheda 360° e manuale admin), elenco clienti dell'incaricato a 50 per pagina e blocco dell'accesso per troppi tentativi (manuale utente e guida breve), reinvio fatture a 200 per giro, `lamess:coda` e `withoutOverlapping` fra le operazioni pianificate (architettura), sezioni su sicurezza, prestazioni, email in coda e firma con codice nel manuale sviluppatori (§10).
 - Decisioni aperte: commissione di prelievo 2,50 € tolta da OPEN-54 e A-01 (eliminata il 15/10, `LAMESS_BANK_FEE` = 0,00); A-12 riporta la richiesta di Laura sugli XML per email (invio mensile o a pulsante); A-03 annota che il test non compare fra i rossi dell'ultima esecuzione.
 - README: elenco dei test rossi allineato al registro del 16/10.
 - Dossier `docs/dossier.html` rigenerato (era fermo al 14/10).
@@ -431,3 +431,10 @@
 - Le liquidazioni mostrano lo stato in italiano (Aperta, Accreditata sul portafoglio, Pagata) invece del codice.
 - Le pagine già curate (omaggi, eventi, news, download, spedizioni) sono divise in sezioni con spiegazione; tutte le pagine di modifica hanno i pulsanti fissi in basso e tornano all'elenco dopo il salvataggio.
 - Nessuna migrazione. Il comportamento dei dati non cambia.
+
+## 2026-10-23 — Checkout, KMoney, "I miei clienti", accesso come, etichette
+- Checkout: indirizzo di fatturazione bloccato dopo il primo salvataggio (si cambia da «I miei dati»); «Salva i dati» obbligatorio prima di abilitare «Conferma ordine»; la bozza (metodo di pagamento, abbonamento, privacy) non si perde nel passaggio da KMoney.
+- KMoney: collegamento obbligatorio prima dell'ordine, massimale suggerito di 1500 KY (`KMONEY_MANDATE_LIMIT_KY`) per il pagamento automatico a un clic; conferme ridotte; niente «Conferma e paga» dopo il pagamento; importi KMoney in «KY» senza decimali nelle email; email e footer in italiano.
+- «I miei clienti»: l'incaricato è il primo cliente (acquisti propri), filtro per mese, colori per chi dà il punto / sta per scadere / senza ordine (vale 0). «Team 1° liv.» diventa «1° liv.».
+- Super admin: «Accedi come» da Utenti, Clienti, Incaricati (fascia di avviso, pagamenti/password/firme/IBAN/prelievi bloccati, log di audit `impersonation.*`).
+- Etichette di spedizione: singola (ordine) o in blocco su foglio A4 (8 per foglio) dall'elenco ordini.

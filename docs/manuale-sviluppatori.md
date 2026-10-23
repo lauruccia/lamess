@@ -204,3 +204,12 @@ App\Domain\Billing       InvoiceService, FatturaPaBuilder, InvoiceSink (+ Fake, 
 ## 11. Documentazione
 
 I manuali sono in `docs/` (elenco nel `README.md`). `php artisan lamess:parametri` produce solo le tabelle del piano precedente (vedi sezione 4 per la sovrascrittura); `php artisan lamess:manuale` ricostruisce il dossier HTML unico dai manuali.
+
+## Accesso come (impersonation)
+`App\Domain\Access\Impersonation` (sessione `impersonator_id`), azione Filament `ImpersonateAction`, middleware `impersonation.safe` (`BlockWhileImpersonating`) sulle rotte di pagamento/password/firma/IBAN/prelievi/KMoney, rotta `POST /area/torna-admin`. `SiteClosed` lascia passare durante l'accesso; `AuditLog::actor()` aggiunge il super_admin. Test: `ImpersonationTest`.
+
+## Etichette di spedizione
+`App\Domain\Orders\ShippingLabelService` + vista `pdf/shipping-labels`; rotta `GET /admin-files/orders/etichette?ids=1,2&formato=singola`; azioni in `OrderResource`. Test: `ShippingLabelsTest`.
+
+## Checkout: dati di fatturazione
+`App\Domain\Customers\BillingData`; `ShopController::saveBilling`/`checkoutConnectKMoney`; massimale KMoney `lamess.kmoney.mandate_limit_ky` (`KMONEY_MANDATE_LIMIT_KY`).

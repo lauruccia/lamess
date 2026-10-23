@@ -37,7 +37,7 @@ class SubscriptionChargeReminder extends Notification implements ShouldQueueAfte
         $date = $this->subscription->next_run_at?->setTimezone('Europe/Rome')->format('d/m/Y');
         $mail = (new MailMessage)->subject('Tra pochi giorni il prossimo addebito del tuo abbonamento Lamèss')
             ->greeting('Ciao!')
-            ->line("Il {$date} ti addebiteremo il prossimo ordine del tuo abbonamento".($this->amount !== null ? ' (importo indicativo: € '.$this->amount.', IVA inclusa).' : '.'));
+            ->line("Il {$date} ti addebiteremo il prossimo ordine del tuo abbonamento".($this->amount !== null ? ' (importo indicativo: '.$this->amount.', IVA inclusa).' : '.'));
         $mail->line($byCard
             ? 'Controlla che la carta salvata sia valida e abbia disponibilità sufficiente, così l\'addebito va a buon fine.'
             : 'Controlla che sul tuo conto KMoney ci sia saldo sufficiente e che il conto sia ancora collegato.');

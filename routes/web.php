@@ -1,11 +1,13 @@
 <?php
 
+use App\Domain\Access\Impersonation;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Billing\BillingException;
 use App\Domain\Billing\FatturaPaBuilder;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\SignatureCertificate;
+use App\Domain\Orders\ShippingLabelService;
 use App\Domain\Payouts\ExportService;
 use App\Domain\Payouts\PayoutException;
 use App\Domain\Payouts\ReceiptService;
@@ -13,6 +15,7 @@ use App\Domain\Payouts\StatementService;
 use App\Domain\System\BackupService;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\BadgeVerifyController;
+use App\Http\Controllers\BonusStatementController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\InstallController;
@@ -22,7 +25,6 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TransferController;
-use App\Http\Controllers\BonusStatementController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WebhookController;
 use App\Models\CommissionReceipt;
@@ -31,8 +33,10 @@ use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\IvdContract;
 use App\Models\KycDocument;
+use App\Models\Order;
 use App\Models\Payout;
 use App\Models\Period;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -68,18 +72,23 @@ Route::middleware('guest')->group(function () {
     Route::get('/password-reset/{token}', [SiteController::class, 'resetForm'])->name('password.reset');
     Route::post('/password-reset', [SiteController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
 });
+Route::post('/area/torna-admin', function (Request $request) {
+    Impersonation::stop($request) ?: abort(403);
+
+    return redirect('/admin');
+})->middleware('auth')->name('impersonation.stop');
 Route::post('/esci', [SiteController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->prefix('area')->group(function () {
     Route::get('/', [AreaController::class, 'home'])->name('area');
     Route::get('/diventa-incaricato', [AreaController::class, 'becomeForm']);
     Route::post('/diventa-incaricato', [AreaController::class, 'apply']);
-    Route::post('/diventa-incaricato/firma', [AreaController::class, 'sign'])->middleware('throttle:10,1');
+    Route::post('/diventa-incaricato/firma', [AreaController::class, 'sign'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::post('/diventa-incaricato/codice', [AreaController::class, 'resendCode'])->middleware('throttle:5,1');
     Route::get('/onboarding', [AreaController::class, 'onboarding']);
     Route::post('/onboarding/verifica-online', [AreaController::class, 'startOnlineKyc'])->middleware('throttle:6,1');
-    Route::post('/onboarding/documento', [AreaController::class, 'uploadDocument']);
-    Route::post('/onboarding/iban', [AreaController::class, 'saveIban']);
+    Route::post('/onboarding/documento', [AreaController::class, 'uploadDocument'])->middleware('impersonation.safe');
+    Route::post('/onboarding/iban', [AreaController::class, 'saveIban'])->middleware('impersonation.safe');
     Route::get('/file/{kind}', [AreaController::class, 'download']);
     Route::get('/rete', [AreaController::class, 'network']);
     Route::get('/rete/{id}/dettaglio', [AreaController::class, 'networkDetail'])->whereNumber('id')->middleware('throttle:120,1');
@@ -89,7 +98,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/indirizzi', [AreaController::class, 'addAddress'])->middleware('throttle:20,1');
     Route::post('/indirizzi/{address}', [AreaController::class, 'updateAddress'])->middleware('throttle:20,1');
     Route::post('/indirizzi/{address}/{action}', [AreaController::class, 'addressAction'])->whereIn('action', ['elimina', 'predefinito'])->middleware('throttle:20,1');
-    Route::post('/profilo/password', [AreaController::class, 'savePassword'])->middleware('throttle:6,1');
+    Route::post('/profilo/password', [AreaController::class, 'savePassword'])->middleware('impersonation.safe')->middleware('throttle:6,1');
     Route::get('/statini-bonus', [BonusStatementController::class, 'index']);
     Route::get('/statini-bonus/{week}', [BonusStatementController::class, 'show']);
     Route::get('/statini-bonus/{week}/pdf', [BonusStatementController::class, 'pdf']);
@@ -120,16 +129,18 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/referral/inviti', [ContentController::class, 'inviteStore'])->middleware('throttle:20,1');
     Route::post('/referral/inviti/{invite}/ricorda', [ContentController::class, 'inviteRemind'])->middleware('throttle:20,1');
     Route::get('/wallet', [WalletController::class, 'wallet']);
-    Route::post('/wallet/prelievo', [WalletController::class, 'withdraw'])->middleware('throttle:10,1');
-    Route::post('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'addDocument'])->middleware('throttle:10,1');
+    Route::post('/wallet/prelievo', [WalletController::class, 'withdraw'])->middleware('impersonation.safe')->middleware('throttle:10,1');
+    Route::post('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'addDocument'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::get('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'document']);
-    Route::post('/wallet/prelievo/{withdrawal}/annulla', [WalletController::class, 'cancelWithdrawal'])->middleware('throttle:10,1');
+    Route::post('/wallet/prelievo/{withdrawal}/annulla', [WalletController::class, 'cancelWithdrawal'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::get('/ricevute', [WalletController::class, 'receipts']);
     Route::get('/ricevute/{receipt}', [WalletController::class, 'receipt']);
     Route::get('/ricevute/{receipt}/pdf', [WalletController::class, 'receiptPdf']);
     Route::post('/ricevute/{receipt}/reclamo', [WalletController::class, 'disputeReceipt'])->middleware('throttle:6,1');
     Route::get('/checkout', [ShopController::class, 'checkoutForm']);
-    Route::post('/checkout', [ShopController::class, 'checkout'])->middleware('throttle:20,1');
+    Route::post('/checkout', [ShopController::class, 'checkout'])->middleware('impersonation.safe')->middleware('throttle:20,1');
+    Route::post('/checkout/dati', [ShopController::class, 'saveBilling'])->middleware('throttle:30,1');
+    Route::post('/checkout/kmoney', [ShopController::class, 'checkoutConnectKMoney'])->middleware('impersonation.safe')->middleware('throttle:20,1');
     Route::post('/checkout/nazione', [ShopController::class, 'checkoutCountry'])->middleware('throttle:60,1');
     Route::post('/carrello/per-altri', [ShopController::class, 'addForOther']);
     Route::get('/abbonamenti', [ShopController::class, 'subscriptions']);
@@ -138,10 +149,10 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/abbonamenti/{subscription}/indirizzo', [ShopController::class, 'subscriptionAddress'])->middleware('throttle:20,1');
     Route::get('/ordini', [ShopController::class, 'orders']);
     Route::get('/ordini/{order}', [ShopController::class, 'order']);
-    Route::get('/kmoney/collega', [KMoneyController::class, 'connect'])->middleware('throttle:20,1');
+    Route::get('/kmoney/collega', [KMoneyController::class, 'connect'])->middleware('impersonation.safe')->middleware('throttle:20,1');
     Route::get('/kmoney/ritorno', [KMoneyController::class, 'back']);
-    Route::get('/kmoney/mandato', [KMoneyController::class, 'mandate'])->middleware('throttle:20,1');
-    Route::post('/kmoney/scollega', [KMoneyController::class, 'disconnect'])->middleware('throttle:10,1');
+    Route::get('/kmoney/mandato', [KMoneyController::class, 'mandate'])->middleware('impersonation.safe')->middleware('throttle:20,1');
+    Route::post('/kmoney/scollega', [KMoneyController::class, 'disconnect'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::post('/ordini/{order}/resto', [ShopController::class, 'chooseRest'])->middleware('throttle:10,1');
     Route::post('/ordini/{order}/riprova', [ShopController::class, 'retryCard'])->middleware('throttle:10,1');
     Route::post('/ordini/{order}/annulla', [ShopController::class, 'cancelOwn'])->middleware('throttle:10,1');
@@ -165,6 +176,15 @@ Route::middleware(['auth'])->prefix('admin-files')->group(function () {
         abort_unless(auth()->user()->can('network.manage') && $contract->signed_at !== null && $contract->signature_provider !== 'odoo', 403);
 
         return response(app(SignatureCertificate::class)->pdf($contract), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="certificato-firma-'.$contract->id.'.pdf"']);
+    });
+    Route::get('/orders/etichette', function (Request $request) {
+        abort_unless(auth()->user()->can('orders.manage'), 403);
+        $ids = array_filter(array_map('intval', explode(',', (string) $request->query('ids'))));
+        abort_if($ids === [], 404);
+        $orders = Order::with('items', 'buyer')->whereIn('id', $ids)->orderBy('id')->get();
+        AuditLog::record('order.labels_printed', 'Stampate le etichette di spedizione: '.$orders->count().' ordini', null, ['ordini' => $orders->pluck('number')->all()]);
+
+        return response(app(ShippingLabelService::class)->pdf($orders, $request->query('formato') !== 'singola'), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="etichette-spedizione.pdf"']);
     });
     Route::get('/badge/{consultant}', function (Consultant $consultant) {
         abort_unless(auth()->user()->can('network.manage'), 403);

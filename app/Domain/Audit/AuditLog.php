@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Audit;
 
+use App\Domain\Access\Impersonation;
 use App\Models\User;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -228,7 +229,10 @@ final class AuditLog
     {
         $user = Auth::user();
         if ($user instanceof User) {
-            return [(int) $user->getKey(), (string) $user->email];
+            // Durante un «Accedi come» l'azione resta attribuita anche al super_admin che la sta compiendo.
+            $by = Impersonation::impersonator();
+
+            return [(int) $user->getKey(), (string) $user->email.($by !== null ? " (accesso come, da {$by->email})" : '')];
         }
 
         return [null, app()->runningInConsole() ? 'console' : 'anonimo'];

@@ -174,6 +174,30 @@
     sync();
   }
 
+  // Checkout: «Conferma ordine» si attiva solo con i dati di fatturazione salvati (e, pagando con KMoney, con il conto collegato)
+  function confirmGate() {
+    var btn = $('#confirm-order'), form = $('#checkout-form'); if (!btn || !form) return;
+    var dirty = false, hint = $('[data-confirm-hint]'), state = $('[data-billing-state]');
+    var fields = ['type', 'first_name', 'last_name', 'company_name', 'tax_code', 'vat_number', 'sdi_code', 'pec', 'address', 'city', 'zip', 'province'];
+    function sync() {
+      var missing = btn.dataset.billingMissing === '1' || dirty;
+      var pm = $('input[name=payment_method]:checked');
+      var needLink = btn.dataset.kmNeedsLink === '1' && pm && pm.value === 'kmoney';
+      btn.disabled = missing || needLink;
+      if (hint) {
+        hint.hidden = !(missing || needLink);
+        hint.textContent = missing ? 'Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».' : 'Collega prima il tuo conto KMoney (pulsante «Collega KMoney») per attivare «Conferma ordine».';
+      }
+      if (dirty && state) state.innerHTML = 'Hai modificato i dati: <b>salvali</b> per poter confermare l\'ordine.';
+    }
+    fields.forEach(function (n) {
+      var el = form.elements[n]; if (!el || el.readOnly) return;
+      ['input', 'change'].forEach(function (ev) { el.addEventListener(ev, function () { dirty = true; sync(); }); });
+    });
+    $$('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  }
+
   // Varianti: formato, taglia, colore. Le pillole scelgono la variante; il menu nascosto resta come alternativa senza JavaScript.
   function variants() {
     var box = $('[data-variants]'), raw = $('#variants-data'); if (!box || !raw) return;
@@ -226,6 +250,7 @@
     var sel = $('#type'); if (sel) { sel.addEventListener('change', company); company(); }
     subscription();
     kmoneyRest(); kmoneyAmounts();
+    confirmGate();
     formErrors();
   });
 })();

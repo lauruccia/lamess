@@ -33,9 +33,9 @@ class OrderShipped extends Notification implements ShouldQueueAfterCommit
     {
         $mail = (new MailMessage)->subject("Ordine {$this->order->number}: spedito")
             ->greeting('Il tuo ordine è in viaggio!')
-            ->line("L'ordine {$this->order->number} è stato affidato al corriere".($this->order->carrier ? " {$this->order->carrier}" : '').'.');
+            ->line("L'ordine {$this->order->number} è stato affidato al corriere".($this->order->carrier ? " {$this->order->carrier}" : '').' e arriverà all\'indirizzo di spedizione indicato.');
         if (filled($this->order->tracking_code)) {
-            $mail->line("Codice di tracciamento: {$this->order->tracking_code}");
+            $mail->line("Codice di tracciamento: **{$this->order->tracking_code}**");
         }
 
         return $mail->action('Vedi il tuo ordine', url("/area/ordini/{$this->order->id}"));

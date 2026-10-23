@@ -29,7 +29,10 @@
   <div class="note"><div><strong>Fai il bonifico per confermare l'ordine</strong>{{ config('lamess.bank_transfer_instructions') }}<br>Causale: <strong>{{ $order->number }}</strong> · Importo: <strong>€ {{ $eur($order->total) }}</strong>. L'ordine sarà confermato alla ricezione del pagamento.</div></div>
  @elseif($order->payment_method === 'kmoney')
   @php($kmPaid = $order->payments->contains(fn ($p) => $p->method === 'kmoney' && $p->status === 'paid'))
-  @if(! $kmPaid)
+  @if(! $kmPaid && ($kmoneyConfirming ?? false))
+   <div class="note" data-km-confirming><div><strong>Stiamo confermando il pagamento con KMoney</strong>Hai già confermato su KMoney: questa pagina si aggiorna da sola entro pochi istanti, non devi fare altro.</div></div>
+   <script>setTimeout(function () { location.reload(); }, 5000);</script>
+  @elseif(! $kmPaid)
    <div class="note"><div><strong>Conferma il pagamento con KMoney</strong>Quando confermi, addebitiamo {{ $eur($order->kmoney_amount) }} KY dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
     <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Conferma e paga {{ $eur($order->kmoney_amount) }} KY</button></form></div>
   @elseif($order->kmoney_rest_method === null && (float) $order->restDue() > 0)

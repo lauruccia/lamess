@@ -22,6 +22,12 @@
 @php($isConsultant = $me?->consultant && $me->consultant->status !== 'terminated')
 @php(\App\Domain\Orders\PendingCart::pending(request()))
 @php($cartCount = array_sum((array) session('cart', [])) + array_sum(array_map('array_sum', (array) session('cart_others', []))))
+@if(\App\Domain\Access\Impersonation::active(request()) && $me)
+<div class="impersonation-bar" role="status" style="background:#b45309;color:#fff;padding:.5rem 1rem;display:flex;gap:1rem;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.9rem">
+ <span>Stai usando il portale come <b>{{ $me->name ?: $me->email }}</b> ({{ $me->email }}). Pagamenti, password, firme e dati bancari sono bloccati.</span>
+ <form method="POST" action="{{ route('impersonation.stop') }}" style="margin:0">@csrf<button type="submit" style="background:#fff;color:#92400e;border:0;border-radius:6px;padding:.3rem .8rem;font-weight:600;cursor:pointer">Torna al mio account</button></form>
+</div>
+@endif
 <header class="site-header">
  <div class="bar">
   <a class="brand" href="/" aria-label="Lamèss">

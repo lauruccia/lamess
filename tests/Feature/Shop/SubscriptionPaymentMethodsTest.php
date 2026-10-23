@@ -534,8 +534,7 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $this->assertStringNotContainsString('Addebito automatico', $html);
         $this->assertStringContainsString('Da pagare in KMoney', $html);
         $this->assertStringNotContainsString('Risparmia fino al', $html);
-        $this->assertStringContainsString('<a href="/area/kmoney/collega">collega il tuo conto KMoney</a>', $html);
-        $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Apri un conto KMoney</a>', $html);
+        $this->assertStringContainsString('Per pagare col tuo saldo devi prima collegare il conto KMoney', $html);
         $this->assertStringNotContainsString('Ti chiederemo di collegare', $html);
 
         config(['lamess.kmoney_bonus_percent' => 0]);
@@ -552,7 +551,8 @@ final class SubscriptionPaymentMethodsTest extends TestCase
         $p = $this->product('A', '150.00', ['kmoney_percent' => 100]);
         $html = $this->actingAs($u)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
 
-        $this->assertStringContainsString('<a href="/area/kmoney/collega">collega il tuo conto KMoney</a>', $html);
-        $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Apri un conto KMoney</a>', $html);
+        $this->assertStringContainsString('formaction="/area/checkout/kmoney"', $html);
+        $this->assertStringContainsString('<a href="https://kmoney.it/register" target="_blank" rel="noopener">Non hai un conto? Aprilo qui</a>', $html);
+        $this->assertStringContainsString('data-km-needs-link="1"', $html);
     }
 }

@@ -6,6 +6,7 @@ namespace Tests\Feature\Shop;
 
 use App\Domain\Customers\ShippingAddressBook;
 use App\Models\Order;
+use App\Models\Profile;
 use App\Models\ShippingRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ShopDb;
@@ -60,6 +61,8 @@ final class CheckoutCountryTest extends TestCase
     {
         $user = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00');
+        // L'indirizzo di fatturazione è bloccato nel checkout: spedire in Germania «come la fatturazione» vale solo se il profilo ha la Germania.
+        Profile::where('user_id', $user->id)->update(['country_code' => 'DE']);
 
         $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])
             ->post('/area/checkout', $this->form(['country' => 'DE']))->assertRedirect();

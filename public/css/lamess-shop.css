@@ -814,3 +814,13 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 }
 /* Fra 1360 e 1560 px le etichette «Ordina» / «Per pagina» spariscono (restano nei select) per far stare tutto. */
 @media(min-width:1181px) and (max-width:1560px){.shop-form .filters .tb-sel{font-size:0;gap:0}.shop-form .filters .tb-sel select{font-size:15px}}
+
+/* Checkout: indirizzo di fatturazione bloccato, salvataggio dati, collegamento KMoney */
+.co-form input.locked{background:#f3efe9;color:#6b645b;cursor:not-allowed;border-style:dashed}
+.co-form .lock-note{margin:6px 0 10px}
+.co-form .billing-save{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.co-form .billing-save .ok{color:#2f7d4f}
+.co-form .km-connect{margin-top:10px}
+.co-form .km-connect-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.co-confirm button[disabled]{opacity:.5;cursor:not-allowed}
+.co-confirm .confirm-hint{margin:8px 0 0}

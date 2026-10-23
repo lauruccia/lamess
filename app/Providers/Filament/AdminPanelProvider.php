@@ -2,16 +2,17 @@
 
 namespace App\Providers\Filament;
 
+use App\Domain\Access\Impersonation;
 use App\Filament\Pages\AuditVerificationPage;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
-use App\Filament\Pages\LegacyPlanPage;
 use App\Filament\Pages\ConsultantLevelsPage;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\FeaturesPage;
 use App\Filament\Pages\GoLiveCheckPage;
-use App\Filament\Pages\NetworkTreePage;
 use App\Filament\Pages\IncaricatiSimulationPage;
+use App\Filament\Pages\LegacyPlanPage;
+use App\Filament\Pages\NetworkTreePage;
 use App\Filament\Pages\RankComparisonPage;
 use App\Filament\Pages\SalesDashboardPage;
 use App\Filament\Pages\ShopSettingsPage;
@@ -70,6 +71,14 @@ class AdminPanelProvider extends PanelProvider
             ->font('Inter')
             // token grafici Lamèss: font Marcellus per i titoli, colori e tema scuro condivisi con il sito
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => new HtmlString('<link rel="stylesheet" href="'.e(asset('css/lamess-tokens.css')).'"><link rel="stylesheet" href="'.e(asset('css/lamess-admin.css')).'"><script src="'.e(asset('js/lamess-image-editor.js')).'?v=1" defer></script>'))
+            ->renderHook(PanelsRenderHook::BODY_START, function () {
+                $me = auth()->user();
+                if (! Impersonation::active(request()) || ! $me) {
+                    return '';
+                }
+
+                return new HtmlString('<div style="background:#b45309;color:#fff;padding:.5rem 1rem;display:flex;gap:1rem;align-items:center;justify-content:center;font-size:.9rem">Stai usando il portale come <b>'.e($me->email).'</b>. <form method="POST" action="'.e(route('impersonation.stop')).'" style="margin:0"><input type="hidden" name="_token" value="'.e(csrf_token()).'"><button type="submit" style="background:#fff;color:#92400e;border:0;border-radius:6px;padding:.3rem .8rem;font-weight:600;cursor:pointer">Torna al mio account</button></form></div>');
+            })
             ->renderHook(PanelsRenderHook::CONTENT_BEFORE, fn () => PageHelp::render())
             ->colors([
                 'primary' => Color::hex('#C2663A'), // terracotta Lamèss

@@ -154,3 +154,6 @@ Punti d'ingresso dei provider: `POST /webhooks/stripe` e `POST /webhooks/kmoney`
 ## Hosting e rilascio
 
 L'applicazione sta **fuori** dalla cartella pubblica (`$HOME/lamess_app`), in `public_html` va solo il contenuto di `public/`. Il codice arriva da GitHub (`lauruccia/lamess`, branch `main`) con cPanel → Git Version Control e `.cpanel.yml`; il sito live **non ha terminale**. Il deploy non lancia `migrate` né `lamess:ruoli`. Cosa si fa in sviluppo e cosa su cPanel: vedi «Manuale per sviluppatori», sezione 3, e `installazione-cpanel.md`.
+
+## Accesso come e etichette
+Vedi manuale sviluppatori: `Domain/Access/Impersonation`, `Domain/Orders/ShippingLabelService`, `Domain/Customers/BillingData`.

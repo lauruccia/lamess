@@ -174,15 +174,44 @@ final class KMoneyMandateFlowTest extends TestCase
         $this->assertSame(0, Subscription::count());
     }
 
-    public function test_with_the_account_linked_and_authorized_the_kmoney_order_is_registered_as_before(): void
+    public function test_with_the_account_linked_and_authorized_confirm_order_charges_kmoney_in_one_click(): void
     {
         [$user, $link] = $this->linkedWithoutMandate();
         $link->update(['mandate_uuid' => 'M-1']);
         $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake(['kmoney.test/api/v1/mandates/M-1/charge' => Http::response(['status' => 'booked', 'transfer_uuid' => 'T-1'], 200)]);
 
         $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm())
             ->assertSessionHasNoErrors();
-        $this->assertSame(1, Order::where('payment_method', 'kmoney')->where('status', 'pending_payment')->count());
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+        $this->assertContains($order->status, Order::PAID_STATES, 'nessuna seconda conferma: «Conferma ordine» addebita subito');
+        Http::assertSentCount(1);
+    }
+
+    public function test_when_kmoney_asks_for_one_confirmation_the_customer_is_sent_there_and_the_order_waits(): void
+    {
+        [$user, $link] = $this->linkedWithoutMandate();
+        $link->update(['mandate_uuid' => 'M-1']);
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake(['kmoney.test/api/v1/mandates/M-1/charge' => Http::response(['reason' => 'amount_over_cap', 'confirmation_url' => 'https://kmoney.test/pay/abc'], 402)]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm())
+            ->assertRedirect('https://kmoney.test/pay/abc')->assertSessionHas('kmoney_order');
+        $this->assertSame('pending_payment', Order::where('payment_method', 'kmoney')->firstOrFail()->status);
+    }
+
+    public function test_after_confirming_on_kmoney_the_order_page_hides_confirm_and_pay_until_the_result_arrives(): void
+    {
+        [$user, $link] = $this->linkedWithoutMandate();
+        $link->update(['mandate_uuid' => 'M-1']);
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake(['kmoney.test/api/v1/mandates/M-1/charge' => Http::response(['reason' => 'amount_over_cap', 'confirmation_url' => 'https://kmoney.test/pay/abc'], 402)]);
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm());
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+
+        $this->get("/area/ordini/{$order->id}")->assertSee('Conferma e paga');
+        $this->get('/area/kmoney/ritorno')->assertRedirect("/area/ordini/{$order->id}");
+        $this->get("/area/ordini/{$order->id}")->assertSee('Stiamo confermando il pagamento con KMoney')->assertDontSee('Conferma e paga');
     }
 
     public function test_paying_with_card_does_not_require_a_kmoney_account(): void

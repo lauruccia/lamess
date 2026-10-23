@@ -8,6 +8,7 @@ use App\Domain\Access\Roles;
 use App\Domain\Access\UserAdministration;
 use App\Domain\Features\FeatureRegistry;
 use App\Domain\Plan\LegacyPlan;
+use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -137,6 +138,7 @@ class UserResource extends Resource
             PasswordResetAction::bulk(),
         ])->recordActions([
             EditAction::make()->iconButton()->tooltip('Modifica'),
+            ImpersonateAction::forRow(fn (User $r) => $r, true),
             Action::make('resetPassword')->label('Nuova password')->iconButton()->tooltip('Nuova password')->icon('heroicon-o-key')->color('gray')
                 ->visible(fn (User $r) => ! $r->isSuperAdmin())
                 ->requiresConfirmation()->modalDescription('Genera una password temporanea (mostrata una volta sola) e chiude le sessioni aperte.')

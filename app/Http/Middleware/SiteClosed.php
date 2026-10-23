@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Domain\Access\Impersonation;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ final class SiteClosed
             return $next($request);
         }
         $user = $request->user();
-        if ($user instanceof User && $user->isBackoffice()) {
+        if (Impersonation::active($request) || ($user instanceof User && $user->isBackoffice())) {
             return $next($request);
         }
 

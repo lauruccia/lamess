@@ -10,6 +10,7 @@ use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\RefundService;
 use App\Domain\Orders\ReturnRequestService;
 use App\Domain\Orders\ReturnService;
+use App\Domain\Orders\ShippingLabelService;
 use App\Domain\Orders\StripeCheckoutProvider;
 use App\Domain\Orders\StripeWebhook;
 use App\Domain\Periods\PeriodStateException;
@@ -26,6 +27,7 @@ use App\Models\ReturnRequest;
 use App\Models\Subscription;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -40,6 +42,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use UnitEnum;
 
 /** Ordini: conferma bonifici, preparazione, spedizione e consegna, annullo, resi con nota di credito, storno PV, rimborso dei soldi e giacenza; cronologia e note interne. */
@@ -165,6 +168,19 @@ class OrderResource extends Resource
             TernaryFilter::make('subscription_id')->label('Abbonamento')->nullable()->placeholder('Tutti')->trueLabel('Solo abbonamenti')->falseLabel('Solo ordini singoli'),
             SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico']),
         ])->recordUrl(fn (Order $record) => static::getUrl('view', ['record' => $record]))
+            ->toolbarActions([
+                BulkAction::make('labels')->authorize('orders.manage')->label('Stampa etichette (foglio A4)')->icon('heroicon-o-printer')->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records) {
+                        $ids = $records->filter(fn (Order $o) => app(ShippingLabelService::class)->isPrintable($o))->pluck('id');
+                        if ($ids->isEmpty()) {
+                            Notification::make()->title('Nessun ordine pronto da spedire tra quelli scelti')->warning()->send();
+
+                            return;
+                        }
+
+                        return redirect('/admin-files/orders/etichette?ids='.$ids->implode(','));
+                    }),
+            ])
             ->recordActions(array_map(fn (Action $a) => $a->iconButton()->tooltip($a->getLabel()), self::orderActions()));
     }
 
@@ -202,6 +218,9 @@ class OrderResource extends Resource
                     };
                     Notification::make()->title($msg[0])->{$msg[1]}()->send();
                 }),
+            Action::make('label')->authorize('orders.manage')->label('Stampa etichetta')->icon('heroicon-o-printer')->color('gray')
+                ->visible(fn (Order $record) => app(ShippingLabelService::class)->isPrintable($record))
+                ->url(fn (Order $record) => url('/admin-files/orders/etichette?formato=singola&ids='.$record->id), shouldOpenInNewTab: true),
             Action::make('processing')->authorize('orders.manage')->label('In preparazione')->icon('heroicon-o-cube')->color('gray')
                 ->visible(fn (Order $record) => $record->status === 'paid')
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->startProcessing($record), 'Ordine in preparazione')),

@@ -6,6 +6,7 @@ namespace App\Domain\Orders;
 
 use App\Models\KMoneyLink;
 use App\Models\Order;
+use App\Models\OrderEvent;
 use App\Models\Product;
 use App\Models\Subscription;
 use App\Models\User;
@@ -66,6 +67,8 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
             'client_id' => config('lamess.kmoney.client_id'),
             'return_url' => self::redirectUri(),
             'seller' => config('lamess.kmoney.seller_account'),
+            // Tetto per singolo acquisto proposto al cliente (KY): perché un ordine come una box da 1.500 KY si paghi in un clic.
+            'limit' => config('lamess.kmoney.mandate_limit_ky'),
         ]));
     }
 
@@ -145,7 +148,7 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
                 'order' => $order->number, 'user' => $buyer->id, 'mandate' => $mandate, 'amount_cents' => $cents,
                 'subscription' => $order->subscription_id, 'reason' => $reason, 'message' => $res->json('message'),
             ]);
-            \App\Models\OrderEvent::log($order, 'kmoney_confirmation', 'KMoney chiede la conferma del cliente (402) · motivo: '.$reason.($res->json('message') ? ' · '.$res->json('message') : '').' · mandato '.$mandate.' · importo € '.number_format($cents / 100, 2, ',', '.'), true);
+            OrderEvent::log($order, 'kmoney_confirmation', 'KMoney chiede la conferma del cliente (402) · motivo: '.$reason.($res->json('message') ? ' · '.$res->json('message') : '').' · mandato '.$mandate.' · importo € '.number_format($cents / 100, 2, ',', '.'), true);
 
             return new PaymentResult(false, null, $reason, $res->json('confirmation_url'));
         }

@@ -93,7 +93,7 @@
         @else
             <div class="lv-tools"><button type="button" x-on:click="all()">Apri tutto</button><button type="button" x-on:click="none()">Chiudi tutto</button></div>
             <table class="lv-table">
-                <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th>Stato</th><th class="num">Team 1° liv.</th><th class="num">Clienti</th><th class="num" title="Clienti assegnati con almeno un ordine pagato nel periodo scelto ({{ $buyLabel }})">Hanno acquistato <span class="lv-muted" style="text-transform:none">({{ $buyLabel }})</span></th><th>Dal</th></tr></thead>
+                <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th>Stato</th><th class="num">1° liv.</th><th class="num">Clienti</th><th class="num" title="Clienti assegnati con almeno un ordine pagato nel periodo scelto ({{ $buyLabel }})">Hanno acquistato <span class="lv-muted" style="text-transform:none">({{ $buyLabel }})</span></th><th>Dal</th></tr></thead>
                 <tbody>
                 @foreach($list['rows'] as $r)
                     <tr class="lv-row-{{ $r['level'] === 0 ? 0 : 'n' }}" x-show="shown({{ $r['id'] }})" @if($r['parent'] !== null) x-cloak style="display:none" @endif>

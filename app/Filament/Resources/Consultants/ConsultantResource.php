@@ -15,6 +15,7 @@ use App\Domain\Onboarding\Iban;
 use App\Domain\Plan\ActiveStatus;
 use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\GatedByPermission;
+use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Consultants\Pages\CreateConsultant;
 use App\Filament\Resources\Consultants\Pages\EditConsultant;
 use App\Filament\Resources\Consultants\Pages\ListConsultants;
@@ -265,7 +266,7 @@ class ConsultantResource extends Resource
                     ->limit(22)->tooltip(fn (Consultant $r): ?string => $r->sponsor_name ? $r->sponsor_name.' · '.$r->sponsor_code : null)
                     ->url(fn (Consultant $r): ?string => $r->sponsor_id ? static::getUrl('view', ['record' => $r->sponsor_id]) : null)
                     ->searchable(false),
-                TextColumn::make('directs_count')->label('Team 1° liv.')->tooltip('Incaricati sponsorizzati direttamente')->numeric()->alignEnd()->sortable()
+                TextColumn::make('directs_count')->label('1° liv.')->tooltip('Incaricati sponsorizzati direttamente')->numeric()->alignEnd()->sortable()
                     ->url(fn (Consultant $r): ?string => $r->directs_count > 0 ? static::getUrl('index', ['filters' => ['sponsor' => ['value' => $r->id]]]) : null),
                 TextColumn::make('stat_group_pr')->label('PR pers. / gruppo')->alignEnd()->placeholder('—')
                     ->state(fn (Consultant $r): ?string => $r->stat_pr === null ? null : number_format((float) $r->stat_pr, 0, ',', '.').' / '.number_format((float) $r->stat_group_pr, 0, ',', '.'))
@@ -318,6 +319,7 @@ class ConsultantResource extends Resource
                     Action::make('editData')->label('Modifica dati')->icon('heroicon-o-pencil-square')->color('gray')
                         ->visible(fn (Consultant $record): bool => ! Superadmin::is() && static::canEdit($record))
                         ->url(fn (Consultant $record): string => static::getUrl('edit', ['record' => $record])),
+                    ImpersonateAction::forRow(fn (Consultant $r) => $r->user),
                     KycRequestAction::forRow(),
                     PasswordResetAction::forRow(),
                     PasswordResetAction::temporaryForRow(),

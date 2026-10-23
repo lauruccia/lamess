@@ -63,7 +63,7 @@
                     <div>
                         <h2 x-text="sel.name"></h2>
                         <div class="lt-sub" x-text="sel.code + ' · ' + statusName(sel.status) + (sel.since ? ' · dal ' + sel.since : '')"></div>
-                        <div class="lt-sub" x-text="'Team 1° liv. ' + (kids[sel.id] || []).length + ' · team ' + sel.team + ' · clienti ' + sel.clients"></div>
+                        <div class="lt-sub" x-text="'1° liv. ' + (kids[sel.id] || []).length + ' · team ' + sel.team + ' · clienti ' + sel.clients"></div>
                         <div style="margin:.7rem 0;display:flex;gap:.4rem;flex-wrap:wrap">
                             <a :href="sel.url"><button class="pri" type="button">Scheda incaricato</button></a>
                             <button type="button" @click="focus(sel.id); closeModal()">Apri albero di questo incaricato</button>

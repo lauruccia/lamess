@@ -130,3 +130,9 @@ Prima di usare materiali promozionali tuoi (volantini, post, video) **proponili 
 - **Link referral**: si genera da solo se manca; a video il dominio compare con l'accento (lamèss.it), mentre «Copia», QR e WhatsApp usano l'indirizzo ASCII.
 - **Requisiti e crescita (incaricati)**: in *Il mio ramo*, pannello a destra, trovi i **requisiti della tua qualifica attuale** (con ✓ se li soddisfi ancora), i **requisiti che mancano per la prossima** e «Cosa fare». La tabella **Dove agire** elenca tutte le persone sotto di te, con le più vicine alla prossima qualifica in cima: qualifica, clienti, iscritti (validi e senza primo ordine), ultimo ordine, il loro ramo, cosa manca loro e il venduto del mese. «Ti serve Pearl» segnala un tuo diretto che, salendo a Pearl, ti aiuta a completare i requisiti. Dei clienti degli altri incaricati vedi solo numeri e date, mai nomi o contatti.
 
+
+## Checkout e KMoney: cosa cambia
+Nel checkout compili e salvi i **dati di fatturazione** con «Salva i dati»: solo dopo si abilita «Conferma ordine». L'indirizzo di fatturazione salvato non si cambia qui ma da «I miei dati». Per pagare con KMoney devi prima **collegare KMoney** (massimale di 1500 KY per il pagamento automatico a un clic); tornando dal collegamento trovi il carrello e le scelte fatte intatte.
+
+## I miei clienti (incaricati)
+Il primo cliente in elenco sei tu (i tuoi acquisti). Scegli il mese in alto: **verde** chi dà il punto nel mese, **arancione** chi sta per scadere, **grigio** chi non ha ordini (vale 0).

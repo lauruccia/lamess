@@ -9,6 +9,7 @@ use App\Domain\Network\ConsultantConversion;
 use App\Domain\Network\NetworkException;
 use App\Domain\Network\TreeOperations;
 use App\Filament\Concerns\GatedByPermission;
+use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Support\ConsultantFilter;
@@ -147,6 +148,7 @@ class CustomerResource extends Resource
                     ->visible(fn (Customer $record) => $record->user?->profile?->type !== 'company' && ! Consultant::where('user_id', $record->user_id)->where('status', '!=', 'terminated')->exists())
                     ->modalDescription('Il cliente entra subito nell\'albero come incaricato attivo, con codice e link referral nuovi. Lettera d\'incarico e KYC si completano dopo.')
                     ->schema(self::promoteForm())->action(fn (Customer $record, array $data) => self::promote($record, $data)),
+                ImpersonateAction::forRow(fn (Customer $r) => $r->user, true),
                 PasswordResetAction::forRow()->iconButton()->tooltip('Invia reset password'),
                 PasswordResetAction::temporaryForRow()->iconButton()->tooltip('Imposta password temporanea'),
                 Action::make('reassign')->label('Riassegna')->iconButton()->tooltip('Riassegna')->icon('heroicon-o-arrows-right-left')->authorize('network.restructure')

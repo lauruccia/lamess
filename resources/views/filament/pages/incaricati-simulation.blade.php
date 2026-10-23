@@ -315,7 +315,7 @@
                     {{-- Elenco per livelli: tabella come «Elenco incaricati per livelli» --}}
                     <div class="scroll" x-show="view === 'levels'" x-cloak>
                         <table class="lv-table">
-                            <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th class="num">Team 1° liv.</th><th class="num">Clienti</th><th>Per la successiva</th><th class="num">Compensi del mese</th><th></th></tr></thead>
+                            <thead><tr><th>Incaricato</th><th>Livello</th><th>Qualifica</th><th class="num">1° liv.</th><th class="num">Clienti</th><th>Per la successiva</th><th class="num">Compensi del mese</th><th></th></tr></thead>
                             <tbody>
                             @foreach($treeRows as $t)
                                 @php [$code, $nm] = str_contains($t['label'], ' — ') ? explode(' — ', $t['label'], 2) : [null, $t['label']]; @endphp

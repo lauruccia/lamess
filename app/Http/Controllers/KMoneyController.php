@@ -9,6 +9,7 @@ use App\Domain\Orders\KMoneyApiProvider;
 use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
+use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\KMoneyLink;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -80,6 +81,11 @@ final class KMoneyController extends Controller
         }
 
         // Ritorno da una conferma manuale: l'esito vero arriva dal webhook firmato, qui si rimanda all'ordine.
+        // Il cliente ha già confermato su KMoney: finché non arriva l'esito la pagina dell'ordine non rimostra «Conferma e paga».
+        if ($orderId) {
+            $r->session()->put('kmoney_confirming', ['id' => (int) $orderId, 'at' => time()]);
+        }
+
         return $this->toOrder($orderId, $r)->with('status', 'Stiamo confermando il pagamento con KMoney: l\'ordine si aggiorna entro pochi istanti.');
     }
 
@@ -178,7 +184,7 @@ final class KMoneyController extends Controller
         }
         // Mese di un abbonamento confermato dal cliente su KMoney: il calendario avanza subito, senza aspettare il passaggio notturno.
         try {
-            app(\App\Domain\Subscriptions\SubscriptionService::class)->afterOrderSettled($order->refresh());
+            app(SubscriptionService::class)->afterOrderSettled($order->refresh());
         } catch (\Throwable $e) {
             Log::warning('KMoney: abbonamento non aggiornato dopo la conferma', ['order' => $order->number, 'error' => $e->getMessage()]);
         }

@@ -105,6 +105,7 @@ return [
         'api_token' => env('KMONEY_API_TOKEN'),             // token API del conto venditore (abilità write): serve ai rimborsi
         'seller_account' => env('KMONEY_SELLER_ACCOUNT'),   // numero di conto KY (KYB…) di Lamèss che incassa
         'webhook_secret' => env('KMONEY_WEBHOOK_SECRET'),
+        'mandate_limit_ky' => env('KMONEY_MANDATE_LIMIT_KY', 1500),   // tetto per singolo acquisto proposto nella pagina del mandato (KY); 0 = non proporre
         'register_url' => env('KMONEY_REGISTER_URL'),       // pagina di registrazione di KMoney; vuoto = «{base_url}/register»
     ],
     // Vantaggio KMoney mostrato nel checkout: ricaricando 100 € si ricevono 100 + N % di KY (25 → 120 € = 150 KY). 0 = nessun messaggio.

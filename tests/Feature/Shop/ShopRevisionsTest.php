@@ -6,6 +6,7 @@ namespace Tests\Feature\Shop;
 
 use App\Domain\Orders\PaymentProvider;
 use App\Domain\Orders\PaymentResult;
+use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ShopDb;
@@ -191,11 +192,7 @@ final class ShopRevisionsTest extends TestCase
         $this->assertSame('61.00', $order->kmoney_amount);
         $this->assertNull($order->kmoney_rest_method, 'il resto non si sceglie nel checkout');
         $this->assertSame(1, $order->payments()->count(), 'per ora esiste solo il pagamento KMoney');
-        $this->assertSame('pending', $order->payments()->firstOrFail()->status, 'nessun addebito finché il cliente non conferma');
-
-        // conferma esplicita: solo ora la quota KMoney viene addebitata
-        $this->post("/area/ordini/{$order->id}/riprova");
-        $this->assertSame('paid', $order->payments()->where('method', 'kmoney')->firstOrFail()->status);
+        $this->assertSame('paid', $order->payments()->firstOrFail()->status, '«Conferma ordine» è già la conferma: la quota KMoney si addebita subito, in un clic');
 
         // prima la quota KMoney: finché non è incassata il resto non si può scegliere
         $order->payments()->where('method', 'kmoney')->update(['status' => 'pending']);
@@ -242,7 +239,7 @@ final class ShopRevisionsTest extends TestCase
         $u = $this->buyer($this->activeSponsor());
         $p = $this->product('A', '100.00');
 
-        $sub = app(\App\Domain\Subscriptions\SubscriptionService::class)->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 0);
+        $sub = app(SubscriptionService::class)->subscribe($u, [$p->id => 1], 'IT', $this->billing(), 0);
 
         $this->assertTrue((bool) $sub->free_shipping);
         $this->assertSame('0.00', Order::where('subscription_id', $sub->id)->firstOrFail()->shipping_net);

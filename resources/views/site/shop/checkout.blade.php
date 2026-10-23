@@ -26,11 +26,21 @@
    <div class="row"><div><label>Codice fiscale <b class="req" data-private title="Obbligatorio">*</b></label><input name="tax_code" data-req-private value="{{ old('tax_code', $profile?->tax_code) }}"></div><div data-company><label>Partita IVA (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="vat_number" data-req-company value="{{ old('vat_number', $profile?->vat_number) }}"></div></div>
    <p class="muted small req-note" data-company style="margin:0 0 4px">Per le aziende italiane serve il codice SDI oppure la PEC.</p>
    <div class="row" data-company><div><label>Codice SDI (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="sdi_code" value="{{ old('sdi_code', $profile?->sdi_code) }}"></div><div><label>PEC (aziende) <b class="req" title="Obbligatorio">*</b></label><input name="pec" value="{{ old('pec', $profile?->pec) }}"></div></div>
-   <label>Indirizzo di fatturazione <b class="req" title="Obbligatorio">*</b></label><input required name="address" value="{{ old('address', $profile?->address) }}" autocomplete="street-address">
-   <div class="row"><div><label>Città <b class="req" title="Obbligatorio">*</b></label><input required name="city" value="{{ old('city', $profile?->city) }}" autocomplete="address-level2"></div><div><label>CAP <b class="req" title="Obbligatorio">*</b></label><input required name="zip" value="{{ old('zip', $profile?->zip) }}" autocomplete="postal-code" inputmode="numeric"></div></div>
-   <div class="row"><div><label>Provincia</label><input name="province" maxlength="3" value="{{ old('province', $profile?->province) }}"></div><div><label for="country">Nazione</label><select name="country" id="country" data-country-reload>@foreach($countries as $code => $name)<option value="{{ $code }}" @selected(old('country', $country) === $code)>{{ $name }}</option>@endforeach</select></div></div>
-   <input type="hidden" name="remember" value="0">
-   <label class="chk"><input type="checkbox" name="remember" value="1" @checked(old('remember', '1') == '1')> Salva questi dati per i prossimi ordini (potrai cambiare l'indirizzo in ogni ordine)</label>
+   @if($addressLocked)
+    <label>Indirizzo di fatturazione</label><input name="address" value="{{ $profile?->address }}" readonly class="locked" aria-readonly="true">
+    <div class="row"><div><label>Città</label><input name="city" value="{{ $profile?->city }}" readonly class="locked" aria-readonly="true"></div><div><label>CAP</label><input name="zip" value="{{ $profile?->zip }}" readonly class="locked" aria-readonly="true"></div></div>
+    <div class="row"><div><label>Provincia</label><input name="province" value="{{ $profile?->province }}" readonly class="locked" aria-readonly="true"></div><div><label>Nazione</label><input value="{{ $countries[$profile?->country_code ?: 'IT'] ?? $profile?->country_code }}" readonly class="locked" aria-readonly="true"><input type="hidden" name="country" value="{{ $profile?->country_code ?: 'IT' }}"></div></div>
+    <p class="muted small lock-note">🔒 L'indirizzo di fatturazione non si cambia dal checkout. Per modificarlo vai su <a href="/area/profilo">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.</p>
+   @else
+    <label>Indirizzo di fatturazione <b class="req" title="Obbligatorio">*</b></label><input required name="address" value="{{ old('address', $profile?->address) }}" autocomplete="street-address">
+    <div class="row"><div><label>Città <b class="req" title="Obbligatorio">*</b></label><input required name="city" value="{{ old('city', $profile?->city) }}" autocomplete="address-level2"></div><div><label>CAP <b class="req" title="Obbligatorio">*</b></label><input required name="zip" value="{{ old('zip', $profile?->zip) }}" autocomplete="postal-code" inputmode="numeric"></div></div>
+    <div class="row"><div><label>Provincia</label><input name="province" maxlength="3" value="{{ old('province', $profile?->province) }}"></div><div><label for="country">Nazione</label><select name="country" id="country" data-country-reload>@foreach($countries as $code => $name)<option value="{{ $code }}" @selected(old('country', $country) === $code)>{{ $name }}</option>@endforeach</select></div></div>
+    <p class="muted small lock-note">Dopo il salvataggio l'indirizzo di fatturazione non si potrà più cambiare dal checkout (solo da <a href="/area/profilo">I miei dati</a>).</p>
+   @endif
+   <div class="billing-save" data-billing-save>
+    <button type="submit" class="btn" formaction="/area/checkout/dati" data-save-billing>Salva i dati</button>
+    <span class="muted small" data-billing-state>@if($billingMissing === [])<b class="ok">✓ Dati salvati.</b> Se li modifichi, salvali di nuovo prima di confermare.@else Salva i dati di fatturazione per poter confermare l'ordine.@endif</span>
+   </div>
    @foreach(['first_name','last_name','company_name','tax_code','vat_number','sdi_code','address','city','zip','pec'] as $f)@error($f)<div class="err">{{ $message }}</div>@enderror @endforeach
   </section>
   <section class="card">
@@ -50,13 +60,19 @@
      <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>Paga con KMoney</b><small>
       <span class="km-link">
        @unless($kmLinked)
-        Per pagare col tuo saldo <a href="/area/kmoney/collega">collega il tuo conto KMoney</a>: al termine torni qui al checkout. Non hai un conto? <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.
+        Per pagare col tuo saldo devi prima collegare il conto KMoney: al ritorno trovi qui tutto com'era.
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">Consigliato</em></label>
      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>
-      <span data-sum-single @if($sub !== 'none') hidden @endif>Dopo «Conferma ordine» ti chiediamo di confermare l'addebito di {{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY dal tuo conto KMoney.@if($priced->kmoneyRest()->isPositive()) Poi scegli come pagare il resto, € {{ \App\Support\Money::eur($priced->kmoneyRest()) }}, con carta o bonifico.@endif</span>
+      <span data-sum-single @if($sub !== 'none') hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($priced->kmoneyShare()) }} KY dal tuo conto KMoney, in un clic. Se l'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.@if($priced->kmoneyRest()->isPositive()) Poi scegli come pagare il resto, € {{ \App\Support\Money::eur($priced->kmoneyRest()) }}, con carta o bonifico.@endif</span>
       <span data-sum-sub @if($sub === 'none') hidden @endif>Con «Conferma ordine» addebitiamo {{ \App\Support\Money::eur($pricedSub->kmoneyShare()) }} KY dal tuo conto KMoney.@if($pricedSub->kmoneyRest()->isPositive()) Il resto, € {{ \App\Support\Money::eur($pricedSub->kmoneyRest()) }}, si addebita in automatico sulla carta.@endif Lo stesso a ogni addebito.</span>
      </p>
+     @if(! $kmLinked)
+      <div class="warn km-connect" data-km-only data-km-connect @if($pay !== 'kmoney') hidden @endif>
+       <b>Collega il tuo conto KMoney per continuare.</b> Con «Collega KMoney» vai su KMoney e, al ritorno, ritrovi qui tutto com'era: dati, spedizione, metodo di pagamento e abbonamento.
+       <div class="km-connect-actions"><button type="submit" class="btn accent" formaction="/area/checkout/kmoney" formnovalidate>Collega KMoney</button> <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">Non hai un conto? Aprilo qui</a></div>
+      </div>
+     @endif
     @endif
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
@@ -90,9 +106,10 @@
   <div data-sum-single @if($sub !== 'none') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
   <div data-sum-sub @if($sub === 'none') hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
   <div class="co-confirm">
-  <label class="chk"><input type="checkbox" name="privacy" value="1" form="checkout-form"><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
+  <label class="chk"><input type="checkbox" name="privacy" value="1" form="checkout-form" @checked(old('privacy'))><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
   @error('privacy')<div class="err">{{ $message }}</div>@enderror
-  <button class="btn accent wide cta-lock" form="checkout-form"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($sub !== 'none') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if($sub === 'none') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
+  <button class="btn accent wide cta-lock" form="checkout-form" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [])><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($sub !== 'none') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if($sub === 'none') hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
+  <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === []) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
   <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
   </div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>

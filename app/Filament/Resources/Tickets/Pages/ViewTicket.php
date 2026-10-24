@@ -18,6 +18,7 @@ use App\Models\CommissionStatement;
 use App\Models\ComplianceCase;
 use App\Models\Consultant;
 use App\Models\Ticket;
+use App\Models\TicketMessage;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -40,16 +41,31 @@ class ViewTicket extends ViewRecord
                 TextEntry::make('number')->label('Numero'),
                 TextEntry::make('category')->label('Categoria')->formatStateUsing(fn (string $state) => Ticket::CATEGORIES[$state] ?? $state),
                 TextEntry::make('status')->label('Stato')->badge(),
-                TextEntry::make('consultant.code')->label('Incaricato')->placeholder('—'),
-                TextEntry::make('subject')->label('Oggetto')->columnSpan(2),
+                TextEntry::make('user.name')->label('Creato da')->state(fn (Ticket $t) => $t->requesterName())->weight('medium')
+                    ->helperText(fn (Ticket $t) => trim($t->requesterKind().' · '.$t->user?->email, ' ·')),
+                TextEntry::make('created_at')->label('Aperto il')->dateTime('d/m/Y H:i', 'Europe/Rome'),
+                TextEntry::make('assigned_to')->label('In carico a')->placeholder('Non ancora preso in carico'),
+                TextEntry::make('subject')->label('Oggetto')->columnSpanFull(),
             ]),
             Section::make('Conversazione')->schema([
                 TextEntry::make('thread')->hiddenLabel()->state(fn (Ticket $t) => $t->messages()->get()->map(fn ($m) => sprintf(
                     '[%s] %s%s: %s', $m->created_at->setTimezone('Europe/Rome')->format('d/m/Y H:i'),
-                    $m->is_internal ? 'NOTA INTERNA — ' : '', $m->is_staff ? 'Assistenza' : 'Utente', $m->body,
+                    $m->is_internal ? 'NOTA INTERNA — ' : '', $this->authorLabel($m), $m->body,
                 ))->implode("\n\n"))->extraAttributes(['style' => 'white-space: pre-line']),
             ]),
         ]);
+    }
+
+    /** Chi ha scritto il messaggio; il nome di un super admin non si mostra a chi non lo è (resta «Assistenza»). */
+    private function authorLabel(TicketMessage $m): string
+    {
+        $author = $m->user;
+        $hidden = $author && $m->is_staff && $author->isSuperAdmin() && ! Auth::user()?->isSuperAdmin();
+        if (! $author || $hidden) {
+            return $m->is_staff ? 'Assistenza' : 'Utente';
+        }
+
+        return $m->is_staff ? "Assistenza ({$author->name})" : $author->name;
     }
 
     /** Il ticket è un reclamo su estratto o ricevuta ancora da decidere (si chiude solo con una decisione). */

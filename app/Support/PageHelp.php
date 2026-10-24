@@ -116,7 +116,7 @@ final class PageHelp
 
             // ---------- Assistenza ----------
             'TicketResource' => ['scopo' => 'Richieste di assistenza e reclami degli incaricati.',
-                'colonne' => ['Stato' => 'Aperto, in lavorazione o chiuso.', 'In carico a' => 'Operatore che se ne occupa.', 'Ultimo messaggio' => 'Quando è arrivata l\'ultima risposta.']],
+                'colonne' => ['Creato da' => 'Chi ha aperto il ticket, con il suo ruolo (incaricato, cliente).', 'Stato' => 'Aperto, in lavorazione o chiuso.', 'In carico a' => 'Operatore che se ne occupa.', 'Ultimo messaggio' => 'Quando è arrivata l\'ultima risposta.']],
             'ComplianceCaseResource' => ['scopo' => 'Segnalazioni di condotte non conformi alle regole (materiali, comunicazioni, comportamenti).',
                 'colonne' => ['Categoria' => 'Tipo di violazione contestata.']],
             'SanctionResource' => ['scopo' => 'Provvedimenti presi verso gli incaricati (richiami, sospensioni).',

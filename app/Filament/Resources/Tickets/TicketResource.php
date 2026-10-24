@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Tickets;
 
+use App\Domain\Access\Actor;
 use App\Domain\Access\Superadmin;
 use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\Tickets\Pages\ListTickets;
@@ -14,6 +15,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
@@ -69,19 +71,24 @@ class TicketResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('last_message_at', 'desc')->columns([
+        return $table->defaultSort('last_message_at', 'desc')->modifyQueryUsing(fn ($query) => $query->with(['user.customer', 'consultant']))->columns([
             TextColumn::make('number')->label('Numero')->searchable(),
+            TextColumn::make('user.name')->label('Creato da')->searchable(['name', 'email'])->weight('medium')
+                ->description(fn (Ticket $t) => $t->requesterKind()),
             TextColumn::make('category')->label('Categoria')->formatStateUsing(fn (string $state) => Ticket::CATEGORIES[$state] ?? $state)->badge(),
             TextColumn::make('subject')->label('Oggetto')->searchable()->limit(60),
-            TextColumn::make('consultant.code')->label('Incaricato')->placeholder('—')->searchable(),
+            TextColumn::make('consultant.code')->label('Incaricato')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('status')->label('Stato')->badge()
                 ->formatStateUsing(fn (string $state) => ['open' => 'Da rispondere', 'answered' => 'Risposto', 'closed' => 'Chiuso'][$state] ?? $state)
                 ->color(fn (string $state) => ['open' => 'warning', 'answered' => 'info', 'closed' => 'gray'][$state] ?? 'gray'),
             TextColumn::make('assigned_to')->label('In carico a')->placeholder('—')->toggleable(),
+            TextColumn::make('created_at')->label('Aperto il')->dateTime('d/m/Y H:i', 'Europe/Rome')->sortable()->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('last_message_at')->label('Ultimo messaggio')->dateTime('d/m/Y H:i', 'Europe/Rome')->sortable(),
         ])->filters([
             SelectFilter::make('status')->label('Stato')->options(['open' => 'Da rispondere', 'answered' => 'Risposto', 'closed' => 'Chiuso']),
             SelectFilter::make('category')->label('Categoria')->options(Ticket::CATEGORIES),
+            Filter::make('unassigned')->label('Non presi in carico')->query(fn ($query) => $query->whereNull('assigned_to')->where('status', '!=', Ticket::CLOSED)),
+            Filter::make('mine')->label('In carico a me')->query(fn ($query) => $query->where('assigned_to', Actor::label())),
         ])->recordUrl(fn (Ticket $t) => static::getUrl('view', ['record' => $t]));
     }
 

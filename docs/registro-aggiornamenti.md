@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-10-24 — Ticket: si vede chi li crea
+- Elenco admin: colonna **Creato da** (nome + «Incaricato LM…» / «Cliente»), ricercabile per nome ed email; «Incaricato» e «Aperto il» disponibili come colonne facoltative; nuovi filtri «Non presi in carico» e «In carico a me»; caricamento dei dati senza query ripetute.
+- Scheda ticket: creatore, data di apertura e «In carico a»; i messaggi mostrano il nome dell'autore (un super admin resta «Assistenza» per gli altri admin).
+- Prima il ticket di un cliente o collaboratore (senza codice incaricato) mostrava «—» come unico riferimento.
+- Test: `test_back_office_sees_who_created_the_ticket`. Nessuna migrazione.
+
 ## 2026-10-23 — Lettera di Incarico «Definitiva» Kadeo Group, dichiarazioni e accettazioni
 - Testo: la lettera del Consorzio (16 articoli, premesse, art. 12 dichiarazioni, art. 13 privacy e immagine) sostituisce il riassunto di una pagina. Un solo testo (`resources/views/legal/ivd-letter-body.blade.php`) per la pagina pubblica `/lettera-di-incarico`, la schermata di firma e il PDF. Modello versione `2026-2`.
 - Refusi del file Word corretti nel portale: indirizzi `kadeogrou.it`, `kadeogropu.it`, `kadeogroup/support` → `www.kadeogroup.it`, «Conorzio» → «Consorzio», «Via G. ferraris» → «Via G. Ferraris». Il canone dell'art. 2 si legge dall'impostazione del portale (non più «19,90» fisso) e, se spento, la frase cambia in «senza alcun canone annuale».

@@ -44,6 +44,22 @@ class Ticket extends Model
         return $this->belongsTo(Consultant::class);
     }
 
+    /** Nome di chi ha aperto il ticket. */
+    public function requesterName(): string
+    {
+        return $this->user?->name ?? 'Utente eliminato';
+    }
+
+    /** Ruolo di chi ha aperto il ticket: «Incaricato LM00004», «Cliente» oppure l'email se non ha né l'uno né l'altro. */
+    public function requesterKind(): string
+    {
+        if ($this->consultant) {
+            return trim('Incaricato '.($this->consultant->code ?? ''));
+        }
+
+        return $this->user?->customer ? 'Cliente' : (string) $this->user?->email;
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(TicketMessage::class)->orderBy('id');

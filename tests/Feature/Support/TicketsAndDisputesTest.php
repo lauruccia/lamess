@@ -10,6 +10,7 @@ use App\Domain\Payouts\StatementLifecycle;
 use App\Domain\Periods\PeriodService;
 use App\Domain\Support\SupportException;
 use App\Domain\Support\TicketService;
+use App\Filament\Resources\Tickets\Pages\ListTickets;
 use App\Filament\Resources\Tickets\Pages\ViewTicket;
 use App\Models\CommissionStatement;
 use App\Models\Consultant;
@@ -227,6 +228,22 @@ final class TicketsAndDisputesTest extends TestCase
         $this->assertSame('resolved', $doc->refresh()->status);
         $this->assertSame('upheld', $doc->outcome);
         $this->assertSame(CarbonImmutable::class, get_class($doc->resolved_at));
+    }
+
+    public function test_back_office_sees_who_created_the_ticket(): void
+    {
+        $creator = User::factory()->create(['name' => 'Paola Speranza']);
+        $ticket = app(TicketService::class)->open($creator, 'general', 'Domanda sul piano', 'Vorrei un chiarimento.');
+        $agent = User::factory()->role('support')->create();
+        $super = User::factory()->role(Roles::SUPER_ADMIN)->create(['name' => 'Nome Riservato']);
+        app(TicketService::class)->reply($ticket, $super, 'Ti rispondiamo subito.', true);
+
+        Livewire::actingAs($agent)->test(ListTickets::class)->assertSee('Paola Speranza')
+            ->searchTable('Speranza')->assertCanSeeTableRecords([$ticket])
+            ->searchTable('inesistente')->assertCanNotSeeTableRecords([$ticket]);
+
+        Livewire::actingAs($agent)->test(ViewTicket::class, ['record' => $ticket->getKey()])
+            ->assertSee('Paola Speranza')->assertSee('Ti rispondiamo subito.')->assertDontSee('Nome Riservato');
     }
 
     public function test_artisan_command_accepts_overdue_statements(): void

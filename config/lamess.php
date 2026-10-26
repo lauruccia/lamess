@@ -122,6 +122,9 @@ return [
     'return_window_days' => 14,                    // giorni dalla consegna per chiedere un reso
     'order_prefix' => 'ORD',
     // Abbonamento e spedizione gratuita sugli ordini ripetitivi (RF-A01, RF-A03). Modificabili da Impostazioni di sistema.
+    'orders' => [
+        'admin_mail_to' => env('LAMESS_ORDINI_MAIL_TO', ''), // destinatari dell'avviso «Nuovo ordine» (virgole); vuoto = utenti admin e super admin
+    ],
     'subscription' => [
         'monthly_enabled' => true,   // il cliente può attivare l'abbonamento mensile (nuove sottoscrizioni; quelli già attivi proseguono)
         'bimonthly_enabled' => true, // il cliente può attivare l'abbonamento bimestrale

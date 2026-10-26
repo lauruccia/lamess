@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders;
 
+use App\Domain\Access\Roles;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Customers\AddressCheck;
 use App\Domain\Engine\Support\Num;
@@ -24,6 +25,7 @@ use App\Models\Product;
 use App\Models\PvMovement;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\NewOrderAdmin;
 use App\Notifications\OrderPaid;
 use App\Notifications\OrderPaymentDetails;
 use App\Notifications\OrderShipped;
@@ -156,7 +158,7 @@ final class OrderService
             $kmoneyRest = null;
         }
 
-        return DB::transaction(function () use ($buyer, $items, $country, $method, $snapshot, $now, $notes, $type, $beneficiary, $subscription, $priced, $kmoneyAmount, $kmoneyRest): Order {
+        $order = DB::transaction(function () use ($buyer, $items, $country, $method, $snapshot, $now, $notes, $type, $beneficiary, $subscription, $priced, $kmoneyAmount, $kmoneyRest): Order {
             $this->reserveStock($items);
             $order = Order::create([
                 'number' => 'tmp', 'buyer_user_id' => $buyer->id, 'buyer_type' => $type, 'beneficiary_consultant_id' => $beneficiary?->id,
@@ -228,6 +230,37 @@ final class OrderService
 
             return $order->refresh()->load('items');
         });
+
+        $this->notifyAdminsNewOrder($order);
+
+        return $order;
+    }
+
+    /** @return list<string> LAMESS_ORDINI_MAIL_TO (virgole) oppure, se vuoto, email degli utenti admin e super admin */
+    public function newOrderRecipients(): array
+    {
+        $list = array_values(array_filter(array_map('trim', explode(',', (string) config('lamess.orders.admin_mail_to')))));
+        if ($list !== []) {
+            return $list;
+        }
+
+        return User::role([Roles::ADMIN, Roles::SUPER_ADMIN])->whereNotNull('email')->pluck('email')->unique()->values()->all();
+    }
+
+    /** Avvisa l'amministrazione di un nuovo ordine; non blocca mai chi ordina. */
+    private function notifyAdminsNewOrder(Order $order): void
+    {
+        try {
+            if (! config('lamess.mail_enabled')) {
+                return;
+            }
+            $to = $this->newOrderRecipients();
+            if ($to !== []) {
+                Notification::route('mail', $to)->notify(new NewOrderAdmin($order));
+            }
+        } catch (Throwable $e) {
+            Log::warning('Avviso nuovo ordine agli admin non inviato', ['ordine' => $order->number, 'errore' => $e->getMessage()]);
+        }
     }
 
     /**

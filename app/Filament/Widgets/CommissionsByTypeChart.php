@@ -18,6 +18,9 @@ class CommissionsByTypeChart extends ChartWidget
     /** Caricato insieme alla pagina: niente richiesta Livewire separata per ogni widget. */
     protected static bool $isLazy = false;
 
+    /** Filament aggiorna i widget ogni 5 secondi per default: troppe richieste PHP per l'hosting condiviso. */
+    protected ?string $pollingInterval = null;
+
     protected static ?int $sort = 4;
 
     protected int | string | array $columnSpan = ['default' => 'full', 'lg' => 5];

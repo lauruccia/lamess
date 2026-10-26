@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Cache;
 /** Dice se il cron del server («schedule:run») sta davvero girando: da lì partono canoni, fatture, abbonamenti e pagamenti. */
 class SchedulerStatus extends StatsOverviewWidget
 {
+    /** Filament aggiorna i widget ogni 5 secondi per default: troppe richieste PHP per l'hosting condiviso. */
+    protected ?string $pollingInterval = '60s';
+
     protected static ?int $sort = 2;
 
     protected int | string | array $columnSpan = ['default' => 'full', 'lg' => 4];

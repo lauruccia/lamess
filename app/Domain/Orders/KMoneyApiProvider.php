@@ -186,7 +186,7 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
             $qty = (int) array_sum($lines);
             $kmoneyAmount = $subscription->orders()->where('payment_method', 'kmoney')->latest('id')->value('kmoney_amount');
             $res = $this->api($link)->timeout(8)->put($this->url('/api/v1/subscriptions/'.$subscription->id), [
-                'title' => $qty.' '.($qty === 1 ? 'prodotto' : 'prodotti').' al mese',
+                'title' => $qty.' '.($qty === 1 ? 'prodotto' : 'prodotti').' '.$subscription->cadenceLabel(),
                 'items' => $items,
                 'seller_account_number' => config('lamess.kmoney.seller_account'),
                 'amount' => $kmoneyAmount === null ? null : BigDecimal::of((string) $kmoneyAmount)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp)->toInt(),

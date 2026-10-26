@@ -21,6 +21,10 @@
   <form method="post" action="/area/profilo" class="panel">@csrf
    <header><h2>Anagrafica e indirizzo di fatturazione</h2></header>
    <div class="panel-body">
+    <dl class="dl only-mobile" style="margin-bottom:16px">
+     <dt>Codice fiscale</dt><dd>{{ $profile->tax_code ?: 'Non indicato' }}</dd>
+     @if($profile->vat_number)<dt>Partita IVA</dt><dd>{{ $profile->vat_number }}</dd>@endif
+    </dl>
     <div class="form-grid">
      @if($company)
       <div class="full"><label for="p-company">Ragione sociale</label><input id="p-company" name="company_name" value="{{ old('company_name', $profile->company_name) }}"></div>
@@ -150,7 +154,7 @@
    <div class="panel-body">
     <dl class="dl">
      <dt>Email</dt><dd>{{ $user->email }}</dd>
-     @if($profile->tax_code)<dt>Codice fiscale</dt><dd>{{ $profile->tax_code }}</dd>@endif
+     <dt>Codice fiscale</dt><dd>{{ $profile->tax_code ?: 'Non indicato' }}</dd>
      @if($profile->vat_number)<dt>Partita IVA</dt><dd>{{ $profile->vat_number }}</dd>@endif
     </dl>
     <p class="muted" style="margin:12px 0 0;font-size:13px">Servono per fatture e contratti: per modificarli scrivi al Consorzio.</p>

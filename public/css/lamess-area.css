@@ -239,3 +239,7 @@ a.item:hover{background:rgb(194 102 58/.05);color:inherit}
 .cl-chip.cl-ordered{background:rgba(47,125,79,.14);color:#235c3b}
 .cl-chip.cl-expiring{background:rgba(217,154,30,.2);color:#7a5200}
 .cl-chip.cl-zero{background:rgba(196,73,58,.14);color:#8a2b1f}
+
+/* Dati fissi (CF/P.IVA) in cima al form: solo telefono, dove il pannello laterale finisce in fondo */
+.only-mobile{display:none}
+@media(max-width:980px){.only-mobile{display:grid}}

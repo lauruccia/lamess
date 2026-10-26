@@ -14,6 +14,9 @@ class RankDistributionChart extends ChartWidget
 {
     use InteractsWithPageFilters;
 
+    /** Caricato insieme alla pagina: niente richiesta Livewire separata per ogni widget. */
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = ['default' => 'full', 'lg' => 7];

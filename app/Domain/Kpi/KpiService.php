@@ -12,6 +12,7 @@ use App\Models\IvdContract;
 use App\Models\KycDocument;
 use App\Models\Period;
 use App\Models\PvMovement;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -21,6 +22,9 @@ use Illuminate\Support\Facades\DB;
  */
 final class KpiService
 {
+    /** Secondi di validità dello snapshot in cache. */
+    private const SNAPSHOT_TTL = 60;
+
     public function latestPeriodCode(): ?string
     {
         return Period::query()->orderByDesc('code')->value('code');
@@ -46,6 +50,14 @@ final class KpiService
      * @return array<string, mixed>
      */
     public function snapshot(?string $periodCode): array
+    {
+        // I tre widget della Cruscotto leggono lo stesso snapshot: una sola serie di query ogni SNAPSHOT_TTL secondi
+        // invece di una per widget a ogni caricamento (evita i 502 su hosting con pochi processi simultanei).
+        return Cache::remember('kpi.snapshot.'.($periodCode ?? 'none'), self::SNAPSHOT_TTL, fn (): array => $this->buildSnapshot($periodCode));
+    }
+
+    /** @return array<string, mixed> */
+    private function buildSnapshot(?string $periodCode): array
     {
         $period = $periodCode ? Period::where('code', $periodCode)->first() : null;
 

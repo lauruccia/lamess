@@ -261,3 +261,11 @@ body.is-auth .auth-wrap{min-height:calc(100vh - 118px)}
 .plan-table th{text-align:left;font-weight:600;color:var(--lm-muted,#7a6d65);padding:6px 12px 6px 0;border-bottom:1px solid rgba(128,128,128,.35)}
 .plan-table td{padding:7px 12px 7px 0;border-bottom:1px solid rgba(128,128,128,.2);vertical-align:top}
 @media (max-width:640px){.plan-table{display:block;overflow-x:auto}}
+
+/* Occhiolino mostra/nascondi password (js/lamess-pw.js) */
+.pw-wrap{position:relative;display:block}
+.pw-wrap input{padding-right:48px}
+.pw-wrap .pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;box-shadow:none;border-radius:9px;color:var(--lm-brown);cursor:pointer}
+.pw-wrap .pw-eye:hover{background:rgb(194 102 58/.1);box-shadow:none;color:var(--lm-brown)}
+.pw-wrap .pw-eye:focus-visible{outline:0;box-shadow:0 0 0 3px rgb(194 102 58/.3)}
+.pw-wrap .pw-eye[aria-pressed=true]{color:var(--lm-terracotta)}

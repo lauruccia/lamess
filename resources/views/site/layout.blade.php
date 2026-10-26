@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/css/lamess-shop.css?v={{ @filemtime(public_path('css/lamess-shop.css')) ?: 1 }}">
 @stack('styles')
 <script src="/js/lamess-shop.js?v={{ @filemtime(public_path('js/lamess-shop.js')) ?: 1 }}" defer></script>
+<script src="/js/lamess-pw.js?v={{ @filemtime(public_path('js/lamess-pw.js')) ?: 1 }}" defer></script>
 </head>
 @php($isAuth = trim($__env->yieldContent('width')) === 'auth')
 @php($minimalHeader = trim($__env->yieldContent('header')) === 'minimal')

@@ -13,6 +13,7 @@ use App\Filament\Pages\GoLiveCheckPage;
 use App\Filament\Pages\IncaricatiSimulationPage;
 use App\Filament\Pages\LegacyPlanPage;
 use App\Filament\Pages\IvdLetterPage;
+use App\Filament\Pages\RegolamentoPage;
 use App\Filament\Pages\NetworkTreePage;
 use App\Filament\Pages\RankComparisonPage;
 use App\Filament\Pages\SalesDashboardPage;
@@ -90,6 +91,7 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
                 NetworkTreePage::class,
                 IvdLetterPage::class,
+                RegolamentoPage::class,
                 ConsultantLevelsPage::class,
                 SystemSettingsPage::class,
                 ShopSettingsPage::class,

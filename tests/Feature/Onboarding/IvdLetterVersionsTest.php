@@ -157,7 +157,7 @@ final class IvdLetterVersionsTest extends TestCase
 
         $form = ['otp' => $m[1], 'income_over_threshold' => 'no', 'other_social_security' => 'no', 'multi_principal' => 'no'];
         $this->post('/area/lettera/firma', $form)->assertSessionHasErrors(); // senza accettazioni non si firma
-        $this->post('/area/lettera/firma', $form + ['accept_letter' => '1', 'accept_letter_1341' => '1'])->assertRedirect('/area');
+        $this->post('/area/lettera/firma', $form + ['accept_letter' => '1', 'accept_letter_1341' => '1', 'accept_regolamento' => '1', 'accept_regolamento_1341' => '1'])->assertRedirect('/area');
 
         $sig = IvdLetterSignature::where('consultant_id', $a->id)->firstOrFail();
         $this->assertSame('signed', $sig->status);
@@ -231,5 +231,38 @@ final class IvdLetterVersionsTest extends TestCase
 
         Livewire::test(IvdLetterPage::class)->callAction('send', ['mode' => 'all'])->assertNotified();
         $this->assertEqualsCanonicalizing([$a->id, $b->id, $c->id], IvdLetterSignature::pluck('consultant_id')->all());
+    }
+
+    public function test_il_regolamento_e_modificabile_e_va_accettato_prima_di_firmare(): void
+    {
+        $c = $this->incaricato('r@example.test');
+        IvdContract::where('consultant_id', $c->id)->update(['template_version' => 'odoo-storico']);
+        $reg = app(\App\Domain\Onboarding\RegolamentoDocument::class);
+        $this->assertSame('2.0', $reg->version());
+        $this->get('/regolamento')->assertOk()->assertSee('Incaricato');
+
+        $this->actingAs(User::factory()->role()->create());
+        Livewire::test(\App\Filament\Pages\RegolamentoPage::class)->assertOk();
+        $html = $reg->html();
+        $d = $reg->saveTypoFix($html.'<p>Nota di prova.</p>', 'prova', 'test');
+        $this->assertSame(['2.0', 1], [$d->version, $d->revision]);
+        $reg->saveNewVersion($d->body.'<p>Nuovo articolo 10 del regolamento.</p>', '2.1', 'Aggiunto articolo 10', null, 'test');
+        $this->assertSame('2.1', $reg->version());
+        $this->get('/regolamento')->assertSee('Nuovo articolo 10');
+
+        $v = $this->tpl->ensureCurrent('test');
+        app(IvdLetterSigning::class)->send($v, 'test', [$c->id]);
+        $this->assertStringContainsString('versione 2.1', app(IvdLetterSigning::class)->items($v)['regolamento']['label']);
+
+        $this->actingAs($c->user)->get('/area/lettera')->assertOk()->assertSee('Principi generali e Regolamento')->assertSee('Nuovo articolo 10');
+        $hint = $this->followingRedirects()->post('/area/lettera/codice')->assertOk()->getContent();
+        preg_match('/OTP: (\d{6})/', $hint, $m);
+        $form = ['otp' => $m[1], 'income_over_threshold' => 'no', 'other_social_security' => 'no', 'multi_principal' => 'no', 'accept_letter' => '1', 'accept_letter_1341' => '1'];
+        $this->post('/area/lettera/firma', $form)->assertSessionHasErrors('accept_regolamento'); // senza il Regolamento non si firma
+        $this->post('/area/lettera/firma', $form + ['accept_regolamento' => '1', 'accept_regolamento_1341' => '1'])->assertRedirect('/area');
+
+        $sig = IvdLetterSignature::firstOrFail();
+        $this->assertSame('2.1', $sig->evidence['regolamento_version']);
+        $this->assertSame($reg->hash(), $sig->evidence['regolamento_sha256']);
     }
 }

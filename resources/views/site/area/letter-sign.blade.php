@@ -20,6 +20,11 @@
      <p class="muted" style="margin:8px 0 0;font-size:13px">Allegati: <a href="/regolamento" target="_blank" rel="noopener">Regolamento</a> · <a href="/piano-compensi" target="_blank" rel="noopener">Piano compensi</a> · <a href="/privacy" target="_blank" rel="noopener">Informativa privacy</a></p>
     </details>
 
+    <details style="margin:0 0 18px">
+     <summary style="cursor:pointer;font-weight:600">Leggi i Principi generali e Regolamento (Allegato 1) · versione {{ $regolamentoVersion }}</summary>
+     <div class="legal-body" style="max-height:380px;overflow:auto;border:1px solid var(--lm-line,#d9d2cc);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:14px">{!! $regolamentoHtml !!}</div>
+    </details>
+
     <form method="post" action="/area/lettera/firma">@csrf
      <h3 style="margin:0 0 8px;font-size:1rem">2 · Dichiarazioni (art. 12)</h3>
      <fieldset style="border:0;padding:0;margin:0 0 10px">

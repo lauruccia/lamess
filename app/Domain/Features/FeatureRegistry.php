@@ -93,7 +93,7 @@ final class FeatureRegistry
 
         // ---- Back-office: pagine del menu che non sono elenchi
         $pages = [
-            'albero_rete' => ['Albero della rete', 'Rete'], 'lettera_incarico' => ['Lettera di incarico', 'Rete'], 'elenco_livelli' => ['Elenco per livelli', 'Rete'],
+            'albero_rete' => ['Albero della rete', 'Rete'], 'lettera_incarico' => ['Lettera di incarico', 'Rete'], 'regolamento_incaricati' => ['Regolamento incaricati', 'Rete'], 'elenco_livelli' => ['Elenco per livelli', 'Rete'],
             'confronto_qualifiche' => ['Confronto qualifiche', 'Compensi'],
             'simulazione_incaricati' => ['Simulazione incaricati', 'Compensi'],
             'cruscotto_vendite' => ['Cruscotto vendite', 'Vendite'], 'negozio_pagamenti' => ['Pagamenti e spedizioni', 'Vendite'],

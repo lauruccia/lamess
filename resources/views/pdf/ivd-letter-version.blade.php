@@ -40,6 +40,11 @@ table{width:100%;border-collapse:collapse}td{padding:3px 6px;vertical-align:top}
 @endforeach
 </div>
 
+<div style="page-break-before:always"></div>
+<h1>Allegato 1 — Principi generali e Regolamento</h1>
+<p class="small">Versione {{ $regolamentoVersion }} · testo accettato con la firma di questa lettera</p>
+<div class="ivd-letter">{!! $regolamentoHtml !!}</div>
+
 <div class="box"><strong>Firma elettronica</strong><br>
 Firmato il {{ $signedAt->setTimezone(new DateTimeZone('Europe/Rome'))->format('d/m/Y H:i') }} (ora italiana) con verifica OTP · provider: {{ $sig->signature_provider }} · rif. {{ $sig->signature_ref }}</div>
 <p class="small">Copia generata automaticamente dal portale. L'impronta SHA-256 del documento firmato è conservata insieme alle evidenze di firma.</p>

@@ -29,6 +29,7 @@ class LetterSignatureController extends Controller
         return view('site.area.letter-sign', [
             'sig' => $sig, 'version' => $sig->version, 'user' => $user, 'items' => $signing->items($sig->version),
             'hint' => session('signature_hint'),
+            'regolamentoHtml' => app(\App\Domain\Onboarding\RegolamentoDocument::class)->html(), 'regolamentoVersion' => app(\App\Domain\Onboarding\RegolamentoDocument::class)->version(),
         ]);
     }
 

@@ -113,9 +113,13 @@ final class IvdLetterSigning
      */
     public function items(IvdLetterVersion $v): array
     {
+        $reg = app(RegolamentoDocument::class);
+
         return [
             'letter' => ['label' => "Dichiaro di aver letto ed accettato la LETTERA DI INCARICO IVD, versione {$v->version}.", 'detail' => null],
             'letter_1341' => ['label' => 'Dichiaro di approvare espressamente, ai sensi e per gli effetti degli Artt. 1341 e 1342 del codice civile, i seguenti articoli della LETTERA DI INCARICO KADEO:', 'detail' => $this->template->articles1341($v)],
+            'regolamento' => ['label' => 'Dichiaro di aver letto ed accettato i «PRINCIPI GENERALI E REGOLAMENTO» (Allegato 1), versione '.$reg->version().'.', 'detail' => null],
+            'regolamento_1341' => ['label' => 'Dichiaro di approvare espressamente, ai sensi e per gli effetti degli Artt. 1341 e 1342 del codice civile, i seguenti articoli dei «PRINCIPI GENERALI E REGOLAMENTO»:', 'detail' => $reg->articles1341()],
         ];
     }
 
@@ -153,6 +157,7 @@ final class IvdLetterSigning
             $pdf = Pdf::loadView('pdf.ivd-letter-version', [
                 'sig' => $sig, 'version' => $v, 'profile' => $profile, 'consultant' => $consultant, 'signedAt' => $now,
                 'decl' => $declarations, 'accepted' => $accepted, 'items' => $this->items($v), 'html' => $this->template->render($declarations, null, null, $v),
+                'regolamentoHtml' => app(RegolamentoDocument::class)->html(), 'regolamentoVersion' => app(RegolamentoDocument::class)->version(),
             ])->output();
             $path = "contracts/letter-{$sig->id}.pdf";
             Storage::put($path, $pdf);
@@ -163,6 +168,7 @@ final class IvdLetterSigning
                     'provider' => $sig->signature_provider, 'reference' => $sig->signature_ref, 'ip' => $ip, 'user_agent' => $userAgent, 'signed_at' => $now->format(DATE_ATOM),
                     'document_sha256' => $hash, 'signer_email' => $user->email, 'version' => $v->version, 'revision' => $v->revision,
                     'declarations' => $declarations, 'accepted' => $accepted,
+                    'regolamento_version' => app(RegolamentoDocument::class)->version(), 'regolamento_sha256' => app(RegolamentoDocument::class)->hash(),
                 ],
             ]);
             AuditLog::record('ivd_letter.signed', "Lettera di incarico v{$v->version} firmata da {$consultant->code}", $sig);

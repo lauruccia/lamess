@@ -76,14 +76,18 @@ class SiteController extends Controller
 
     public function register(Request $request, CustomerService $customers, ReferralResolver $resolver): RedirectResponse
     {
+        // spazi e minuscole non contano: si salva sempre in maiuscolo, senza spazi
+        if ($request->filled('tax_code')) {
+            $request->merge(['tax_code' => strtoupper((string) preg_replace('/\s+/', '', (string) $request->input('tax_code')))]);
+        }
         $data = $request->validate([
             'type' => 'required|in:private,company', 'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(10)],
             'first_name' => 'required_if:type,private', 'last_name' => 'required_if:type,private',
             'company_name' => 'required_if:type,company', 'vat_number' => 'required_if:type,company',
-            'sdi_code' => 'nullable', 'pec' => 'nullable|email', 'tax_code' => 'nullable', 'phone' => 'nullable',
+            'sdi_code' => 'nullable', 'pec' => 'nullable|email', 'tax_code' => ['nullable', 'regex:/^([A-Z0-9]{16}|[0-9]{11})$/'], 'phone' => 'nullable',
             'sponsor_code' => 'nullable', 'privacy' => 'accepted',
-        ], self::MESSAGES, self::ATTRIBUTES);
+        ], self::MESSAGES + ['tax_code.regex' => 'Il codice fiscale deve avere 16 caratteri (11 cifre per le aziende). Se non lo hai a portata di mano, lascia il campo vuoto.'], self::ATTRIBUTES);
         if ($data['type'] === 'company' && blank($data['sdi_code'] ?? null) && blank($data['pec'] ?? null)) {
             return back()->withInput()->withErrors(['sdi_code' => 'Per le aziende serve il codice SDI o la PEC.']);
         }

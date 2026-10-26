@@ -6,7 +6,7 @@
 @section('content')
 @php
     $isCompany = old('type') === 'company';
-    $stepOneFields = ['type', 'first_name', 'last_name', 'company_name', 'vat_number', 'sdi_code', 'pec', 'email'];
+    $stepOneFields = ['type', 'first_name', 'last_name', 'company_name', 'vat_number', 'sdi_code', 'pec', 'tax_code', 'email'];
     $startStep = ($errors->any() && ! $errors->hasAny($stepOneFields)) ? 2 : 1;
 @endphp
 <script>document.documentElement.classList.add('js')</script>
@@ -61,6 +61,11 @@
       @error('pec')<p class="fe">{{ $message }}</p>@enderror
      </div>
     </div>
+   </div>
+
+   <div class="fld @error('tax_code') bad @enderror">
+    <input id="f-tax" name="tax_code" value="{{ old('tax_code') }}" placeholder=" " autocomplete="off" autocapitalize="characters" maxlength="16" spellcheck="false" enterkeyhint="next"><label for="f-tax">Codice fiscale (facoltativo)</label>
+    @error('tax_code')<p class="fe">{{ $message }}</p>@enderror
    </div>
 
    <div class="fld @error('email') bad @enderror">

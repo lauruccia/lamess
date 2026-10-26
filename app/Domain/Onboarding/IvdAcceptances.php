@@ -59,7 +59,7 @@ final class IvdAcceptances
             'items' => collect(self::items())->map(fn (array $i, string $k): bool => (bool) ($accepted[$k] ?? false))->all(),
             'accepted_at' => $at->format(DATE_ATOM),
             'documents' => [
-                'letter' => (string) config('lamess.ivd_template_version'),
+                'letter' => app(IvdLetterTemplate::class)->versionLabel(),
                 'regolamento' => self::REGOLAMENTO_VERSION,
                 'piano_compensi' => $planName,
                 'photo_release' => self::PHOTO_RELEASE_VERSION,

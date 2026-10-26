@@ -69,7 +69,7 @@ final class IvdService
 
         return IvdContract::create([
             'user_id' => $user->id, 'sponsor_id' => $sponsor?->id,
-            'template_version' => (string) config('lamess.ivd_template_version'), 'status' => 'awaiting_signature',
+            'template_version' => app(IvdLetterTemplate::class)->versionLabel(), 'status' => 'awaiting_signature',
         ]);
     }
 

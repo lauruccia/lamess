@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Onboarding;
 
 use App\Domain\Career\RankPalette;
+use App\Domain\Engine\Plan\PlanLoader;
 use App\Domain\Network\NetworkService;
+use App\Models\CompPlanVersion;
 use App\Models\Consultant;
 use App\Models\Customer;
 use App\Models\Order;
@@ -81,6 +83,24 @@ final class AreaPagesTest extends TestCase
         foreach (['pr', 'pvf', 'pv', 'hide_pr'] as $oldKey) {
             $this->assertArrayNotHasKey($oldKey, $tree['nodes'][1]);
         }
+    }
+
+    public function test_branch_page_puts_the_tree_above_a_filterable_and_sortable_list(): void
+    {
+        $plan = CompPlanVersion::createFromArray('Incaricati', json_decode((string) file_get_contents(base_path('config/lamess/'.PlanLoader::INCARICATI_FILE)), true), CompPlanVersion::ACTIVE);
+        $this->openPeriod('2026-10', $plan);
+        $a = $this->consultant('A');
+        $b = $this->consultant('B', $a);
+        $this->consultant('C', $b);
+        app(NetworkService::class)->rebuildClosure();
+
+        $html = $this->actingAs($this->withUser($a))->get('/area/rete')->assertOk()->getContent();
+        $this->assertLessThan(strpos($html, 'id="act-panel"'), strpos($html, 'id="lt-data"'), "L'albero deve stare sopra l'elenco");
+        $this->assertLessThan(strpos($html, 'id="act-panel"'), strpos($html, 'Albero della rete'));
+        $this->assertStringContainsString('data-lv="2"', $html);
+        $this->assertStringContainsString('id="act-rank"', $html);
+        $this->assertStringContainsString('data-k="clients"', $html);
+        $this->assertSame(2, substr_count($html, '<tr data-i='));
     }
 
     public function test_branch_detail_is_only_for_me_and_my_downline(): void

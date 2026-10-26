@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Onboarding;
 
 use App\Models\IvdContract;
+use App\Models\IvdLetterSignature;
 use App\Notifications\SignatureOtpCode;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -27,7 +28,7 @@ final class EmailSignatureProvider implements SignatureProvider
         return 'email';
     }
 
-    public function request(IvdContract $contract): SignatureRequest
+    public function request(IvdContract|IvdLetterSignature $contract): SignatureRequest
     {
         if (! config('lamess.mail_enabled')) {
             throw new OnboardingException('L\'invio del codice per email non è attivo al momento: riprova più tardi o contatta l\'assistenza.');
@@ -36,7 +37,7 @@ final class EmailSignatureProvider implements SignatureProvider
         if ($user === null || blank($user->email)) {
             throw new OnboardingException('Manca l\'indirizzo email a cui inviare il codice.');
         }
-        $key = "sig-email-sent:{$contract->id}";
+        $key = 'sig-email-sent:'.class_basename($contract).":{$contract->id}";
         if (Cache::has($key)) {
             throw new OnboardingException('Il codice è stato appena inviato: controlla la posta (anche lo spam) e attendi un minuto prima di chiederne un altro.');
         }

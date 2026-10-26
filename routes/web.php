@@ -21,6 +21,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\KMoneyController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\LetterSignatureController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SupportController;
@@ -87,6 +88,10 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/diventa-incaricato', [AreaController::class, 'apply']);
     Route::post('/diventa-incaricato/firma', [AreaController::class, 'sign'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::post('/diventa-incaricato/codice', [AreaController::class, 'resendCode'])->middleware('throttle:5,1');
+    Route::get('/lettera', [LetterSignatureController::class, 'show']);
+    Route::post('/lettera/codice', [LetterSignatureController::class, 'code'])->middleware('impersonation.safe')->middleware('throttle:5,1');
+    Route::post('/lettera/firma', [LetterSignatureController::class, 'sign'])->middleware('impersonation.safe')->middleware('throttle:10,1');
+    Route::get('/lettera/{signature}/pdf', [LetterSignatureController::class, 'pdf'])->whereNumber('signature');
     Route::get('/onboarding', [AreaController::class, 'onboarding']);
     Route::post('/onboarding/verifica-online', [AreaController::class, 'startOnlineKyc'])->middleware('throttle:6,1');
     Route::post('/onboarding/documento', [AreaController::class, 'uploadDocument'])->middleware('impersonation.safe');
@@ -177,6 +182,11 @@ Route::middleware(['auth'])->prefix('admin-files')->group(function () {
         abort_unless(auth()->user()->can('network.manage') && $contract->pdf_path && Storage::exists($contract->pdf_path), 403);
 
         return Storage::response($contract->pdf_path);
+    });
+    Route::get('/letter-signature/{signature}', function (\App\Models\IvdLetterSignature $signature) {
+        abort_unless(auth()->user()->can('network.manage') && $signature->pdf_path && Storage::exists($signature->pdf_path), 403);
+
+        return Storage::response($signature->pdf_path);
     });
     Route::get('/contract/{contract}/certificate', function (IvdContract $contract) {
         abort_unless(auth()->user()->can('network.manage') && $contract->signed_at !== null && $contract->signature_provider !== 'odoo', 403);

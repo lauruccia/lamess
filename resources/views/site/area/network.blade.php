@@ -42,14 +42,53 @@
      $allReq = array_merge($k['requirements'] ?? [], []);
      $needPearl = collect($allReq)->contains(fn ($r) => $r['key'] === 'pearl' && ! $r['ok'] && ! $r['disabled']);
     @endphp
-    <section class="panel">
-     <header><h2>Dove agire</h2><span class="muted" style="font-size:13px">Chi è più vicino alla prossima qualifica, in cima</span></header>
-     <div class="panel-body" style="padding-bottom:6px"><input id="act-q" type="search" placeholder="Cerca per nome o codice" style="width:100%;padding:8px 12px;border:1px solid var(--hair);border-radius:10px"></div>
+    @include('site.area._tree')
+
+    @php
+     $rankIdx = collect($tree['ranks'] ?? [])->pluck('name')->flip();
+     $actRanks = collect($act)->pluck('rank')->filter()->unique()->sortBy(fn ($r) => $rankIdx[$r] ?? 99)->values();
+     $perLevel = collect($act)->countBy('level')->sortKeys();
+    @endphp
+    <section class="panel" id="act-panel">
+     <header><h2>Le persone del mio ramo</h2><span class="muted" style="font-size:13px" id="act-count">{{ count($act) }} persone</span></header>
+     <div class="panel-body act-filters">
+      <input id="act-q" type="search" placeholder="Cerca per nome o codice" aria-label="Cerca per nome o codice">
+      <div class="act-row" role="group" aria-label="Filtra per livello">
+       <span class="act-lbl">Livello</span>
+       <button type="button" class="chip on" data-lv="">Tutti ({{ count($act) }})</button>
+       @foreach($perLevel as $lv => $cnt)<button type="button" class="chip" data-lv="{{ $lv }}">{{ $lv }}{{ $lv === 1 ? ' · diretti' : '' }} ({{ $cnt }})</button>@endforeach
+      </div>
+      <div class="act-row">
+       <label class="act-lbl" for="act-rank">Qualifica</label>
+       <select id="act-rank"><option value="">Tutte</option>@foreach($actRanks as $r)<option value="{{ mb_strtolower($r) }}">{{ $r }}</option>@endforeach</select>
+       <label class="act-lbl" for="act-show">Mostra</label>
+       <select id="act-show">
+        <option value="">Tutti</option>
+        <option value="clients">Con almeno un cliente</option>
+        <option value="noclients">Senza clienti</option>
+        <option value="waiting">Con iscritti senza primo ordine</option>
+        <option value="ready">Requisiti per la qualifica soddisfatti</option>
+        <option value="team">Con persone sotto di sé</option>
+        <option value="inactive">Sospesi o cessati</option>
+       </select>
+       <button type="button" class="chip" id="act-reset">Azzera filtri</button>
+      </div>
+     </div>
      <div class="tbl-wrap"><table class="tbl cards" id="act-t">
-      <thead><tr><th>Persona</th><th>Liv.</th><th>Qualifica</th><th class="num">Clienti</th><th>Iscritti</th><th class="num">Il suo ramo</th><th>Prossima qualifica e cosa manca</th><th class="num">Venduto mese</th></tr></thead>
+      <thead><tr>
+       @foreach(['name' => 'Persona', 'level' => 'Liv.', 'rank' => 'Qualifica', 'clients' => 'Clienti', 'registered' => 'Iscritti', 'persons' => 'Il suo ramo'] as $k => $lbl)
+        <th @if(in_array($k, ['clients', 'persons'], true))class="num"@endif aria-sort="none"><button type="button" class="srt" data-k="{{ $k }}">{{ $lbl }}<i aria-hidden="true"></i></button></th>
+       @endforeach
+       <th>Prossima qualifica e cosa manca</th>
+       <th class="num" aria-sort="none"><button type="button" class="srt" data-k="eur">Venduto mese<i aria-hidden="true"></i></button></th>
+      </tr></thead>
       <tbody>
-      @foreach($act as $a)
-       <tr data-name="{{ mb_strtolower($a['name'].' '.$a['code']) }}">
+      @foreach($act as $i => $a)
+       @php
+        $ready = $a['next_name'] !== null && ! $a['missing'];
+       @endphp
+       <tr data-i="{{ $i }}" data-name="{{ mb_strtolower($a['name'].' '.$a['code']) }}" data-level="{{ $a['level'] }}" data-rank="{{ mb_strtolower((string) $a['rank']) }}" data-rankord="{{ $rankIdx[$a['rank']] ?? 99 }}"
+           data-clients="{{ $a['clients'] }}" data-registered="{{ $a['registered'] }}" data-waiting="{{ $a['waiting'] }}" data-persons="{{ $a['persons'] }}" data-eur="{{ $a['eur'] }}" data-ready="{{ $ready ? 1 : 0 }}" data-inactive="{{ $a['status'] !== 'active' ? 1 : 0 }}">
         <td data-l="Persona"><b>{{ $a['name'] }}</b> <span class="muted">{{ $a['code'] }}</span>@if($a['status'] !== 'active')<br><span class="st st-warn">{{ $a['status'] === 'suspended' ? 'sospeso' : 'cessato' }}</span>@endif @if($needPearl && $a['direct'] && $a['next_code'] === $pearlCode && $a['units'] > 0)<br><span class="st st-ok" title="Ti serve un Pearl in più al 1° livello">ti serve Pearl</span>@endif</td>
         <td data-l="Livello" class="num">{{ $a['level'] }}@if($a['direct']) <span class="muted">diretto</span>@endif</td>
         <td data-l="Qualifica">{{ $a['rank'] ?? '—' }}</td>
@@ -60,12 +99,11 @@
         <td data-l="Venduto mese" class="num">{{ $a['eur'] > 0 ? '€ '.$eur($a['eur']) : '—' }}</td>
        </tr>
       @endforeach
+      <tr id="act-none" hidden><td colspan="8" class="muted" style="text-align:center;padding:18px">Nessuna persona corrisponde ai filtri.</td></tr>
       </tbody>
      </table></div>
-     <div class="panel-body muted" style="font-size:13px">«Validi» sono i clienti che hanno fatto un ordine che conta per il piano. Vedi solo numeri: nome e contatti dei clienti degli altri incaricati restano riservati.</div>
+     <div class="panel-body muted" style="font-size:13px">Di base chi è più vicino alla prossima qualifica è in cima: clicca il titolo di una colonna per ordinare (di nuovo per invertire). «Validi» sono i clienti che hanno fatto un ordine che conta per il piano. Vedi solo numeri: nome e contatti dei clienti degli altri incaricati restano riservati.</div>
     </section>
-
-    @include('site.area._tree')
 
     <section class="panel">
      <header><h2>Le mie colonne</h2><span class="muted" style="font-size:13px">Una colonna è un tuo diretto con tutta la sua discendenza</span></header>
@@ -134,13 +172,63 @@
 @endif
 
 <style>
+ #act-t tr[hidden]{display:none!important}
+ .act-filters{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
+ .act-filters #act-q{width:100%;padding:8px 12px;border:1px solid var(--hair);border-radius:10px}
+ .act-row{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+ .act-lbl{font-size:13px;color:var(--muted,#6a615a);margin:0 2px 0 0}
+ .act-row select{padding:6px 10px;border:1px solid var(--hair);border-radius:10px;font:inherit;font-size:14px;margin-right:8px}
+ .chip{font:inherit;font-size:13px;padding:4px 11px;border:1px solid var(--hair);border-radius:999px;background:transparent;color:inherit;cursor:pointer;margin:0;box-shadow:none}
+ .chip.on{background:#C2663A;border-color:#C2663A;color:#fff}
+ .srt{font:inherit;font-weight:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;box-shadow:none;text-transform:inherit;letter-spacing:inherit}
+ .srt i{display:inline-block;width:.9em;font-style:normal;opacity:.55}
+ th[aria-sort=ascending] .srt i:after{content:'▲'}th[aria-sort=descending] .srt i:after{content:'▼'}
  .mini-bar{height:8px;min-width:90px;border-radius:5px;background:rgba(127,127,127,.22);overflow:hidden}
  .mini-bar>i{display:block;height:100%;background:#C2663A}.mini-bar>i.ok{background:#2E9E5B}
 </style>
 <script>
  (function(){
-  var aq=document.getElementById('act-q');
-  if(aq){aq.addEventListener('input',function(){var t=aq.value.trim().toLowerCase();document.querySelectorAll('#act-t tbody tr').forEach(function(r){r.style.display=(t===''||(r.getAttribute('data-name')||'').indexOf(t)>-1)?'':'none';});});}
+  var tb=document.querySelector('#act-t tbody'); if(!tb){return;}
+  var rows=[].slice.call(tb.querySelectorAll('tr[data-i]')), none=document.getElementById('act-none'), cnt=document.getElementById('act-count');
+  var q=document.getElementById('act-q'), rk=document.getElementById('act-rank'), sh=document.getElementById('act-show'), lv='';
+  var chips=[].slice.call(document.querySelectorAll('[data-lv]'));
+  var sortK=null, sortDir=1;
+  var num={level:1,rankord:1,clients:1,registered:1,persons:1,eur:1};
+  function match(r){
+   var t=q.value.trim().toLowerCase(), d=r.dataset;
+   if(t&&d.name.indexOf(t)<0){return false;}
+   if(lv!==''&&d.level!==lv){return false;}
+   if(rk.value&&d.rank!==rk.value){return false;}
+   switch(sh.value){
+    case 'clients':return +d.clients>0; case 'noclients':return +d.clients===0; case 'waiting':return +d.waiting>0;
+    case 'ready':return d.ready==='1'; case 'team':return +d.persons>0; case 'inactive':return d.inactive==='1';
+   }
+   return true;
+  }
+  function apply(){
+   var n=0;
+   rows.forEach(function(r){var ok=match(r);r.hidden=!ok;if(ok){n++;}});
+   none.hidden=n>0;
+   cnt.textContent=(n===rows.length?rows.length+' persone':n+' di '+rows.length+' persone');
+  }
+  function sortRows(){
+   var k=sortK;
+   var arr=rows.slice().sort(function(a,b){
+    if(k===null){return a.dataset.i-b.dataset.i;}
+    var key=k==='rank'?'rankord':k, x,y;
+    if(num[key]){x=+a.dataset[key];y=+b.dataset[key];}else{x=a.dataset[key]||'';y=b.dataset[key]||'';}
+    var c=x<y?-1:(x>y?1:0);
+    return c*sortDir||(a.dataset.i-b.dataset.i);
+   });
+   arr.forEach(function(r){tb.insertBefore(r,none);});
+   document.querySelectorAll('#act-t th[aria-sort]').forEach(function(th){var b=th.querySelector('.srt');th.setAttribute('aria-sort',b&&b.dataset.k===k?(sortDir>0?'ascending':'descending'):'none');});
+  }
+  q.addEventListener('input',apply); rk.addEventListener('change',apply); sh.addEventListener('change',apply);
+  chips.forEach(function(c){c.addEventListener('click',function(){lv=c.dataset.lv;chips.forEach(function(x){x.classList.toggle('on',x===c);});apply();});});
+  document.querySelectorAll('.srt').forEach(function(b){b.addEventListener('click',function(){
+   var k=b.dataset.k; if(sortK===k){sortDir=-sortDir;}else{sortK=k;sortDir=(k==='name'||k==='level'||k==='rank')?1:-1;} sortRows();});});
+  document.getElementById('act-reset').addEventListener('click',function(){
+   q.value='';rk.value='';sh.value='';lv='';chips.forEach(function(x){x.classList.toggle('on',x.dataset.lv==='');});sortK=null;sortDir=1;sortRows();apply();});
  })();
 </script>
 @endsection

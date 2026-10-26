@@ -34,6 +34,9 @@
 </div>
 
 {{-- Cose da fare, in ordine di urgenza --}}
+@if(! empty($letterToSign))
+ <div class="note"><div><strong>Lettera di Incarico da firmare</strong>@if(filled($letterToSign->version->change_summary)){{ \Illuminate\Support\Str::limit($letterToSign->version->change_summary, 160) }}@else Il Consorzio ti chiede di firmare la versione {{ $letterToSign->version->version }} della lettera.@endif</div><a class="btn" href="/area/lettera">Leggi e firma</a></div>
+@endif
 @if($c && $contract?->status === 'signed')
  <div class="note note-info"><div><strong>Domanda firmata</strong>È in attesa di accettazione da parte del Consorzio: ti avvisiamo appena è pronta.</div></div>
 @endif

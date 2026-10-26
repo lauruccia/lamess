@@ -68,6 +68,7 @@ class AreaController extends Controller
         $live = $user->consultant !== null && $user->consultant->status !== 'terminated' ? $user->consultant : null;
 
         return view('site.area.home', [
+            'letterToSign' => $this->safely(static fn () => app(\App\Domain\Onboarding\IvdLetterSigning::class)->pendingFor($user)),
             'user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
             // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
             'progress' => $live ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($live->id)) : null,

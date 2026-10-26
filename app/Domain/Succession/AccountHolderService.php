@@ -86,7 +86,7 @@ final class AccountHolderService
             }
             $new = IvdContract::create([
                 'user_id' => $to->id, 'consultant_id' => $c->id, 'sponsor_id' => $c->sponsor_id, 'kind' => $kind,
-                'template_version' => (string) config('lamess.ivd_template_version'), 'status' => 'awaiting_signature', 'term_index' => $oldContract?->term_index ?? 1,
+                'template_version' => app(\App\Domain\Onboarding\IvdLetterTemplate::class)->versionLabel(), 'status' => 'awaiting_signature', 'term_index' => $oldContract?->term_index ?? 1,
             ]);
             if ($from !== null && $kind === 'transfer') {
                 $this->customers->ensureCustomer($from, $this->network->effectiveSponsor($c));

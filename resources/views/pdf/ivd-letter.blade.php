@@ -13,7 +13,7 @@ h2{font-size:11px;color:#894C2D;margin:14px 0 4px}
 table{width:100%;border-collapse:collapse}td{padding:3px 6px;vertical-align:top}td.l{width:32%;color:#555}
 .box{border:1px solid #BBB4AF;padding:8px;margin:10px 0;background:#FCF6F3}.small{font-size:8px;color:#666}
 .ivd-letter p{margin:0 0 5px;text-align:justify}
-.ivd-letter ul.prem{margin:0 0 5px 14px;padding:0}.ivd-letter ul.prem li{margin:0 0 3px;text-align:justify}
+.ivd-letter ul,.ivd-letter ol{margin:0 0 5px 14px;padding:0}.ivd-letter li{margin:0 0 3px;text-align:justify}.ivd-letter ul.prem{margin:0 0 5px 14px;padding:0}.ivd-letter ul.prem li{margin:0 0 3px;text-align:justify}
 .ivd-letter p.dich{margin-left:10px}
 .att p{margin:0 0 5px}.att .ck{font-size:12px}.att .det{margin:0 0 6px 16px;color:#333}
 .firme td{width:50%;padding-top:10px;vertical-align:bottom}

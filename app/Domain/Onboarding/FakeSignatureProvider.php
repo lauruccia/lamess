@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Onboarding;
 
 use App\Models\IvdContract;
+use App\Models\IvdLetterSignature;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ final class FakeSignatureProvider implements SignatureProvider
         return 'fake';
     }
 
-    public function request(IvdContract $contract): SignatureRequest
+    public function request(IvdContract|IvdLetterSignature $contract): SignatureRequest
     {
         $ref = 'fake-'.Str::uuid();
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);

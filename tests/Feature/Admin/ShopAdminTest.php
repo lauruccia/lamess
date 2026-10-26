@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\PvMovement;
 use App\Models\User;
+use App\Notifications\OrderPaymentDetails;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -108,5 +109,43 @@ final class ShopAdminTest extends TestCase
         $this->actingAs(User::factory()->role('admin_finance')->create());
         Livewire::test(ListInvoices::class)->callTableAction('resend', $inv)->assertNotified();
         $this->assertSame('sent', $inv->fresh()->sink_status);
+    }
+
+    public function test_payment_details_can_be_resent_from_the_panel(): void
+    {
+        $this->plan();
+        config(['lamess.mail_enabled' => true, 'lamess.bank_transfer_instructions' => 'IBAN IT60X0542811101000000123456']);
+        $order = $this->placeOrder();
+        $this->actingAs(User::factory()->role('admin_finance')->create());
+
+        Livewire::test(ListOrders::class)->callTableAction('sendPaymentDetails', $order)->assertNotified();
+
+        Notification::assertSentTo($order->buyer, OrderPaymentDetails::class, fn ($n) => $n->reminder);
+        $this->assertTrue($order->events()->where('type', 'payment_details_sent')->exists());
+    }
+
+    public function test_payment_details_are_not_sent_without_iban_or_with_email_off(): void
+    {
+        $this->plan();
+        $order = $this->placeOrder();
+        $this->actingAs(User::factory()->role('admin_finance')->create());
+
+        config(['lamess.mail_enabled' => false, 'lamess.bank_transfer_instructions' => 'IBAN IT60X0542811101000000123456']);
+        Livewire::test(ListOrders::class)->callTableAction('sendPaymentDetails', $order)->assertNotified();
+        config(['lamess.mail_enabled' => true, 'lamess.bank_transfer_instructions' => 'IBAN da configurare — causale: numero ordine']);
+        Livewire::test(ListOrders::class)->callTableAction('sendPaymentDetails', $order)->assertNotified();
+
+        Notification::assertNothingSentTo($order->buyer);
+        $this->assertFalse($order->events()->where('type', 'payment_details_sent')->exists());
+    }
+
+    public function test_payment_details_action_is_hidden_on_paid_orders(): void
+    {
+        $this->plan();
+        $order = $this->placeOrder();
+        app(OrderService::class)->markPaid($order);
+        $this->actingAs(User::factory()->role('admin_finance')->create());
+
+        Livewire::test(ListOrders::class)->assertTableActionHidden('sendPaymentDetails', $order->fresh());
     }
 }

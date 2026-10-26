@@ -25,6 +25,7 @@ use App\Models\PvMovement;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\OrderPaid;
+use App\Notifications\OrderPaymentDetails;
 use App\Notifications\OrderShipped;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -228,6 +229,45 @@ final class OrderService
 
             return $order->refresh()->load('items');
         });
+    }
+
+    /**
+     * Manda al cliente i dati per completare il pagamento (IBAN, importo e causale per il bonifico; link all'ordine per carta o KMoney).
+     * Serve all'invio automatico dopo l'ordine con bonifico e al pulsante admin «Invia di nuovo i dati di pagamento».
+     *
+     * @return string l'indirizzo email a cui è partito
+     */
+    public function sendPaymentDetails(Order $order, bool $reminder = false): string
+    {
+        if ($order->status !== 'pending_payment') {
+            throw new OrderException("L'ordine {$order->number} non è in attesa di pagamento: non c'è nulla da pagare.");
+        }
+        if (! config('lamess.mail_enabled')) {
+            throw new OrderException('L\'invio delle email è spento: accendilo in Impostazioni → Email.');
+        }
+        $buyer = $order->buyer;
+        if ($buyer === null || blank($buyer->email)) {
+            throw new OrderException('Il cliente non ha un indirizzo email.');
+        }
+        $transfer = $order->payment_method === 'transfer' || ($order->payment_method === 'kmoney' && $order->kmoney_rest_method === 'transfer');
+        $iban = trim((string) config('lamess.bank_transfer_instructions'));
+        if ($transfer && ($iban === '' || str_contains(strtolower($iban), 'da configurare'))) {
+            throw new OrderException('Scrivi prima l\'IBAN in Impostazioni → Metodi di pagamento → «Istruzioni per il bonifico».');
+        }
+        Notification::send($buyer, new OrderPaymentDetails($order, $reminder));
+        OrderEvent::log($order, 'payment_details_sent', ($reminder ? 'Dati di pagamento inviati di nuovo a ' : 'Dati di pagamento inviati a ').$buyer->email, true);
+
+        return (string) $buyer->email;
+    }
+
+    /** Come sendPaymentDetails ma senza mai bloccare chi ordina: se l'invio non riesce resta una riga nel log e l'ordine prosegue (l'admin può rimandarla). */
+    public function trySendPaymentDetails(Order $order): void
+    {
+        try {
+            $this->sendPaymentDetails($order);
+        } catch (Throwable $e) {
+            Log::warning('Dati di pagamento non inviati', ['ordine' => $order->number, 'errore' => $e->getMessage()]);
+        }
     }
 
     /** Motivo del rifiuto dell'ultimo addebito con carta (serve a spiegarlo al cliente negli abbonamenti). */

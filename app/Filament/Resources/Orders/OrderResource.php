@@ -198,6 +198,23 @@ class OrderResource extends Resource
                 ->visible(fn (Order $record) => $record->status === 'pending_payment' && ! $record->paysByCard())->requiresConfirmation()
                 ->modalDescription(LegacyPlan::hidden() ? 'Conferma di aver ricevuto il pagamento. Verrà generata la fattura.' : 'Conferma di aver ricevuto il pagamento. Verranno generati i punti e la fattura.')
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->markPaid($record), LegacyPlan::hidden() ? 'Pagamento confermato: fattura generata' : 'Pagamento confermato: punti e fattura generati')),
+            Action::make('sendPaymentDetails')->authorize('orders.manage')->label('Invia di nuovo i dati di pagamento')->icon('heroicon-o-envelope')->color('info')
+                ->visible(fn (Order $record) => $record->status === 'pending_payment')->requiresConfirmation()
+                ->modalHeading('Invia di nuovo i dati di pagamento')
+                ->modalDescription(fn (Order $record) => 'Mandiamo a '.($record->buyer?->email ?? 'il cliente').' un\'email con '.match (true) {
+                    $record->payment_method === 'transfer', $record->kmoney_rest_method === 'transfer' => 'IBAN, importo e causale del bonifico',
+                    $record->paysByCard() => 'il link all\'ordine per pagare con carta',
+                    default => 'il link all\'ordine per confermare il pagamento',
+                }.'. Il link porta alla pagina dell\'ordine, dove il cliente trova anche i pulsanti per pagare.')
+                ->modalSubmitActionLabel('Invia')
+                ->action(function (Order $record): void {
+                    try {
+                        $to = app(OrderService::class)->sendPaymentDetails($record, reminder: true);
+                        Notification::make()->title("Dati di pagamento inviati a {$to}")->success()->send();
+                    } catch (OrderException $e) {
+                        Notification::make()->title($e->getMessage())->danger()->send();
+                    }
+                }),
             Action::make('checkStripe')->authorize('orders.manage')->label('Verifica su Stripe')->icon('heroicon-o-credit-card')->color('info')
                 ->visible(fn (Order $record) => $record->status === 'pending_payment' && $record->paysByCard() && app(PaymentProvider::class) instanceof StripeCheckoutProvider)
                 ->modalDescription('Chiede a Stripe se il cliente ha pagato. Se sì, l\'ordine viene confermato; la carta si conferma solo così, mai a mano.')

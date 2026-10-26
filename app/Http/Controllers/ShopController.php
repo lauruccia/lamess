@@ -901,6 +901,7 @@ class ShopController extends Controller
         // Bonifico: l'ordine è registrato e il carrello si svuota. Carta o KMoney: il carrello resta finché l'ordine non risulta pagato.
         if ($d['payment_method'] === 'transfer') {
             PendingCart::clear($r);
+            $orders->trySendPaymentDetails($order);   // email con IBAN, importo e causale
         } else {
             PendingCart::hold($r, $order);
         }
@@ -1083,6 +1084,9 @@ class ShopController extends Controller
         $d = $r->validate(['kmoney_rest' => 'required|in:card,transfer'], SiteController::MESSAGES);
         try {
             $order = $orders->chooseKMoneyRest($order, $d['kmoney_rest']);
+            if ($d['kmoney_rest'] === 'transfer') {
+                $orders->trySendPaymentDetails($order);
+            }
         } catch (OrderException $e) {
             return redirect("/area/ordini/{$order->id}")->withErrors(['order' => $e->getMessage()]);
         }

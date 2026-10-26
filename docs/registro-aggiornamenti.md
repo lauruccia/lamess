@@ -1,5 +1,12 @@
 # Registro aggiornamenti
 
+## 2026-10-26 — Dati di pagamento via email e pulsante «Invia di nuovo»
+- Prima: con il bonifico l'IBAN si vedeva solo nella pagina dell'ordine; nessuna email al cliente alla registrazione dell'ordine (l'unica email di pagamento era «pagamento ricevuto»).
+- Ora: nuova email `OrderPaymentDetails` con IBAN/istruzioni, importo e causale per il bonifico, oppure link all'ordine per pagare con carta o confermare KMoney (anche in due passi KMoney + resto). Parte da sola quando il cliente conferma un ordine con bonifico (o sceglie il bonifico per il resto dopo KMoney); un errore di invio non blocca mai l'ordine.
+- Admin: azione **Invia di nuovo i dati di pagamento** sugli ordini in attesa (elenco e scheda ordine), con conferma. Rifiuta con un messaggio chiaro se le email sono spente, se manca l'email del cliente o se l'IBAN è ancora «da configurare». Ogni invio lascia una nota interna in cronologia.
+- Il link porta alla pagina dell'ordine (accesso con login), dove ci sono IBAN e pulsanti di pagamento: non è un link diretto a Stripe.
+- Test: `test_bank_transfer_order_emails_the_payment_details_to_the_customer`, `test_card_order_does_not_send_bank_details`, `test_payment_details_can_be_resent_from_the_panel`, `test_payment_details_are_not_sent_without_iban_or_with_email_off`, `test_payment_details_action_is_hidden_on_paid_orders`. Nessuna migrazione.
+
 ## 2026-10-24 — Ticket: si vede chi li crea
 - Elenco admin: colonna **Creato da** (nome + «Incaricato LM…» / «Cliente»), ricercabile per nome ed email; «Incaricato» e «Aperto il» disponibili come colonne facoltative; nuovi filtri «Non presi in carico» e «In carico a me»; caricamento dei dati senza query ripetute.
 - Scheda ticket: creatore, data di apertura e «In carico a»; i messaggi mostrano il nome dell'autore (un super admin resta «Assistenza» per gli altri admin).

@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\PvMovement;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\OrderPaymentDetails;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\Support\ShopDb;
@@ -94,6 +95,37 @@ final class ShopPagesTest extends TestCase
         $order = Order::firstOrFail();
         $this->assertSame('pending_payment', $order->status);
         $this->get("/area/ordini/{$order->id}")->assertSee('Bonifico')->assertSee($order->number);
+    }
+
+    public function test_bank_transfer_order_emails_the_payment_details_to_the_customer(): void
+    {
+        Notification::fake();
+        config(['lamess.mail_enabled' => true, 'lamess.bank_transfer_instructions' => 'IBAN IT60X0542811101000000123456']);
+        $this->plan();
+        $p = $this->product('A', '100.00');
+        $user = $this->buyer($this->activeSponsor());
+        $this->actingAs($user)->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
+        $this->post('/area/checkout', $this->form(['payment_method' => 'transfer']))->assertRedirect();
+        $order = Order::firstOrFail();
+
+        Notification::assertSentTo($user, OrderPaymentDetails::class, fn ($n) => $n->order->is($order) && ! $n->reminder);
+        $mail = (new OrderPaymentDetails($order))->toMail($user);
+        $text = implode(' ', array_map('strval', $mail->introLines));
+        $this->assertStringContainsString('IT60X0542811101000000123456', $text);
+        $this->assertStringContainsString($order->number, $text);
+    }
+
+    public function test_card_order_does_not_send_bank_details(): void
+    {
+        Notification::fake();
+        config(['lamess.mail_enabled' => true]);
+        $this->plan();
+        $p = $this->product('A', '100.00');
+        $user = $this->buyer($this->activeSponsor());
+        $this->actingAs($user)->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
+        $this->post('/area/checkout', $this->form(['payment_method' => 'card']));
+
+        Notification::assertNotSentTo($user, OrderPaymentDetails::class);
     }
 
     public function test_checkout_validation_errors_are_shown(): void

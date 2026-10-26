@@ -25,7 +25,7 @@
      <div class="legal-body" style="max-height:380px;overflow:auto;border:1px solid var(--lm-line,#d9d2cc);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:14px">{!! $regolamentoHtml !!}</div>
     </details>
 
-    <form method="post" action="/area/lettera/firma">@csrf
+    <form id="sign-form" method="post" action="/area/lettera/firma">@csrf
      <h3 style="margin:0 0 8px;font-size:1rem">2 · Dichiarazioni (art. 12)</h3>
      <fieldset style="border:0;padding:0;margin:0 0 10px">
       <legend style="font-size:.92rem;padding:0;margin-bottom:4px">12.1 — Reddito complessivo netto di 5.000 € (art. 7), nell'anno in corso</legend>
@@ -51,17 +51,17 @@
       @if($item['detail'])<p class="muted" style="margin:0 0 8px 26px;font-size:13px">{{ $item['detail'] }}</p>@endif
      @endforeach
 
-     <h3 style="margin:18px 0 8px;font-size:1rem">4 · Firma</h3>
-     @if($hint)<div class="note note-info"><div>{{ $hint }}</div></div>@endif
-     <label for="l-otp">Codice OTP</label><input id="l-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" style="max-width:240px;font-size:20px;letter-spacing:.2em">
-     @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
-     <div class="form-actions"><button class="accent">Firma</button></div>
     </form>
 
-    <form method="post" action="/area/lettera/codice" style="margin-top:14px">@csrf
-     <p style="margin:.2rem 0 .6rem;font-size:.9rem;opacity:.8">Non hai ancora il codice, o non è arrivato? Chiedine uno (puoi chiederne un altro dopo un minuto).</p>
-     <button class="btn" type="submit">Invia il codice</button>
+    <h3 style="margin:18px 0 8px;font-size:1rem">4 · Firma</h3>
+    <form method="post" action="/area/lettera/codice" style="margin:0 0 16px">@csrf
+     <p style="margin:.2rem 0 .6rem;font-size:.9rem;opacity:.8">Prima chiedi il codice: ti arriva per email e lo scrivi qui sotto. Se non arriva puoi chiederne un altro dopo un minuto.</p>
+     <button class="btn accent" type="submit" style="margin-top:0">Invia il codice</button>
     </form>
+    @if($hint)<div class="note note-info"><div>{{ $hint }}</div></div>@endif
+    <label for="l-otp">Codice OTP</label><input id="l-otp" name="otp" form="sign-form" inputmode="numeric" autocomplete="one-time-code" style="max-width:240px;font-size:20px;letter-spacing:.2em">
+    @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
+    <div class="form-actions"><button class="btn accent" type="submit" form="sign-form">Firma</button></div>
    </div>
   </section>
  </div>

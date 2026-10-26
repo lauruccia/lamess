@@ -15,8 +15,8 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#FCF6F3;
 <div class="muted">Data: {{ $doc->issued_at->timezone('Europe/Rome')->format('d/m/Y') }} · Ordine {{ $doc->order->number ?? '' }}
 @if($isCredit) · Rettifica la fattura {{ $doc->invoice->number }}@endif</div>
 <div style="margin-top:14px">
- <div class="box"><b>Cedente</b><br>{{ $seller['name'] }}<br>@if($seller['vat_number'])P.IVA {{ $seller['vat_number'] }}<br>@endif{{ $seller['address'] }}</div>
- <div class="box"><b>Cessionario</b><br>{{ $buyer['name'] }}<br>@if($buyer['vat_number'])P.IVA {{ $buyer['vat_number'] }}<br>@endif @if($buyer['tax_code'])C.F. {{ $buyer['tax_code'] }}<br>@endif{{ $buyer['address'] }}, {{ $buyer['zip'] }} {{ $buyer['city'] }} {{ $buyer['province'] }}<br>@if(!empty($buyer['sdi_code']))Codice SDI: {{ $buyer['sdi_code'] }}@elseif(!empty($buyer['pec']))PEC: {{ $buyer['pec'] }}@endif</div>
+ <div class="box"><b>Cedente</b><br>{{ $seller['name'] ?? '' }}<br>@if(!empty($seller['vat_number']))P.IVA {{ $seller['vat_number'] }}<br>@endif{{ $seller['address'] ?? '' }}</div>
+ <div class="box"><b>Cessionario</b><br>{{ $buyer['name'] ?? '' }}<br>@if(!empty($buyer['vat_number']))P.IVA {{ $buyer['vat_number'] }}<br>@endif @if(!empty($buyer['tax_code']))C.F. {{ $buyer['tax_code'] }}<br>@endif{{ $buyer['address'] ?? '' }}, {{ $buyer['zip'] ?? '' }} {{ $buyer['city'] ?? '' }} {{ $buyer['province'] ?? '' }}<br>@if(!empty($buyer['sdi_code']))Codice SDI: {{ $buyer['sdi_code'] }}@elseif(!empty($buyer['pec']))PEC: {{ $buyer['pec'] }}@endif</div>
 </div>
 @if($isCredit)<p><b>Motivo:</b> {{ $doc->reason }}</p>@endif
 <table><tr><th>Descrizione</th><th class="r">Q.tà</th><th class="r">Prezzo unit.</th><th class="r">Imponibile</th><th class="r">IVA %</th></tr>

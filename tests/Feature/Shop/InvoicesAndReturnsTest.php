@@ -116,6 +116,18 @@ final class InvoicesAndReturnsTest extends TestCase
         $this->assertStringStartsWith('%PDF', app(InvoiceService::class)->pdf($o->invoice));
     }
 
+    public function test_pdf_is_generated_when_buyer_has_no_vat_number_or_tax_code(): void
+    {
+        $this->plan();
+        $p = $this->product('A', '100.00');
+        $o = $this->paid([$p->id => 1]);
+        $invoice = $o->invoice;
+        $invoice->buyer = ['name' => 'Mario Rossi', 'address' => 'Via Roma 1', 'zip' => '89100', 'city' => 'Reggio Calabria', 'province' => 'RC'];
+        $invoice->save();
+
+        $this->assertStringStartsWith('%PDF', app(InvoiceService::class)->pdf($invoice->fresh()));
+    }
+
     public function test_document_counters_are_independent_per_year_and_prefix(): void
     {
         $this->assertSame('FT/2026/00001', DocumentNumbers::next('FT', 2026));

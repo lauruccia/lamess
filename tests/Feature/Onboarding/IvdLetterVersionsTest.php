@@ -211,4 +211,25 @@ final class IvdLetterVersionsTest extends TestCase
         $this->assertSame([$storico->id], IvdLetterSignature::where('status', 'pending')->pluck('consultant_id')->all());
         $this->assertNotContains($gia->id, IvdLetterSignature::pluck('consultant_id')->all());
     }
+
+    public function test_dalla_pagina_admin_si_sceglie_a_chi_inviare(): void
+    {
+        $a = $this->incaricato('a@example.test');
+        $b = $this->incaricato('b@example.test');
+        $c = $this->incaricato('c@example.test');
+        $c->update(['status' => 'suspended']);
+        foreach ([$a, $b, $c] as $x) {
+            IvdContract::where('consultant_id', $x->id)->update(['template_version' => 'odoo-storico']);
+        }
+        $this->actingAs(User::factory()->role()->create());
+
+        Livewire::test(IvdLetterPage::class)->callAction('send', ['mode' => 'pick', 'ids' => [$b->id]])->assertNotified();
+        $this->assertSame([$b->id], IvdLetterSignature::pluck('consultant_id')->all());
+
+        Livewire::test(IvdLetterPage::class)->callAction('send', ['mode' => 'active'])->assertNotified();
+        $this->assertEqualsCanonicalizing([$a->id, $b->id], IvdLetterSignature::pluck('consultant_id')->all()); // il sospeso non c'è
+
+        Livewire::test(IvdLetterPage::class)->callAction('send', ['mode' => 'all'])->assertNotified();
+        $this->assertEqualsCanonicalizing([$a->id, $b->id, $c->id], IvdLetterSignature::pluck('consultant_id')->all());
+    }
 }

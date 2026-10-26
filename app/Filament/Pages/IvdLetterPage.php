@@ -13,10 +13,13 @@ use App\Models\IvdLetterEdit;
 use App\Models\IvdLetterSignature;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
@@ -142,18 +145,38 @@ class IvdLetterPage extends Page implements HasSchemas
             Action::make('send')->label('Invia da firmare')->icon('heroicon-o-paper-airplane')->color('success')
                 ->modalHeading('Inviare la lettera da firmare?')
                 ->modalDescription(function (): HtmlString {
-                    $v = app(IvdLetterTemplate::class)->current();
-                    $n = $v === null ? app(IvdLetterSigning::class)->eligible($this->virtualVersion())->count() : app(IvdLetterSigning::class)->eligible($v)->count();
                     $mail = config('lamess.mail_enabled') ? 'Ognuno riceve un\'email con il link per firmare e un avviso nella sua area.' : '<strong>L\'invio email è spento</strong>: gli incaricati vedranno solo l\'avviso nella loro area riservata.';
 
-                    return new HtmlString("<p>La versione in vigore va a <strong>{$n} incaricati</strong> registrati che non l'hanno ancora firmata.</p><p>{$mail}</p>");
+                    return new HtmlString("<p>La lettera è solo per gli <strong>incaricati registrati</strong> che non hanno ancora firmato la versione in vigore (i clienti e i cessati non sono mai inclusi).</p><p>{$mail}</p>");
                 })
                 ->modalSubmitActionLabel('Invia')
-                ->action(function (): void {
+                ->schema(function (): array {
+                    $eligible = app(IvdLetterSigning::class)->eligible($this->versionToSend());
+                    $active = $eligible->where('status', 'active')->count();
+
+                    return [
+                        Radio::make('mode')->label('A chi la invio')->live()->default('all')->required()->options([
+                            'all' => "A tutti gli incaricati che non l'hanno firmata ({$eligible->count()})",
+                            'active' => "Solo agli incaricati attivi ({$active})",
+                            'pick' => 'Scelgo io a chi',
+                        ]),
+                        Select::make('ids')->label('Incaricati')->multiple()->searchable()->preload()
+                            ->options($eligible->mapWithKeys(fn ($c) => [$c->id => $c->name.' · '.$c->code.($c->status !== 'active' ? ' ('.($c->status === 'suspended' ? 'sospeso' : $c->status).')' : '')])->all())
+                            ->visible(fn (Get $get): bool => $get('mode') === 'pick')->required(fn (Get $get): bool => $get('mode') === 'pick'),
+                    ];
+                })
+                ->action(function (array $data): void {
                     try {
                         // la prima volta la versione in vigore esiste solo come testo di base: la si salva così com'è
                         $v = app(IvdLetterTemplate::class)->ensureCurrent(Actor::label());
-                        $r = app(IvdLetterSigning::class)->send($v, Actor::label());
+                        $signing = app(IvdLetterSigning::class);
+                        $mode = (string) ($data['mode'] ?? 'all');
+                        $ids = match ($mode) {
+                            'pick' => array_map('intval', (array) ($data['ids'] ?? [])),
+                            'active' => $signing->eligible($v)->where('status', 'active')->pluck('id')->map(fn ($i) => (int) $i)->all(),
+                            default => null,
+                        };
+                        $r = $signing->send($v, Actor::label(), $ids);
                     } catch (OnboardingException $e) {
                         Notification::make()->title('Invio non riuscito')->body($e->getMessage())->danger()->persistent()->send();
 
@@ -175,6 +198,12 @@ class IvdLetterPage extends Page implements HasSchemas
                     Notification::make()->title($n > 0 ? "Promemoria inviato a {$n} incaricati" : 'Nessuna email inviata (invio email spento?)')->color($n > 0 ? 'success' : 'warning')->send();
                 }),
         ];
+    }
+
+    /** Versione in vigore, o quella di base se nessuno ha ancora salvato nulla (serve solo per contare chi la riceverebbe). */
+    private function versionToSend(): \App\Models\IvdLetterVersion
+    {
+        return app(IvdLetterTemplate::class)->current() ?? $this->virtualVersion();
     }
 
     private function virtualVersion(): \App\Models\IvdLetterVersion

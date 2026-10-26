@@ -95,6 +95,11 @@ final class IvdLetterTemplate
             'CASELLA_PENSIONATO' => '<p class="dich">'.$box(! empty($decl['is_pensioner']), true).' di essere in possesso di pensione previdenziale e s’impegna a comunicare al Consorzio, mediante l’utilizzo del servizio di assistenza dedicato www.kadeogroup.it/support, ogni variazione della propria posizione previdenziale.</p>',
             'CASELLE_PLURIMANDATARIO' => '<p class="dich">'.$box($decl['multi_principal'] ?? null, 'no').' NO &nbsp; '.$box($decl['multi_principal'] ?? null, 'yes').' SI &nbsp; Quali? <u>'.e(($decl['multi_principal'] ?? null) === 'yes' ? (string) ($decl['multi_principal_names'] ?? '') : '').'</u></p>',
         ];
+        if (! empty($decl['_form_below'])) {
+            // Nella schermata di firma le caselle dell'art. 12 si compilano nel modulo sotto: qui non si ripetono (sarebbero caselle morte).
+            $note = '<p class="dich"><em>Le dichiarazioni dell\'art. 12.1 e 12.2 si compilano nella sezione «2 · Dichiarazioni» qui sotto.</em></p>';
+            $blocks = ['CASELLE_REDDITO' => $note, 'CASELLE_PREVIDENZA' => '', 'CASELLA_PENSIONATO' => '', 'CASELLE_PLURIMANDATARIO' => ''];
+        }
         foreach ($blocks as $token => $html) {
             $body = (string) preg_replace('/<p[^>]*>\s*\[\['.$token.'\]\]\s*<\/p>/', $html, $body);
             $body = str_replace('[['.$token.']]', $html, $body);

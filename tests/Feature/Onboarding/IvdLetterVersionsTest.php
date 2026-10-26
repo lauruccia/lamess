@@ -150,7 +150,7 @@ final class IvdLetterVersionsTest extends TestCase
         app(IvdLetterSigning::class)->send($v, 'admin@test');
 
         $this->actingAs($a->user)->get('/area')->assertOk()->assertSee('Lettera di Incarico da firmare');
-        $this->get('/area/lettera')->assertOk()->assertSee('Nuovo art. 17')->assertSee('obbligo di aggiornare i propri recapiti');
+        $this->get('/area/lettera')->assertOk()->assertSee('si compilano nella sezione')->assertSee('Nuovo art. 17')->assertSee('obbligo di aggiornare i propri recapiti');
         $hint = $this->followingRedirects()->post('/area/lettera/codice')->assertOk()->getContent();
         preg_match('/OTP: (\d{6})/', $hint, $m);
         $this->assertNotEmpty($m);

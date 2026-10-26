@@ -15,7 +15,7 @@
     <details open style="margin:0 0 18px">
      <summary style="cursor:pointer;font-weight:600">1 · Leggi la Lettera di Incarico</summary>
      <div class="legal-body" style="max-height:560px;overflow:auto;border:1px solid var(--lm-line,#d9d2cc);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:14px">
-      @include('legal.ivd-letter-body', ['letterVersion' => $version])
+      @include('legal.ivd-letter-body', ['letterVersion' => $version, 'decl' => ['_form_below' => true]])
      </div>
      <p class="muted" style="margin:8px 0 0;font-size:13px">Allegati: <a href="/regolamento" target="_blank" rel="noopener">Regolamento</a> · <a href="/piano-compensi" target="_blank" rel="noopener">Piano compensi</a> · <a href="/privacy" target="_blank" rel="noopener">Informativa privacy</a></p>
     </details>

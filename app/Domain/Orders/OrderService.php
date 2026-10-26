@@ -8,7 +8,7 @@ use App\Domain\Billing\InvoiceService;
 use App\Domain\Customers\AddressCheck;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Ledger\PvLedger;
-use App\Domain\Periods\NightlyRecalculation;
+use App\Domain\Periods\LiveRecalcDispatcher;
 use App\Domain\Plan\LegacyPlan;
 use App\Models\BundleRule;
 use App\Models\Consultant;
@@ -31,7 +31,6 @@ use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -471,22 +470,7 @@ final class OrderService
      */
     private function refreshCareerAfterPayment(): void
     {
-        if (! config('lamess.recalc_on_payment', true)) {
-            return;
-        }
-        dispatch(function (): void {
-            $lock = Cache::lock('lamess.live_recalc', 120);
-            if (! $lock->get()) {
-                return;   // un ricalcolo è già in corso: il prossimo pagamento o il ricalcolo notturno lo recuperano
-            }
-            try {
-                app(NightlyRecalculation::class)->run();
-            } catch (Throwable $e) {
-                Log::warning('Ricalcolo dopo il pagamento non riuscito: '.$e->getMessage());
-            } finally {
-                $lock->release();
-            }
-        })->afterResponse();
+        LiveRecalcDispatcher::afterResponse();
     }
 
     public function cancel(Order $order): Order

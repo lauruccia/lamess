@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\PvMovements\Pages;
 
 use App\Domain\Ledger\PvLedger;
+use App\Domain\Periods\LiveRecalcDispatcher;
 use App\Domain\Periods\PeriodStateException;
 use App\Filament\Resources\PvMovements\PvMovementResource;
 use App\Models\Consultant;
@@ -19,6 +20,11 @@ use InvalidArgumentException;
 class CreatePvMovement extends CreateRecord
 {
     protected static string $resource = PvMovementResource::class;
+
+    protected function afterCreate(): void
+    {
+        LiveRecalcDispatcher::afterResponse();   // il movimento inserito a mano entra subito nei compensi provvisori
+    }
 
     /** Tutta la validazione passa da PvLedger (periodo aperto, data nel periodo, resi negativi). */
     protected function handleRecordCreation(array $data): Model

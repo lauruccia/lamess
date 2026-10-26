@@ -21,6 +21,9 @@
   <div class="kpi"><small>Clienti nel mio ramo</small><strong>{{ $total['clients'] }}</strong><span>Clienti personali di chi è sotto di te</span></div>
   <div class="kpi"><small>Pearl nel ramo</small><strong>{{ $total['pearl'] }}</strong><span>{{ $mine ? $mine['pearl_first'].' al tuo 1° livello' : 'Qualifica Pearl o superiore' }}</span></div>
   <div class="kpi {{ $waiting_total > 0 ? 'k-warn' : '' }}"><small>Clienti senza primo ordine</small><strong>{{ $waiting_total + ($my_customers['waiting'] ?? 0) }}</strong><span>Iscritti nel tuo ramo che non hanno ancora comprato: sono i primi da contattare</span></div>
+  @if($earn ?? null)
+   <a class="kpi" href="/area/statini"><small>Compenso {{ $earn['period'] }}{{ $earn['closed'] ? '' : ' · provvisorio' }}</small><strong>€ {{ $eur($earn['accrued']) }}</strong><span>@if($earn['closed'])Mese chiuso: importo definitivo @else Non definitivo: sul calcolo di adesso @if($earn['calculated_at'])({{ $earn['calculated_at']->setTimezone('Europe/Rome')->format('d/m H:i') }}) @endif· sale se arrivano nuovi clienti prima della chiusura @endif</span></a>
+  @endif
   <div class="kpi"><small>Venduto del mese</small><strong>€ {{ $eur($total['eur'] + $mine_eur) }}</strong><span>Ai clienti, IVA inclusa · tuoi € {{ $eur($mine_eur) }}</span></div>
  @elseif(\App\Domain\Plan\LegacyPlan::visible())
   <div class="kpi"><small>PVF personali del mese</small><strong>{{ $mine ? $n($mine['pvf']) : '—' }}</strong><span>{{ $mine ? 'Gruppo '.$n($mine['group_pv']).' PV' : 'Nessun calcolo ancora' }}</span></div>

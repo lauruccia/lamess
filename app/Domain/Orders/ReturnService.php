@@ -8,6 +8,7 @@ use App\Domain\Billing\InvoiceService;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Engine\Support\PeriodKey;
 use App\Domain\Ledger\PvLedger;
+use App\Domain\Periods\LiveRecalcDispatcher;
 use App\Models\CreditNote;
 use App\Models\Order;
 use App\Models\OrderEvent;
@@ -57,7 +58,7 @@ final class ReturnService
             }
         }
 
-        return DB::transaction(function () use ($order, $qtyByItem, $reason, $restock, $refundShipping): CreditNote {
+        $note = DB::transaction(function () use ($order, $qtyByItem, $reason, $restock, $refundShipping): CreditNote {
             $note = $this->invoices->issueCreditNote($order, $qtyByItem, $reason, $refundShipping);
             RefundService::adoptExternal($order, $note);
             if ($refundShipping) {
@@ -81,6 +82,9 @@ final class ReturnService
 
             return $note;
         });
+        LiveRecalcDispatcher::afterResponse();   // il reso toglie importo e clienti: i compensi provvisori si aggiornano subito
+
+        return $note;
     }
 
     private function reverse(PvMovement $orig, $item, int $qty, CreditNote $note): void

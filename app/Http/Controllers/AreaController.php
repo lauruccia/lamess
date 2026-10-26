@@ -141,7 +141,8 @@ class AreaController extends Controller
         $progress = $this->safely(static fn () => $careers->forConsultant($me->id));
         $tree = $data['total']['persons'] > 0 ? $this->safely(static fn () => app(NetworkTree::class)->for($data, $careers->all())) : null;
 
-        return view('site.area.network', $data + ['progress' => $progress, 'tree' => $tree, 'kosmos' => $data['plan']?->kosmos !== null]);
+        return view('site.area.network', $data + ['progress' => $progress, 'tree' => $tree, 'kosmos' => $data['plan']?->kosmos !== null,
+            'earn' => $this->safely(static fn () => app(EarningsSummary::class)->for($me->id))]);
     }
 
     /** Requisiti di una persona del proprio ramo (o i propri), caricati al clic sull'albero. Chi è fuori dal ramo non esiste: 404. */

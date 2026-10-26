@@ -280,7 +280,15 @@ final class Consultant360
         $total = (clone $base)->where('cl.engine_status', '!=', 'excluded')->sum('cl.amount');
         $excluded = (clone $base)->where('cl.engine_status', 'excluded')->sum('cl.amount');
 
-        return ['facts' => [['Totale maturato o trattenuto (mesi calcolati)', $this->eur($total)], ['Importi non spettanti (esclusi dal motore)', $this->eur($excluded)]], 'tables' => [
+        $facts = [['Totale maturato o trattenuto (mesi calcolati)', $this->eur($total)], ['Importi non spettanti (esclusi dal motore)', $this->eur($excluded)]];
+        $open = DB::table('periods')->where('status', '!=', 'closed')->orderBy('code')->first();
+        if ($open !== null) {
+            $runId = $open->official_run_id ?? DB::table('calculation_runs')->where('period_id', $open->id)->where('status', 'completed')->max('id');
+            $at = $runId === null ? null : DB::table('calculation_runs')->where('id', $runId)->value('finished_at');
+            $facts[] = ["Mese {$open->code}: PROVVISORIO, non definitivo", 'Calcolo '.($at === null ? 'non ancora fatto' : 'del '.$this->d($at, true)).': si aggiorna a ogni pagamento, reso o movimento e può cambiare (nuovi clienti, scaglione %) fino alla chiusura del mese'];
+        }
+
+        return ['facts' => $facts, 'tables' => [
             $this->table('Per mese, tipo e stato', ['Periodo', 'Tipo', 'Stato', 'Righe', 'Importo'], $sum, 'Nessuna commissione.'),
             $this->table('Ultime 25 righe', ['Periodo', 'Tipo', 'Base', '%', 'Importo', 'Stato', 'Spiegazione'], $lines, 'Nessuna riga.'),
         ]];

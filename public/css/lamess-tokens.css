@@ -84,21 +84,8 @@
   --lm-chart-6: #80776D;
 }
 
-/* ---------- Tema scuro: automatico, oppure forzato con data-theme="dark" / classe .dark (Filament) ---------- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']):not(.light) {
-    --lm-bg: #13110E;
-    --lm-surface: #1D1A16;
-    --lm-text: #F3EBE6;
-    --lm-border: #4A443E;
-    --lm-link: var(--lm-sand);
-    --lm-chrome: #2A241E;
-    --lm-on-chrome: #FCF6F3;
-    --lm-ok: #7CC29B;  --lm-ok-bg: #1F2E26;
-    --lm-err: #F2A097; --lm-err-bg: #3A1F1C;
-    --lm-warn-bg: #33261A;
-  }
-}
+/* ---------- Tema: SOLO CHIARO per tutti (utenti e admin). Il tema scuro automatico (prefers-color-scheme) è stato disattivato; le variabili scure qui sotto restano solo se qualcuno forza data-theme="dark"/.dark, cosa che il portale non fa più. ---------- */
+:root { color-scheme: light; }
 :root[data-theme='dark'], :root.dark {
   --lm-bg: #13110E;
   --lm-surface: #1D1A16;

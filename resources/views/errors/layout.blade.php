@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
+<meta name="color-scheme" content="light">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>@yield('title') — Lamèss</title>
 <link rel="icon" href="/favicon.ico?v=2">

@@ -60,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.4rem')
             ->favicon(asset('favicon.ico').'?v=2')
             ->topNavigation()
+            ->darkMode(false) // solo tema chiaro, nessun selettore sole/luna/sistema
             ->maxContentWidth('full')
             ->navigationGroups([
                 NavigationGroup::make('Rete')->label('Rete'),

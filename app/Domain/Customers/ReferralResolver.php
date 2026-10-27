@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Customers;
 
+use App\Domain\Access\AccountSuspension;
 use App\Models\Consultant;
 
 /**
@@ -38,6 +39,8 @@ final class ReferralResolver
         return Consultant::query()
             ->where(fn ($q) => $q->where('referral_code', $upper)->orWhere('code', $upper))
             ->whereIn('status', (array) config('lamess.sponsoring_statuses'))
+            // un account sospeso o bannato non porta più nuovi clienti: il suo link referral non vale
+            ->where(fn ($w) => $w->whereNull('user_id')->orWhereNotIn('user_id', AccountSuspension::suspendedUserIds()))
             ->first();
     }
 }

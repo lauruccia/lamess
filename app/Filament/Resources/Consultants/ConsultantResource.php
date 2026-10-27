@@ -20,6 +20,7 @@ use App\Filament\Resources\Consultants\Pages\CreateConsultant;
 use App\Filament\Resources\Consultants\Pages\EditConsultant;
 use App\Filament\Resources\Consultants\Pages\ListConsultants;
 use App\Filament\Resources\Consultants\Pages\ViewConsultant;
+use App\Filament\Support\AccountStatus;
 use App\Filament\Support\ConsultantAccessAction;
 use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\ConsultantList;
@@ -255,6 +256,7 @@ class ConsultantResource extends Resource
                     ->color(fn (string $state) => match ($state) {
                         'active' => 'success', 'suspended' => 'warning', 'terminated' => 'danger', default => 'gray',
                     }),
+                AccountStatus::column()->toggleable(),
                 TextColumn::make('stat_rank')->label('Qualifica')->badge()->color('primary')
                     ->state(fn (Consultant $r): ?string => $r->stat_rank ?? ($r->status === 'terminated' ? null : $list()->entryRankCode()))
                     ->formatStateUsing(fn (?string $state) => ($n = $list()->rankName($state)) === 'Incaricato' ? $n : preg_replace('/^(Consulente|Incaricato) /', '', $n))
@@ -290,6 +292,7 @@ class ConsultantResource extends Resource
                 TextColumn::make('referral_code')->label('Referral')->copyable()->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('since')->label('Dal')->size('sm')->dateTime('d/m/y', 'Europe/Rome')->sortable(),
             ])->filters([
+                AccountStatus::filter('consultants.user_id'),
                 ConsultantFilter::make('sponsor_id', 'sponsor', 'Sponsor'),
                 SelectFilter::make('status')->label('Stato')->multiple()->options(['pending' => 'In attesa', 'active' => 'Attivo', 'suspended' => 'Sospeso', 'terminated' => 'Cessato']),
                 SelectFilter::make('rank')->label('Qualifica')->options(fn (): array => $list()->rankNames())
@@ -332,6 +335,8 @@ class ConsultantResource extends Resource
                     ...ConsultantAccessAction::forRow(),
                     RankHoldAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && Feature::enabled('consultant360.action.hold_rank')),
                     FounderAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated'),
+                    AccountStatus::suspendAction(),
+                    AccountStatus::reinstateAction(),
                     Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
                         ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))
                         ->url(fn (Consultant $record): string => url("/admin-files/badge/{$record->id}"), shouldOpenInNewTab: true),

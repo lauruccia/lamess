@@ -12,6 +12,7 @@ use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
+use App\Filament\Support\AccountStatus;
 use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\PasswordResetAction;
 use App\Models\Consultant;
@@ -119,6 +120,7 @@ class CustomerResource extends Resource
                 ->withMax(['orders as last_purchase_at' => fn ($q) => $q->whereIn('status', $paid)], 'paid_at'))
             ->columns([
                 TextColumn::make('user.name')->label('Nome')->searchable(),
+                AccountStatus::column()->toggleable(),
                 TextColumn::make('user.email')->label('Email')->searchable()->limit(32)->tooltip(fn ($state) => $state),
                 TextColumn::make('user.profile.type')->label('Tipo')->badge()->formatStateUsing(fn ($state) => $state === 'company' ? 'Azienda' : 'Privato'),
                 TextColumn::make('user.profile.phone')->label('Telefono')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
@@ -131,6 +133,7 @@ class CustomerResource extends Resource
                 TextColumn::make('active_subscriptions_count')->label('Abbon.')->tooltip('Abbonamenti attivi')->numeric()->alignEnd()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('registered_at')->label('Registrato il')->date('d/m/Y')->timezone('Europe/Rome')->sortable(),
             ])->filters([
+                AccountStatus::filter('customers.user_id'),
                 ConsultantFilter::make('assigned_consultant_id'),
                 TernaryFilter::make('has_orders')->label('Hanno acquistato')->placeholder('Tutti')->trueLabel('Con acquisti')->falseLabel('Mai acquistato')
                     ->queries(
@@ -149,6 +152,8 @@ class CustomerResource extends Resource
                     ->modalDescription('Il cliente entra subito nell\'albero come incaricato attivo, con codice e link referral nuovi. Lettera d\'incarico e KYC si completano dopo.')
                     ->schema(self::promoteForm())->action(fn (Customer $record, array $data) => self::promote($record, $data)),
                 ImpersonateAction::forRow(fn (Customer $r) => $r->user, true),
+                AccountStatus::suspendAction()->iconButton()->tooltip('Sospendi o banna'),
+                AccountStatus::reinstateAction()->iconButton()->tooltip('Riattiva account'),
                 PasswordResetAction::forRow()->iconButton()->tooltip('Invia reset password'),
                 PasswordResetAction::temporaryForRow()->iconButton()->tooltip('Imposta password temporanea'),
                 Action::make('reassign')->label('Riassegna')->iconButton()->tooltip('Riassegna')->icon('heroicon-o-arrows-right-left')->authorize('network.restructure')

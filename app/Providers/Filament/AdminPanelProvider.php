@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Domain\Access\Impersonation;
+use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Filament\Pages\AuditVerificationPage;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
@@ -115,6 +116,7 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                BlockSuspendedAccounts::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,
                 SubstituteBindings::class,

@@ -1,5 +1,24 @@
 # Registro aggiornamenti
 
+## 2026-10-27 — Sospendere o bannare un account
+- Nuovo: ogni account (cliente, incaricato o admin) si può **sospendere** (stop temporaneo) o **bannare** (blocco deciso), con motivo obbligatorio. Si riattiva quando si vuole.
+- Effetti: non può più entrare (sito e back-office; le sessioni aperte si chiudono alla richiesta successiva); non compare più in elenchi, alberi (admin e «Il mio ramo»), conteggi di tab e link referral; i suoi abbonamenti non vengono più addebitati. Non si cancella nulla: ordini, fatture, compensi e storico restano, e la rete non si spezza (i suoi sotto-incaricati si vedono sotto il primo sponsor ancora visibile). Chi prova ad accedere, con la password giusta, vede «account sospeso/bloccato».
+- Dove: azione **Sospendi o banna** / **Riattiva account** nel menu della riga di Incaricati, Clienti e Utenti. I bloccati si ritrovano col filtro **Account** (predefinito «Attivi»; opzioni Sospesi, Bannati, Sospesi e bannati) e hanno il badge nella colonna **Account**. Chi può: super_admin per tutti tranne altri super_admin; admin con permesso `network.manage` solo per incaricati e clienti; nessuno su se stesso. Ogni azione è nel log di audit (`user.suspended`, `user.reinstated`).
+- Diverso dallo stato «Sospeso» dell'incaricato (rete/sanzioni, che ferma solo i compensi): quello resta com'era.
+- Migrazione `2026_11_14_100000_account_suspension`: sul sito live (senza terminale) esegui **prima del deploy**, in phpMyAdmin → scheda SQL sul database `lamess_portale`:
+  ```sql
+  ALTER TABLE users
+    ADD COLUMN suspended_at TIMESTAMP NULL DEFAULT NULL,
+    ADD COLUMN suspension_type VARCHAR(16) NULL,
+    ADD COLUMN suspension_reason VARCHAR(500) NULL,
+    ADD COLUMN suspended_by BIGINT UNSIGNED NULL,
+    ADD INDEX users_suspended_at_index (suspended_at);
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_14_100000_account_suspension', MAX(batch) + 1 FROM migrations;
+  ```
+  Senza le colonne il codice nuovo dà errore (link referral, abbonamenti, elenchi).
+- Test: `AccountSuspensionTest` (9).
+
 ## 2026-10-26 — Dati di pagamento via email e pulsante «Invia di nuovo»
 - Prima: con il bonifico l'IBAN si vedeva solo nella pagina dell'ordine; nessuna email al cliente alla registrazione dell'ordine (l'unica email di pagamento era «pagamento ricevuto»).
 - Ora: nuova email `OrderPaymentDetails` con IBAN/istruzioni, importo e causale per il bonifico, oppure link all'ordine per pagare con carta o confermare KMoney (anche in due passi KMoney + resto). Parte da sola quando il cliente conferma un ordine con bonifico (o sceglie il bonifico per il resto dopo KMoney); un errore di invio non blocca mai l'ordine.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Domain\Access\AccountSuspension;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Career\RankPalette;
 use App\Domain\Features\Feature;
@@ -54,16 +55,23 @@ class NetworkTreePage extends Page
         }
         $progress = app(CareerProgress::class);
         $prog = $progress->all();
-        $clients = DB::table('customers')->whereNotNull('assigned_consultant_id')->groupBy('assigned_consultant_id')
+        $hiddenIds = AccountSuspension::hiddenConsultantIds();
+        $hidden = array_fill_keys($hiddenIds, true);
+        $clients = DB::table('customers')->whereNotNull('assigned_consultant_id')->whereNotIn('user_id', AccountSuspension::suspendedUserIds())->groupBy('assigned_consultant_id')
             ->selectRaw('assigned_consultant_id as id, count(*) as n')->pluck('n', 'id');
-        $team = DB::table('network_paths')->where('depth', '>', 0)->groupBy('ancestor_id')->selectRaw('ancestor_id as id, count(*) as n')->pluck('n', 'id');
+        $team = DB::table('network_paths')->where('depth', '>', 0)->whereNotIn('descendant_id', $hiddenIds)->groupBy('ancestor_id')->selectRaw('ancestor_id as id, count(*) as n')->pluck('n', 'id');
         $entry = $ranks[0]['code'] ?? null;
 
         $nodes = [];
-        foreach (DB::table('consultants')->orderBy('id')->get(['id', 'code', 'name', 'status', 'sponsor_id', 'since']) as $c) {
+        $all = DB::table('consultants')->orderBy('id')->get(['id', 'code', 'name', 'status', 'sponsor_id', 'since']);
+        $parentOf = $all->mapWithKeys(static fn ($c) => [(int) $c->id => $c->sponsor_id === null ? null : (int) $c->sponsor_id])->all();
+        foreach ($all as $c) {
+            if (isset($hidden[(int) $c->id])) {
+                continue;   // account sospeso o bannato: fuori dall'albero, i suoi sotto-incaricati salgono al primo sponsor visibile
+            }
             $p = $prog[$c->id] ?? null;
             $nodes[] = [
-                'id' => $c->id, 'parent' => $c->sponsor_id, 'code' => $c->code, 'name' => $c->name, 'status' => $c->status,
+                'id' => $c->id, 'parent' => AccountSuspension::visibleParent($parentOf, $hidden, $c->sponsor_id === null ? null : (int) $c->sponsor_id), 'code' => $c->code, 'name' => $c->name, 'status' => $c->status,
                 'rank' => $p['rank']['code'] ?? $entry, 'active' => (bool) ($p['activity']['active'] ?? false), 'pr' => (float) ($p['activity']['points'] ?? 0),
                 'next' => $p['next']['name'] ?? null, 'pct' => $p === null || $p['next'] === null ? 100 : $p['pr']['percent'], 'missing' => (float) ($p['pr']['missing'] ?? 0),
                 'hide_pr' => LegacyPlan::hidden(), 'clients' => (int) ($clients[$c->id] ?? 0), 'team' => (int) ($team[$c->id] ?? 0),

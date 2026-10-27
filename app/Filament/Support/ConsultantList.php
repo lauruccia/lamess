@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Support;
 
+use App\Domain\Access\AccountSuspension;
 use App\Models\CalculationRun;
 use App\Models\CompPlanVersion;
 use App\Models\Period;
@@ -75,6 +76,7 @@ final class ConsultantList
             '(select sp.code from consultants sp where sp.id = consultants.sponsor_id) as sponsor_code',
             '(select sp.name from consultants sp where sp.id = consultants.sponsor_id) as sponsor_name',
             '(select u.email from users u where u.id = consultants.user_id) as user_email',
+            '(select u.suspension_type from users u where u.id = consultants.user_id and u.suspended_at is not null) as user_suspension_type',
             '(select count(*) from consultants d where d.sponsor_id = consultants.id) as directs_count',
             "(select coalesce(sum(st.accrued), 0) from settlements st where st.consultant_id = consultants.id and st.status = 'open' and st.payout_id is null) as open_balance",
             $stat('effective_rank').' as stat_rank',
@@ -88,7 +90,8 @@ final class ConsultantList
     /** Conteggi per le schede di stato, in una sola query. @return array<string, int> */
     public function counts(): array
     {
-        $row = DB::table('consultants')->selectRaw(
+        // i conteggi dicono quanto si vede: gli account sospesi o bannati si trovano col filtro «Account»
+        $row = DB::table('consultants')->where(fn ($w) => $w->whereNull('user_id')->orWhereNotIn('user_id', AccountSuspension::suspendedUserIds()))->selectRaw(
             "count(*) as total, sum(status = 'active') as active, sum(status = 'pending') as pending, sum(status = 'suspended') as suspended, "
             ."sum(status = 'terminated') as `terminated`, sum(status <> 'terminated' and onboarding_complete = 0) as onboarding, "
             ."sum(status <> 'terminated' and (kyc_status is null or kyc_status <> 'verified')) as kyc"

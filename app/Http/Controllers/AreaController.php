@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Access\AccountSuspension;
 use App\Domain\Career\CareerProgress;
 use App\Domain\Career\EarningsSummary;
 use App\Domain\Career\NetworkOverview;
@@ -15,6 +16,7 @@ use App\Domain\Ledger\PointsGrant;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\IdentityVerifier;
 use App\Domain\Onboarding\IvdAcceptances;
+use App\Domain\Onboarding\IvdLetterSigning;
 use App\Domain\Onboarding\IvdService;
 use App\Domain\Onboarding\KycService;
 use App\Domain\Onboarding\OnboardingException;
@@ -68,7 +70,7 @@ class AreaController extends Controller
         $live = $user->consultant !== null && $user->consultant->status !== 'terminated' ? $user->consultant : null;
 
         return view('site.area.home', [
-            'letterToSign' => $this->safely(static fn () => app(\App\Domain\Onboarding\IvdLetterSigning::class)->pendingFor($user)),
+            'letterToSign' => $this->safely(static fn () => app(IvdLetterSigning::class)->pendingFor($user)),
             'user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
             // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
             'progress' => $live ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($live->id)) : null,
@@ -150,6 +152,7 @@ class AreaController extends Controller
     {
         $me = $this->activeConsultant($request);
         abort_unless($id === (int) $me->id || DB::table('network_paths')->where('ancestor_id', $me->id)->where('descendant_id', $id)->where('depth', '>', 0)->exists(), 404);
+        abort_if(in_array($id, AccountSuspension::hiddenConsultantIds(), true), 404);
         $p = $this->safely(static fn () => app(CareerProgress::class)->forConsultant($id));
 
         $tree = app(NetworkTree::class);

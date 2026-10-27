@@ -12,6 +12,7 @@ use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Support\AccountStatus;
 use App\Filament\Support\PasswordResetAction;
 use App\Models\User;
 use BackedEnum;
@@ -128,9 +129,11 @@ class UserResource extends Resource
                 ->color(fn (string $state) => match ($state) {
                     Roles::SUPER_ADMIN => 'danger', Roles::ADMIN => 'warning', 'consultant' => 'success', default => 'gray',
                 }),
+            AccountStatus::column(),
             IconColumn::make('two_factor')->label('2FA')->boolean()->state(fn (User $r) => filled($r->app_authentication_secret)),
             TextColumn::make('created_at')->label('Creato il')->dateTime('d/m/Y', 'Europe/Rome')->sortable(),
         ])->filters([
+            AccountStatus::filter('users.id'),
             SelectFilter::make('role')->label('Ruolo')->options([
                 Roles::SUPER_ADMIN => 'Super admin', Roles::ADMIN => 'Admin', 'consultant' => 'Incaricato', 'customer' => 'Cliente',
             ])->query(fn (Builder $query, array $data) => filled($data['value'] ?? null) ? $query->whereHas('roles', fn ($r) => $r->where('name', $data['value'])) : $query),
@@ -147,6 +150,8 @@ class UserResource extends Resource
                     Notification::make()->title('Password temporanea')->body($password)->persistent()->success()->send();
                 }),
             PasswordResetAction::forRow()->iconButton()->tooltip('Invia link di reset'),
+            AccountStatus::suspendAction()->iconButton()->tooltip('Sospendi o banna'),
+            AccountStatus::reinstateAction()->iconButton()->tooltip('Riattiva account'),
             Action::make('resetTwoFactor')->label('Azzera 2FA')->iconButton()->tooltip('Azzera 2FA')->icon('heroicon-o-device-phone-mobile')->color('gray')
                 ->visible(fn (User $r) => ! $r->isSuperAdmin() && filled($r->app_authentication_secret))
                 ->requiresConfirmation()->modalDescription('Da usare se l\'utente ha perso il telefono: al prossimo accesso dovrà collegare di nuovo l\'app.')

@@ -7,13 +7,16 @@ namespace App\Http\Controllers;
 use App\Domain\Customers\CustomerService;
 use App\Domain\Customers\ReferralInviteService;
 use App\Domain\Customers\ReferralResolver;
+use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -118,6 +121,11 @@ class SiteController extends Controller
             $minutes = (int) ceil(max(RateLimiter::availableIn($byPair), RateLimiter::availableIn($byEmail)) / 60);
 
             return back()->withInput($request->only('email'))->withErrors(['email' => "Troppi tentativi di accesso. Riprova tra {$minutes} minuti oppure usa «Password dimenticata»."]);
+        }
+        // account sospeso o bannato: lo si dice solo a chi conosce la password (nessuna enumerazione degli account)
+        $blocked = User::query()->where('email', $cred['email'])->whereNotNull('suspended_at')->first();
+        if ($blocked !== null && Hash::check($cred['password'], $blocked->password)) {
+            return back()->withInput($request->only('email'))->withErrors(['email' => BlockSuspendedAccounts::message($blocked)]);
         }
         if (! Auth::attempt($cred, $request->boolean('remember'))) {
             RateLimiter::hit($byPair, self::LOGIN_LOCK_SECONDS);

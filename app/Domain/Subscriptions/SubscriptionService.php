@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Subscriptions;
 
+use App\Domain\Access\AccountSuspension;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Orders\KMoneyProvider;
 use App\Domain\Orders\KMoneySubscriptionSync;
@@ -146,7 +147,9 @@ final class SubscriptionService
     {
         $now ??= CarbonImmutable::now();
         $out = ['paid' => 0, 'failed' => 0, 'paused' => 0];
-        foreach (Subscription::where('status', Subscription::ACTIVE)->where('next_run_at', '<=', $now)->orderBy('id')->get() as $sub) {
+        foreach (Subscription::where('status', Subscription::ACTIVE)->where('next_run_at', '<=', $now)
+            ->whereNotIn('user_id', AccountSuspension::suspendedUserIds())   // account sospeso o bannato: nessun addebito
+            ->orderBy('id')->get() as $sub) {
             $r = $this->runCycle($sub, $now);
             $out[$r]++;
         }
@@ -168,7 +171,7 @@ final class SubscriptionService
         $now = CarbonImmutable::instance($now ?? CarbonImmutable::now());
         $sent = 0;
         $subs = Subscription::where('status', Subscription::ACTIVE)->where('payment_method', Subscription::METHOD_CARD)
-            ->whereNotNull('stripe_payment_method_id')->orderBy('id')->get();
+            ->whereNotNull('stripe_payment_method_id')->whereNotIn('user_id', AccountSuspension::suspendedUserIds())->orderBy('id')->get();
         foreach ($subs as $sub) {
             $pm = (string) $sub->stripe_payment_method_id;
             $done = "subscription-card-expiry-notified:{$sub->id}:{$pm}";
@@ -210,6 +213,7 @@ final class SubscriptionService
         $now = CarbonImmutable::instance($now ?? CarbonImmutable::now());
         $sent = 0;
         $due = Subscription::where('status', Subscription::ACTIVE)->where('retry_count', 0)
+            ->whereNotIn('user_id', AccountSuspension::suspendedUserIds())
             ->where('next_run_at', '>', $now)->where('next_run_at', '<=', $now->addDays($days))->orderBy('id')->get();
         foreach ($due as $sub) {
             if ($sub->reminded_for !== null && $sub->reminded_for->equalTo($sub->next_run_at)) {

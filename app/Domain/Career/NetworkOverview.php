@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Career;
 
+use App\Domain\Access\AccountSuspension;
 use App\Domain\Engine\Plan\PlanConfig;
 use App\Models\CalculationRun;
 use App\Models\Consultant;
 use App\Models\ConsultantPeriodStat;
 use App\Models\Period;
+use Brick\Math\BigDecimal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -25,6 +27,17 @@ final class NetworkOverview
         $period = Period::query()->orderByDesc('code')->first();
         $plan = $period?->planVersion->plan();
         $links = DB::table('network_paths')->where('ancestor_id', $me->id)->where('depth', '>', 0)->pluck('depth', 'descendant_id')->all();
+        // chi ha l'account sospeso o bannato non si vede più: i suoi sotto-incaricati si collegano al primo sopra di lui ancora visibile
+        $hiddenAll = array_flip(AccountSuspension::hiddenConsultantIds());
+        $hidden = [];
+        foreach (array_keys($links) as $linkId) {
+            if (isset($hiddenAll[(int) $linkId])) {
+                $hidden[(int) $linkId] = true;
+                unset($links[$linkId]);
+            }
+        }
+        $hiddenParent = $hidden === [] ? [] : DB::table('consultants')->whereIn('id', array_keys($hidden))->pluck('sponsor_id', 'id')
+            ->map(static fn ($v) => $v === null ? null : (int) $v)->all();
         $ids = array_map('intval', array_keys($links));
         $nodes = Consultant::query()->whereIn('id', $ids)->get(['id', 'code', 'name', 'sponsor_id', 'status', 'since'])->keyBy('id');
 
@@ -34,7 +47,7 @@ final class NetworkOverview
 
         $children = [];
         foreach ($nodes as $n) {
-            $children[(int) $n->sponsor_id][] = (int) $n->id;
+            $children[(int) AccountSuspension::visibleParent($hiddenParent, $hidden, $n->sponsor_id === null ? null : (int) $n->sponsor_id)][] = (int) $n->id;
         }
         foreach ($children as &$list) {
             usort($list, static fn ($a, $b) => strcmp((string) $nodes[$a]->name, (string) $nodes[$b]->name));
@@ -212,7 +225,7 @@ final class NetworkOverview
             } else {
                 $row['buyers']++;
                 $row['spent'] += (float) $o->spent;
-                $valid = $plan?->kosmos !== null ? $plan->kosmos->orderQualifies(\Brick\Math\BigDecimal::of((string) $o->biggest)) : true;
+                $valid = $plan?->kosmos !== null ? $plan->kosmos->orderQualifies(BigDecimal::of((string) $o->biggest)) : true;
                 $row['valid'] += $valid ? 1 : 0;
                 if ($o->last_paid !== null && ($row['last_order'] === null || $o->last_paid > $row['last_order'])) {
                     $row['last_order'] = (string) $o->last_paid;

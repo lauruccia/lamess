@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -60,16 +61,29 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     {
         return [
             'email_verified_at' => 'datetime',
+            'suspended_at' => 'datetime',
             'password' => 'hashed',
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
         ];
     }
 
-    /** Accesso al back-office: solo i ruoli di Roles::backoffice(). */
+    /** Accesso al back-office: solo i ruoli di Roles::backoffice(), e mai con l'account sospeso o bannato. */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'admin' && $this->hasAnyRole(Roles::backoffice());
+        return $panel->getId() === 'admin' && ! $this->isSuspended() && $this->hasAnyRole(Roles::backoffice());
+    }
+
+    /** Account sospeso o bannato: non entra e non compare più negli elenchi (vedi AccountSuspension). */
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
+    /** Solo gli account attivi (non sospesi né bannati). */
+    public function scopeNotSuspended(Builder $query): Builder
+    {
+        return $query->whereNull($query->getModel()->getTable().'.suspended_at');
     }
 
     public function isBackoffice(): bool

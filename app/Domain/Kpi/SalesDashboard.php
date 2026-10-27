@@ -62,7 +62,6 @@ final class SalesDashboard
         $w = $this->window($days, $offset, $now);
         $orders = $this->orders($w['start'], $w['end']);
         $paid = $orders->filter(fn (Order $o) => $this->isPaid($o))->values();
-        $quotes = $orders->filter(fn (Order $o) => $o->status === self::QUOTE)->values();
 
         $prevOrders = $w['prev_start'] && $w['prev_end'] ? $this->orders($w['prev_start'], $w['prev_end']) : null;
         $prevPaid = $prevOrders?->filter(fn (Order $o) => $this->isPaid($o))->values();
@@ -95,7 +94,6 @@ final class SalesDashboard
             ],
             'monthly' => $monthly,
             'chart' => self::areaChart(array_column($monthly, 'revenue')),
-            'top_quotes' => $this->topOrders($quotes, $names, $sellers, $sellerOf),
             'top_orders' => $this->topOrders($paid, $names, $sellers, $sellerOf),
             'top_customers' => $this->topCustomers($paid, $names, $sellers, $sellerOf, $assigned),
             'top_products' => $this->topProducts($items),

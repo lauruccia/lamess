@@ -136,7 +136,6 @@ final class SalesDashboardTest extends TestCase
         $this->assertSame(244.0, $d['top_orders'][0]['total']);
         $this->assertSame('Vendita diretta', $d['top_orders'][0]['seller']);
         $this->assertSame('Mario Rossi', $d['top_orders'][1]['customer']);
-        $this->assertCount(1, $d['top_quotes']);
 
         $this->assertSame(['TAZZA', 'BOX COSMETIC COFFEE'], array_column($d['top_products'], 'label'));
         $this->assertSame([244.0, 122.0], array_column($d['top_products'], 'revenue'));
@@ -250,7 +249,7 @@ final class SalesDashboardTest extends TestCase
 
         Livewire::test(SalesDashboardPage::class)
             ->assertSuccessful()->assertSee('Cruscotto vendite')->assertSee('Vendite mensili')->assertSee('Prodotti principali')
-            ->assertSee('Preventivi migliori')->assertSee('Performance incaricati')
+            ->assertSee('Ordini di vendita migliori')->assertDontSee('Preventivi migliori')->assertSee('Performance incaricati')
             ->call('previous')->assertSet('offset', 1)
             ->call('next')->call('next')->assertSet('offset', 0)
             ->set('days', 0)->assertSuccessful()->assertSet('offset', 0)

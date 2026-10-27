@@ -136,11 +136,6 @@
         </section>
 
         <div class="lm-s-grid">
-            <section class="lm-s-card" aria-labelledby="s-quotes">
-                <h2 id="s-quotes">Preventivi migliori</h2>
-                <p class="lm-s-note" style="margin-bottom:.4rem">Ordini in attesa di pagamento.</p>
-                @include('filament.pages.partials.sales-orders-list', ['rows' => $d['top_quotes'], 'eur2' => $eur2])
-            </section>
             <section class="lm-s-card" aria-labelledby="s-orders">
                 <h2 id="s-orders">Ordini di vendita migliori</h2>
                 @include('filament.pages.partials.sales-orders-list', ['rows' => $d['top_orders'], 'eur2' => $eur2])

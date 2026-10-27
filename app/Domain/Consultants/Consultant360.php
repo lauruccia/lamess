@@ -62,7 +62,7 @@ final class Consultant360
         $id = $this->c->id;
         $defs = [
             ['directs', '1° liv.', ConsultantResource::class, fn () => Consultant::where('sponsor_id', $id)->count(), ['sponsor' => ['value' => $id]], null],
-            ['customers', 'Clienti', CustomerResource::class, fn () => Customer::where('assigned_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
+            ['customers', 'Clienti', CustomerResource::class, fn () => Customer::notConsultants()->where('assigned_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
             ['orders', 'Ordini', OrderResource::class, fn () => Order::where('beneficiary_consultant_id', $id)->count(), ['consultant' => ['value' => $id]], LegacyPlan::hidden() ? 'a nome suo' : 'a nome suo (PV a lui)'],
             ['movements', 'Movimenti PV', PvMovementResource::class, fn () => PvMovement::where('consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
             ['settlements', 'Liquidazioni', SettlementResource::class, fn () => Settlement::where('consultant_id', $id)->count(), ['consultant' => ['value' => $id]], null],
@@ -216,7 +216,7 @@ final class Consultant360
             ['Sponsor attuale', $chain[0] ?? 'nessuno'], ['Sponsor originale', $orig ? "{$orig->code} — {$orig->name}" : '—'],
             ['Catena verso l\'alto', $chain === [] ? '—' : implode(' ← ', array_slice($chain, 0, 6))],
             ['1° liv.', (string) Consultant::where('sponsor_id', $this->c->id)->count()],
-            ['Clienti diretti', (string) Customer::where('assigned_consultant_id', $this->c->id)->count()],
+            ['Clienti diretti', (string) Customer::notConsultants()->where('assigned_consultant_id', $this->c->id)->count()],
         ];
 
         $name = fn ($x) => $x ? (Consultant::find($x)?->name ?? "#{$x}") : '—';

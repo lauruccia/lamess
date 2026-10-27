@@ -64,7 +64,7 @@ final class KpiService
         $out = [
             'period' => $period?->code,
             'period_status' => $period?->status,
-            'fan_total' => Customer::count(),
+            'fan_total' => Customer::notConsultants()->count(),
             'consultants_by_status' => Consultant::query()->select('status', DB::raw('count(*) as n'))->groupBy('status')->pluck('n', 'status')->map(fn ($n) => (int) $n)->all(),
             'kyc_pending' => KycDocument::where('status', 'pending')->count(),
             'ivd_to_review' => IvdContract::where('status', 'signed')->count(),
@@ -80,7 +80,7 @@ final class KpiService
 
         $mv = PvMovement::query()->where('period_id', $period->id)->where('status', 'confirmed');
         $out += [
-            'new_fan' => Customer::whereBetween('created_at', [$period->starts_at, $period->ends_at])->count(),
+            'new_fan' => Customer::notConsultants()->whereBetween('created_at', [$period->starts_at, $period->ends_at])->count(),
             'new_consultants' => Consultant::whereBetween('created_at', [$period->starts_at, $period->ends_at])->count(),
             'movements' => (clone $mv)->count(),
             'pv' => number_format((float) (clone $mv)->sum('pv'), 2, '.', ''),

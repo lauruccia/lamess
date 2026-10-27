@@ -114,7 +114,7 @@ class CustomerResource extends Resource
         $paid = Order::PAID_STATES;
 
         return $table->defaultSort('id', 'desc')
-            ->modifyQueryUsing(fn ($query) => $query->with(['user.profile', 'consultant'])
+            ->modifyQueryUsing(fn ($query) => $query->notConsultants()->with(['user.profile', 'consultant'])
                 ->withCount(['orders as paid_orders_count' => fn ($q) => $q->whereIn('status', $paid), 'subscriptions as active_subscriptions_count' => fn ($q) => $q->where('status', 'active')])
                 ->withSum(['orders as spent_total' => fn ($q) => $q->whereIn('status', $paid)], 'total')
                 ->withMax(['orders as last_purchase_at' => fn ($q) => $q->whereIn('status', $paid)], 'paid_at'))

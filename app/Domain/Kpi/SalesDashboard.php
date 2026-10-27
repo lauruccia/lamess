@@ -220,7 +220,7 @@ final class SalesDashboard
             'revenue' => $revenue,
             'avg' => $paid->count() ? $revenue / $paid->count() : 0.0,
             // data di registrazione reale (nei clienti importati `created_at` è il giorno dell'import)
-            'new_customers' => Customer::query()->whereRaw('COALESCE(registered_at, created_at) BETWEEN ? AND ?', [$from, $to])->count(),
+            'new_customers' => Customer::query()->notConsultants()->whereRaw('COALESCE(registered_at, created_at) BETWEEN ? AND ?', [$from, $to])->count(),
             'refunds' => (float) Refund::query()->whereBetween('created_at', [$from, $to])->where('status', '!=', Refund::FAILED)->sum('amount'),
             'kmoney' => (float) $paid->sum(fn (Order $o) => (float) $o->kmoney_amount),
         ];

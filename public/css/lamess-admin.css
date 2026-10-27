@@ -197,3 +197,7 @@ body.fi-body, .fi-body { font-family: var(--lm-font-text); background: var(--lm-
 .fi-ta-cell .fi-ta-text-item { font-size: .84rem; }
 .fi-ta-cell .fi-ta-text-item-description { font-size: .74rem; }
 .fi-ta-content-ctn { max-width: 100%; scrollbar-width: thin; }
+
+/* Elenco clienti: icone azione di riga più strette, così la tabella non esce dallo schermo. */
+.fi-resource-customers .fi-ta-actions { gap: 0; flex-wrap: nowrap; }
+.fi-resource-customers .fi-ta-actions .fi-icon-btn { width: 1.75rem; height: 1.75rem; }

@@ -120,12 +120,12 @@ class CustomerResource extends Resource
                 ->withMax(['orders as last_purchase_at' => fn ($q) => $q->whereIn('status', $paid)], 'paid_at'))
             ->columns([
                 TextColumn::make('user.name')->label('Nome')->searchable(),
-                AccountStatus::column()->toggleable(),
-                TextColumn::make('user.email')->label('Email')->searchable()->limit(32)->tooltip(fn ($state) => $state),
+                AccountStatus::column()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user.email')->label('Email')->searchable()->limit(26)->tooltip(fn ($state) => $state),
                 TextColumn::make('user.profile.type')->label('Tipo')->badge()->formatStateUsing(fn ($state) => $state === 'company' ? 'Azienda' : 'Privato'),
                 TextColumn::make('user.profile.phone')->label('Telefono')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('city')->label('Città')->state(fn (Customer $r) => ($p = $r->user?->profile) && $p->city ? $p->city.($p->province ? " ({$p->province})" : '') : null)->placeholder('—')->toggleable(),
-                TextColumn::make('consultant.name')->label('Incaricato')->placeholder('— nessuno —')->searchable(),
+                TextColumn::make('city')->label('Città')->state(fn (Customer $r) => ($p = $r->user?->profile) && $p->city ? $p->city.($p->province ? " ({$p->province})" : '') : null)->placeholder('—')->limit(22)->tooltip(fn ($state) => $state)->toggleable(),
+                TextColumn::make('consultant.name')->label('Incaricato')->placeholder('— nessuno —')->limit(24)->tooltip(fn ($state) => $state)->searchable(),
                 TextColumn::make('source')->label('Origine')->badge()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('paid_orders_count')->label('Ordini')->numeric()->alignEnd()->sortable()->color(fn ($state) => $state ? null : 'gray'),
                 TextColumn::make('spent_total')->label('Speso')->money('EUR', locale: 'it')->placeholder('—')->alignEnd()->sortable(),

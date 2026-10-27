@@ -166,12 +166,22 @@ class ViewConsultant extends ViewRecord
                 ->schema([
                     Select::make('rank_code')->label('Qualifica')->required()->options(fn () => collect(CompPlanVersion::inForce()?->data['ranks'] ?? [])->mapWithKeys(fn ($r) => [$r['code'] => $r['name']])->all()),
                     DatePicker::make('effective_from')->label('Efficace dal')->default(now()->toDateString())->required(),
+                    Toggle::make('rank_hold_open')->label('Mantieni fino a revoca (senza scadenza)')->live()->default(false)
+                        ->helperText('La qualifica resta protetta finché un admin non toglie la protezione da «Mantieni qualifica».'),
+                    DatePicker::make('rank_hold_until')->label('Mantieni la qualifica fino al')->native(false)->displayFormat('d/m/Y')->format('Y-m-d')
+                        ->disabled(fn (Get $get): bool => (bool) $get('rank_hold_open'))
+                        ->helperText('Sono protetti i mesi che finiscono entro la data: per tenerla fino a dicembre indica il 31/12; dopo, la qualifica torna a seguire i requisiti del piano. Senza data e senza «fino a revoca» il ricalcolo notturno può riabbassarla subito per mancanza di requisiti.'),
                     Textarea::make('reason')->label('Motivo')->required(),
                 ])
                 ->action(function (array $data): void {
                     try {
                         app(TreeOperations::class)->forceRank($this->record, $data['rank_code'], new DateTimeImmutable($data['effective_from']), $data['reason']);
-                        Notification::make()->title('Qualifica forzata')->success()->send();
+                        $until = RankHoldAction::until($data);
+                        if ($until !== null) {
+                            RankHoldAction::apply([$this->record], $until, (string) $data['reason']);
+                            $this->record->refresh();
+                        }
+                        Notification::make()->title('Qualifica forzata')->body($until === null ? 'Nessuna protezione: il ricalcolo notturno può riabbassarla se mancano i requisiti.' : 'Mantenuta '.(RankHoldAction::isOpenEnded($until) ? RankHoldAction::label($until) : 'fino al '.RankHoldAction::label($until)).'. Vale dal prossimo ricalcolo del periodo (automatico ogni notte).')->success()->send();
                     } catch (NetworkException $e) {
                         Notification::make()->title('Operazione non consentita')->body($e->getMessage())->danger()->send();
                     }

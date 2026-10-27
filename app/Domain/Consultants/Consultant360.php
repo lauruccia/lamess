@@ -114,7 +114,7 @@ final class Consultant360
             $add($r->created_at, 'Rete', 'Sponsor: '.$name($r->from_sponsor_id !== null ? (int) $r->from_sponsor_id : null).' → '.$name($r->to_sponsor_id !== null ? (int) $r->to_sponsor_id : null).' ('.$this->sponsorReason((string) $r->reason).')', $r->approved_by);
         }
         foreach (DB::table('rank_achievements')->where('consultant_id', $id)->orderByDesc('achieved_at')->limit(20)->get() as $r) {
-            $add($r->achieved_at, 'Qualifica', 'Qualifica raggiunta: '.$this->rankName($r->rank_code).' (in vigore dal '.Carbon::parse($r->effective_from)->format('d/m/Y').($r->source === 'manual' ? ', forzata' : '').')');
+            $add($r->achieved_at, 'Qualifica', 'Qualifica raggiunta: '.$this->rankName($r->rank_code).' (in vigore dal '.Carbon::parse($r->effective_from)->format('d/m/Y').(in_array($r->source, ['forced', 'manual'], true) ? ', forzata' : '').')');
         }
         foreach (DB::table('rank_awards')->where('consultant_id', $id)->orderByDesc('id')->limit(20)->get() as $r) {
             $add($r->created_at, 'Premio', 'Premio qualifica '.$this->rankName($r->rank_code).': '.$this->eur($r->amount).' ('.mb_strtolower((string) StatusLabels::label($r->status)).')');
@@ -255,7 +255,7 @@ final class Consultant360
             ->get(['p.code', 's.personal_pvf', 's.personal_pvc', 's.activity_points', 's.pr_closing', 's.group_pr_closing', 's.is_active', 's.effective_rank', 's.achieved_rank'])
             ->map(fn ($r) => [$r->code, $this->n($r->personal_pvf), $this->n($r->personal_pvc), $this->n($r->activity_points), $this->n($r->pr_closing), $this->n($r->group_pr_closing), $r->is_active ? 'Attivo' : 'Non attivo', $this->rankName((string) $r->effective_rank)])->all();
         $ach = DB::table('rank_achievements')->where('consultant_id', $this->c->id)->orderByDesc('achieved_at')->get()
-            ->map(fn ($r) => [$this->rankName($r->rank_code), $this->d($r->achieved_at), $this->d($r->effective_from), $r->source === 'manual' ? 'Forzata' : 'Calcolata'])->all();
+            ->map(fn ($r) => [$this->rankName($r->rank_code), $this->d($r->achieved_at), $this->d($r->effective_from), in_array($r->source, ['forced', 'manual'], true) ? 'Forzata' : 'Calcolata'])->all();
         $awards = DB::table('rank_awards')->where('consultant_id', $this->c->id)->orderByDesc('id')->get()
             ->map(fn ($r) => [$this->rankName($r->rank_code), $this->eur($r->amount), (string) StatusLabels::label($r->status), (string) ($r->reason ?? '')])->all();
         $mov = PvMovement::where('consultant_id', $this->c->id)->count();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Support;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Periods\LiveRecalcDispatcher;
 use App\Models\Consultant;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
@@ -76,6 +77,9 @@ final class RankHoldAction
                 $c, ['fino_al' => ['prima' => $before, 'dopo' => $until]], $reason,
             );
             $changed++;
+        }
+        if ($changed > 0) {
+            LiveRecalcDispatcher::afterResponse(); // qualifica mostrata subito aggiornata, senza aspettare il ricalcolo notturno
         }
 
         return $changed;

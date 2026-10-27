@@ -11,6 +11,7 @@ use App\Domain\Network\NetworkException;
 use App\Domain\Network\NetworkService;
 use App\Domain\Network\TreeOperations;
 use App\Domain\Onboarding\BadgeService;
+use App\Domain\Periods\LiveRecalcDispatcher;
 use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\ConsultantAccessAction;
@@ -180,8 +181,10 @@ class ViewConsultant extends ViewRecord
                         if ($until !== null) {
                             RankHoldAction::apply([$this->record], $until, (string) $data['reason']);
                             $this->record->refresh();
+                        } else {
+                            LiveRecalcDispatcher::afterResponse();
                         }
-                        Notification::make()->title('Qualifica forzata')->body($until === null ? 'Nessuna protezione: il ricalcolo notturno può riabbassarla se mancano i requisiti.' : 'Mantenuta '.(RankHoldAction::isOpenEnded($until) ? RankHoldAction::label($until) : 'fino al '.RankHoldAction::label($until)).'. Vale dal prossimo ricalcolo del periodo (automatico ogni notte).')->success()->send();
+                        Notification::make()->title('Qualifica forzata')->body($until === null ? 'Nessuna protezione: il ricalcolo notturno può riabbassarla se mancano i requisiti.' : 'Mantenuta '.(RankHoldAction::isOpenEnded($until) ? RankHoldAction::label($until) : 'fino al '.RankHoldAction::label($until)).'. Il calcolo si aggiorna a breve.')->success()->send();
                     } catch (NetworkException $e) {
                         Notification::make()->title('Operazione non consentita')->body($e->getMessage())->danger()->send();
                     }

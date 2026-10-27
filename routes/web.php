@@ -8,6 +8,7 @@ use App\Domain\Billing\InvoiceService;
 use App\Domain\Onboarding\BadgeService;
 use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Orders\ShippingLabelService;
+use App\Domain\Onboarding\Iban;
 use App\Domain\Payouts\ExportService;
 use App\Domain\Payouts\PayoutException;
 use App\Domain\Payouts\ReceiptService;
@@ -263,6 +264,14 @@ Route::middleware(['auth'])->prefix('admin-files')->group(function () {
         abort_unless(auth()->user()->can('payouts.view'), 403);
 
         return response(app(ReceiptService::class)->pdf($receipt), 200, ['Content-Type' => 'application/pdf']);
+    });
+    Route::get('/export/payouts-fuori-sepa', function () {
+        abort_unless(auth()->user()->can('payouts.view'), 403);
+        $payouts = Payout::with('consultant', 'period')->where('status', Payout::TO_PAY)->orderBy('id')->get()
+            ->filter(fn (Payout $p) => Iban::isValid((string) $p->iban) && ! Iban::isSepa((string) $p->iban))->values();
+        AuditLog::record('export.payouts_outside_sepa', 'Esportato l\'elenco dei bonifici fuori area SEPA: '.$payouts->count(), null, ['pagamenti' => $payouts->pluck('id')->all()]);
+
+        return response(app(ExportService::class)->payoutsOutsideSepa($payouts), 200, ['Content-Type' => 'text/csv; charset=UTF-8', 'Content-Disposition' => 'attachment; filename=bonifici-fuori-sepa.csv']);
     });
     Route::get('/export/payouts', function () {
         abort_unless(auth()->user()->can('payouts.view'), 403);

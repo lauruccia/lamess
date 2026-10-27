@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payouts;
 
+use App\Domain\Onboarding\Iban;
 use App\Models\Payout;
 use Brick\Math\BigDecimal;
 use DateTimeInterface;
@@ -12,13 +13,15 @@ use DOMDocument;
 /**
  * File SEPA di bonifici multipli (ISO 20022 pain.001.001.03) da caricare nell'home banking.
  * I pagamenti con IBAN mancante o non valido vengono saltati e restituiti in «skipped».
+ * Quelli con IBAN valido ma fuori dall'area SEPA non possono stare in un file SEPA: restano fuori e sono elencati in «outside»
+ * (e «outside_ids»), da pagare a parte con un bonifico estero.
  */
 final class SepaExport
 {
     /**
      * @param  iterable<Payout>  $payouts
      * @param  array{name: string, iban: string, bic?: string}  $debtor
-     * @return array{xml: string, count: int, total: string, skipped: list<string>}
+     * @return array{xml: string, count: int, total: string, skipped: list<string>, ids: list<int>, outside: list<string>, outside_ids: list<int>}
      */
     public function build(iterable $payouts, array $debtor, DateTimeInterface $now, ?DateTimeInterface $execution = null): array
     {
@@ -31,6 +34,8 @@ final class SepaExport
 
         $rows = [];
         $skipped = [];
+        $outside = [];
+        $outsideIds = [];
         $total = BigDecimal::zero();
         foreach ($payouts as $p) {
             $cIban = self::normalizeIban((string) $p->iban);
@@ -43,12 +48,19 @@ final class SepaExport
             if ((float) $amount <= 0) {
                 continue;
             }
+            if (! Iban::isSepa($cIban)) {
+                $outside[] = "{$p->consultant->code} ({$p->consultant->name}): IBAN {$this->country($cIban)} fuori area SEPA, {$amount} €".(blank($p->bic) ? ' — BIC/SWIFT mancante' : '');
+                $outsideIds[] = (int) $p->id;
+
+                continue;
+            }
             $rows[] = ['payout' => $p, 'iban' => $cIban, 'amount' => $amount];
             $total = $total->plus($amount);
         }
         $total = (string) $total->toScale(2);
         if ($rows === []) {
-            throw new PayoutException('Nessun pagamento esportabile'.($skipped ? ': '.implode('; ', $skipped) : '.'));
+            $why = array_merge($skipped, $outside);
+            throw new PayoutException('Nessun pagamento esportabile'.($why ? ': '.implode('; ', $why) : '.'));
         }
 
         $d = new DOMDocument('1.0', 'UTF-8');
@@ -96,7 +108,15 @@ final class SepaExport
             $this->el($d, $this->el($d, $tx, 'RmtInf'), 'Ustrd', self::text("Provvigioni Lamess {$p->period->code}", 140));
         }
 
-        return ['xml' => (string) $d->saveXML(), 'count' => count($rows), 'total' => $total, 'skipped' => $skipped];
+        return [
+            'xml' => (string) $d->saveXML(), 'count' => count($rows), 'total' => $total, 'skipped' => $skipped,
+            'ids' => array_map(fn (array $r): int => (int) $r['payout']->id, $rows), 'outside' => $outside, 'outside_ids' => $outsideIds,
+        ];
+    }
+
+    private function country(string $iban): string
+    {
+        return substr($iban, 0, 2);
     }
 
     public static function normalizeIban(string $iban): string

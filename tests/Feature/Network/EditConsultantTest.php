@@ -108,6 +108,29 @@ final class EditConsultantTest extends TestCase
         $this->assertSame($c->name, $c->iban_holder, 'intestatario vuoto = nome e cognome');
     }
 
+    public function test_a_foreign_iban_needs_the_bic_and_the_bic_can_be_changed_alone(): void
+    {
+        $this->actingAsRole('admin_network');
+        $c = $this->consultantWithAccess();
+        $c->update(['iban' => 'IT28W8000000292100645211', 'iban_holder' => 'Vecchio Titolare']);
+
+        $page = Livewire::test(EditConsultant::class, ['record' => $c->getKey()]);
+        $page->fillForm(['iban_new' => 'TN59 1000 6035 1835 9847 8831', 'bic' => ''])->call('save');
+        $this->assertSame('IT28W8000000292100645211', $c->fresh()->iban, 'IBAN tunisino senza BIC: non si salva');
+
+        $page->fillForm(['iban_new' => 'TN59 1000 6035 1835 9847 8831', 'bic' => 'BIAT'])->call('save')->assertHasFormErrors(['bic']);
+        $page->fillForm(['iban_new' => 'TN59 1000 6035 1835 9847 8831', 'bic' => 'atbk tntt'])->call('save')->assertHasNoFormErrors();
+        $c->refresh();
+        $this->assertSame('TN5910006035183598478831', $c->iban);
+        $this->assertSame('ATBKTNTT', $c->bic);
+
+        // Solo il BIC: cambia senza toccare l'IBAN.
+        $page = Livewire::test(EditConsultant::class, ['record' => $c->getKey()]);
+        $page->fillForm(['iban_new' => null, 'bic' => 'BIATTNTT'])->call('save')->assertHasNoFormErrors();
+        $this->assertSame('BIATTNTT', $c->fresh()->bic);
+        $this->assertSame('TN5910006035183598478831', $c->fresh()->iban);
+    }
+
     public function test_without_an_access_the_email_creates_it_and_personal_data_requires_the_email(): void
     {
         $this->actingAsRole('admin_network');

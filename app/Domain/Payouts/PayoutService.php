@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payouts;
 
+use App\Domain\Onboarding\Iban;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Engine\Support\Num;
 use App\Domain\Wallet\WithdrawalService;
@@ -116,6 +117,8 @@ final class PayoutService
         }
         if (blank($c->iban)) {
             $reasons[] = 'IBAN mancante';
+        } elseif (! Iban::isSepa((string) $c->iban) && blank($c->bic)) {
+            $reasons[] = 'BIC/SWIFT mancante (IBAN fuori area SEPA)';
         }
         if ($c->bonus_hold) {
             $reasons[] = 'pagamenti sospesi';
@@ -165,7 +168,7 @@ final class PayoutService
                 $payout = Payout::create([
                     'consultant_id' => $c->id, 'period_id' => $upTo->id, 'amount' => $f['net'], 'gross_amount' => (string) $balance, 'withholding_amount' => $f['withholding'],
                     'inps_amount' => $f['inps_worker'], 'fiscal_year' => $year, 'iban' => $c->iban,
-                    'iban_holder' => $c->iban_holder, 'status' => Payout::TO_PAY, 'prepared_by' => $by,
+                    'iban_holder' => $c->iban_holder, 'bic' => $c->bic, 'status' => Payout::TO_PAY, 'prepared_by' => $by,
                 ]);
                 Settlement::where('consultant_id', $c->id)->where('status', 'open')->whereNull('payout_id')
                     ->whereHas('period', fn ($p) => $p->where('code', '<=', $upTo->code))->update(['payout_id' => $payout->id]);

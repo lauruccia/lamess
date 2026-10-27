@@ -626,9 +626,9 @@ class AreaController extends Controller
     {
         $consultant = $request->user()->consultant;
         abort_if($consultant === null, 404);
-        $data = $request->validate(['iban' => 'required', 'iban_holder' => 'required'], SiteController::MESSAGES);
+        $data = $request->validate(['iban' => 'required', 'iban_holder' => 'required', 'bic' => 'nullable|string|max:20'], SiteController::MESSAGES);
         try {
-            $onboarding->saveBankDetails($consultant, $data['iban'], $data['iban_holder']);
+            $onboarding->saveBankDetails($consultant, $data['iban'], $data['iban_holder'], (string) ($data['bic'] ?? ''));
         } catch (OnboardingException $e) {
             return back()->withErrors(['iban' => $e->getMessage()])->withInput();
         }

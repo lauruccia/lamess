@@ -11,7 +11,10 @@ use App\Notifications\OnboardingCompleted;
 /** Onboarding completo (RF-014): foto + documento + dati fiscali + IBAN intestato + KYC verificato. */
 final class OnboardingService
 {
-    public function saveBankDetails(Consultant $c, string $iban, string $holder): Consultant
+    /**
+     * @param  string|null  $bic  null = lascia il BIC com'è; stringa vuota = lo toglie. Per un IBAN fuori area SEPA il BIC è obbligatorio.
+     */
+    public function saveBankDetails(Consultant $c, string $iban, string $holder, ?string $bic = null): Consultant
     {
         if (! Iban::isValid($iban)) {
             throw new OnboardingException('IBAN non valido.');
@@ -19,9 +22,31 @@ final class OnboardingService
         if (trim($holder) === '') {
             throw new OnboardingException("Indicare l'intestatario dell'IBAN.");
         }
-        $c->update(['iban' => Iban::normalize($iban), 'iban_holder' => trim($holder)]);
+        $bic = $this->checkedBic($iban, $bic ?? (string) $c->bic);
+        $c->update(['iban' => Iban::normalize($iban), 'iban_holder' => trim($holder), 'bic' => $bic]);
 
         return $this->recompute($c);
+    }
+
+    /** Cambia solo il BIC/SWIFT, controllandolo rispetto all'IBAN già salvato. */
+    public function saveBic(Consultant $c, string $bic): Consultant
+    {
+        $c->update(['bic' => $this->checkedBic((string) $c->iban, $bic)]);
+
+        return $c;
+    }
+
+    private function checkedBic(string $iban, string $bic): ?string
+    {
+        $bic = Iban::normalizeBic($bic);
+        if ($bic !== '' && ! Iban::isValidBic($bic)) {
+            throw new OnboardingException('BIC/SWIFT non valido: servono 8 o 11 caratteri (per esempio BCITITMM).');
+        }
+        if ($bic === '' && $iban !== '' && ! Iban::isSepa($iban)) {
+            throw new OnboardingException('Per un IBAN fuori dall\'area SEPA (come '.Iban::country($iban).') serve anche il BIC/SWIFT della banca.');
+        }
+
+        return $bic === '' ? null : $bic;
     }
 
     /** Ultimo documento per tipo. @return array<string,\App\Models\KycDocument> */

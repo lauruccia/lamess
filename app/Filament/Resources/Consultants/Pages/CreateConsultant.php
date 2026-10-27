@@ -42,7 +42,7 @@ class CreateConsultant extends CreateRecord
 
         if (filled($data['iban'] ?? null)) {
             try {
-                app(OnboardingService::class)->saveBankDetails($consultant, (string) $data['iban'], filled($data['iban_holder'] ?? null) ? (string) $data['iban_holder'] : $name);
+                app(OnboardingService::class)->saveBankDetails($consultant, (string) $data['iban'], filled($data['iban_holder'] ?? null) ? (string) $data['iban_holder'] : $name, (string) ($data['bic'] ?? ''));
             } catch (OnboardingException $e) {
                 Notification::make()->title('Incaricato creato, ma IBAN non salvato')->body($e->getMessage().' Lo può inserire l\'incaricato dall\'onboarding.')->warning()->persistent()->send();
             }

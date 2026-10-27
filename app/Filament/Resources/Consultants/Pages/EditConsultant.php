@@ -167,6 +167,12 @@ class EditConsultant extends EditRecord
                                     $fail('IBAN non valido.');
                                 }
                             }]),
+                        TextInput::make('bic')->label('BIC/SWIFT')->trim()->maxLength(11)->helperText('Obbligatorio se l\'IBAN è di un paese fuori area SEPA (come la Tunisia).')
+                            ->rules([fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                                if (filled($value) && ! Iban::isValidBic((string) $value)) {
+                                    $fail('BIC/SWIFT non valido (8 o 11 caratteri).');
+                                }
+                            }]),
                         TextInput::make('iban_holder')->label('Intestatario')->maxLength(120)->helperText('Se cambi l\'IBAN e lo lasci vuoto: nome e cognome.'),
                     ]),
                     Section::make('Regime fiscale e verifica identità')->aside()->contained(false)->extraAttributes($divider)->columns(2)->schema([
@@ -388,15 +394,29 @@ class EditConsultant extends EditRecord
      */
     private function saveBank(Consultant $record, array $data, string $name): array
     {
+        $bic = array_key_exists('bic', $data) ? (string) ($data['bic'] ?? '') : null;
+        $onboarding = app(OnboardingService::class);
         if (blank($data['iban_new'] ?? null)) {
-            return [];
+            if ($bic === null || Iban::normalizeBic($bic) === (string) $record->bic) {
+                return [];
+            }
+            $before = $record->bic;
+            $onboarding->saveBic($record, $bic);
+
+            return ['BIC/SWIFT' => ['prima' => $before ?: 'non inserito', 'dopo' => $record->refresh()->bic ?: 'non inserito']];
         }
         $before = $this->maskedIban();
+        $beforeBic = $record->bic;
         $holder = filled($data['iban_holder'] ?? null) ? (string) $data['iban_holder'] : $name;
-        app(OnboardingService::class)->saveBankDetails($record, (string) $data['iban_new'], $holder);
+        $onboarding->saveBankDetails($record, (string) $data['iban_new'], $holder, $bic);
         $record->refresh();
 
-        return ['IBAN' => ['prima' => $before ?? 'non inserito', 'dopo' => $this->maskedIban()]];
+        $changes = ['IBAN' => ['prima' => $before ?? 'non inserito', 'dopo' => $this->maskedIban()]];
+        if ((string) $beforeBic !== (string) $record->bic) {
+            $changes['BIC/SWIFT'] = ['prima' => $beforeBic ?: 'non inserito', 'dopo' => $record->bic ?: 'non inserito'];
+        }
+
+        return $changes;
     }
 
     /**

@@ -51,6 +51,7 @@
    <header><h2>Dati bancari</h2></header>
    <div class="panel-body">
     <label for="o-iban">IBAN</label><input id="o-iban" name="iban" value="{{ old('iban', $consultant->iban) }}" autocapitalize="characters" autocomplete="off">
+    <label for="o-bic">BIC/SWIFT della banca <span class="muted">(obbligatorio se l'IBAN non è di un paese SEPA)</span></label><input id="o-bic" name="bic" value="{{ old('bic', $consultant->bic) }}" autocapitalize="characters" autocomplete="off" maxlength="11" placeholder="Per esempio BCITITMM">
     <label for="o-hold">Intestatario</label><input id="o-hold" name="iban_holder" value="{{ old('iban_holder', $consultant->iban_holder ?: $consultant->name) }}">
     @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
     <div class="form-actions"><button>Salva</button></div>

@@ -140,6 +140,12 @@ class ConsultantResource extends Resource
                                     $fail('IBAN non valido.');
                                 }
                             }]),
+                        TextInput::make('bic')->label('BIC/SWIFT')->trim()->maxLength(11)->helperText('Obbligatorio se l\'IBAN è di un paese fuori area SEPA.')->columnSpan($third)
+                            ->rules([fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                                if (filled($value) && ! Iban::isValidBic((string) $value)) {
+                                    $fail('BIC/SWIFT non valido (8 o 11 caratteri).');
+                                }
+                            }]),
                         TextInput::make('iban_holder')->label('Intestatario')->helperText('Se vuoto: nome e cognome.')->columnSpan($third),
                     ]),
                 ])->columnSpan(['xl' => 2]),

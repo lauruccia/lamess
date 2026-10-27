@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Payouts\Pages;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Onboarding\Iban;
 use App\Domain\Payouts\PayoutException;
 use App\Domain\Payouts\PayoutService;
 use App\Domain\Payouts\SepaExport;
@@ -31,14 +32,22 @@ class ListPayouts extends SuperadminListRecords
                         $r = $svc->preparePayouts(Period::where('code', $data['code'])->firstOrFail());
                         Notification::make()->title("{$r['created']} pagamenti preparati per € {$r['amount']}")
                             ->body("Sotto soglia: {$r['below_min']} · saldo negativo: {$r['negative']} · bloccati (KYC/IBAN/sospensione): {$r['blocked']}")->success()->send();
+                        $outside = Payout::where('status', Payout::TO_PAY)->get()->filter(fn (Payout $p) => Iban::isValid((string) $p->iban) && ! Iban::isSepa((string) $p->iban))->count();
+                        if ($outside > 0) {
+                            Notification::make()->title("{$outside} pagamenti con IBAN fuori area SEPA")
+                                ->body('Non entrano nel file SEPA: vanno pagati a parte con un bonifico estero. Scarica «Bonifici fuori area SEPA (CSV)».')->warning()->persistent()->send();
+                        }
                     } catch (PayoutException $e) {
                         Notification::make()->title('Operazione non consentita')->body($e->getMessage())->danger()->send();
                     }
                 }),
             Action::make('export')->authorize('payouts.view')->label('Esporta bonifici da fare (CSV)')->icon('heroicon-o-arrow-down-tray')->color('gray')
                 ->url(url('/admin-files/export/payouts')),
+            Action::make('outsideSepa')->authorize('payouts.view')->label('Bonifici fuori area SEPA (CSV)')->icon('heroicon-o-globe-europe-africa')->color('gray')
+                ->modalDescription('Elenco dei pagamenti «da pagare» con IBAN di un paese fuori dall\'area SEPA (per esempio la Tunisia). Non entrano nel file SEPA: si pagano a parte con un bonifico estero, usando IBAN e BIC/SWIFT di questo elenco.')
+                ->url(url('/admin-files/export/payouts-fuori-sepa')),
             Action::make('sepa')->authorize('payouts.manage')->label('Esporta file SEPA (XML)')->icon('heroicon-o-document-arrow-down')->color('gray')
-                ->modalDescription('File di bonifici multipli da caricare nell\'home banking. Contiene i pagamenti «da pagare» con IBAN valido; gli altri vengono saltati e te li elenco. Prima di usarlo la prima volta fallo controllare dalla tua banca.')
+                ->modalDescription('File di bonifici multipli da caricare nell\'home banking. Contiene i pagamenti «da pagare» con IBAN valido dell\'area SEPA; quelli con IBAN mancante o non valido vengono saltati e quelli fuori area SEPA restano fuori e vanno pagati a parte (te li elenco). Prima di usarlo la prima volta fallo controllare dalla tua banca.')
                 ->requiresConfirmation()
                 ->action(function (SepaExport $sepa) {
                     $payouts = Payout::with('consultant', 'period')->where('status', Payout::TO_PAY)->orderBy('id')->get();
@@ -51,9 +60,13 @@ class ListPayouts extends SuperadminListRecords
 
                         return null;
                     }
-                    $ids = $payouts->filter(fn (Payout $p) => ! in_array("{$p->consultant->code} ({$p->consultant->name}): IBAN mancante o non valido", $r['skipped'], true))->pluck('id');
+                    $ids = collect($r['ids']);
                     Payout::whereIn('id', $ids)->update(['exported_at' => now()]);
-                    AuditLog::record('export.sepa', "Esportato il file SEPA: {$r['count']} bonifici per {$r['total']} €", null, ['pagamenti' => $ids->all(), 'saltati' => $r['skipped']]);
+                    AuditLog::record('export.sepa', "Esportato il file SEPA: {$r['count']} bonifici per {$r['total']} €", null, ['pagamenti' => $ids->all(), 'saltati' => $r['skipped'], 'fuori_sepa' => $r['outside']]);
+                    if ($r['outside'] !== []) {
+                        Notification::make()->title(count($r['outside']).' pagamenti fuori area SEPA: non sono nel file')
+                            ->body("Restano «da pagare» e vanno fatti a parte con un bonifico estero (scarica «Bonifici fuori area SEPA (CSV)»).\n".implode("\n", $r['outside']))->warning()->persistent()->send();
+                    }
                     if ($r['skipped'] !== []) {
                         Notification::make()->title('Alcuni pagamenti sono stati saltati')->body(implode("\n", $r['skipped']))->warning()->persistent()->send();
                     }

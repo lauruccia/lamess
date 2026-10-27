@@ -44,13 +44,31 @@ final class ExportService
         $data = [];
         foreach ($payouts as $p) {
             $data[] = [
-                $p->period->code, $p->consultant->code, $p->iban_holder ?: $p->consultant->name, $p->iban, $this->num((string) $p->amount),
+                $p->period->code, $p->consultant->code, $p->iban_holder ?: $p->consultant->name, $p->iban, $p->bic ?? '', $this->num((string) $p->amount),
                 "Provvigioni Lamess {$p->period->code}", ['to_pay' => 'da pagare', 'paid' => 'pagato', 'cancelled' => 'annullato'][$p->status] ?? $p->status, $p->reference ?? '',
                 $this->num($p->gross()), $this->num((string) $p->withholding_amount), $this->num((string) $p->inps_amount), $this->num((string) $p->fee_amount),
             ];
         }
 
-        return $this->csv(['Periodo', 'Codice incaricato', 'Intestatario', 'IBAN', 'Importo €', 'Causale', 'Stato', 'Riferimento', 'Lordo €', 'Ritenuta €', 'INPS incaricato €', 'Commissione €'], $data);
+        return $this->csv(['Periodo', 'Codice incaricato', 'Intestatario', 'IBAN', 'BIC/SWIFT', 'Importo €', 'Causale', 'Stato', 'Riferimento', 'Lordo €', 'Ritenuta €', 'INPS incaricato €', 'Commissione €'], $data);
+    }
+
+    /**
+     * Bonifici da fare fuori dal file SEPA (IBAN di un paese fuori area SEPA): con paese, BIC/SWIFT e causale, per il bonifico estero.
+     *
+     * @param  iterable<Payout>  $payouts
+     */
+    public function payoutsOutsideSepa(iterable $payouts): string
+    {
+        $data = [];
+        foreach ($payouts as $p) {
+            $data[] = [
+                $p->period->code, $p->consultant->code, $p->iban_holder ?: $p->consultant->name, $p->iban, substr((string) $p->iban, 0, 2), $p->bic ?: 'MANCANTE',
+                $this->num((string) $p->amount), "Provvigioni Lamess {$p->period->code}", $p->reference ?? '',
+            ];
+        }
+
+        return $this->csv(['Periodo', 'Codice incaricato', 'Intestatario', 'IBAN', 'Paese', 'BIC/SWIFT', 'Importo €', 'Causale', 'Riferimento'], $data);
     }
 
     private function num(string|int|float $v): string

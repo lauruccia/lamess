@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Payouts;
 
+use App\Domain\Onboarding\Iban;
+use App\Domain\Onboarding\OnboardingException;
+use App\Domain\Onboarding\OnboardingService;
 use App\Domain\Payouts\PayoutException;
 use App\Domain\Payouts\PayoutService;
 use App\Domain\Payouts\SepaExport;
@@ -85,6 +88,102 @@ final class SepaAndNoticesTest extends TestCase
         $this->assertStringContainsString('<IBAN>IT60X0542811101000000123456</IBAN>', $r['xml']);
         $this->assertStringContainsString((string) $r['total'], $r['xml']);
         $this->assertStringContainsString('Mario Rossi e L\'Ottimo A', $r['xml'], 'nome ripulito dai caratteri non SEPA');
+    }
+
+    public function test_payouts_with_an_iban_outside_sepa_stay_out_of_the_file_and_are_listed_apart(): void
+    {
+        [$p, $a, $b] = $this->closedOctober();
+        app(PeriodService::class)->close($p);
+        app(PayoutService::class)->preparePayouts($p->refresh());
+        // La Tunisia non è nell'area SEPA: IBAN valido, ma il pagamento non può stare nel file.
+        Payout::where('consultant_id', $b->id)->update(['iban' => 'TN5910006035183598478831', 'bic' => 'ATBKTNTT']);
+
+        $payouts = Payout::with('consultant', 'period')->where('status', Payout::TO_PAY)->get();
+        $this->assertGreaterThan(1, $payouts->count());
+        $r = (new SepaExport)->build($payouts, self::DEBTOR, now());
+
+        $this->assertSame([], $r['skipped']);
+        $this->assertCount(1, $r['outside']);
+        $this->assertStringContainsString('TN', $r['outside'][0]);
+        $this->assertStringNotContainsString('TN5910006035183598478831', $r['xml']);
+        $this->assertSame(Payout::where('consultant_id', $b->id)->pluck('id')->map(fn ($i) => (int) $i)->all(), $r['outside_ids']);
+        $this->assertNotContains($r['outside_ids'][0], $r['ids']);
+        $this->assertSame($payouts->count() - 1, $r['count']);
+    }
+
+    public function test_sepa_action_marks_only_sepa_payouts_as_exported_and_warns_about_the_others(): void
+    {
+        [$p, $a, $b] = $this->closedOctober();
+        app(PeriodService::class)->close($p);
+        app(PayoutService::class)->preparePayouts($p->refresh());
+        Payout::where('consultant_id', $b->id)->update(['iban' => 'TN5910006035183598478831', 'bic' => 'ATBKTNTT']);
+        config(['lamess.sepa.debtor_name' => 'Lamess', 'lamess.sepa.debtor_iban' => 'IT60X0542811101000000123456']);
+
+        $this->superAdmin();
+        Livewire::test(ListPayouts::class)->callAction('sepa')->assertFileDownloaded()->assertNotified();
+        $this->assertNull(Payout::where('consultant_id', $b->id)->first()->exported_at, 'il pagamento fuori SEPA non risulta esportato');
+        $this->assertNotNull(Payout::where('consultant_id', $a->id)->first()->exported_at);
+        $this->assertSame(Payout::TO_PAY, Payout::where('consultant_id', $b->id)->first()->status);
+    }
+
+    public function test_the_outside_sepa_csv_lists_country_bic_and_amount(): void
+    {
+        [$p, $a, $b] = $this->closedOctober();
+        app(PeriodService::class)->close($p);
+        app(PayoutService::class)->preparePayouts($p->refresh());
+        Payout::where('consultant_id', $b->id)->update(['iban' => 'TN5910006035183598478831', 'bic' => 'ATBKTNTT']);
+
+        $this->superAdmin();
+        $res = $this->get('/admin-files/export/payouts-fuori-sepa')->assertOk();
+        $csv = $res->getContent();
+        $this->assertStringContainsString('TN5910006035183598478831;TN;ATBKTNTT', $csv);
+        $this->assertStringNotContainsString('IT60X0542811101000000123456', $csv);
+    }
+
+    public function test_iban_and_bic_checks(): void
+    {
+        $this->assertTrue(Iban::isValid('TN59 1000 6035 1835 9847 8831'));
+        $this->assertFalse(Iban::isValid('TN59 1000 6035 1835 9847 883'), 'lunghezza tunisina sbagliata');
+        $this->assertTrue(Iban::isSepa('IT60X0542811101000000123456'));
+        $this->assertFalse(Iban::isSepa('TN5910006035183598478831'));
+        $this->assertTrue(Iban::isValidBic('ATBKTNTT'));
+        $this->assertTrue(Iban::isValidBic('bcit itmm 123'));
+        $this->assertFalse(Iban::isValidBic('BIAT'));
+    }
+
+    public function test_an_iban_outside_sepa_needs_a_bic_when_saved(): void
+    {
+        $c = $this->payable('Z');
+        $svc = app(OnboardingService::class);
+
+        try {
+            $svc->saveBankDetails($c, 'TN59 1000 6035 1835 9847 8831', 'Ali Ben Salah');
+            $this->fail('Doveva chiedere il BIC.');
+        } catch (OnboardingException $e) {
+            $this->assertStringContainsString('BIC', $e->getMessage());
+        }
+        $this->assertSame('IT60X0542811101000000123456', $c->fresh()->iban, 'nulla è stato salvato');
+
+        $svc->saveBankDetails($c, 'TN59 1000 6035 1835 9847 8831', 'Ali Ben Salah', 'atbk tntt');
+        $this->assertSame('TN5910006035183598478831', $c->fresh()->iban);
+        $this->assertSame('ATBKTNTT', $c->fresh()->bic);
+
+        $this->expectException(OnboardingException::class);
+        $svc->saveBic($c, '');
+    }
+
+    public function test_payout_preparation_copies_the_bic_and_blocks_a_missing_one_for_non_sepa_iban(): void
+    {
+        [$p, $a, $b] = $this->closedOctober();
+        $b->update(['iban' => 'TN5910006035183598478831', 'bic' => null]);
+        app(PeriodService::class)->close($p);
+        $r = app(PayoutService::class)->preparePayouts($p->refresh());
+        $this->assertSame(0, Payout::where('consultant_id', $b->id)->count(), 'senza BIC il pagamento non nasce');
+        $this->assertGreaterThanOrEqual(1, $r['blocked']);
+
+        $b->update(['bic' => 'ATBKTNTT']);
+        app(PayoutService::class)->preparePayouts($p->refresh());
+        $this->assertSame('ATBKTNTT', Payout::where('consultant_id', $b->id)->first()->bic);
     }
 
     public function test_sepa_requires_debtor_account_and_refuses_empty_selection(): void

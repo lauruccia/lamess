@@ -77,7 +77,7 @@ final class WithdrawalService
 
             $r = WithdrawalRequest::create([
                 'consultant_id' => $c->id, 'gross' => (string) $amount, 'withholding' => $f['withholding'], 'inps' => $f['inps_worker'], 'fee' => $f['fee'], 'net' => $f['net'],
-                'iban' => (string) $c->iban, 'iban_holder' => $c->iban_holder, 'status' => WithdrawalRequest::REQUESTED, 'requested_at' => now(),
+                'iban' => (string) $c->iban, 'iban_holder' => $c->iban_holder, 'bic' => $c->bic, 'status' => WithdrawalRequest::REQUESTED, 'requested_at' => now(),
                 'due_by' => self::dueBy(CarbonImmutable::now())->format('Y-m-d'),
             ]);
             AuditLog::record('withdrawal.requested', "Prelievo di {$amount} € richiesto da {$c->code}", $r, ['netto' => $f['net']]);
@@ -140,7 +140,7 @@ final class WithdrawalService
             $payout = Payout::create([
                 'consultant_id' => $c->id, 'period_id' => $period->id, 'amount' => $f['net'], 'gross_amount' => $r->gross, 'withholding_amount' => $f['withholding'],
                 'inps_amount' => $f['inps_worker'], 'fee_amount' => $f['fee'], 'fiscal_year' => (int) CarbonImmutable::now('Europe/Rome')->format('Y'),
-                'iban' => $r->iban, 'iban_holder' => $r->iban_holder, 'status' => Payout::TO_PAY, 'prepared_by' => Actor::label(),
+                'iban' => $r->iban, 'iban_holder' => $r->iban_holder, 'bic' => $r->bic, 'status' => Payout::TO_PAY, 'prepared_by' => Actor::label(),
             ]);
             $r->update([
                 'status' => WithdrawalRequest::APPROVED, 'payout_id' => $payout->id, 'approved_at' => now(), 'reviewed_by' => Actor::label(),

@@ -12,7 +12,6 @@
     };
     $hasPrev = $w['prev_start'] !== null;
     $tiles = [
-        $tile('Preventivi', number_format($d['tiles']['quotes']['value'], 0, ',', '.'), $d['tiles']['quotes']['delta'], $hasPrev, 'a'),
         $tile('Ordini', number_format($d['tiles']['orders']['value'], 0, ',', '.'), $d['tiles']['orders']['delta'], $hasPrev, 'a'),
         $tile('Ricavo (IVA incl.)', $eur0($d['tiles']['revenue']['value']), $d['tiles']['revenue']['delta'], $hasPrev, 'b'),
         $tile('Ordine medio', $eur0($d['tiles']['avg']['value']), $d['tiles']['avg']['delta'], $hasPrev, 'b'),
@@ -183,6 +182,6 @@
             </section>
         </div>
 
-        <p class="lm-s-note">Importi IVA inclusa. «Ordini» = pagati e non resi del tutto; «Preventivi» = in attesa di pagamento; gli annullati non contano. L'incaricato di un ordine è quello indicato sull'ordine, altrimenti quello assegnato al cliente; senza nessuno dei due è «vendita diretta». Il periodo è confrontato con quello di pari durata immediatamente precedente.</p>
+        <p class="lm-s-note">Importi IVA inclusa. «Ordini» = pagati e non resi del tutto; gli ordini in attesa di pagamento e gli annullati non contano. L'incaricato di un ordine è quello indicato sull'ordine, altrimenti quello assegnato al cliente; senza nessuno dei due è «vendita diretta». Il periodo è confrontato con quello di pari durata immediatamente precedente.</p>
     </div>
 </x-filament-panels::page>

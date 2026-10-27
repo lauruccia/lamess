@@ -103,19 +103,17 @@ final class SalesDashboardTest extends TestCase
         $this->assertSame(0.0, $s->delta(100, 100));
     }
 
-    public function test_tiles_count_paid_and_pending_orders_and_ignore_cancelled_and_refunded(): void
+    public function test_tiles_count_paid_orders_and_ignore_pending_cancelled_and_refunded(): void
     {
         $this->seedSales();
         $d = app(SalesDashboard::class)->build(90, 0, $this->now());
 
-        $this->assertSame(1, $d['tiles']['quotes']['value']);
         $this->assertSame(2, $d['tiles']['orders']['value']);
         $this->assertEqualsWithDelta(366.0, $d['tiles']['revenue']['value'], 0.001);
         $this->assertEqualsWithDelta(183.0, $d['tiles']['avg']['value'], 0.001);
         // finestra precedente: 1 ordine da 100 €
         $this->assertSame(100.0, $d['tiles']['orders']['delta']);
         $this->assertSame(266.0, $d['tiles']['revenue']['delta']);
-        $this->assertNull($d['tiles']['quotes']['delta']);
     }
 
     public function test_monthly_series_covers_every_month_even_without_sales(): void

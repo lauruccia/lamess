@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
  * Cruscotto vendite del back-office (stile dashboard Odoo di Lamèss). Sola lettura: non scrive nulla.
  *
  * Importi in euro IVA inclusa (`orders.total`). «Ordini» sono quelli pagati e non del tutto resi (`Order::PAID_STATES`),
- * «Preventivi» quelli in attesa di pagamento; gli annullati non contano. Il periodo è una finestra mobile di N giorni
+ * gli altri stati (in attesa di pagamento, annullati) non contano. Il periodo è una finestra mobile di N giorni
  * (spostabile indietro con `$offset`) confrontata con la finestra precedente di pari durata.
  * Le aggregazioni sono fatte in PHP, così il codice è identico su SQLite e MySQL.
  */
@@ -28,8 +28,6 @@ final class SalesDashboard
 {
     /** giorni => etichetta; 0 = tutto lo storico */
     public const RANGES = [30 => 'Ultimi 30 giorni', 90 => 'Ultimi 90 giorni', 180 => 'Ultimi 180 giorni', 365 => 'Ultimi 12 mesi', 0 => 'Tutto lo storico'];
-
-    public const QUOTE = 'pending_payment';
 
     private const TOP = 10;
 
@@ -199,12 +197,12 @@ final class SalesDashboard
     {
         return Order::query()->whereBetween('created_at', [$from, $to])
             ->get(['id', 'number', 'buyer_user_id', 'beneficiary_consultant_id', 'status', 'country_code', 'payment_method', 'source', 'total', 'kmoney_amount', 'created_at', 'billing'])
-            ->filter(fn (Order $o) => $this->isPaid($o) || $o->status === self::QUOTE)->values();
+            ->filter(fn (Order $o) => $this->isPaid($o))->values();
     }
 
     /**
      * @param  ?Collection<int, Order>  $orders  già caricati (per la finestra corrente), altrimenti li legge
-     * @return array{quotes:int,orders:int,revenue:float,avg:float,new_customers:int,refunds:float,kmoney:float}
+     * @return array{orders:int,revenue:float,avg:float,new_customers:int,refunds:float,kmoney:float}
      */
     private function metrics(CarbonImmutable $from, CarbonImmutable $to, ?Collection $orders = null): array
     {
@@ -213,7 +211,6 @@ final class SalesDashboard
         $revenue = (float) $paid->sum(fn (Order $o) => (float) $o->total);
 
         return [
-            'quotes' => $orders->where('status', self::QUOTE)->count(),
             'orders' => $paid->count(),
             'revenue' => $revenue,
             'avg' => $paid->count() ? $revenue / $paid->count() : 0.0,
@@ -232,7 +229,7 @@ final class SalesDashboard
     private function tiles(array $cur, ?array $prev): array
     {
         $out = [];
-        foreach (['quotes', 'orders', 'revenue', 'avg'] as $k) {
+        foreach (['orders', 'revenue', 'avg'] as $k) {
             $out[$k] = ['value' => $cur[$k], 'delta' => $prev ? $this->delta($cur[$k], $prev[$k]) : null];
         }
 

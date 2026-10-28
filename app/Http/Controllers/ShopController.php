@@ -283,8 +283,11 @@ class ShopController extends Controller
             $perPage = $view === 'elenco' ? self::LIST_PER_PAGE : $cols * self::GRID_ROWS;
         }
 
+        $page = $query->paginate($perPage)->withQueryString();
+        $r->attributes->set('analytics.results', $page->total());   // per le statistiche: ricerche senza risultati
+
         return view('site.shop.index', [
-            'products' => $query->paginate($perPage)->withQueryString(), 'cols' => $cols, 'view' => $view, 'perPage' => $perPage, 'perPageOptions' => $perPageOptions, 'categories' => $categories, 'category' => $category, 'navRoot' => $navRoot,
+            'products' => $page, 'cols' => $cols, 'view' => $view, 'perPage' => $perPage, 'perPageOptions' => $perPageOptions, 'categories' => $categories, 'category' => $category, 'navRoot' => $navRoot,
             'term' => $term, 'sort' => $sort, 'sorts' => self::SORTS, 'totalVisible' => $visibleIds->count(),
             'priceMin' => $min, 'priceMax' => $max, 'priceBounds' => $priceBounds,
             'kmoneyMin' => $kmoneyMin, 'kmoneyFilters' => self::KMONEY_FILTERS, 'kmoneyAvailable' => $kmoneyAvailable,

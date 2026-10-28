@@ -1,5 +1,63 @@
 # Registro aggiornamenti
 
+## 2026-10-28 — Statistiche del sito
+- Nuovo: pagina **Statistiche sito** (*Sistema*, permesso `kpi.view`, nascondibile da *Funzionalità e viste*). Per il **sito pubblico e l'area riservata** e per il **back-office**: utenti **online adesso** (chi sono, in quale pagina, da dove arrivano, dispositivo e luogo, aggiornamento ogni 30 secondi), visite e pagine viste con confronto sul periodo precedente, grafico giornaliero, pagine più viste e d'ingresso, **ricerche nel negozio** (anche quelle senza risultati), **come arrivano** (Google, social, email, altri siti, campagne UTM, link referral degli incaricati), paesi e città, dispositivi, browser, sistemi, ultime visite; nel back-office anche chi ha lavorato e cosa ha usato.
+- Rilevamento interno (nessun servizio esterno, nessun cookie in più): niente bot, immagini o richieste interne; IP troncato; cancellazione automatica dopo 180 giorni (`LAMESS_ANALYTICS_RETENTION_DAYS`, ogni notte alle 03:10); spegnibile con `LAMESS_ANALYTICS=false`. Le visite dello staff nel sito pubblico sono escluse di default.
+- Limiti: il **paese e la città** si vedono solo se l'hosting li comunica (es. Cloudflare); le **ricerche dentro il back-office** non si registrano; il sito chiuso al pubblico mostra solo le visite dello staff. Conviene citare le statistiche anonime nell'informativa privacy.
+- Migrazione `2026_11_15_100000_site_analytics` (due tabelle nuove). Sul sito live (senza terminale) esegui **prima del deploy**, in phpMyAdmin → scheda SQL sul database `lamess_portale`. Se la dimentichi il sito funziona lo stesso: la pagina avvisa che mancano le tabelle e non registra nulla finché non le crei.
+  ```sql
+  CREATE TABLE IF NOT EXISTS analytics_visits (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    vid VARCHAR(26) NOT NULL,
+    started_at TIMESTAMP NULL DEFAULT NULL,
+    last_seen_at TIMESTAMP NULL DEFAULT NULL,
+    user_id BIGINT UNSIGNED NULL,
+    is_staff TINYINT(1) NOT NULL DEFAULT 0,
+    landing_area VARCHAR(5) NOT NULL,
+    landing_path VARCHAR(255) NOT NULL,
+    current_area VARCHAR(5) NOT NULL,
+    current_path VARCHAR(255) NOT NULL,
+    referrer_host VARCHAR(120) NULL,
+    source VARCHAR(40) NOT NULL,
+    medium VARCHAR(20) NULL,
+    campaign VARCHAR(120) NULL,
+    referral_code VARCHAR(40) NULL,
+    country VARCHAR(2) NULL,
+    region VARCHAR(80) NULL,
+    city VARCHAR(80) NULL,
+    device VARCHAR(10) NOT NULL,
+    browser VARCHAR(30) NOT NULL,
+    os VARCHAR(30) NOT NULL,
+    ip_masked VARCHAR(45) NULL,
+    hits INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY analytics_visits_vid_unique (vid),
+    KEY analytics_visits_started_at_index (started_at),
+    KEY analytics_visits_last_seen_at_index (last_seen_at),
+    KEY analytics_visits_user_id_index (user_id),
+    KEY analytics_visits_source_index (source)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+  CREATE TABLE IF NOT EXISTS analytics_hits (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    visit_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    area VARCHAR(5) NOT NULL,
+    path VARCHAR(255) NOT NULL,
+    user_id BIGINT UNSIGNED NULL,
+    search_term VARCHAR(120) NULL,
+    search_results INT UNSIGNED NULL,
+    PRIMARY KEY (id),
+    KEY analytics_hits_visit_id_index (visit_id),
+    KEY analytics_hits_created_at_index (created_at),
+    KEY analytics_hits_area_created_at_index (area, created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_15_100000_site_analytics', MAX(batch) + 1 FROM migrations;
+  ```
+- Test: `SiteStatsTest` (14).
+
 ## 2026-10-27 — Sospendere o bannare un account
 - Nuovo: ogni account (cliente, incaricato o admin) si può **sospendere** (stop temporaneo) o **bannare** (blocco deciso), con motivo obbligatorio. Si riattiva quando si vuole.
 - Effetti: non può più entrare (sito e back-office; le sessioni aperte si chiudono alla richiesta successiva); non compare più in elenchi, alberi (admin e «Il mio ramo»), conteggi di tab e link referral; i suoi abbonamenti non vengono più addebitati. Non si cancella nulla: ordini, fatture, compensi e storico restano, e la rete non si spezza (i suoi sotto-incaricati si vedono sotto il primo sponsor ancora visibile). Chi prova ad accedere, con la password giusta, vede «account sospeso/bloccato».

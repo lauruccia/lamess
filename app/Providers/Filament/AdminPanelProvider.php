@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Domain\Access\Impersonation;
 use App\Http\Middleware\BlockSuspendedAccounts;
+use App\Http\Middleware\TrackVisit;
 use App\Filament\Pages\AuditVerificationPage;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
@@ -18,6 +19,7 @@ use App\Filament\Pages\RegolamentoPage;
 use App\Filament\Pages\NetworkTreePage;
 use App\Filament\Pages\RankComparisonPage;
 use App\Filament\Pages\SalesDashboardPage;
+use App\Filament\Pages\SiteStatsPage;
 use App\Filament\Pages\ShopSettingsPage;
 use App\Filament\Pages\SystemSettingsPage;
 use App\Filament\Widgets\CommissionsByTypeChart;
@@ -104,6 +106,7 @@ class AdminPanelProvider extends PanelProvider
                 RankComparisonPage::class,
                 IncaricatiSimulationPage::class,
                 SalesDashboardPage::class,
+                SiteStatsPage::class,
             ])
             ->widgets([
                 SchedulerStatus::class,
@@ -117,6 +120,7 @@ class AdminPanelProvider extends PanelProvider
                 StartSession::class,
                 AuthenticateSession::class,
                 BlockSuspendedAccounts::class,
+                TrackVisit::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,
                 SubstituteBindings::class,

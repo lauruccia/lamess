@@ -144,6 +144,13 @@ php artisan lamess:audit-verifica                  # controlla la catena del log
 - Grafica: CSS statici in `public/css` (`lamess-tokens.css`, `lamess-admin.css`, `lamess-site.css`, `lamess-area.css`, `lamess-shop.css`, `lamess-home.css`), nessun build. Menu admin: `topNavigation()` + `navigationGroup` su ogni risorsa/pagina; gruppi in `AdminPanelProvider`. Pagine di errore: `resources/views/errors/*`.
 - Test: `tests/Feature/Network` (closure, stati, re-iscrizione, operazioni sull'albero), `tests/Feature/Admin` (pannello via Livewire), `tests/Feature/Features`, `tests/Feature/Plan`.
 
+### Statistiche del sito (`App\Domain\Analytics`)
+- `TrackVisit` (middleware nel gruppo `web` e nel pannello Filament, dopo `StartSession`): in `handle` assegna alla sessione l'identificativo di visita (`an.vid`, rinnovato dopo 30 minuti di pausa); in `terminate`, dopo l'invio della risposta, `Tracker::record` scrive `analytics_visits` (una riga per visita) e `analytics_hits` (una per pagina). Qualunque errore è inghiottito (log a livello debug): non deve mai arrivare al visitatore.
+- Si contano solo GET HTML con 200, non Ajax/Livewire, non prefetch, non bot (`UserAgent::isBot`), non in «Accedi come», e non `admin/statistiche-sito`. Le tabelle mancanti non danno errore: `Tracker::ready()` le cerca e ricorda l'esito (10 minuti se mancano) — per questo il deploy senza migrazione non rompe il sito.
+- Provenienza: `TrafficSource` (referrer, UTM, `fbclid`/`gclid`/`ttclid`, app dei social dal User-Agent). Posizione: solo da intestazioni dell'hosting (`CF-IPCountry`, `CF-IPCity`…): nessuna consultazione esterna di proprio. IP: `Tracker::maskIp`.
+- Numeri: `SiteStats::build($area, $giorni, $conStaff)` (solo SQL semplice, valido su SQLite e MySQL); pagina `SiteStatsPage` (`backoffice.page.statistiche_sito`, permesso `kpi.view`). Pulizia: `lamess:statistiche-pulizia`. Test: `tests/Feature/Analytics/SiteStatsTest.php`.
+- Il negozio passa il numero di risultati della ricerca con `$request->attributes->set('analytics.results', …)` (`ShopController::index`).
+
 ## 8. Anagrafica, onboarding, ordini e pagamenti
 
 ```

@@ -97,6 +97,7 @@ final class FeatureRegistry
             'confronto_qualifiche' => ['Confronto qualifiche', 'Compensi'],
             'simulazione_incaricati' => ['Simulazione incaricati', 'Compensi'],
             'cruscotto_vendite' => ['Cruscotto vendite', 'Vendite'], 'negozio_pagamenti' => ['Pagamenti e spedizioni', 'Vendite'],
+            'statistiche_sito' => ['Statistiche sito', 'Sistema'],
         ];
         foreach ($pages as $slug => [$label, $menu]) {
             $defs["backoffice.page.{$slug}"] = ['type' => 'view', 'group' => $bo, 'menu' => $menu, 'label' => "Pagina «{$label}»", 'menu_label' => $label];

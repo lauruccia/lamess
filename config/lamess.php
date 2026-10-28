@@ -19,6 +19,13 @@ return [
     // Spento di default: il PMK dice che diventare Incaricato non richiede acquisti. Modificabile da Impostazioni di sistema.
     'require_first_box_to_apply' => (bool) env('LAMESS_REQUIRE_FIRST_BOX', false),
 
+    // Statistiche del sito (pagina «Statistiche sito»): senza servizi esterni, IP troncato; i dati più vecchi si cancellano da soli
+    'analytics' => [
+        'enabled' => (bool) env('LAMESS_ANALYTICS', true),
+        'retention_days' => (int) env('LAMESS_ANALYTICS_RETENTION_DAYS', 180),
+        'online_minutes' => 5,
+    ],
+
     // Dati societari mostrati nel footer (ripresi da lamess.it); modificabili da .env
     'company' => [
         'name' => env('LAMESS_COMPANY_NAME', 'CONSORZIO KADEO GROUP'),

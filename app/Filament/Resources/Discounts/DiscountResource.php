@@ -43,7 +43,7 @@ class DiscountResource extends Resource
 
     protected static function viewPermission(): string
     {
-        return 'catalog.manage';
+        return 'catalog.view';
     }
 
     protected static function managePermission(): string

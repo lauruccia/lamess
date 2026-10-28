@@ -11,6 +11,8 @@ use App\Filament\Pages\Base\SuperadminEditRecord;
 /**
  * Autorizzazione delle risorse del back-office tramite permessi (App\Domain\Access\Roles).
  * La risorsa dichiara il permesso di lettura e quello di gestione; il super_admin passa sempre.
+ * Chi può gestire può anche vedere: «gestire» include «vedere» (PermissionCatalog), anche per chi ha ricevuto
+ * solo il permesso di gestione prima che esistessero i permessi di sola lettura.
  */
 trait GatedByPermission
 {
@@ -20,7 +22,9 @@ trait GatedByPermission
 
     public static function canViewAny(): bool
     {
-        return (bool) auth()->user()?->can(static::viewPermission())
+        $user = auth()->user();
+
+        return (bool) ($user?->can(static::viewPermission()) || $user?->can(static::managePermission()))
             && Feature::enabled('backoffice.resource.'.str_replace('-', '_', static::getSlug()));
     }
 

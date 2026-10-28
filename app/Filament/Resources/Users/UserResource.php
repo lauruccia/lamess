@@ -7,25 +7,23 @@ namespace App\Filament\Resources\Users;
 use App\Domain\Access\Roles;
 use App\Domain\Access\UserAdministration;
 use App\Domain\Features\FeatureRegistry;
-use App\Domain\Plan\LegacyPlan;
 use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Support\AccountStatus;
 use App\Filament\Support\PasswordResetAction;
+use App\Filament\Support\PermissionFields;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -89,14 +87,11 @@ class UserResource extends Resource
                     ->unique('users', 'email', ignoreRecord: true),
             ]),
             Section::make('Permessi')
-                ->description('Valgono solo per gli admin. Utenti, impostazioni di sistema e log di audit restano sempre riservati al super_admin.')
+                ->description('Valgono solo per gli admin. «Gestire» include sempre «vedere». I permessi segnati come sensibili permettono di cambiare dati importanti. Utenti, impostazioni di sistema e log di audit restano sempre riservati al super_admin.')
                 ->visible(fn (?User $record) => $record === null || $record->hasRole(Roles::ADMIN))
                 ->schema([
-                    Select::make('preset')->label('Parti da un profilo')->dehydrated(false)->native(false)
-                        ->options(Roles::PRESET_LABELS)->placeholder('Scegli un profilo per pre-compilare i permessi')
-                        ->live()->afterStateUpdated(fn ($state, Set $set) => $set('permissions', $state ? Roles::preset((string) $state) : [])),
-                    CheckboxList::make('permissions')->label('Permessi concessi')->columns(2)->bulkToggleable()
-                        ->options(collect(Roles::grantable())->mapWithKeys(fn (string $p) => [$p => LegacyPlan::scrub(Roles::PERMISSIONS[$p])])->all()),
+                    PermissionFields::startFrom(),
+                    ...PermissionFields::lists(),
                 ]),
             Section::make('Voci di menu visibili')
                 ->description('Il permesso decide cosa può fare; qui scegli cosa vede. Le voci non spuntate sono nascoste dal menu e bloccate anche se l\'utente conosce l\'indirizzo. Le caselle del Cruscotto riguardano i grafici della pagina iniziale.')

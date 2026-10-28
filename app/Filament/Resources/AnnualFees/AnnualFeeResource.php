@@ -28,7 +28,7 @@ class AnnualFeeResource extends Resource
 
     protected static function viewPermission(): string
     {
-        return 'fees.manage';
+        return 'fees.view';
     }
 
     protected static function managePermission(): string

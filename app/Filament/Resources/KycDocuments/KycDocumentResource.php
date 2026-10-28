@@ -29,7 +29,7 @@ class KycDocumentResource extends Resource
 
     protected static function viewPermission(): string
     {
-        return 'kyc.manage';
+        return 'kyc.view';
     }
 
     protected static function managePermission(): string

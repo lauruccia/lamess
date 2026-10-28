@@ -20,6 +20,7 @@ use Illuminate\Validation\ValidationException;
  *  - il ruolo super_admin NON si assegna e NON si toglie da qui (si crea solo da riga di comando o dall'installazione guidata);
  *  - un super_admin non si modifica da qui (niente blocchi accidentali di chi comanda);
  *  - a un admin si concedono solo i permessi di Roles::grantable(): mai utenti, impostazioni di sistema o log;
+ *  - «gestire» include sempre «vedere»: i permessi richiesti si aggiungono da soli (PermissionCatalog::close);
  *  - le password vengono generate qui e mostrate UNA volta; nel log non compaiono mai.
  * Le modifiche di ruoli/permessi finiscono nel log di audit anche tramite gli eventi di spatie/permission.
  */
@@ -34,6 +35,7 @@ final class UserAdministration
     public function createAdmin(string $name, string $email, array $permissions, ?string $password = null): array
     {
         $this->assertGrantable($permissions);
+        $permissions = PermissionCatalog::close($permissions);
         $password ??= self::generatePassword();
         $this->assertPasswordStrength($password);
 
@@ -61,7 +63,9 @@ final class UserAdministration
             throw ValidationException::withMessages(['permissions' => 'I permessi singoli si concedono solo agli admin.']);
         }
         $this->assertGrantable($permissions);
-        $user->syncPermissions($permissions);
+        // i permessi nuovi non esistono ancora nel database del sito live (niente terminale): si creano qui, a richiesta
+        Roles::sync();
+        $user->syncPermissions(PermissionCatalog::close($permissions));
 
         return $user;
     }

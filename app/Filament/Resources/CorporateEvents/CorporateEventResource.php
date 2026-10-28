@@ -33,7 +33,7 @@ class CorporateEventResource extends Resource
 
     protected static function viewPermission(): string
     {
-        return 'content.manage';
+        return 'content.view';
     }
 
     protected static function managePermission(): string

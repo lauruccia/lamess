@@ -22,12 +22,19 @@ use Spatie\Permission\PermissionRegistrar;
  *
  * I ruoli di dettaglio di MATRIX (admin_network, admin_finance, …) restano validi per compatibilità e come
  * profili preimpostati dell'admin. Per cambiarli si modifica qui e si lancia `php artisan lamess:ruoli`.
+ *
+ * Ogni permesso «gestire» richiede il corrispondente «vedere» (PermissionCatalog) e la MATRIX è già chiusa rispetto a
+ * questa regola (lo verifica un test). Descrizioni, aree e permessi sensibili stanno in PermissionCatalog.
+ * Oltre ai profili qui sotto, il super_admin crea profili personalizzati dal pannello (AccessProfiles).
  */
 final class Roles
 {
     public const SUPER_ADMIN = 'super_admin';
 
     public const ADMIN = 'admin';
+
+    /** Prefisso dei profili personalizzati: sono ruoli spatie usati solo come modelli, mai assegnati a un utente. */
+    public const PROFILE_PREFIX = 'profilo:';
 
     /**
      * Capacità riservate al super_admin: non si concedono a nessun altro, nemmeno come permesso singolo.
@@ -41,7 +48,9 @@ final class Roles
         'network.view' => 'Vedere incaricati, clienti e rete',
         'network.manage' => 'Creare/cessare incaricati, approvare contratti IVD',
         'network.restructure' => 'Spostare rami, cambiare sponsor, riassegnare clienti, forzare qualifiche',
+        'kyc.view' => 'Vedere i documenti KYC (sola lettura)',
         'kyc.manage' => 'Verificare i documenti KYC',
+        'fees.view' => 'Vedere i canoni annuali (sola lettura)',
         'fees.manage' => 'Gestire i canoni annuali',
         'periods.view' => 'Vedere periodi, calcoli e movimenti PV',
         'periods.manage' => 'Aprire/calcolare/chiudere periodi, registrare movimenti PV',
@@ -51,6 +60,7 @@ final class Roles
         'plan.approve' => 'Approvare o rifiutare la pubblicazione di una versione del piano (secondo amministratore)',
         'orders.view' => 'Vedere ordini, fatture e note di credito',
         'orders.manage' => 'Confermare pagamenti, spedire, annullare e rendere ordini; reinviare fatture',
+        'catalog.view' => 'Vedere prodotti, categorie, sconti, bundle e tariffe di spedizione (sola lettura)',
         'catalog.manage' => 'Gestire prodotti, categorie, sconti, bundle, kit e tariffe di spedizione',
         'payouts.view' => 'Vedere liquidazioni, pagamenti e statini; esportare per la contabilità',
         'payouts.manage' => 'Preparare, segnare come pagati e annullare i pagamenti',
@@ -58,6 +68,7 @@ final class Roles
         'support.manage' => 'Rispondere e chiudere ticket, decidere i reclami sugli estratti conto',
         'compliance.view' => 'Vedere casi di conformità, sanzioni e materiali da approvare',
         'compliance.manage' => 'Aprire casi, applicare e revocare sanzioni (sospensione e blocco compensi), approvare materiali',
+        'content.view' => 'Vedere novità, materiali scaricabili ed eventi (sola lettura)',
         'content.manage' => 'Gestire novità, materiali scaricabili ed eventi',
         'features.manage' => 'Accendere e spegnere funzionalità e viste (pagina «Funzionalità e viste»)',
         'users.manage' => 'Gestire utenti e ruoli del back-office',
@@ -65,10 +76,10 @@ final class Roles
 
     /** @var array<string, list<string>> */
     public const MATRIX = [
-        'admin_network' => ['kpi.view', 'network.view', 'network.manage', 'kyc.manage', 'periods.view', 'orders.view', 'compliance.view', 'compliance.manage'],
-        'admin_finance' => ['kpi.view', 'network.view', 'fees.manage', 'periods.view', 'periods.manage', 'orders.view', 'orders.manage', 'catalog.manage', 'payouts.view', 'payouts.manage', 'support.view', 'support.manage', 'content.manage'],
+        'admin_network' => ['kpi.view', 'network.view', 'network.manage', 'kyc.view', 'kyc.manage', 'periods.view', 'orders.view', 'compliance.view', 'compliance.manage'],
+        'admin_finance' => ['kpi.view', 'network.view', 'fees.view', 'fees.manage', 'periods.view', 'periods.manage', 'orders.view', 'orders.manage', 'catalog.view', 'catalog.manage', 'payouts.view', 'payouts.manage', 'support.view', 'support.manage', 'content.view', 'content.manage'],
         'admin_compplan' => ['kpi.view', 'network.view', 'periods.view', 'plan.view', 'plan.manage', 'plan.compare', 'plan.approve'],
-        'support' => ['network.view', 'kyc.manage', 'orders.view', 'support.view', 'support.manage', 'content.manage', 'compliance.view'],
+        'support' => ['network.view', 'kyc.view', 'kyc.manage', 'orders.view', 'support.view', 'support.manage', 'content.view', 'content.manage', 'compliance.view'],
         'board' => ['kpi.view', 'network.view', 'periods.view', 'plan.view', 'orders.view', 'payouts.view', 'support.view', 'compliance.view'],
     ];
 

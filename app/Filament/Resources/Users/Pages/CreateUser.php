@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Domain\Access\PermissionCatalog;
 use App\Domain\Access\UserAdministration;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Notifications\Notification;
@@ -21,7 +22,7 @@ class CreateUser extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         $service = app(UserAdministration::class);
-        $result = $service->createAdmin((string) $data['name'], (string) $data['email'], array_values($data['permissions'] ?? []));
+        $result = $service->createAdmin((string) $data['name'], (string) $data['email'], PermissionCatalog::flatten($data['perm'] ?? null));
         $this->temporaryPassword = $result['password'];
         $service->setMenu($result['user'], UserAdministration::flattenMenu($data['menu'] ?? null));
 

@@ -10,6 +10,7 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
 use App\Filament\Pages\CompensiMesePage;
+use App\Filament\Pages\CompensoDettaglioPage;
 use App\Filament\Pages\ConsultantLevelsPage;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\FeaturesPage;
@@ -98,6 +99,7 @@ class AdminPanelProvider extends PanelProvider
                 IvdLetterPage::class,
                 RegolamentoPage::class,
                 CompensiMesePage::class,
+                CompensoDettaglioPage::class,
                 ConsultantLevelsPage::class,
                 SystemSettingsPage::class,
                 ShopSettingsPage::class,

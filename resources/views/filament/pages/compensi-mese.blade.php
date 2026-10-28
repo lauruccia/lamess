@@ -82,7 +82,7 @@
             <tbody>
                 @forelse($d['rows'] as $r)
                     <tr wire:key="cm-{{ $r['id'] }}">
-                        <td><a href="{{ $r['url'] }}">{{ $r['name'] }}</a> <span class="cm-muted" style="font-size:.75rem">{{ $r['code'] }}</span></td>
+                        <td><a href="{{ \App\Filament\Pages\CompensoDettaglioPage::urlFor($r['id'], $p?->code) }}" title="Vedi da cosa è dovuto ogni compenso">{{ $r['name'] }}</a> <span class="cm-muted" style="font-size:.75rem">{{ $r['code'] }}</span></td>
                         <td><span class="cm-badge">{{ $r['rank'] }}</span>@if($r['rank_from'])<span class="cm-up" title="Mese precedente: {{ $r['rank_from'] }}">↑ da {{ $r['rank_from'] }}</span>@endif</td>
                         @foreach(array_keys($d['types']) as $t)<td class="num {{ ($r['types'][$t] ?? 0) == 0 ? 'cm-muted' : '' }}">{{ $eur($r['types'][$t] ?? 0) }}</td>@endforeach
                         <td class="num {{ $r['structure'] == 0 ? 'cm-muted' : '' }}">{{ $eur($r['structure']) }}</td>
@@ -90,7 +90,7 @@
                         <td class="num {{ $r['held'] == 0 ? 'cm-muted' : '' }}">{{ $eur($r['held']) }}</td>
                         <td class="num">{{ $eur($r['open']) }}</td>
                         <td>{{ $r['payable'] ? 'Sì' : 'No (IBAN/KYC)' }}</td>
-                        <td>@if($r['statement'])<a href="{{ $r['statement'] }}" target="_blank">Statino</a>@else<a href="{{ $r['url'] }}">Scheda</a>@endif</td>
+                        <td style="white-space:nowrap"><a href="{{ \App\Filament\Pages\CompensoDettaglioPage::urlFor($r['id'], $p?->code) }}">Dettaglio</a> · @if($r['statement'])<a href="{{ $r['statement'] }}" target="_blank">Statino</a>@else<a href="{{ $r['url'] }}">Scheda</a>@endif</td>
                     </tr>
                 @empty
                     <tr><td colspan="{{ 8 + count($d['types']) }}" class="cm-muted">Nessun incaricato con importi in questo mese.</td></tr>

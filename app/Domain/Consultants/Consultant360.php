@@ -275,8 +275,8 @@ final class Consultant360
             ->get(['p.code', 'cl.bonus_type', 'cl.engine_status', DB::raw('count(*) as n'), DB::raw('sum(cl.amount) as amount')])
             ->map(fn ($r) => [$r->code, $this->bonus($r->bonus_type), (string) StatusLabels::label($r->engine_status), (string) $r->n, $this->eur($r->amount)])->all();
         $lines = (clone $base)->orderByDesc('cl.id')->limit(25)
-            ->get(['p.code', 'cl.bonus_type', 'cl.base_amount', 'cl.pct', 'cl.amount', 'cl.reason', 'cl.engine_status', 'cl.source_consultant_id'])
-            ->map(fn ($r) => [$r->code, $this->bonus($r->bonus_type), $this->n($r->base_amount), $r->pct !== null ? $this->n((float) $r->pct * 100).'%' : '—', $this->eur($r->amount), (string) StatusLabels::label($r->engine_status), LegacyPlan::hidden() && LegacyPlan::isLegacyBonus((string) $r->bonus_type) ? '' : (string) ($r->reason ?? '')])->all();
+            ->get(['p.code', 'cl.bonus_type', 'cl.base_amount', 'cl.pct', 'cl.amount', 'cl.reason', 'cl.engine_status', 'cl.source_consultant_id', 'cl.explanation'])
+            ->map(fn ($r) => [$r->code, $this->bonus($r->bonus_type), $this->n($r->base_amount), $r->pct !== null ? $this->n((float) $r->pct * 100).'%' : '—', $this->eur($r->amount), (string) StatusLabels::label($r->engine_status), LegacyPlan::hidden() && LegacyPlan::isLegacyBonus((string) $r->bonus_type) ? '' : (string) (($r->reason ?? '') !== '' ? $r->reason : (json_decode((string) $r->explanation, true)['formula'] ?? ''))])->all();
         $total = (clone $base)->where('cl.engine_status', '!=', 'excluded')->sum('cl.amount');
         $excluded = (clone $base)->where('cl.engine_status', 'excluded')->sum('cl.amount');
 

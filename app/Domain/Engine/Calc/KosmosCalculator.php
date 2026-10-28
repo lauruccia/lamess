@@ -304,6 +304,21 @@ final class KosmosCalculator
                     if ($compress) {
                         // Compressione: chi non rispetta i requisiti (o non può maturare) è saltato e il livello passa al primo sopra di lui che li rispetta.
                         if (! $ok || $st === 'excluded') {
+                            // Saltato: non incassa e il livello passa al primo upline sopra di lui che rispetta i requisiti.
+                            // Si registra comunque una riga «non spettante» (mai pagata) così si vede perché non ha maturato.
+                            $skipWhy = $st === 'excluded' ? $why : "requisiti_livello_{$level}: clienti ".($clients[$u] ?? 0).'/'.$levelDef['min_clients'].", Pearl 1° liv. {$pearlFirst[$u]}/{$levelDef['min_pearl']}";
+                            $lines[] = new Line(
+                                key: "indirect:{$m->id}:{$u}", bonus: 'indirect', beneficiaryId: $u, amount: Num::money($base->multipliedBy($rateL)),
+                                base: $base, rate: $rateL, level: $level, sourceMovementId: $m->id, sourcePartnerId: $o, status: 'excluded', reason: $skipWhy,
+                                explanation: [
+                                    'formula' => "{$base} × ".Num::pctLabel($rateL).'%', 'rank' => $ctx->rankCode($u),
+                                    'clients' => $clients[$u] ?? 0, 'min_clients' => $levelDef['min_clients'],
+                                    'pearl_first_level' => $pearlFirst[$u], 'min_pearl' => $levelDef['min_pearl'],
+                                    'compressed' => true, 'depth' => $i + 1,
+                                ],
+                                decisions: ['K01'],
+                            );
+
                             continue;
                         }
                         $paid++;

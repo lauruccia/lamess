@@ -212,6 +212,29 @@ final class KosmosPlanTest extends EngineTestCase
         $this->assertSame([], $this->totals($s->run(), 'indirect'));
     }
 
+    public function test_a_skipped_upline_gets_a_never_paid_line_that_says_which_requirement_is_missing(): void
+    {
+        // T > S > A: S non ha clienti e viene saltato. Il suo compenso non matura e non cambia i totali,
+        // ma resta una riga «non spettante» con i numeri dei requisiti (serve per spiegare perché).
+        $s = $this->scenario();
+        $s->consultant('T');
+        $s->consultant('S', 'T');
+        $s->consultant('A', 'S');
+        $this->buy($s, 'A', 'x1');
+        $this->buy($s, 'T', 't1');
+        $result = $s->run();
+
+        $this->assertSame(['T' => '8.00'], $this->totals($result, 'indirect'), 'i totali pagati non cambiano');
+        $skipped = array_values(array_filter($result->lines, static fn ($l) => $l->bonus === 'indirect' && $l->beneficiaryId === 'S'));
+        $this->assertCount(1, $skipped);
+        $this->assertSame('excluded', $skipped[0]->status);
+        $this->assertSame(1, $skipped[0]->level, 'il livello che non ha saputo occupare');
+        $this->assertStringStartsWith('requisiti_livello_1', $skipped[0]->reason);
+        $this->assertSame(0, $skipped[0]->explanation['clients']);
+        $this->assertSame(1, $skipped[0]->explanation['min_clients']);
+        $this->assertTrue($skipped[0]->explanation['compressed']);
+    }
+
     public function test_compression_counts_levels_only_among_those_who_qualify(): void
     {
         // Top > A (Pearl) > B > V: B non ha clienti ed è saltato. A è il 1° livello (8%), Top il 2° (4%: 2 clienti e A Pearl al 1° livello).

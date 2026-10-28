@@ -95,4 +95,50 @@ final class CommissionExplainerTest extends TestCase
         $this->assertStringContainsString('compenso-dettaglio?incaricato='.$sponsor->id, $html);
         $this->assertStringContainsString('Dettaglio', $html);
     }
+
+    /** Come Sebastiano: salta un livello perché ha 1 cliente e ne servono 2. */
+    private function addSkippedLine(\App\Models\Consultant $c, Period $period): void
+    {
+        $runId = (int) \Illuminate\Support\Facades\DB::table('calculation_runs')->where('period_id', $period->id)->where('status', 'completed')->max('id');
+        $movement = PvMovement::query()->firstOrFail();
+        \Illuminate\Support\Facades\DB::table('commission_lines')->insert([
+            'run_id' => $runId, 'period_id' => $period->id, 'beneficiary_id' => $c->id, 'line_key' => 'indirect:'.$movement->id.':'.$c->id.':skip',
+            'bonus_type' => 'indirect', 'base_amount' => '1000.00', 'pct' => '0.0400', 'amount' => '40.00', 'source_movement_id' => $movement->id,
+            'source_consultant_id' => $c->id, 'level' => 2, 'engine_status' => 'excluded', 'reason' => 'requisiti_livello_2: clienti 1/2, Pearl 1° liv. 5/1',
+            'explanation' => json_encode(['clients' => 1, 'min_clients' => 2, 'pearl_first_level' => 5, 'min_pearl' => 1, 'compressed' => true, 'depth' => 2]),
+            'decisions' => '[]', 'status' => 'draft', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    public function test_skipped_levels_are_listed_with_what_is_missing_and_never_counted_as_earned(): void
+    {
+        [$sponsor, $period] = $this->setUpMonth();
+        $before = app(CommissionExplainer::class)->for($sponsor, $period)['accrued'];
+        $this->addSkippedLine($sponsor, $period);
+
+        $d = app(CommissionExplainer::class)->for($sponsor, $period->refresh());
+
+        $this->assertEquals($before, $d['accrued'], 'una riga saltata non entra nel maturato');
+        $this->assertEquals(40.0, $d['missing']['total']);
+        $lv = $d['missing']['levels'][0];
+        $this->assertSame(2, $lv['level']);
+        $this->assertSame(1, $lv['lack_clients']);
+        $this->assertSame(0, $lv['lack_pearl']);
+        $this->assertSame('1 cliente in più', $lv['lack_text']);
+        $this->assertStringContainsString('mancano 1 cliente personale (ne ha 1, ne servono 2)', $d['missing']['lines'][0]['sentence']);
+    }
+
+    public function test_the_detail_page_shows_the_missing_requirements_section(): void
+    {
+        [$sponsor, $period] = $this->setUpMonth();
+        $this->addSkippedLine($sponsor, $period);
+        $admin = User::factory()->role('super_admin')->create();
+
+        $html = $this->actingAs($admin)
+            ->get('/admin/compenso-dettaglio?incaricato='.$sponsor->id.'&mese='.$period->code)
+            ->assertOk()->getContent();
+
+        $this->assertStringContainsString('Compensi non maturati: requisiti mancanti', $html);
+        $this->assertStringContainsString('1 cliente in più', $html);
+    }
 }

@@ -29,6 +29,10 @@
         .cd-badge.excluded { background:rgba(180,40,40,.15); }
         .cd-line.is-warning { background:rgba(194,102,58,.1); border-radius:.4rem; padding-left:.6rem; padding-right:.6rem; }
         .cd-muted { opacity:.6; }
+        .cd-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+        .cd-table th { text-align:left; padding:.45rem .6rem; border-bottom:1px solid rgba(187,180,175,.6); font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; opacity:.7; white-space:nowrap; }
+        .cd-table td { padding:.4rem .6rem; border-bottom:1px solid rgba(187,180,175,.25); }
+        .cd-table .num { text-align:right; font-variant-numeric:tabular-nums; }
         .cd-link { color:inherit; font-weight:600; text-decoration:underline; }
     </style>
 
@@ -59,7 +63,7 @@
             <div class="cd-kpis">
                 <div class="cd-kpi"><small>Maturato</small><strong>€ {{ $eur($d['accrued']) }}</strong></div>
                 <div class="cd-kpi"><small>Trattenuto</small><strong>€ {{ $eur($d['held']) }}</strong></div>
-                <div class="cd-kpi"><small>Non spettante</small><strong>€ {{ $eur($d['excluded']) }}</strong></div>
+                <div class="cd-kpi"><small>Non maturato (requisiti mancanti)</small><strong>€ {{ $eur($d['excluded']) }}</strong></div>
             </div>
             @if($d['rules'])
                 <details style="margin-top:.8rem"><summary style="cursor:pointer;font-size:.85rem;font-weight:600">Regole del piano usate per il calcolo</summary>
@@ -72,7 +76,7 @@
     @if($d !== null && $d['run_id'] !== null)
         @forelse($d['groups'] as $g)
             <div class="fi-section cd-card cd-group">
-                <h3>{{ $g['label'] }} <span>maturato € {{ $eur($g['accrued']) }}@if($g['held'] != 0) · trattenuto € {{ $eur($g['held']) }}@endif @if($g['excluded'] != 0) · non spettante € {{ $eur($g['excluded']) }}@endif · {{ count($g['lines']) }} {{ count($g['lines']) === 1 ? 'riga' : 'righe' }}</span></h3>
+                <h3>{{ $g['label'] }} <span>maturato € {{ $eur($g['accrued']) }}@if($g['held'] != 0) · trattenuto € {{ $eur($g['held']) }}@endif · {{ count($g['lines']) }} {{ count($g['lines']) === 1 ? 'riga' : 'righe' }}</span></h3>
                 @foreach($g['lines'] as $l)
                     <div class="cd-line {{ $l['warning'] ? 'is-warning' : '' }}" wire:key="cd-{{ $l['type'] }}-{{ $l['id'] }}">
                         <div>
@@ -85,7 +89,52 @@
                 @endforeach
             </div>
         @empty
-            <div class="fi-section cd-card"><p class="cd-muted">Nessun compenso per questo incaricato nel mese.</p></div>
+            @if(! $d['missing']['lines'])
+                <div class="fi-section cd-card"><p class="cd-muted">Nessun compenso per questo incaricato nel mese.</p></div>
+            @endif
         @endforelse
+
+        @if($d['missing']['lines'])
+            @php $ms = $d['missing']; @endphp
+            <div class="fi-section cd-card cd-group">
+                <h3>Compensi non maturati: requisiti mancanti <span>€ {{ $eur($ms['total']) }} non maturati · {{ count($ms['lines']) }} {{ count($ms['lines']) === 1 ? 'riga' : 'righe' }}</span></h3>
+                <p class="cd-sentence cd-muted" style="margin:0 0 .8rem">Sono compensi che sarebbero spettati su ordini della sua rete ma non maturano perché non ha i requisiti del livello. Non vengono pagati a lui: con la compressione passano al primo incaricato sopra di lui che li rispetta. Se i requisiti si raggiungono prima della chiusura del mese, al ricalcolo maturano.</p>
+                @if($ms['levels'])
+                    <div style="overflow-x:auto">
+                        <table class="cd-table">
+                            <thead><tr><th>Livello</th><th>Aliquota</th><th>Requisiti</th><th>Ha</th><th>Cosa manca</th><th class="num">Non maturato</th><th class="num">Ordini</th></tr></thead>
+                            <tbody>
+                            @foreach($ms['levels'] as $lv)
+                                <tr>
+                                    <td><strong>{{ $lv['level'] }}</strong></td>
+                                    <td>{{ $lv['pct'] }}</td>
+                                    <td>almeno {{ $lv['min_clients'] }} {{ $lv['min_clients'] === 1 ? 'cliente' : 'clienti' }} · {{ $lv['min_pearl'] }} Pearl al 1° livello</td>
+                                    <td>{{ $lv['clients'] }} {{ $lv['clients'] === 1 ? 'cliente' : 'clienti' }} · {{ $lv['pearl'] }} Pearl</td>
+                                    <td>{{ $lv['lack_text'] !== '' ? $lv['lack_text'] : '—' }}</td>
+                                    <td class="num"><strong>€ {{ $eur($lv['amount']) }}</strong></td>
+                                    <td class="num">{{ $lv['count'] }}</td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+                @foreach($ms['other'] as $o)
+                    <p class="cd-sentence" style="margin:.6rem 0 0">{{ $o['reason'] }} <span class="cd-muted">({{ $o['count'] }} {{ $o['count'] === 1 ? 'riga' : 'righe' }}, € {{ $eur($o['amount']) }})</span></p>
+                @endforeach
+                <details style="margin-top:.9rem"><summary style="cursor:pointer;font-size:.85rem;font-weight:600">Vedi ogni ordine non maturato</summary>
+                    @foreach($ms['lines'] as $l)
+                        <div class="cd-line" wire:key="cdm-{{ $l['type'] }}-{{ $l['id'] }}">
+                            <div>
+                                <div class="cd-title">{{ $l['title'] }}<span class="cd-badge excluded">{{ $l['status_label'] }}</span>@if($l['order_url'])<a class="cd-link" style="font-size:.75rem;font-weight:400;margin-left:.5rem" href="{{ $l['order_url'] }}">apri ordine</a>@endif</div>
+                                <div class="cd-sentence">{{ $l['sentence'] }}</div>
+                                @if($l['details'])<ul class="cd-details">@foreach($l['details'] as $t)<li>{{ $t }}</li>@endforeach</ul>@endif
+                            </div>
+                            <div class="cd-amount cd-muted">€ {{ $eur($l['amount']) }}@if($l['pct'])<div style="font-weight:400;font-size:.75rem">{{ $l['pct'] }}@if($l['base'] !== null) su {{ $eur($l['base']) }}@endif</div>@endif</div>
+                        </div>
+                    @endforeach
+                </details>
+            </div>
+        @endif
     @endif
 </x-filament-panels::page>

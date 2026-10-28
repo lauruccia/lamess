@@ -27,7 +27,8 @@ final class CommissionExplainer
      * @return array{
      *   consultant: array{id:int,code:string,name:string},
      *   period: Period, run_id: ?int, closed: bool,
-     *   groups: list<array{type:string,label:string,accrued:float,held:float,excluded:float,lines:list<array<string,mixed>>}>,
+     *   groups: list<array{type:string,label:string,accrued:float,held:float,lines:list<array<string,mixed>>}>,
+     *   missing: array{total:float, levels:list<array<string,mixed>>, other:list<array<string,mixed>>, lines:list<array<string,mixed>>},
      *   accrued: float, held: float, excluded: float, rules: list<string>
      * }
      */
@@ -62,11 +63,14 @@ final class CommissionExplainer
             $rows[] = $r;
         }
 
+        $missingRows = array_values(array_filter($rows, static fn (array $r) => $r['status'] === 'excluded'));
+        $rows = array_values(array_filter($rows, static fn (array $r) => $r['status'] !== 'excluded'));
+
         $groups = [];
         foreach ($rows as $r) {
             $g = &$groups[$r['type']];
-            $g ??= ['type' => $r['type'], 'label' => StatementService::LABELS[$r['type']] ?? $r['type'], 'accrued' => 0.0, 'held' => 0.0, 'excluded' => 0.0, 'lines' => []];
-            $g[match ($r['status']) { 'accrued' => 'accrued', 'held' => 'held', default => 'excluded' }] += $r['amount'];
+            $g ??= ['type' => $r['type'], 'label' => StatementService::LABELS[$r['type']] ?? $r['type'], 'accrued' => 0.0, 'held' => 0.0, 'lines' => []];
+            $g[$r['status'] === 'held' ? 'held' : 'accrued'] += $r['amount'];
             $g['lines'][] = $r;
             unset($g);
         }
@@ -82,7 +86,9 @@ final class CommissionExplainer
             'consultant' => ['id' => (int) $consultant->id, 'code' => (string) $consultant->code, 'name' => (string) $consultant->name],
             'period' => $period, 'run_id' => $runId, 'closed' => $period->status === Period::CLOSED,
             'groups' => $groups,
-            'accrued' => array_sum(array_column($groups, 'accrued')), 'held' => array_sum(array_column($groups, 'held')), 'excluded' => array_sum(array_column($groups, 'excluded')),
+            'accrued' => array_sum(array_column($groups, 'accrued')), 'held' => array_sum(array_column($groups, 'held')),
+            'excluded' => array_sum(array_column($missingRows, 'amount')),
+            'missing' => $this->missing($missingRows),
             'rules' => $this->rules($kosmos),
         ];
     }
@@ -171,6 +177,28 @@ final class CommissionExplainer
                 }
         }
 
+        $miss = null;
+        if ($l->engine_status === 'excluded' && $l->bonus_type === 'indirect' && isset($ex['min_clients'])) {
+            $c = (int) ($ex['clients'] ?? 0);
+            $p = (int) ($ex['pearl_first_level'] ?? 0);
+            $minC = (int) $ex['min_clients'];
+            $minP = (int) ($ex['min_pearl'] ?? 0);
+            $lackC = max(0, $minC - $c);
+            $lackP = max(0, $minP - $p);
+            $lack = [];
+            if ($lackC > 0) {
+                $lack[] = 'mancano '.$this->plural($lackC, 'cliente personale', 'clienti personali')." (ne ha {$c}, ne servono {$minC})";
+            }
+            if ($lackP > 0) {
+                $lack[] = "mancano {$lackP} Pearl al 1° livello (ne ha {$p}, ne servono {$minP})";
+            }
+            $miss = ['level' => (int) $l->level, 'pct' => $pctLabel, 'clients' => $c, 'min_clients' => $minC, 'pearl' => $p, 'min_pearl' => $minP, 'lack_clients' => $lackC, 'lack_pearl' => $lackP];
+            if ($lack !== []) {
+                $title = "Non maturato — livello {$l->level}: requisiti mancanti";
+                $sentence = ($src ? "{$src} ha generato" : 'Un incaricato della rete ha generato').": {$origin}. Il livello {$l->level} varrebbe {$pctLabel} su {$baseTxt} = ".$this->eur($amount).', ma non matura: '.implode(' e ', $lack).'.';
+                $details = array_values(array_filter($details, static fn (string $t) => ! str_starts_with($t, 'Requisiti del livello')));
+            }
+        }
         $statusLabel = match ($l->engine_status) {
             'accrued' => 'Maturato', 'held' => 'Trattenuto', default => 'Non spettante',
         };
@@ -185,8 +213,56 @@ final class CommissionExplainer
             'id' => (int) $l->id, 'type' => (string) $l->bonus_type, 'date' => $when, 'title' => $title, 'sentence' => $sentence, 'details' => array_values(array_filter($details)),
             'order_number' => $l->order_number, 'order_url' => $orderUrl, 'movement_id' => $l->mov_id !== null ? (int) $l->mov_id : null,
             'amount' => $amount, 'base' => $base, 'pct' => $pctLabel, 'level' => $l->level !== null ? (int) $l->level : null,
-            'status' => (string) $l->engine_status, 'status_label' => $statusLabel, 'warning' => $warning,
+            'status' => (string) $l->engine_status, 'status_label' => $statusLabel, 'warning' => $warning, 'missing' => $miss,
         ];
+    }
+
+    /**
+     * «Compensi non maturati»: per livello, quanto sarebbe spettato e che cosa manca per sbloccarlo.
+     *
+     * @param  list<array<string, mixed>>  $rows  righe non spettanti
+     * @return array{total:float, levels:list<array<string,mixed>>, other:list<array<string,mixed>>, lines:list<array<string,mixed>>}
+     */
+    private function missing(array $rows): array
+    {
+        $levels = [];
+        $other = [];
+        foreach ($rows as $r) {
+            if ($r['missing'] !== null) {
+                $m = $r['missing'];
+                $k = $m['level'];
+                $lv = &$levels[$k];
+                $lv ??= $m + ['amount' => 0.0, 'count' => 0, 'lack_text' => ''];
+                $lv['amount'] += $r['amount'];
+                $lv['count']++;
+                $lv['clients'] = $m['clients'];
+                $lv['lack_clients'] = max($lv['lack_clients'], $m['lack_clients']);
+                $lv['lack_pearl'] = max($lv['lack_pearl'], $m['lack_pearl']);
+                unset($lv);
+
+                continue;
+            }
+            $why = collect($r['details'])->first(static fn (string $t) => str_starts_with($t, 'Non spettante') || str_starts_with($t, 'Trattenuto')) ?? 'Non spettante.';
+            $o = &$other[$why];
+            $o ??= ['reason' => $why, 'amount' => 0.0, 'count' => 0];
+            $o['amount'] += $r['amount'];
+            $o['count']++;
+            unset($o);
+        }
+        ksort($levels);
+        foreach ($levels as &$lv) {
+            $need = [];
+            if ($lv['lack_clients'] > 0) {
+                $need[] = $this->plural($lv['lack_clients'], 'cliente in più', 'clienti in più');
+            }
+            if ($lv['lack_pearl'] > 0) {
+                $need[] = $this->plural($lv['lack_pearl'], 'Pearl in più', 'Pearl in più');
+            }
+            $lv['lack_text'] = implode(' e ', $need);
+        }
+        unset($lv);
+
+        return ['total' => array_sum(array_column($rows, 'amount')), 'levels' => array_values($levels), 'other' => array_values($other), 'lines' => $rows];
     }
 
     /** @return list<array<string, mixed>> */
@@ -212,7 +288,7 @@ final class CommissionExplainer
                 'sentence' => "{$src} ha raggiunto il numero di clienti richiesto (PearlQ)".(isset($ex['reached_at']) ? ' il '.Carbon::parse($ex['reached_at'])->format('d/m/Y') : '').' entro la finestra. Spettano '.$this->eur((float) $b->amount).' a questa posizione della catena.',
                 'details' => $details, 'order_number' => null, 'order_url' => null, 'movement_id' => null,
                 'amount' => (float) $b->amount, 'base' => null, 'pct' => null, 'level' => null,
-                'status' => (string) $b->engine_status, 'status_label' => match ($b->engine_status) { 'accrued' => 'Maturato', 'held' => 'Trattenuto', default => 'Non spettante' }, 'warning' => false,
+                'status' => (string) $b->engine_status, 'status_label' => match ($b->engine_status) { 'accrued' => 'Maturato', 'held' => 'Trattenuto', default => 'Non spettante' }, 'warning' => false, 'missing' => null,
             ];
         }
 

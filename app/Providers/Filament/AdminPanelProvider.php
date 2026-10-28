@@ -6,6 +6,7 @@ use App\Domain\Access\Impersonation;
 use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Http\Middleware\TrackVisit;
 use App\Filament\Pages\AuditVerificationPage;
+use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
 use App\Filament\Pages\ConsultantLevelsPage;
@@ -53,7 +54,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
             ->passwordReset(RequestPasswordReset::class)
             ->profile()
             ->multiFactorAuthentication(

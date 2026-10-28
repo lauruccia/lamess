@@ -143,10 +143,10 @@ body.fi-body, .fi-body { font-family: var(--lm-font-text); background: var(--lm-
 
 /* Elenco clienti: celle strette, nessuna barra di scorrimento orizzontale */
 .fi-resource-customers .fi-ta-content { overflow-x: visible; }
-.fi-resource-customers .fi-ta-header-cell { padding: .65rem .45rem; }
+.fi-resource-customers .fi-ta-header-cell { padding: .65rem .25rem; }
 .fi-resource-customers .fi-ta-header-cell-label { white-space: nowrap; }
 .fi-resource-customers .fi-ta-header-cell:first-child, .fi-resource-customers .fi-ta-cell:first-child { padding-inline-start: .9rem; }
-.fi-resource-customers .fi-ta-cell .fi-ta-text, .fi-resource-customers .fi-ta-cell .fi-ta-icon { padding: .5rem .35rem; }
+.fi-resource-customers .fi-ta-cell .fi-ta-text, .fi-resource-customers .fi-ta-cell .fi-ta-icon { padding: .5rem .2rem; }
 .fi-resource-customers .fi-ta-text-item { font-size: .84rem; }
 .fi-resource-customers .fi-ta-cell:last-child { padding-inline-end: .6rem; }
 
@@ -198,6 +198,6 @@ body.fi-body, .fi-body { font-family: var(--lm-font-text); background: var(--lm-
 .fi-ta-cell .fi-ta-text-item-description { font-size: .74rem; }
 .fi-ta-content-ctn { max-width: 100%; scrollbar-width: thin; }
 
-/* Elenco clienti: icone azione di riga più strette, così la tabella non esce dallo schermo. */
-.fi-resource-customers .fi-ta-actions { gap: 0; flex-wrap: nowrap; }
+/* Elenco clienti: colonne ravvicinate, icone azione di riga ben distanziate. */
+.fi-resource-customers .fi-ta-actions { gap: .35rem; flex-wrap: nowrap; }
 .fi-resource-customers .fi-ta-actions .fi-icon-btn { width: 1.75rem; height: 1.75rem; }

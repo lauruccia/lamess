@@ -76,7 +76,7 @@ final class FeatureRegistry
             'inheritance_cases' => ['Successioni', 'Rete'], 'referral_invites' => ['Inviti referral', 'Rete'],
             'periods' => ['Periodi', 'Compensi'], 'pv_movements' => ['Movimenti PV', 'Compensi'], 'point_grants' => ['Punti assegnati', 'Compensi'], 'comp_plan_versions' => ['Piano compensi', 'Compensi'],
             'settlements' => ['Liquidazioni', 'Compensi'], 'payouts' => ['Pagamenti', 'Compensi'], 'commission_receipts' => ['Ricevute provvigionali', 'Compensi'],
-            'bonus_struttura' => ['Bonus di Struttura', 'Compensi'], 'wallet_transactions' => ['Movimenti wallet', 'Compensi'], 'withdrawal_requests' => ['Prelievi su richiesta', 'Compensi'],
+            'bonus_struttura' => ['Bonus di Struttura', 'Compensi'], 'wallet_transactions' => ['Movimenti wallet', 'Compensi'], 'withdrawal_requests' => ['Prelievi su richiesta', 'Compensi'], 'rank_helps' => ['Agenti regalati', 'Compensi'],
             'orders' => ['Ordini', 'Vendite'], 'invoices' => ['Fatture', 'Vendite'], 'credit_notes' => ['Note di credito', 'Vendite'],
             'products' => ['Prodotti', 'Vendite'], 'product_categories' => ['Categorie', 'Vendite'], 'discounts' => ['Sconti', 'Vendite'],
             'bundle_rules' => ['Bundle e omaggi', 'Vendite'], 'shipping_rates' => ['Tariffe di spedizione', 'Vendite'], 'subscriptions' => ['Abbonamenti', 'Vendite'],

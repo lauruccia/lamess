@@ -39,6 +39,10 @@ final class PermissionCatalogTest extends TestCase
             $manage = (new \ReflectionMethod($class, 'managePermission'))->invoke(null);
             $this->assertArrayHasKey($view, Roles::PERMISSIONS, "{$class}: permesso di lettura sconosciuto");
             $this->assertArrayHasKey($manage, Roles::PERMISSIONS, "{$class}: permesso di gestione sconosciuto");
+            $this->assertTrue(
+                \App\Domain\Features\FeatureRegistry::has('backoffice.resource.'.str_replace('-', '_', $class::getSlug())),
+                "{$class}: manca nel FeatureRegistry, quindi non compare tra le voci di menu da scegliere",
+            );
         }
     }
 

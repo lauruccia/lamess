@@ -1,6 +1,6 @@
 # Messa online: controlli, aggiornamenti e piano di ritorno
 
-Aggiornato al 14 ottobre 2026. Il portale è su cPanel con database MySQL (`lamess_portale`) e **senza terminale sul sito live**: si lavora solo con cPanel, phpMyAdmin e File Manager. Indirizzo del sito: `https://lamèss.it` (in `APP_URL` si scrive la forma punycode `https://xn--lamss-6ra.it`); risponde anche da `www`.
+Aggiornato al 28 ottobre 2026. Il portale è su cPanel con database MySQL (`lamess_portale`) e **senza terminale sul sito live**: si lavora solo con cPanel, phpMyAdmin e File Manager. Indirizzo del sito: `https://lamèss.it` (in `APP_URL` si scrive la forma punycode `https://xn--lamss-6ra.it`); risponde anche da `www`.
 
 ## 1. Il portale resta chiuso finché non lo apri tu
 Come funziona nel codice:
@@ -84,6 +84,30 @@ SELECT '2026_11_04_100000_consultants_rank_hold_until', MAX(batch) + 1 FROM migr
 ```
 Se il database è sul sito di prova o ha un prefisso alle tabelle, adatta i nomi. Se l'`ALTER` dà «Duplicate column name», la colonna c'è già: registra solo la riga in `migrations`.
 
+**Migrazioni dopo il 13 ottobre** (in ordine di nome; l'SQL pronto da incollare è nel registro aggiornamenti, alla voce di ogni rilascio, che resta la fonte: se manca, traduci il metodo `up()`):
+
+| Migrazione | Cosa fa | Tipo |
+|---|---|---|
+| `2026_11_05_100000_product_makes_client` | «Rende cliente» sul prodotto | ALTER |
+| `2026_11_06_100000_create_referral_invites_table` | inviti dei link di presentazione | CREATE |
+| `2026_11_07_100000_shipping_address_country` | paese sull'indirizzo di spedizione | ALTER |
+| `2026_11_07_110000_subscriptions_reminded_for` | promemoria scadenza carta | ALTER |
+| `2026_11_07_120000_products_barcode` | codice a barre del prodotto | ALTER |
+| `2026_11_07_130000_founder_prices` | incaricato fondatore e prezzo fondatore | ALTER |
+| `2026_11_07_140000_subscriptions_interval_months` | abbonamenti mensili o bimestrali | ALTER |
+| `2026_11_08_100000_pv_movements_client_user` | cliente collegato al movimento | ALTER |
+| `2026_11_08_110000_easyfatt_exported_at` | data di esportazione Easyfatt | ALTER |
+| `2026_11_09_100000_product_months_per_piece` | «I pezzi moltiplicano i mesi» | ALTER |
+| `2026_11_09_110000_tasca` | Tasca: conti, movimenti, accredito del Bonus di Struttura | CREATE e ALTER |
+| `2026_11_10_100000_rank_helps` | Agenti regalati | CREATE |
+| `2026_11_11_100000_ivd_letter_versions` | versioni della Lettera, firme per versione (tre tabelle) | CREATE |
+| `2026_11_12_100000_legal_documents` | Regolamento modificabile (due tabelle) | CREATE |
+| `2026_11_13_100000_beneficiary_bic` | BIC su incaricati, pagamenti e richieste di prelievo | ALTER |
+| `2026_11_14_100000_account_suspension` | sospensione e ban degli accessi (`users`) | ALTER |
+| `2026_11_15_100000_site_analytics` | statistiche delle visite (due tabelle) | CREATE |
+
+Le pagine nuove **danno errore finché la loro tabella non esiste**: Agenti regalati, Lettera di incarico e Regolamento (admin e `/area/lettera`), Tasca, Statistiche. Applica le migrazioni **prima** di aprire il rilascio, non dopo. Nel `INSERT INTO migrations` usa `MAX(batch)` oppure `MAX(batch) + 1`: per il registro è indifferente.
+
 Altri casi: le migrazioni che creano tabelle o indici richiedono di tradurre a mano `Schema::create(...)`; se non te la senti, fai fare la traduzione a uno sviluppatore **prima** di pubblicare il rilascio, oppure esegui `php artisan migrate --force` da un terminale temporaneo (anche di un altro hosting con accesso allo stesso database).
 
 **Permessi nuovi** (`lamess:ruoli`): il super_admin ha comunque ogni permesso. I permessi di dettaglio dei ruoli vengono sincronizzati dal codice solo all'installazione, con `lamess:ruoli` e quando si crea un utente admin da Sistema → Utenti. Non è provato cosa succeda dopo un rilascio che ne aggiunge: se un admin non vede una voce nuova, ricontrollalo dopo aver creato un utente admin dal pannello e segnalalo.
@@ -141,16 +165,17 @@ Con `QUEUE_CONNECTION=sync` (oggi) le email partono dentro la richiesta: se il s
 **Codice che dà problemi dopo un aggiornamento**: su GitHub si annulla il commit difettoso con un commit di ripristino (`git revert`) su `main`, poi in cPanel *Update from Remote* e *Deploy HEAD Commit*, poi si svuota la cache (punto 3.4). Se il rilascio aveva migrazioni, le colonne aggiunte restano (sono compatibili con il codice vecchio); se serve tornare indietro anche sul database, si ripristina il backup fatto prima dell'aggiornamento (perdendo i dati inseriti nel frattempo).
 Alternativa al deploy da Git: il pacchetto ZIP (`php tools/crea-pacchetto-cpanel.php`, vedi «Installazione su cPanel») resta disponibile; conservare sempre l'ultimo pacchetto buono.
 
-## 9. Cosa serve dal cliente prima di aprire (aggiornato al 14 ottobre 2026)
+## 9. Cosa serve dal cliente prima di aprire (aggiornato al 28 ottobre 2026)
 **Il codice è pronto; mancano credenziali e decisioni.** Lo stato reale delle chiavi sul sito lo dice il Controllo messa online.
 - **Carta (Stripe)**: account del cliente, chiavi `sk_live_…` e segreto del webhook; provare prima con le chiavi di prova e una carta di prova. Poi `LAMESS_PAYMENT_DRIVER=stripe`. Gli **abbonamenti con carta** si rinnovano da soli: dopo il primo pagamento Stripe la carta è salvata e i cicli successivi si addebitano senza il cliente davanti (se la banca chiede una conferma, il ciclo non è pagato e si riprova o va in pausa).
 - **KMoney**: vedi punto 5.
 - **Verifica d'identità online (facoltativa)**: `LAMESS_KYC_DRIVER=stripe_identity`; ha un costo per verifica. Senza, i documenti si controllano a mano.
 - **Fatture elettroniche**: scegliere come trasmetterle. Il portale produce l'XML FatturaPA (validato contro lo schema 1.2.2). Opzioni: `file` (XML in `storage/app/private/sdi-out`, da ritirare), `mail` (spedito a una casella: gestionale, commercialista o PEC verso lo SdI). **GestionaleK**: nei documenti non risulta nessuna interfaccia; servono le loro specifiche per un collegamento diretto. Clienti esteri: l'XML usa il paese reale e `XXXXXXX`; le righe a IVA 0 hanno la Natura (`LAMESS_VAT_ZERO_NATURE`). Da decidere con il commercialista: IVA/OSS per i clienti UE, Natura, privati in fattura o in ricevuta (le ricevute non vanno allo SdI).
 - **Dati del venditore**: ragione sociale, partita IVA (11 cifre), indirizzo, CAP, comune, provincia, regime fiscale.
-- **Parametri fiscali** (ritenuta, quota imponibile, INPS, commissione sui prelievi) e **testi** (Lettera IVD, Regolamento): da far validare al commercialista e al Consorzio; ricevute e ritenuta restano spente finché non sono validati.
+- **Parametri fiscali** (ritenuta, quota imponibile, INPS, commissione sui prelievi) e **testi** (Lettera IVD, Regolamento): la Lettera è ora il testo definitivo di Kadeo (modificabile a versioni dal pannello), il Regolamento v2.0 è in bozza da validare; da far validare al commercialista e al Consorzio; ricevute e ritenuta restano spente finché non sono validati.
 - **Firma elettronica reale** della lettera d'incarico: finché `LAMESS_SIGNATURE_DRIVER` è `fake` è un sistema di prova (OTP mostrato a schermo) e il Controllo dà BLOCCO. Decisione del 16/10: si usa `email` (codice OTP per email), vedi sopra.
-- **IBAN degli incaricati**: li inseriscono loro dall'area personale.
+- **IBAN degli incaricati**: li inseriscono loro dall'area personale; fuori area SEPA serve anche il BIC/SWIFT.
+- **Caselle per gli avvisi**: `LAMESS_ORDINI_MAIL_TO` (avviso «Nuovo ordine») e `LAMESS_ABBONAMENTI_MAIL_TO` (riepilogo giornaliero degli abbonamenti, alle 08:15); servono l'invio email acceso e le caselle indicate.
 - **Prova su MariaDB/MySQL** delle migrazioni nuove, sul sito di prova.
 
 ## 10. Primo giorno dopo l'apertura

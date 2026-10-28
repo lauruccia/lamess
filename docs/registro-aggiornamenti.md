@@ -1,5 +1,12 @@
 # Registro aggiornamenti
 
+## 2026-10-28 — Pagina «Compensi del mese» e login con la «è»
+- Nuovo: pagina **Compensi → Compensi del mese** (permesso `payouts.view`, nascondibile da *Funzionalità e viste*, voce `compensi_mese`). Mostra, per ogni incaricato, quanto sta maturando nel mese scelto (di default quello in corso): qualifica (con «↑ da …» se è salito rispetto al mese prima), importo per ogni tipo di compenso, **Bonus di Struttura**, **Totale**, **Trattenuto**, **Saldo non ancora pagato** e se è **pagabile** (IBAN presente e KYC verificato). In alto i totali del mese.
+- **Mese aperto**: è la stima dell'ultimo calcolo, si aggiorna a ogni ordine, pagamento o movimento e può cambiare fino alla chiusura. **Mese chiuso**: importi definitivi, con il link allo **Statino** di ciascuno (nei mesi aperti il link porta alla scheda). Se per il mese non c'è nessun calcolo, la pagina rimanda a *Periodi → Stima (live)*.
+- Filtri: mese (ultimi 24), ricerca per nome o codice, «solo chi ha importi» (acceso), ordine per totale, nome o trattenuto. **Esporta CSV** (separatore `;`, con le colonne dei tipi di compenso e «Pagabile»). Sola lettura: non scrive nulla.
+- Login del back-office: ora accetta anche l'email con la «è» (`nome@lamèss.it`) da iPhone/Safari, che rifiutava il campo email standard; il dominio è convertito in punycode (`xn--lamss-6ra.it`) prima del controllo. Nessuna migrazione, nessun SQL.
+- Clienti: colonne più ravvicinate e icone azione più distanziate.
+
 ## 2026-10-28 — Statistiche del sito
 - Nuovo: pagina **Statistiche sito** (*Sistema*, permesso `kpi.view`, nascondibile da *Funzionalità e viste*). Per il **sito pubblico e l'area riservata** e per il **back-office**: utenti **online adesso** (chi sono, in quale pagina, da dove arrivano, dispositivo e luogo, aggiornamento ogni 30 secondi), visite e pagine viste con confronto sul periodo precedente, grafico giornaliero, pagine più viste e d'ingresso, **ricerche nel negozio** (anche quelle senza risultati), **come arrivano** (Google, social, email, altri siti, campagne UTM, link referral degli incaricati), paesi e città, dispositivi, browser, sistemi, ultime visite; nel back-office anche chi ha lavorato e cosa ha usato.
 - Rilevamento interno (nessun servizio esterno, nessun cookie in più): niente bot, immagini o richieste interne; IP troncato; cancellazione automatica dopo 180 giorni (`LAMESS_ANALYTICS_RETENTION_DAYS`, ogni notte alle 03:10); spegnibile con `LAMESS_ANALYTICS=false`. Le visite dello staff nel sito pubblico sono escluse di default.
@@ -58,6 +65,23 @@
   ```
 - Test: `SiteStatsTest` (14).
 
+## 2026-10-27 — Bonifici fuori area SEPA e BIC/SWIFT
+- Nuovo campo **BIC/SWIFT** su incaricato, pagamento e richiesta di prelievo (copiato al momento della richiesta). È **obbligatorio se l'IBAN è fuori area SEPA**; il formato è controllato. Compare nei moduli IBAN (area incaricato, creazione e modifica admin) e nel CSV dei bonifici.
+- Il **file SEPA (XML)** esclude i pagamenti con IBAN fuori area SEPA: restano da pagare, sono elencati in un avviso all'admin e in un **CSV a parte** («Bonifici fuori area SEPA») da fare a mano in banca. Senza BIC un pagamento con IBAN extra-SEPA **non viene preparato** (resta bloccato come per KYC/IBAN mancanti).
+- IBAN: aggiunte le lunghezze per TN, MA, EG, TR, AE, SA e l'elenco dei paesi SEPA.
+- Migrazione `2026_11_13_100000_beneficiary_bic`: sul sito live (senza terminale) esegui **prima del deploy**, in phpMyAdmin → scheda SQL sul database `lamess_portale`:
+  ```sql
+  ALTER TABLE `consultants` ADD COLUMN `bic` VARCHAR(11) NULL AFTER `iban_holder`;
+  ALTER TABLE `payouts` ADD COLUMN `bic` VARCHAR(11) NULL AFTER `iban_holder`;
+  ALTER TABLE `withdrawal_requests` ADD COLUMN `bic` VARCHAR(11) NULL AFTER `iban_holder`;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_13_100000_beneficiary_bic', MAX(`batch`) FROM `migrations`;
+  ```
+  Senza le colonne il salvataggio dell'IBAN e la preparazione dei pagamenti danno errore.
+
+## 2026-10-27 — «Forza qualifica» fino a una data o a revoca
+- Il modulo **Forza qualifica** permette ora di mantenere la qualifica **fino a una data** oppure **fino a revoca** (usa la stessa protezione di «Mantieni qualifica», con log). Storico e tabella «Qualifiche raggiunte» riconoscono la fonte «forzata» (prima la forzatura non risultava).
+- Dopo la forzatura o la protezione il calcolo live riparte subito: badge e albero rete leggono il nuovo risultato senza aspettare il ricalcolo notturno delle 02:45. Nessuna migrazione.
+
 ## 2026-10-27 — Sospendere o bannare un account
 - Nuovo: ogni account (cliente, incaricato o admin) si può **sospendere** (stop temporaneo) o **bannare** (blocco deciso), con motivo obbligatorio. Si riattiva quando si vuole.
 - Effetti: non può più entrare (sito e back-office; le sessioni aperte si chiudono alla richiesta successiva); non compare più in elenchi, alberi (admin e «Il mio ramo»), conteggi di tab e link referral; i suoi abbonamenti non vengono più addebitati. Non si cancella nulla: ordini, fatture, compensi e storico restano, e la rete non si spezza (i suoi sotto-incaricati si vedono sotto il primo sponsor ancora visibile). Chi prova ad accedere, con la password giusta, vede «account sospeso/bloccato».
@@ -76,6 +100,108 @@
   ```
   Senza le colonne il codice nuovo dà errore (link referral, abbonamenti, elenchi).
 - Test: `AccountSuspensionTest` (9).
+
+## 2026-10-26 — Lettera di incarico a versioni e Regolamento incaricati modificabili
+- **Rete → Lettera di incarico**: l'admin modifica il testo (base in `resources/legal/ivd-letter-default.html`, con segnaposto) distinguendo il **refuso** (stessa versione, nessuna nuova firma) dalla **modifica contrattuale** (nuova versione da far firmare). Pulsante **Invia da firmare** agli incaricati registrati: tutti, solo attivi o selezione manuale; promemoria, storico delle modifiche e stato delle firme per versione. Il contratto IVD già firmato non si tocca.
+- **Area incaricato**: pagina `/area/lettera` per firmare la nuova versione con codice OTP, PDF firmato e avviso nella panoramica. Pagina di firma a tutta larghezza, prima la richiesta del codice e poi l'OTP; le dichiarazioni dell'art. 12 si compilano solo nel modulo e non si ripetono nel testo.
+- **Rete → Regolamento incaricati**: stesso meccanismo (refuso / nuova versione, storico) per il Regolamento, che l'incaricato accetta prima di firmare la lettera. Funzione nascondibile `regolamento_incaricati` (e `lettera_incarico` per la lettera).
+- Migrazioni `2026_11_11_100000_ivd_letter_versions` e `2026_11_12_100000_legal_documents`: sul sito live esegui **prima del deploy**, in phpMyAdmin → SQL. La prima versione della lettera si crea da sola al primo salvataggio o al primo «Invia da firmare».
+  ```sql
+  CREATE TABLE IF NOT EXISTS `ivd_letter_versions` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `version` VARCHAR(30) NOT NULL,
+    `body` LONGTEXT NOT NULL,
+    `change_summary` TEXT NULL,
+    `articles_1341` TEXT NULL,
+    `is_current` TINYINT(1) NOT NULL DEFAULT 0,
+    `revision` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `published_at` DATETIME NULL,
+    `published_by` VARCHAR(255) NULL,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ivd_letter_versions_version_unique` (`version`),
+    KEY `ivd_letter_versions_is_current_index` (`is_current`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CREATE TABLE IF NOT EXISTS `ivd_letter_edits` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ivd_letter_version_id` BIGINT UNSIGNED NOT NULL,
+    `kind` VARCHAR(20) NOT NULL,
+    `summary` TEXT NULL,
+    `body_before` LONGTEXT NULL,
+    `words_changed` INT UNSIGNED NOT NULL DEFAULT 0,
+    `actor` VARCHAR(255) NULL,
+    `created_at` DATETIME NOT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `ivd_letter_edits_ivd_letter_version_id_foreign` FOREIGN KEY (`ivd_letter_version_id`) REFERENCES `ivd_letter_versions` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CREATE TABLE IF NOT EXISTS `ivd_letter_signatures` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ivd_letter_version_id` BIGINT UNSIGNED NOT NULL,
+    `consultant_id` BIGINT UNSIGNED NOT NULL,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+    `sent_by` VARCHAR(255) NULL,
+    `sent_at` DATETIME NULL,
+    `last_reminder_at` DATETIME NULL,
+    `viewed_at` DATETIME NULL,
+    `signature_provider` VARCHAR(255) NULL,
+    `signature_ref` VARCHAR(255) NULL,
+    `signed_at` DATETIME NULL,
+    `evidence` JSON NULL,
+    `pdf_path` VARCHAR(255) NULL,
+    `pdf_hash` VARCHAR(64) NULL,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `ivd_letter_signatures_version_consultant_unique` (`ivd_letter_version_id`, `consultant_id`),
+    KEY `ivd_letter_signatures_user_id_status_index` (`user_id`, `status`),
+    CONSTRAINT `ivd_letter_signatures_ivd_letter_version_id_foreign` FOREIGN KEY (`ivd_letter_version_id`) REFERENCES `ivd_letter_versions` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `ivd_letter_signatures_consultant_id_foreign` FOREIGN KEY (`consultant_id`) REFERENCES `consultants` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `ivd_letter_signatures_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CREATE TABLE IF NOT EXISTS `legal_documents` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `slug` VARCHAR(40) NOT NULL,
+    `version` VARCHAR(30) NOT NULL,
+    `body` LONGTEXT NOT NULL,
+    `articles_1341` TEXT NULL,
+    `change_summary` TEXT NULL,
+    `revision` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `updated_by` VARCHAR(255) NULL,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `legal_documents_slug_unique` (`slug`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CREATE TABLE IF NOT EXISTS `legal_document_edits` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `legal_document_id` BIGINT UNSIGNED NOT NULL,
+    `kind` VARCHAR(20) NOT NULL,
+    `version` VARCHAR(30) NOT NULL,
+    `summary` TEXT NULL,
+    `body_before` LONGTEXT NULL,
+    `actor` VARCHAR(255) NULL,
+    `created_at` DATETIME NOT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `legal_document_edits_legal_document_id_foreign` FOREIGN KEY (`legal_document_id`) REFERENCES `legal_documents` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_11_100000_ivd_letter_versions', MAX(`batch`) FROM `migrations`;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_12_100000_legal_documents', MAX(`batch`) FROM `migrations`;
+  ```
+  Senza le tabelle la pagina di firma della lettera e le pagine Lettera/Regolamento danno errore.
+- Test: `IvdLetterVersionsTest`, `AreaPagesTest`.
+
+## 2026-10-26 — Il mio ramo, guadagni provvisori e ritocchi dell'area
+- **Il mio ramo**: l'albero sta sopra l'elenco; l'elenco ha filtri (livello, qualifica, tipo) e ordinamento.
+- **Guadagni provvisori**: la panoramica e la scheda mostrano la stima dei compensi del mese in corso, che si aggiorna a ogni ordine, pagamento, reso o movimento (ricalcolo live in coda, `LiveRecalcDispatcher`), senza aspettare il ricalcolo notturno. Test `ProvisionalEarningsTest`.
+- **Registrazione**: codice fiscale facoltativo con controllo di formato; in «I miei dati» è visibile anche da mobile e, se vuoto, mostra «Non indicato».
+- Ai campi password del sito è stato aggiunto l'**occhiolino** per mostrare/nascondere la password; il portale (utenti e admin) resta sempre sul **tema chiaro**.
+- PDF fattura: non va più in errore se il cliente non ha partita IVA o codice fiscale.
+
+## 2026-10-26 — Avviso «Nuovo ordine» e cruscotto più leggero
+- Alla creazione di ogni ordine parte una email a tutti gli utenti **admin e super admin**, oppure agli indirizzi in `LAMESS_ORDINI_MAIL_TO` (separati da virgola) se impostato. Non blocca mai l'ordine e rispetta `LAMESS_MAIL_ENABLED`.
+- Cruscotto: lo snapshot dei KPI resta in **cache per 60 secondi** (per periodo) e i widget si caricano con la pagina, senza il refresh ogni 5 secondi di Filament (con quattro widget erano circa 48 richieste PHP al minuto per scheda aperta e l'hosting condiviso rispondeva 502 su `livewire/update`). Nessuna migrazione.
 
 ## 2026-10-26 — Dati di pagamento via email e pulsante «Invia di nuovo»
 - Prima: con il bonifico l'IBAN si vedeva solo nella pagina dell'ordine; nessuna email al cliente alla registrazione dell'ordine (l'unica email di pagamento era «pagamento ricevuto»).
@@ -501,6 +627,49 @@
   ALTER TABLE `pv_movements` ADD CONSTRAINT `pv_movements_client_user_id_foreign` FOREIGN KEY (`client_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
   INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_08_100000_pv_movements_client_user', MAX(`batch`) FROM `migrations`;
   ```
+
+## 2026-10-21 — Tasca, statini mensile e settimanale, durata per pezzo
+- Il **wallet** si chiama ora **Tasca** («i tuoi documenti»): raccoglie statini mensili, statini settimanali dei bonus, ricevute e fatture, ed è il modo di pagamento standard: l'incaricato **chiede il prelievo** al posto del bonifico automatico del 15. Il prelievo non richiede il documento fiscale: fattura o ricevuta si **aggiungono dopo** (facoltative), con download per l'incaricato e per l'admin.
+- **Statino mensile**: in alto l'importo totale, poi **Dirette** e **Indirette** (gli estesi stanno dentro le Indirette). **Statino settimanale dei Bonus di Struttura**, separato, con PDF (area incaricato → «Statini bonus»; un statino a settimana). I Bonus di Struttura confermati sono accreditati nella Tasca **una sola volta**.
+- Prodotto: nuovo interruttore **«I pezzi moltiplicano i mesi»** (acceso di default): se acceso, i pezzi di una riga moltiplicano i mesi di validità cliente.
+- Migrazioni `2026_11_09_100000_product_months_per_piece` e `2026_11_09_110000_tasca`: sul sito live esegui **prima del deploy**, in phpMyAdmin → SQL:
+  ```sql
+  ALTER TABLE `products` ADD COLUMN `months_per_piece` TINYINT(1) NOT NULL DEFAULT 1;
+  ALTER TABLE `structure_bonuses` ADD COLUMN `wallet_credited_at` TIMESTAMP NULL DEFAULT NULL;
+  ALTER TABLE `withdrawal_requests`
+    ADD COLUMN `document_path` VARCHAR(255) NULL,
+    ADD COLUMN `document_name` VARCHAR(255) NULL,
+    ADD COLUMN `document_added_at` TIMESTAMP NULL DEFAULT NULL;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_09_100000_product_months_per_piece', MAX(`batch`) FROM `migrations`;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_09_110000_tasca', MAX(`batch`) FROM `migrations`;
+  ```
+- Test: `TascaTest`, `StructureBonusTest`, `ProductVapAndValidityTest`.
+- Rettifica manuale della Tasca (22/10): corretto l'errore 500 all'invio (mancava l'etichetta dell'incaricato nel campo di scelta).
+
+## 2026-10-23 — Agenti regalati (aiuti di qualifica)
+- Nuova voce **Compensi → Agenti regalati** e opzione nel modulo **Assegna punti** («Livello degli agenti», «Quanti agenti», «Valgono fino al»): l'azienda aggiunge **N agenti virtuali di una qualifica** sotto un incaricato per aiutarlo a qualificarsi (esempio: 2 Pearl sotto un Pearl per fargli raggiungere Crystal; fino a 50). Contano al 1° livello **solo per i requisiti della qualifica**: non generano compensi, non sono clienti, non entrano nei requisiti dei livelli indiretti e non compaiono nella rete. Valgono dalla data indicata fino alla scadenza (vuota = finché non vengono annullati); ogni assegnazione e annullamento è nel log. Dopo l'assegnazione il calcolo del mese riparte subito.
+- Migrazione `2026_11_10_100000_rank_helps`: sul sito live esegui **prima del deploy**, in phpMyAdmin → SQL:
+  ```sql
+  CREATE TABLE IF NOT EXISTS `rank_helps` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `consultant_id` BIGINT UNSIGNED NOT NULL,
+    `rank_code` VARCHAR(40) NOT NULL,
+    `quantity` SMALLINT UNSIGNED NOT NULL,
+    `reason` VARCHAR(255) NOT NULL,
+    `starts_at` DATETIME NOT NULL,
+    `valid_until` DATE NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'confirmed',
+    `created_by` BIGINT UNSIGNED NULL,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `rank_helps_status_starts_at_index` (`status`, `starts_at`),
+    CONSTRAINT `rank_helps_consultant_id_foreign` FOREIGN KEY (`consultant_id`) REFERENCES `consultants` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `rank_helps_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  INSERT INTO `migrations` (`migration`, `batch`) SELECT '2026_11_10_100000_rank_helps', MAX(`batch`) FROM `migrations`;
+  ```
+- Test: `RankHelpGrantTest`, `KosmosPlanTest`.
 
 ## 2026-10-21 — Segno «Easyfatt» sulle fatture e note di credito
 - **Elenco Fatture e Note di credito**: nuova colonna **Easyfatt** (verde «Esportata» con data nel suggerimento, grigio «Da esportare»), filtro *Tutte / Esportate / Da esportare* e azione di riga per segnare o rimettere da esportare a mano.

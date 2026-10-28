@@ -53,7 +53,7 @@ resi dopo la chiusura. FSB attivo dal PMK 070726: D08/D09 restano provvisorie (O
 | OPEN-23 | Canone annuale | primo anno gratuito, canone dal secondo anno: **19 € IVA compresa**; interruttore «Canone annuale attivo» (spento: nessun canone, rinnovi gratuiti) — aggiornato il 12/10/2026 | `annual_fee_first_paid_year`, `annual_fee_amount`, `annual_fee_enabled` |
 | OPEN-24 | Canone non pagato | scadenza senza giorni di grazia; contratto scaduto, consulente cessato, torna FAN | `annual_fee_grace_days` |
 
-Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzio.
+Testo legale della Lettera IVD: dal 26/10/2026 è il testo definitivo di Kadeo (`resources/legal/ivd-letter-default.html`), modificabile dal pannello a versioni; il Regolamento v2.0 è in bozza da validare.
 
 ## Decisioni del negozio (F2) adottate come default
 
@@ -66,15 +66,15 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 | OPEN-33 | Reso della spedizione | **CHIUSA il 09/10/2026**: l'admin può scegliere «Rimborsa anche le spese di spedizione» (una sola volta per ordine, nota di credito con riga spedizione); di default restano escluse | `ReturnService`, scheda del reso |
 | OPEN-34 | Prezzi del listino Odoo | **CHIUSA**: prezzi **IVA inclusa** (verificato: KIT GOLD 2.440 € = 2.000 € + IVA 22%); dal 13/10/2026 prezzi e riepiloghi sono IVA inclusa anche nel portale (si mostra solo l'aliquota). PV esplicito per prodotto (solo storico: il Piano Incaricati calcola sugli euro) | `lamess:importa-prodotti --netti` se un file fosse al netto |
 | OPEN-40 | Disdetta abbonamento | **CHIUSA il 13-14/10/2026**: gli abbonamenti partono con impegno di 12 mesi **non vincolante**, si possono interrompere quando si vuole (nessuna penale; prima dei 12 mesi è registrata come «disdetta anticipata»); la spedizione è sempre gratuita e l'impegno minimo non è più configurabile | `SubscriptionService::cancel` |
-| OPEN-41 (nuova) | Chi può ricevere un ordine per conto di altri | clienti assegnati al consulente e consulenti attivi da lui sponsorizzati direttamente | `OrderService::recipientsFor` |
+| OPEN-41 (nuova) | Chi può ricevere un ordine per conto di altri | clienti assegnati al consulente e consulenti attivi da lui sponsorizzati direttamente; dal 23/10/2026 la funzione è **nascosta dal carrello** (`LAMESS_ORDER_FOR_OTHERS=false`), la logica resta | `OrderService::recipientsFor` |
 | OPEN-42 (nuova) | Mesi storici già pagati fuori dal portale | si segnano «storico già pagato» a mano, mese per mese | scheda del periodo → «Segna come storico già pagato» |
 | OPEN-43 (nuova) | Chiusura mensile automatica | «solo calcolo ufficiale»: la chiusura la conferma l'admin | Impostazioni → Chiusura mensile |
-| OPEN-44 (nuova) | Pagamento delle provvigioni | preparato in automatico dal 15 del mese successivo; il bonifico in banca resta manuale | piano: `payout_mode`, `payout_day` |
+| OPEN-44 (nuova) | Pagamento delle provvigioni | dal 21/10/2026 il modello del Piano Incaricati ha `payout_mode = on_request`: i compensi maturano nella **Tasca** e l'incaricato chiede il prelievo; con `monthly_auto` i pagamenti sono preparati dal 15 del mese successivo. Conta la versione del piano in vigore. Il bonifico in banca resta manuale | piano: `payout_mode`, `payout_day` |
 | OPEN-45 (nuova) | Avvisi email | agli incaricati (statino pronto, bonifico effettuato, richiesta e promemoria dei documenti KYC, invio documenti) e al cliente per l'ordine pagato e spedito; tutto fermo finché l'interruttore generale è spento; spenti dall'interruttore generale | Impostazioni → Email |
-| OPEN-46 (nuova) | Bonifici ai consulenti | file SEPA pain.001.001.03 da caricare in banca; da far validare dalla banca al primo uso | Pagamenti → Esporta file SEPA |
+| OPEN-46 (nuova) | Bonifici ai consulenti | file SEPA pain.001.001.03 da caricare in banca; da far validare dalla banca al primo uso. Dal 27/10/2026 un IBAN fuori area SEPA richiede il BIC e va in un CSV a parte (bonifico manuale) | Pagamenti → Esporta file SEPA |
 | OPEN-47 (nuova) | Mesi chiusi con la regola precedente | gennaio–settembre sono stati calcolati con la vecchia regola K2: ricalcolarli oggi darebbe totali diversi; da decidere se tenerli come storico o ricalcolare | Periodi |
 | OPEN-48 (nuova) | Primo mese pagato dal portale | per evitare pagamenti arretrati (febbraio–settembre) quando arriveranno gli IBAN: scegliere il primo mese e marcare i precedenti «storico già pagato» | Pagamenti |
-| OPEN-49 (nuova) | Firma elettronica reale | il sistema di prova non basta per aprire ai clienti: scegliere il fornitore | Impostazioni |
+| OPEN-49 (nuova) | Firma elettronica reale | il sistema di prova non basta per aprire ai clienti; deciso il 16/10 un codice OTP per email (driver `email`, già nel codice, vedi A-11) | `.env` |
 
 ## Decisioni dei moduli 1-7 (05/10/2026): default adottati e punti per il cliente
 
@@ -121,8 +121,14 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 | Hosting e rilascio | cPanel, database MySQL `lamess_portale`, nessun terminale sul sito live; dominio `lamèss.it` (anche `www`); GitHub privato `lauruccia/lamess` collegato a cPanel → Git Version Control (OPEN-50 in parte) | 14/10 |
 | Apertura al pubblico | il portale resta **chiuso** («Lamèss apre presto») finché Laura decide di aprirlo | 14/10 |
 | Ricevute e ritenuta d'acconto | restano **spente** finché non risponde il commercialista (la questione sotto resta aperta) | 12/10 |
+| Abbonamenti | mensili o bimestrali; addebito fallito ritentato dopo 1, 3 e 5 giorni e pausa alla 4ª volta; riepilogo giornaliero via email | 20-23/10 |
+| Tasca | pagamento «su richiesta»: i compensi e il Bonus di Struttura confermato maturano nella Tasca (ex portafoglio), prelievo su richiesta con documento fiscale facoltativo | 21/10 |
+| Lettera di incarico | testo definitivo di Kadeo, a versioni: un refuso (fino a 30 parole) non cambia la versione, una modifica contrattuale ne crea una nuova da firmare; Regolamento modificabile dal pannello | 26/10 |
+| BIC e IBAN esteri | per un IBAN fuori area SEPA serve il BIC; niente file SEPA ma un CSV dedicato | 27/10 |
+| Sospensione e ban | un accesso può essere sospeso o bannato dall'admin, distinto dallo stato «sospeso» nella rete | 27/10 |
+| Statistiche di visita | raccolta interna, conservata 180 giorni, spegnibile con `LAMESS_ANALYTICS` | 28/10 |
 
-## Questioni aperte oggi (14 ottobre 2026)
+## Questioni aperte oggi (28 ottobre 2026)
 
 | Id | Questione | Stato / cosa serve | Chi |
 |---|---|---|---|
@@ -131,15 +137,16 @@ Testo legale della Lettera IVD: segnaposto da sostituire con quello del Consorzi
 | A-03 | **Test noto rosso** `SitePagesTest::test_full_consultant_journey_through_the_site`: il tesserino risulta scaricabile subito dopo la firma (200) mentre il test si aspetta 404. Va deciso quale comportamento è giusto e allineare codice o test. Nell'ultima esecuzione registrata (16/10/2026) non compare fra i test rossi: da riverificare al prossimo giro completo. Un secondo rosso del 12/10, `InstallerTest::test_install_creates_superadmin_once_and_locks`, dipendeva dai requisiti server dell'ambiente cloud di prova | da decidere/correggere | Laura, sviluppo |
 | A-04 | **Token KMoney mostrato in uno screenshot**: va ruotato in KMoney e il nuovo valore messo nel `.env` (`KMONEY_API_TOKEN`); non condividere il `.env` né schermate con token | da fare | Laura |
 | A-05 | **Indirizzi di ritorno OAuth di KMoney** (`/area/kmoney/ritorno`): registrarli per `xn--lamss-6ra.it` e `www.xn--lamss-6ra.it`; poi provare un collegamento e un pagamento reali. Il «Controllo messa online» non verifica KMoney | da fare/provare | Laura |
-| A-06 | **Migrazioni senza terminale** (OPEN-50): decidere se costruire una pagina riservata al super_admin. Nel frattempo SQL in phpMyAdmin; verificare che quelle del 12-13/10 (`2026_11_03_*`, `2026_11_04_100000_consultants_rank_hold_until`) risultino nella tabella `migrations` del sito | da verificare sul sito | Laura |
+| A-06 | **Migrazioni senza terminale** (OPEN-50): decidere se costruire una pagina riservata al super_admin. Nel frattempo SQL in phpMyAdmin; verificare che tutte quelle fino a `2026_11_15_100000_site_analytics` (elenco in «Messa online», punto 4) risultino nella tabella `migrations` del sito: le pagine nuove danno errore finché mancano le tabelle | da verificare sul sito | Laura |
 | A-07 | **Cache dopo il deploy**: il deploy lancia `optimize:clear` solo se `vendor` e `.env` ci sono; verificare se basta, altrimenti resta la cancellazione manuale di `bootstrap/cache` e `storage/framework/views` | da verificare | Laura |
 | A-08 | **Soglia «cliente» e promozioni**: con `min_amount` a 150 € un ordine in promozione sotto la soglia (es. Box a 129,90 €) non rende cliente | da decidere | Laura |
 | A-09 | **Validazione del Piano Incaricati**: il file del piano è «BOZZA da validare» (presentazioni dell'8/10); punti da confermare prima di pubblicarlo | da validare | Laura, cliente |
 | A-10 | **Mesi già calcolati** (OPEN-47, OPEN-48): gennaio–settembre calcolati con la regola precedente e scelta del primo mese pagato dal portale | da decidere | Laura, cliente |
 | A-11 | **Firma elettronica reale** (OPEN-49): decisione di Laura del 16/10/2026: per ora firma elettronica semplice con **codice OTP inviato per email** (`LAMESS_SIGNATURE_DRIVER=email`, richiede `LAMESS_MAIL_ENABLED=true` e l'SMTP); il driver `fake` resta solo per lo sviluppo e dà BLOCCO. Un fornitore esterno (Yousign/Namirial/InfoCert) resta possibile in futuro; il valore legale della firma con OTP per email va confermato col consulente | da attivare sul server | Laura |
-| A-12 | **Fatture allo SdI / GestionaleK** (OPEN-51): nessun collegamento diretto; scelta fra `file` e `mail` | Laura vuole gli XML per email a `LAMESS_SDI_MAIL_TO`, con invio mensile o con un pulsante (non uno per uno): si attiva con la posta quando il portale è online; per ora il driver `mail` spedisce a ogni emissione | commercialista, cliente |
+| A-12 | **Fatture allo SdI / GestionaleK** (OPEN-51): nessun collegamento diretto; scelta fra `file` e `mail` | Laura vuole gli XML per email a `LAMESS_SDI_MAIL_TO`, con invio mensile o con un pulsante (non uno per uno): la modalità `LAMESS_SDI_SEND_MODE=batch` esiste (pulsante in *Fatture* o il 1° del mese alle 08:30); il default resta `immediate`, da scegliere con la posta quando il portale è online | commercialista, cliente |
 | A-13 | **Stripe live**: chiavi `sk_live_…`, webhook, prova di pagamento e di rinnovo di un abbonamento con carta di prova (OPEN-62) | da fare | cliente, Laura |
 | A-14 | **Prova su MySQL/MariaDB** delle migrazioni successive al 5 ottobre e della suite completa (finora provate solo su SQLite) | da fare | sviluppo |
 | A-15 | **Clienti esteri e IVA** (20/10): l'XML ora gestisce paese, `XXXXXXX` e Natura; resta da decidere l'IVA da applicare ai clienti UE/extra-UE (oggi aliquota del prodotto, soglia 10.000 € e OSS) e la Natura per i casi diversi da N3.1/N3.2 | codice pronto, regola fiscale aperta | commercialista, Laura |
 | A-16 | **Soggetto emittente** (20/10): le fatture 2026 in Odoo sono di INHORECA.IT SRLS (P.IVA 02507740518), il portale è configurato per il Consorzio Kadeo Group (P.IVA 02530190517): decidere da quando e con quale numerazione | aperta | Laura, commercialista |
+| A-17 | **Funzioni non nascondibili** (28/10): Agenti regalati, Utenti e Log di audit non sono nell'elenco chiuso `FeatureRegistry`, quindi la pagina di visibilità non può nasconderli. Aggiungerli o lasciarli sempre visibili? | da decidere | Laura |
 

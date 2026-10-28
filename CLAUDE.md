@@ -1,3 +1,25 @@
+# Lamèss: guida per chi lavora sul codice
+
+Portale Lamèss (negozio, rete degli Incaricati, motore dei compensi, area riservata, back-office). Parla italiano con chi lo usa e nei testi del prodotto. Dettagli in `docs/`: `manuale-sviluppatori.md` (si parte da qui), `architettura.md`, `specifica-motore.md`, `parametri.md`, `messa-online.md`, `decisioni-aperte.md`; la cronologia è in `docs/registro-aggiornamenti.md`.
+
+## Stack e comandi
+- PHP ^8.3, Laravel 13, Filament 4, spatie/laravel-permission 8, PHPUnit 12, Laravel Boost (dev). Nessuna compilazione del front-end: CSS e JS sono statici in `public/` (il `package.json` Vite/Tailwind non è usato).
+- Test: `php artisan test --compact` (tutta la suite) o `--filter=Nome`. Stile: `vendor/bin/pint --format agent`.
+- Sviluppo: SQLite; produzione: MySQL/MariaDB su cPanel.
+
+## Regole da non rompere
+- Nel prodotto si scrive «Incaricato/Incaricati»; nel codice restano `Consultant`, `consultants`, ecc. Non rinominare le tabelle.
+- Importi sempre `BigDecimal`, mai `float`; prezzi IVA inclusa. Il motore (`App\Domain\Engine`) non accede al database: riceve uno snapshot.
+- Ogni parametro del piano è un dato (JSON in `config/lamess/`, versioni del piano), non una costante. Due motori: `kosmos_v1` (Piano Incaricati, in uso) e `multilevel_v3` (piano precedente, nascondibile).
+- Il sito live **non ha terminale**: una migrazione nuova va applicata a mano in phpMyAdmin. Chi la scrive mette l'SQL nel registro aggiornamenti (vedi `docs/messa-online.md`, punto 4). Il deploy non lancia `migrate`.
+- Gli orari automatici sono solo in `routes/console.php` (fuso Europa/Roma); `docs/architettura.md` e `docs/installazione-cpanel.md` devono restare allineati.
+- Le pagine e funzioni che l'admin può nascondere stanno nell'elenco chiuso `App\Domain\Features\FeatureRegistry`: una voce nuova va aggiunta lì. Una chiave sconosciuta risulta sempre visibile.
+- Filament: i parametri delle closure si iniettano per **nome** (`$record`, `$state`, `$get`, `$set`): non rinominarli.
+- Blade: con Livewire installato non usare `@continue`/`@break` dentro `@foreach`; usa `@if`.
+- Nessun segreto nel repository; il `.env` vive solo sul server. A fine di ogni lavoro: commit e push su `main` (repository `lauruccia/lamess`); il deploy su cPanel lo fa Laura.
+- Quando cambi comportamento aggiorna il manuale giusto (utente, admin, sviluppatori) e il registro; non toccare a mano `dossier.html` (si rigenera con `php artisan lamess:manuale`).
+
+
 <laravel-boost-guidelines>
 === foundation rules ===
 

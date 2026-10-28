@@ -1,47 +1,8 @@
-<laravel-boost-guidelines>
-# Laravel Application
+# Lamèss: istruzioni per gli assistenti di codice
 
-This repository contains a Laravel application. Complete the following setup before working on the user's request.
+La guida del progetto e le regole di Laravel Boost stanno in `CLAUDE.md`: leggilo per primo. Il portale è Laravel 13 + Filament 4 (PHP ^8.3); il front-end non si compila.
 
-## Prerequisites
-
-Verify that PHP and Composer are available:
-
-```sh
-php -v
-composer -V
-```
-
-If either command is unavailable, detect the user's operating system and install the prerequisites with the appropriate command:
-
-macOS:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/mac/8.5)"
-```
-
-Windows PowerShell:
-
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows/8.5'))
-```
-
-Linux:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/linux/8.5)"
-```
-
-After installation, ask the user to restart their terminal. If the agent needs the restarted shell to continue, ask the user to reopen their terminal and rerun their original prompt.
-
-## Agent Setup
-
-Install Laravel Boost from the application root before making application changes:
-
-```sh
-composer require laravel/boost --dev
-php artisan boost:install
-```
-
-Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
-</laravel-boost-guidelines>
+- Documentazione: `docs/` (parti da `manuale-sviluppatori.md`; cronologia in `registro-aggiornamenti.md`).
+- Test: `php artisan test --compact`; stile: `vendor/bin/pint --format agent`.
+- Il sito live non ha terminale: le migrazioni nuove si applicano a mano (SQL nel registro, vedi `docs/messa-online.md`).
+- A fine lavoro commit e push su `main`; il deploy lo fa Laura. Non scrivere segreti nel repository.

@@ -1,6 +1,6 @@
 # Installazione su cPanel (hosting condiviso, MySQL/MariaDB)
 
-Aggiornato al 14 ottobre 2026. Questo documento descrive l'installazione e la configurazione. Per gli aggiornamenti del sito già in linea, per l'apertura al pubblico e per il piano di ritorno vedi «Messa online e piano di ritorno».
+Aggiornato al 28 ottobre 2026. Questo documento descrive l'installazione e la configurazione. Per gli aggiornamenti del sito già in linea, per l'apertura al pubblico e per il piano di ritorno vedi «Messa online e piano di ritorno».
 
 **Situazione di Lamèss**: hosting cPanel con database MySQL `lamess_portale`, **senza terminale sul sito live** (solo cPanel, phpMyAdmin, File Manager). Il codice arriva da GitHub (repository privato `lauruccia/lamess`, branch `main`) con cPanel → *Git Version Control* e il file `.cpanel.yml` (sezione A). Il pacchetto ZIP (sezione B) resta come alternativa.
 
@@ -60,6 +60,12 @@ Base per questo sito: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://
 | `LAMESS_DISPUTE_DAYS` | `10` | giorni per reclamare su estratti conto e ricevute |
 | `LAMESS_PLAN_FOUR_EYES` | `true` | la pubblicazione del piano richiede un secondo amministratore |
 | `LAMESS_KYC_REQUEST_DUE_DAYS` | `7` | giorni per rispondere a una richiesta di documenti KYC |
+| `LAMESS_ORDINI_MAIL_TO` | indirizzo email | casella che riceve l'avviso «Nuovo ordine» (vuoto = nessun avviso) |
+| `LAMESS_ABBONAMENTI_MAIL_TO` | indirizzo email | casella del riepilogo giornaliero degli abbonamenti (08:15) |
+| `LAMESS_ORDER_FOR_OTHERS` | `false` (default) · `true` | mostra «Ordine per altri» nel carrello (nascosto dal 23/10/2026) |
+| `LAMESS_SEPA_NAME`, `_IBAN`, `_BIC` | testo | conto da addebitare nel file SEPA dei pagamenti (modificabili da Impostazioni) |
+| `LAMESS_ANALYTICS`, `LAMESS_ANALYTICS_RETENTION_DAYS` | `true` · `180` | statistiche di visita interne e giorni di conservazione (pulizia ogni notte alle 03:10) |
+| `ADMIN_2FA_REQUIRED` | `true` (default) | autenticazione a due fattori obbligatoria per gli amministratori |
 
 Molti di questi valori si cambiano anche da **Impostazioni** nel pannello (hanno la precedenza sul `.env`). Le chiavi segrete (Stripe, KMoney) stanno **solo** nel `.env`.
 
@@ -108,14 +114,16 @@ Dopo un aggiornamento con terminale: `php artisan migrate --force` e `php artisa
 - ogni minuto il «battito» che il riquadro «Operazioni automatiche» legge;
 - 00:10 versioni del piano programmate che entrano in vigore; 00:20 sanzioni a tempo; 00:30 successioni;
 - 02:15 backup del database; 02:45 ricalcolo notturno (stima del mese aperto);
-- 03:30 canoni annuali; 04:00 abbonamenti; 05:00 preparazione dei pagamenti dei mesi chiusi; 06:00 estratti conto (accettazione tacita); 08:00 promemoria documenti KYC;
+- 03:10 pulizia delle statistiche di visita; 03:30 canoni annuali; 04:00 abbonamenti; 05:00 preparazione dei pagamenti dei mesi chiusi; 06:00 estratti conto (accettazione tacita); 08:00 promemoria documenti KYC; 08:15 riepilogo giornaliero degli abbonamenti (se c'è la casella);
+- il 1° del mese alle 08:30 l'invio delle fatture in coda (solo con `LAMESS_SDI_SEND_MODE=batch`);
+- ogni minuto, se `QUEUE_CONNECTION` non è `sync`, il lavoratore delle code;
 - ogni ora: fatture (invio/ritentativi), chiusura mensile automatica (agisce solo quando il mese è finito e secondo l'impostazione «Chiusura automatica del mese») e Bonus di Struttura (solo se attivi in Impostazioni).
 **Come controllare che giri**: in `/admin`, nella dashboard, il riquadro «Operazioni automatiche» mostra «Attivo» con l'ora dell'ultimo giro. Se dice «Mai partito» o «Fermo» (oltre 20 minuti) il cron non è impostato bene: ricontrolla il percorso di PHP e della cartella in cPanel → *Cron Jobs*.
 
 ## Attenzione
 - `.env`, `storage/` e `vendor/` non devono mai essere raggiungibili dal web (per questo l'applicazione sta in `lamess_app`, fuori da `public_html`).
 - Documenti KYC e lettere IVD stanno in `storage/app` (privato), non in `public`.
-- Il driver di firma è `fake`: **non usare in produzione reale** finché non c'è un provider vero.
+- Il driver di firma `fake` mostra il codice a schermo: **non usarlo in produzione**; usa `LAMESS_SIGNATURE_DRIVER=email` (il Controllo messa online dà BLOCCO con `fake`).
 - Il pagamento con carta reale richiede `LAMESS_PAYMENT_DRIVER=stripe` e le chiavi; con `fake` il «Controllo messa online» dà BLOCCO.
 - I file XML delle fatture e le copie inviate stanno in `storage/app/private/sdi-out` (non pubblico): includili nei backup dei file.
 - Prima di ogni aggiornamento fai il backup del database (Sistema → Backup e cPanel → Backup).

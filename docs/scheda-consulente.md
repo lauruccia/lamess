@@ -1,6 +1,6 @@
 # Scheda incaricato 360° e «Funzionalità e viste»
 
-Aggiornato il 14/10/2026. Specifica di partenza: `Addendum_Scheda_Consulente_360.md` (progetto Lamèss; il nome del file di specifica è rimasto quello originale).
+Aggiornato il 28/10/2026. Specifica di partenza: `Addendum_Scheda_Consulente_360.md` (progetto Lamèss; il nome del file di specifica è rimasto quello originale).
 
 ## La scheda (Rete → Incaricati → apri un incaricato)
 
@@ -14,11 +14,14 @@ In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sos
 - **Stampa tesserino**: il tesserino per la vendita porta a porta (con il retro e il QR di verifica pubblica). **Nasce da solo alla firma della lettera d'incarico** (numero = codice attività, validità = durata della lettera), o all'iscrizione fatta dall'admin; non aspetta l'accettazione. Solo per incarichi attivi senza lettera in attesa di firma.
 - **Certificato di firma**: PDF con le prove della firma (non disponibile per le lettere importate da Odoo).
 - **Riassegna i clienti**, **Forza qualifica**, **Mantieni qualifica** (permesso `network.restructure`): «Mantieni qualifica» congela la qualifica attuale fino a una data, solo con il Piano Incaricati attivo; ogni cambio è nel log.
-- **Sospendi / Riattiva / Cessa**, **Aggiungi nota**, **Mostra IBAN**, **Sposta / cambia sponsor** (vedi sotto).
+- **Sospendi / Riattiva / Cessa**, **Aggiungi nota**, **Mostra IBAN**, **Sposta / cambia sponsor** (vedi sotto). Attenzione: «Sospendi» della scheda cambia lo **stato dell'incarico in rete** e non blocca l'accesso al portale.
+- **Blocco dell'account** (non è nella scheda ma nel menu ⋮ della riga di *Rete → Incaricati*, *Clienti* e *Utenti*): **Sospendi o banna** (sospeso = stop temporaneo, bannato = blocco deciso, motivo obbligatorio) e **Riattiva account**; colonna e filtro **Account** (di base mostra solo gli attivi). La persona non entra più, le sessioni si chiudono, gli abbonamenti non vengono più addebitati e sparisce da elenchi, alberi e link referral; ordini, fatture e compensi restano. Chi prova ad accedere con la password giusta legge che l'account è sospeso o bloccato e di scrivere all'assistenza. Possono farlo il super_admin e gli admin con `network.manage` (questi solo su incaricati e clienti), mai su se stessi.
+- **Invia reset password** e **Imposta password temporanea** (menu ⋮ dell'elenco, permesso `network.manage`): la seconda genera una nuova password, te la mostra **una sola volta** (copiala subito), chiude le sessioni aperte e nel log non resta la password. Per chi non riceve l'email di reset; non vale per gli account del back-office.
 
 **Tab**: Riepilogo · Anagrafica · Rete · Volumi e rank · Commissioni · Pagamenti · Ordini (con il piano precedente visibile: «Ordini e PV») · Documenti · Audit (solo super_admin). Ogni tab mostra i dati recenti e ha il link «Apri la lista…» per vedere tutto. Nel pannello «Funzionalità e viste» le stesse tab hanno nomi più descrittivi (es. «Riepilogo e carriera», «Liquidazioni e pagamenti»).
 
-- **Riepilogo**: avanzamento di carriera. Con il Piano Incaricati mostra la qualifica, **cosa manca per la prossima** e l'elenco «Cosa fare». I requisiti sono quelli del nuovo piano: **clienti personali** (x / y), **incaricati Pearl al 1° livello**, **colonne con almeno N clienti** (per Ruby) e struttura di qualifiche richiesta. Non ci sono PR, PV, Rank Bonus né Matching.
+- **Riepilogo**: avanzamento di carriera. Con il Piano Incaricati mostra la qualifica, **cosa manca per la prossima** e l'elenco «Cosa fare». I requisiti sono quelli del nuovo piano: **clienti personali** (x / y), **incaricati Pearl al 1° livello**, **colonne con almeno N clienti** (per Ruby) e struttura di qualifiche richiesta. Non ci sono PR, PV, Rank Bonus né Matching. Sotto l'avanzamento c'è il riquadro **Punti assegnati dall'azienda** (punti riconosciuti senza acquisto): totale dei punti validi e, per ogni assegnazione, data, causale, punti, effetto e cliente; le assegnazioni annullate restano in elenco, barrate e segnate «(annullata)». Gli stessi punti, senza effetto e cliente, li vede l'incaricato nella sua panoramica.
+- **Commissioni**: compensi per tipo e per mese. Per il mese ancora aperto compare la riga «Mese AAAA-MM: PROVVISORIO, non definitivo» con la data dell'ultimo calcolo: i compensi si ricalcolano da soli dopo ogni pagamento, reso o movimento inserito a mano (anche dalla pagina *Movimenti PV*) e possono cambiare fino alla chiusura del mese.
 - **Rete**: sponsor, storico sponsor, **«1° liv.»** (gli incaricati sponsorizzati da lui; «Clienti diretti» sono invece i suoi clienti) con «Ordini del mese» e «Importo del mese» (ordini pagati nel mese, IVA inclusa) e i clienti diretti con gli stessi dati.
 - **Documenti**: documenti KYC con stato di verifica, contratti IVD e canoni annuali (19 € IVA compresa, se il canone è attivo).
 
@@ -31,7 +34,7 @@ In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sos
 **Modifica dati** (pulsante in alto a destra nella scheda, o «Modifica dati» nel menu ⋮ dell'elenco; per chi ha il permesso `network.manage` e per il super_admin): una pagina a sezioni, con in alto il riepilogo (stato, qualifica, KYC) e il pulsante **Salva modifiche** sempre visibile in fondo. Le sezioni:
 - **Anagrafica**: nome, cognome, codice fiscale, data e luogo di nascita (solo maggiorenni).
 - **Contatti e residenza**: email di accesso, telefono, PEC, indirizzo, città, CAP, provincia, nazione. Se l'incaricato non ha ancora un accesso, scrivendo l'email lo si crea (con l'interruttore per inviare subito l'invito); data di nascita e recapiti si possono salvare solo insieme all'email.
-- **Pagamenti e fisco**: IBAN (mostrato mascherato: per cambiarlo si scrive il nuovo, quello vecchio non viene mai mostrato per intero), intestatario, regime fiscale (ritenuta o partita IVA), verifica KYC (con il permesso `kyc.manage`).
+- **Pagamenti e fisco**: IBAN (mostrato mascherato: per cambiarlo si scrive il nuovo, quello vecchio non viene mai mostrato per intero), **BIC/SWIFT** (obbligatorio se l'IBAN è di un paese fuori area SEPA; 8 o 11 caratteri), intestatario, regime fiscale (ritenuta o partita IVA), verifica KYC (con il permesso `kyc.manage`).
 - **Iscrizione e stato**: codice attività (**solo il super_admin lo cambia**), codice referral, date di firma e di ingresso in rete, onboarding completato, tesserino. Sponsor e stato si **vedono ma non si cambiano qui**: sospendere, riattivare, cessare e spostare lo sponsor restano nella scheda, con il loro motivo registrato.
 - **Piano e compensi**: compensi bloccati, founder, qualifica massima consentita, «Mantieni qualifica» (data o fino a revoca, con motivo) e, solo per il super_admin con il piano precedente visibile, la qualifica del piano precedente.
 
@@ -45,6 +48,21 @@ Un clic su una riga apre la scheda. La colonna **Qualifica** mostra solo il nome
 **Albero della rete** (Rete → Albero della rete): ogni qualifica ha il **colore della sua pietra** (perla, azzurro cristallo, blu zaffiro, rosso rubino, verde smeraldo, argento diamante); il nome della qualifica è comunque sempre scritto. Il pannello laterale mostra «cosa manca per il livello successivo».
 
 **Elenco per livelli** (Rete → Elenco per livelli, o pulsante nell'elenco): incaricati in ordine di ramo con rientro per livello, ricerca del punto di partenza, limite di livelli, filtro per stato e colonna «Hanno acquistato» (clienti con almeno un ordine pagato nel periodo scelto).
+
+## Lettera di incarico e Regolamento (Rete)
+
+**Rete → Lettera di incarico**: l'editor del testo della lettera (le parole tra doppie quadre, come `[[CASELLE_REDDITO]]`, le compila il sistema e non vanno toccate; le caselle dell'art. 12 devono esserci tutte). Due modi di salvare:
+- **Salva correzione (refuso)**: stessa versione, nessuna firma richiesta; la nota su cosa hai corretto è facoltativa e resta nello storico.
+- **Salva modifica contrattuale (da firmare)**: nasce una nuova versione in vigore; servono «Cosa cambia per gli incaricati» (lo leggono nell'email e nella pagina di firma) e l'elenco degli articoli da approvare espressamente (artt. 1341-1342 c.c.), da ricontrollare. Il contratto IVD originale degli incaricati non viene toccato.
+
+Poi **Invia da firmare** crea la richiesta di firma e manda l'email, con scelta dei destinatari: tutti gli incaricati che non l'hanno firmata, solo gli attivi, oppure una selezione manuale; chi ha già firmato la versione o ha già una richiesta aperta non viene avvisato di nuovo. **Promemoria ai non firmatari** rimanda l'email. L'incaricato vede l'avviso «Lettera di Incarico da firmare» nella panoramica e firma da `/area/lettera` con codice OTP; nella tabella delle firme di questa pagina (stato «Da firmare» / «Firmata» / «Annullata») c'è il link al PDF firmato (permesso `network.manage`) e sotto lo «Storico delle modifiche».
+
+**Rete → Regolamento incaricati** («Principi generali e Regolamento», Allegato 1): stessa logica. **Salva correzione (refuso)** non cambia la versione; **Pubblica nuova versione** chiede il numero (per esempio 2.1), «Cosa cambia» e gli articoli da approvare espressamente. Finché nessuno lo salva vale il testo di base `resources/legal/regolamento-v2.0.md`. Chi firma la lettera lo legge nella pagina di firma e lo accetta con una casella dedicata, prima della firma; nelle prove di firma restano versione e impronta (SHA-256) del testo accettato.
+
+## Tasca e prelievi (Compensi)
+Con il Piano Incaricati il pagamento è **su richiesta** (`payout_mode` = `on_request`): i compensi del mese chiuso e ogni Bonus di Struttura confermato vengono accreditati nella **Tasca** dell'incaricato (il vecchio «wallet»). Per i Bonus di Struttura l'accredito è automatico e una volta sola: il bonus risulta «pagato» con riferimento «Tasca». Le voci admin si chiamano **Movimenti Tasca** e **Prelievi su richiesta**; nei prelievi la colonna **Documento** («— (da aggiungere)» se manca) e l'icona *Scarica il documento fiscale* danno la fattura o ricevuta che l'incaricato ha allegato, anche dopo la richiesta. Se l'IBAN è fuori area SEPA, il file SEPA esclude quei pagamenti (restano da pagare, con un avviso e un CSV a parte «Bonifici fuori area SEPA») e senza BIC il pagamento non viene nemmeno preparato.
+
+Gli statini sono due: **mensile** (totale in alto, poi Dirette e Indirette, con gli estesi dentro le Indirette) e **settimanale dei Bonus di Struttura** (da lunedì a domenica, per settimana di conferma), entrambi in PDF. Per i prodotti c'è l'interruttore **«I pezzi moltiplicano i mesi»** (acceso di default): acceso, 2 pezzi nella stessa riga d'ordine valgono il doppio dei mesi di durata cliente; spento, la durata resta quella del prodotto.
 
 ## Piano Incaricati e piano precedente
 - Nel **Piano Incaricati** i PV non esistono più: compensi e clienti si calcolano sugli importi in euro (IVA inclusa) degli ordini pagati, e **la qualifica vale appena raggiunta**. Chi è cliente lo decide l'admin in *Compensi → Piano compensi → Base di calcolo*.

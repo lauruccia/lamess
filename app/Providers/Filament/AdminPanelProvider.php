@@ -9,6 +9,7 @@ use App\Filament\Pages\AuditVerificationPage;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Pages\BackupPage;
+use App\Filament\Pages\CompensiMesePage;
 use App\Filament\Pages\ConsultantLevelsPage;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\FeaturesPage;
@@ -77,7 +78,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->font('Inter')
             // token grafici Lamèss: font Marcellus per i titoli, colori e tema scuro condivisi con il sito
-            ->renderHook(PanelsRenderHook::HEAD_END, fn () => new HtmlString('<link rel="stylesheet" href="'.e(asset('css/lamess-tokens.css')).'"><link rel="stylesheet" href="'.e(asset('css/lamess-admin.css')).'"><script src="'.e(asset('js/lamess-image-editor.js')).'?v=1" defer></script>'))
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => new HtmlString('<link rel="stylesheet" href="'.e(asset('css/lamess-tokens.css')).'"><link rel="stylesheet" href="'.e(asset('css/lamess-admin.css').'?v='.@filemtime(public_path('css/lamess-admin.css'))).'"><script src="'.e(asset('js/lamess-image-editor.js')).'?v=1" defer></script>'))
             ->renderHook(PanelsRenderHook::BODY_START, function () {
                 $me = auth()->user();
                 if (! Impersonation::active(request()) || ! $me) {
@@ -96,6 +97,7 @@ class AdminPanelProvider extends PanelProvider
                 NetworkTreePage::class,
                 IvdLetterPage::class,
                 RegolamentoPage::class,
+                CompensiMesePage::class,
                 ConsultantLevelsPage::class,
                 SystemSettingsPage::class,
                 ShopSettingsPage::class,

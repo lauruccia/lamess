@@ -23,6 +23,7 @@ use App\Http\Controllers\InstallController;
 use App\Http\Controllers\KMoneyController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\LetterSignatureController;
+use App\Http\Controllers\PersonalPageController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SupportController;
@@ -64,6 +65,8 @@ Route::get('/lettera-di-incarico', [LegalController::class, 'show'])->defaults('
 Route::get('/liberatoria-foto', [LegalController::class, 'show'])->defaults('page', 'liberatoria-foto');
 Route::redirect('/terms', '/termini', 301);
 Route::get('/r/{code}', [SiteController::class, 'referral'])->name('referral');
+Route::get('/i/{slug}', [PersonalPageController::class, 'show'])->where('slug', '[A-Za-z0-9-]+')->middleware('throttle:120,1')->name('personal-page');
+Route::get('/media/pagine/{page}/{file}', [PersonalPageController::class, 'photo'])->whereNumber('page')->where('file', '[A-Za-z0-9._-]+');
 Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware('throttle:30,1');
 
 Route::middleware('guest')->group(function () {
@@ -132,6 +135,10 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::get('/eventi', [ContentController::class, 'events']);
     Route::post('/eventi/{event}/iscrizione', [ContentController::class, 'register'])->middleware('throttle:20,1');
     Route::post('/eventi/{event}/annulla', [ContentController::class, 'unregister'])->middleware('throttle:20,1');
+    Route::get('/pagina', [PersonalPageController::class, 'edit']);
+    Route::get('/pagina/anteprima', [PersonalPageController::class, 'preview']);
+    Route::post('/pagina', [PersonalPageController::class, 'save'])->middleware('throttle:30,1');
+    Route::post('/pagina/online', [PersonalPageController::class, 'online'])->middleware('throttle:20,1');
     Route::get('/referral', [ContentController::class, 'referral']);
     Route::get('/referral/qr.svg', [ContentController::class, 'referralQr']);
     Route::post('/referral/inviti', [ContentController::class, 'inviteStore'])->middleware('throttle:20,1');

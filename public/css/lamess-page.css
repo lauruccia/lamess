@@ -1,0 +1,87 @@
+/* Pagina personale dell'incaricato (/i/{slug}) — usa i token di lamess-tokens.css. Chiara + inchiostro, come la home. */
+body.is-pp{background:#FCF6F3}
+main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--gold:#d9b27c;--line:#BBB4AF;--terra:#C2663A;--link:#894C2D;--muted:#6a615a}
+.pp .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.pp h1,.pp h2,.pp h3{font-family:var(--lm-font-display);font-weight:400;margin:0}
+.pp section{padding:84px 0}
+.pp .kicker{font-size:.78rem;letter-spacing:.28em;text-transform:uppercase;color:var(--link);margin:0 0 16px;font-weight:500}
+.pp .preview-bar{background:#b45309;color:#fff;text-align:center;padding:.6rem 1rem;font-size:.92rem}
+.pp .preview-bar a{color:#fff;font-weight:600}
+
+.pp .hero{background:radial-gradient(120% 120% at 80% 20%,#2a2119,#0d0a08 70%);color:#FCF6F3;padding:72px 0 80px}
+.pp .hero-in{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:56px;align-items:center}
+.pp .eyebrow{font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:14px}
+.pp .eyebrow::before{content:"";width:44px;height:1px;background:var(--gold)}
+.pp .hero h1{font-size:clamp(2.6rem,6vw,4.6rem);line-height:1.04;margin:20px 0 10px}
+.pp .hero .role{font-size:1.1rem;color:var(--gold);letter-spacing:.04em;margin:0 0 22px}
+.pp .hero .bio{font-size:1.1rem;font-weight:300;line-height:1.65;color:rgba(252,246,243,.9);max-width:34em;white-space:pre-line}
+.pp .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.pp .btn-p{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 28px;border-radius:999px;font:600 .95rem var(--lm-font-text);letter-spacing:.04em;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:filter .2s,transform .1s}
+.pp .btn-p:active{transform:scale(.98)}
+.pp .btn-p.gold{background:linear-gradient(135deg,#f0cf9f,#d49a5c);color:#1a100a}
+.pp .btn-p.gold:hover{filter:brightness(1.07)}
+.pp .btn-p.line{border-color:rgb(217 178 124/.7);color:#FCF6F3;background:rgb(252 246 243/.04)}
+.pp .btn-p.line:hover{background:var(--gold);color:#13110E}
+.pp .btn-p.dark{background:var(--ink);color:#FCF6F3}
+.pp .btn-p.dark:hover{background:#2A241E}
+.pp .photo{aspect-ratio:4/5;border-radius:200px 200px 24px 24px;overflow:hidden;background:#1d1814;border:1px solid rgb(217 178 124/.35);box-shadow:0 30px 70px -30px rgba(0,0,0,.8)}
+.pp .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.pp .photo.empty{display:grid;place-items:center;font:400 5rem var(--lm-font-display);color:var(--gold)}
+
+.pp .intro{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:end}
+.pp .intro h2{font-size:clamp(1.9rem,4vw,3rem);line-height:1.12}
+.pp .intro p{color:#3d3833;font-size:1.05rem;margin:0}
+.pp .pillars{display:grid;grid-template-columns:repeat(4,1fr);margin-top:56px;border-top:1px solid var(--line)}
+.pp .pillar{padding:28px 24px 6px;border-right:1px solid var(--line)}
+.pp .pillar:first-child{padding-left:0}.pp .pillar:last-child{border-right:0}
+.pp .pillar .n{font:400 .95rem var(--lm-font-display);color:var(--terra);letter-spacing:.2em}
+.pp .pillar h3{font-size:1.2rem;margin:10px 0 8px}
+.pp .pillar p{margin:0;color:#4d453e;font-size:.97rem}
+
+.pp .banner{background:#13110E;color:#FCF6F3;text-align:center}
+.pp .banner h2{font-size:clamp(1.8rem,4.5vw,3.2rem);text-transform:uppercase;letter-spacing:.08em}
+.pp .banner p{max-width:40em;margin:20px auto 0;font-weight:300;color:rgba(252,246,243,.85)}
+.pp .banner .cta-row{justify-content:center}
+
+.pp .story{max-width:44em}
+.pp .story h2{font-size:clamp(1.8rem,3.6vw,2.6rem);margin-bottom:22px}
+.pp .story p{white-space:pre-line;font-size:1.08rem;line-height:1.75;color:#3d3833;margin:0}
+
+.pp .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:34px}
+.pp .card{background:#fff;border:1px solid rgb(187 180 175/.5);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:10px}
+.pp .card .tag{align-self:flex-start;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--link);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.pp .card h3{font-size:1.2rem}
+.pp .card p{margin:0;color:#4d453e;font-size:.96rem;flex:1}
+.pp .card a{font-weight:600;color:var(--link)}
+
+.pp .contact{background:#fff;border-top:1px solid rgb(187 180 175/.45);border-bottom:1px solid rgb(187 180 175/.45)}
+.pp .contact-in{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:48px;align-items:center}
+.pp .contact h2{font-size:clamp(1.8rem,3.6vw,2.6rem)}
+.pp .contact p{color:#3d3833;max-width:34em}
+.pp .socials{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.pp .socials a{border:1px solid var(--line);border-radius:999px;padding:8px 16px;color:var(--ink);text-decoration:none;font-weight:500}
+.pp .socials a:hover{border-color:var(--terra);color:var(--link)}
+.pp .qr{text-align:center;font-size:.85rem;color:var(--muted)}
+.pp .qr svg{width:100%;height:auto;display:block;margin-bottom:8px}
+
+.pp .faq{max-width:50em}
+.pp .faq h2{font-size:clamp(1.8rem,3.6vw,2.6rem);margin-bottom:28px}
+.pp .faq details{border-top:1px solid var(--line);padding:18px 0}
+.pp .faq details:last-of-type{border-bottom:1px solid var(--line)}
+.pp .faq summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:16px}
+.pp .faq summary::after{content:"+";color:var(--terra);font-size:1.4rem;line-height:1}
+.pp .faq details[open] summary::after{content:"–"}
+.pp .faq details p{margin:12px 0 0;color:#4d453e}
+.pp .disclaimer{max-width:50em;margin-top:30px;font-size:.85rem;color:var(--muted)}
+
+@media(max-width:900px){
+ .pp section{padding:60px 0}
+ .pp .hero{padding:40px 0 56px}
+ .pp .hero-in,.pp .intro,.pp .contact-in{grid-template-columns:1fr;gap:32px}
+ .pp .photo{max-width:320px;margin:0 auto;order:-1}
+ .pp .pillars{grid-template-columns:1fr 1fr}
+ .pp .pillar{border-right:0;padding-left:0;border-bottom:1px solid var(--line);padding-bottom:22px}
+ .pp .cards{grid-template-columns:1fr}
+ .pp .contact-in .qr{max-width:200px}
+}
+@media(max-width:560px){.pp .pillars{grid-template-columns:1fr}.pp .btn-p{width:100%}}

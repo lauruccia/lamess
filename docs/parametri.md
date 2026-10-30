@@ -210,6 +210,8 @@ Sono quelle lette da `config/lamess.php`, `config/site.php` e `config/services.p
 | `LAMESS_REENROLLMENT_DAYS` | `180` | attesa prima di poter tornare incaricato dopo una cessazione (Reg. 2.10.b) | — | — |
 | `LAMESS_REFERRAL_COOKIE_DAYS` | `15` | durata del cookie del link referral | — | — |
 | `LAMESS_REFERRAL_INVITES_PER_DAY` | `50` | inviti che un incaricato può creare in 24 ore (0 = nessun limite) | — | — |
+| `LAMESS_PERSONAL_PAGES` | `true` | pagine personali pubbliche degli incaricati (`/i/nome`); pannello: Impostazioni → Rete | sì | sì |
+| `LAMESS_PERSONAL_PAGES_APPROVAL` | `true` | ogni modifica alla pagina personale va approvata dal Consorzio prima di andare online; pannello: Impostazioni → Rete | sì | sì |
 | `LAMESS_DEFAULT_CONSULTANT_CODE` | vuoto | codice dell'incaricato «casa» per i clienti senza referral (OPEN-20) | — | — |
 | `LAMESS_REQUIRE_FIRST_BOX` | `false` | la richiesta di diventare incaricato richiede il primo ordine pagato | — | — |
 | `LAMESS_CODE_PREFIX` | `LM` | prefisso del codice incaricato (poi 5 cifre) | — | — |

@@ -131,6 +131,9 @@ final class PageHelp
             'DownloadResource' => ['scopo' => 'Materiali scaricabili dagli utenti, con regole su chi può vederli.',
                 'colonne' => ['Per' => 'Destinatari.', 'Qualifica min.' => 'Qualifica richiesta.', 'Filigrana' => 'Se il file viene marchiato con il nome di chi lo scarica.']],
             'DownloadLogResource' => ['scopo' => 'Registro di chi ha scaricato cosa e quando.'],
+            'ConsultantPageResource' => ['scopo' => 'Pagine personali pubbliche degli incaricati: approva le modifiche, nascondi una pagina o correggi un testo.',
+                'colonne' => ['Revisione' => 'Se ci sono modifiche in attesa di approvazione.', 'Online' => 'Se la pagina è visibile al pubblico adesso.'],
+                'azioni' => ['Approva' => 'Mette online le modifiche proposte.', 'Non approvare' => 'Le respinge con una motivazione.', 'Nascondi' => 'Toglie la pagina dal pubblico.', 'Modifica testi' => 'Corregge i testi al posto dell\'incaricato.']],
             'PromoMaterialResource' => ['scopo' => 'Materiali promozionali proposti dagli incaricati, da controllare prima che siano usati.',
                 'azioni' => ['Approva' => 'Autorizza l\'uso del materiale.', 'Non approvare' => 'Lo respinge con motivazione.']],
 

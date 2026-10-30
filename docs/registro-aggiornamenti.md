@@ -23,6 +23,55 @@
 ## 2026-10-30 — Etichette di spedizione con email e telefono
 - Sull'etichetta, sotto l'indirizzo, ora compaiono **telefono** (della consegna, altrimenti del profilo del cliente) ed **email** del cliente. Formato invariato (8 per foglio A4). Nessuna migrazione. Test: `ShippingLabelsTest`.
 
+## 2026-10-28 — Pagina personale dell'incaricato (`/i/nome`)
+- Nuovo: ogni incaricato attivo ha una **pagina pubblica personale** sul modello della pagina «brand partner» (hero con nome, qualifica e foto, presentazione, il prodotto, banner *Stop Time*, «La mia storia», video e articoli consigliati, contatti con WhatsApp ed email, social, QR di registrazione, FAQ e avvertenze). Indirizzo `https://lamèss.it/i/{slug}`; lo slug nasce dal nome e l'incaricato lo può cambiare.
+- **Chi modifica cosa**: l'incaricato modifica da *Area → La mia pagina* (nome da mostrare, qualifica, presentazione, foto, storia, WhatsApp, email, 4 social, fino a 3 contenuti consigliati, indirizzo) con **Anteprima**, «Metti online» e «Togli dal pubblico» (con conferma). Le parti comuni (descrizione del prodotto, 4 punti di forza, banner, FAQ, avvertenze) sono del Consorzio e stanno in `config/personal-page.php`: uguali per tutti, non modificabili dall'incaricato.
+- **Approvazione** (impostazione *Le pagine personali vanno approvate dal Consorzio*, accesa di default, `LAMESS_PERSONAL_PAGES_APPROVAL`): ogni salvataggio va in `proposal` e il pubblico continua a vedere la versione precedente; la pagina non è online finché non c'è una prima approvazione. Spenta: le modifiche vanno online subito.
+- **Back-office**: *Assistenza → Pagine personali* (`ConsultantPageResource`, permessi `compliance.view`/`compliance.manage`, nascondibile da *Funzionalità e viste*): **Approva**, **Non approvare** (con motivo, lo legge l'incaricato), **Modifica testi** (vanno online subito), **Nascondi** / **Riattiva**. Badge col numero di pagine da approvare.
+- Interruttore generale *Pagine personali degli incaricati* in Impostazioni di sistema → Rete (`LAMESS_PERSONAL_PAGES`): spento, le pagine non si aprono e la voce sparisce dall'area; i contenuti restano.
+- **Chi non vede la pagina**: incaricati non attivi (cessati, in attesa), account sospesi o bannati, pagine nascoste dal Consorzio o non approvate. La foto si serve da `/media/pagine/{id}/{file}`: pubblica solo se la pagina è online, altrimenti solo per il proprietario e per chi ha `compliance.view`. Testi sempre escapati; link solo http/https; i link esterni hanno `nofollow`.
+- Il pulsante «Registrati con me» porta a `/r/{codice}`: stesso tracciamento del link referral (cookie, 15 giorni). Contatore di visite sulla pagina. Audit: `page.submitted`, `page.updated`, `page.approved`, `page.rejected`, `page.blocked`, `page.unblocked`, `page.online`, `page.offline`, `page.slug_changed`.
+- Migrazione `2026_11_16_100000_consultant_pages` (tabella nuova). Sul sito live (senza terminale) esegui **prima del deploy**, in phpMyAdmin → scheda SQL sul database `lamess_portale`:
+  ```sql
+  CREATE TABLE IF NOT EXISTS consultant_pages (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    consultant_id BIGINT UNSIGNED NOT NULL,
+    slug VARCHAR(60) NOT NULL,
+    display_name VARCHAR(120) NULL,
+    headline VARCHAR(160) NULL,
+    bio TEXT NULL,
+    story TEXT NULL,
+    photo_path VARCHAR(255) NULL,
+    whatsapp VARCHAR(30) NULL,
+    email_public VARCHAR(190) NULL,
+    instagram VARCHAR(300) NULL,
+    facebook VARCHAR(300) NULL,
+    tiktok VARCHAR(300) NULL,
+    linkedin VARCHAR(300) NULL,
+    media LONGTEXT NULL,
+    proposal LONGTEXT NULL,
+    review VARCHAR(12) NOT NULL DEFAULT 'none',
+    review_note TEXT NULL,
+    enabled TINYINT(1) NOT NULL DEFAULT 0,
+    blocked TINYINT(1) NOT NULL DEFAULT 0,
+    blocked_note TEXT NULL,
+    approved_at TIMESTAMP NULL,
+    decided_at TIMESTAMP NULL,
+    views INT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY consultant_pages_consultant_id_unique (consultant_id),
+    UNIQUE KEY consultant_pages_slug_unique (slug),
+    KEY consultant_pages_enabled_blocked_index (enabled, blocked),
+    CONSTRAINT consultant_pages_consultant_id_foreign FOREIGN KEY (consultant_id) REFERENCES consultants (id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_16_100000_consultant_pages', MAX(batch) + 1 FROM migrations;
+  ```
+- Dopo il deploy, per l'**immagine** non serve altro (le foto stanno in `storage/app/private/pages`, come gli altri file riservati). Se la tabella manca, «La mia pagina» dà errore: crearla prima del deploy.
+- Test: `PersonalPageTest`.
+
 ## 2026-10-28 — Ruoli e permessi in dettaglio
 - Corretto: «Agenti regalati» (Compensi) non compariva tra le «Voci di menu visibili» di un utente perché mancava nel `FeatureRegistry`. Ora c'è (`backoffice.resource.rank_helps`) e un test verifica che ogni risorsa del back-office abbia la sua voce.
 - Nuovo: pagina **Sistema → Ruoli e permessi** (solo super_admin, slug `ruoli-permessi`, `RolesPermissionsPage`). Tre viste: **Matrice dei permessi** (ogni permesso per area, con cosa sblocca, se è sensibile e quali profili lo includono), **Profili** (preimpostati e personalizzati) e **Accessi degli utenti** (per ogni admin: profilo corrispondente, numero di permessi e di sensibili, voci di menu visibili su totali, 2FA, avvisi; il «Dettaglio» elenca permessi per area e menu visibile/nascosto). Esportazioni CSV della matrice e degli accessi (`;`, UTF-8 con BOM, celle protette dalle formule); pulsante **Sincronizza permessi**.

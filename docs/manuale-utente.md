@@ -151,6 +151,16 @@ Se è attiva, nell'onboarding trovi **Verifica ora**: fotografi il documento e f
 - **Eventi e corsi** (*Area → Eventi*): iscriviti o annulla; se i posti sono finiti entri in **lista d'attesa** e sali se qualcuno annulla.
 - **Referral** (*Area → Referral*, solo incaricati): il tuo link personale, il **QR code** da stampare o condividere e i pulsanti per inviarlo via WhatsApp o email.
 
+## La mia pagina personale (incaricati)
+Ogni incaricato attivo ha una pagina pubblica da condividere con chi vuoi presentare il prodotto: `lamèss.it/i/il-tuo-nome`. Chi si registra da lì entra nella tua struttura, come dal link referral.
+- **Dove**: *Area → La mia pagina*. Compili nome da mostrare, qualifica, presentazione breve, foto, «La mia storia» (facoltativa), WhatsApp ed email (solo se vuoi mostrarli), fino a 4 social e fino a 3 video o articoli consigliati (titolo + link). I campi vuoti non compaiono.
+- **Anteprima**: il pulsante in alto mostra la pagina com'è adesso, comprese le modifiche non ancora approvate.
+- **Approvazione**: di solito il Consorzio controlla ogni modifica. Dopo «Salva e invia al Consorzio» il pubblico continua a vedere la versione precedente (o niente, se la pagina non è mai stata approvata) finché non arriva l'approvazione; se viene respinta leggi il motivo nella pagina, correggi e salvi di nuovo.
+- **Mettere online / togliere**: «Metti online la pagina» la rende visibile appena è approvata; «Togli dal pubblico» (con conferma) la nasconde subito. Il Consorzio può nasconderla se i contenuti non sono conformi.
+- **Indirizzo**: lo scegli tu (minuscole, numeri, trattini). Se lo cambi, i vecchi link smettono di funzionare.
+- **Cosa non scrivere**: promesse di risultato o indicazioni sanitarie; il prodotto non è un medicinale. Descrizione del prodotto, FAQ e avvertenze sono del Consorzio e uguali per tutti.
+- La pagina non è visibile se non sei più incaricato attivo o se il tuo account è sospeso.
+
 ## Conformità e materiali promozionali
 Prima di usare materiali promozionali tuoi (volantini, post, video) **proponili al Consorzio** da *Area → Conformità*: descrizione e file. Solo i materiali **approvati** (con codice `MA-AAAA-nnnn`) si possono usare; puoi ritirarli quando vuoi. Per segnalare comportamenti scorretti di altri usa Assistenza → «Segnalazione».
 

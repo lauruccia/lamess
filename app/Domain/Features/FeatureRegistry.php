@@ -81,7 +81,7 @@ final class FeatureRegistry
             'products' => ['Prodotti', 'Vendite'], 'product_categories' => ['Categorie', 'Vendite'], 'discounts' => ['Sconti', 'Vendite'],
             'bundle_rules' => ['Bundle e omaggi', 'Vendite'], 'shipping_rates' => ['Tariffe di spedizione', 'Vendite'], 'subscriptions' => ['Abbonamenti', 'Vendite'],
             'tickets' => ['Ticket e reclami', 'Assistenza'], 'compliance_cases' => ['Casi di conformità', 'Assistenza'], 'sanctions' => ['Sanzioni', 'Assistenza'],
-            'promo_materials' => ['Materiali da approvare', 'Assistenza'], 'corporate_events' => ['Eventi e corsi', 'Assistenza'], 'downloads' => ['Materiali scaricabili', 'Assistenza'],
+            'promo_materials' => ['Materiali da approvare', 'Assistenza'], 'consultant_pages' => ['Pagine personali', 'Assistenza'], 'corporate_events' => ['Eventi e corsi', 'Assistenza'], 'downloads' => ['Materiali scaricabili', 'Assistenza'],
             'download_logs' => ['Registro download', 'Assistenza'], 'news_posts' => ['Novità', 'Assistenza'],
             'import_reconciliations' => ['Riconciliazioni import', 'Sistema'],
         ];

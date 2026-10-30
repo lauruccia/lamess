@@ -1,5 +1,9 @@
 # Registro aggiornamenti
 
+## 2026-10-30 — Checkout da telefono: campi affiancati
+- Passo 1 (Fatturazione): **codice fiscale e telefono sulla stessa riga**, come nome/cognome, città/CAP e provincia/nazione (la partita IVA delle aziende va su una riga sua). Sotto i 400 px il carattere dei due campi si riduce un poco perché i 16 caratteri del codice fiscale ci stiano; sotto i 340 px vanno uno sotto l'altro.
+- Da telefono: campi alti 46 px con carattere da 16 px (il telefono non ingrandisce la pagina quando si tocca un campo), pulsanti «Salva i dati» e «Avanti» a tutta larghezza, margini ridotti. Il codice fiscale si scrive in maiuscolo da solo, senza correzione automatica. Solo grafica: nessuna migrazione.
+
 ## 2026-10-30 — Checkout: codice fiscale e telefono obbligatori
 - Per confermare un ordine o un abbonamento servono **codice fiscale** (per chi è in Italia, ora anche le aziende) e **telefono** (per tutti). Prima il telefono non era richiesto e il codice fiscale solo ai privati.
 - Il telefono è un nuovo campo del passo 1 (Fatturazione), si salva col profilo («Salva i dati») e finisce anche nei dati di fatturazione dell'ordine. Chi ha già il profilo senza telefono, al prossimo checkout deve inserirlo e salvare; il checkout non va avanti finché manca. Gli ordini creati a mano dall'admin e i rinnovi degli abbonamenti non cambiano.

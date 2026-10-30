@@ -839,3 +839,25 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 .co-review{display:grid;grid-template-columns:130px 1fr;gap:8px 16px;margin:10px 0 4px}
 .co-review dt{font-weight:600}.co-review dd{margin:0}
 @media (max-width:640px){.co-review{grid-template-columns:1fr}.co-progress li{flex-basis:100%}}
+
+/* Checkout da telefono: coppie di campi sulla stessa riga (nome/cognome, codice fiscale/telefono, città/CAP, provincia/nazione) */
+.co-form .row.pair{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:0 12px}
+.co-form .row.pair-cap{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.co-form .row.pair-prov{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}
+.co-form .row.pair>div{min-width:0}
+.co-form input[name=tax_code]{text-transform:uppercase}
+@media (max-width:640px){
+ /* 16px: iOS non ingrandisce la pagina quando si tocca un campo; altezza comoda per il dito */
+ .co-form input,.co-form select{font-size:16px;min-height:46px;padding:10px 12px}
+ .co-form label{font-size:14px}
+ .co-form .row.pair{gap:0 10px}
+ .co-form .billing-save{flex-direction:column;align-items:stretch}
+ .co-form .billing-save .btn,.co-nav .btn{width:100%;min-height:48px;margin-left:0}
+ .co-nav{flex-direction:column-reverse;align-items:stretch}
+ .co-form .card{padding:16px}
+ .co-progress{gap:6px}.co-progress a,.co-progress .lbl{padding:8px 10px;font-size:14px}
+}
+/* Codice fiscale (16 caratteri) e telefono restano sulla stessa riga anche da telefono: il carattere dei due campi si riduce un po'; solo sotto i 340px vanno uno sotto l'altro */
+@media (max-width:640px){.co-form .row.pair-fiscal{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0 8px}.co-form .row.pair-fiscal input{font-size:15px;padding-left:9px;padding-right:9px}}
+@media (max-width:400px){.co-form .row.pair-fiscal input{font-size:14px;padding-left:8px;padding-right:8px;letter-spacing:-.01em}}
+@media (max-width:339px){.co-form .row.pair-fiscal{grid-template-columns:minmax(0,1fr)}}

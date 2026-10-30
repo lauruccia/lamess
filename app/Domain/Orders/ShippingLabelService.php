@@ -28,7 +28,7 @@ final class ShippingLabelService
     /**
      * I dati di una etichetta: destinatario (indirizzo di consegna, altrimenti fatturazione), mittente, colli.
      *
-     * @return array{number:string,name:string,lines:list<string>,phone:?string,items:list<string>,pieces:int,sender:string}
+     * @return array{number:string,name:string,lines:list<string>,phone:?string,email:?string,items:list<string>,pieces:int,sender:string}
      */
     public function label(Order $order): array
     {
@@ -39,14 +39,16 @@ final class ShippingLabelService
         $country = (string) ($billing['country_code'] ?? 'IT');
         $city = trim(($address['zip'] ?? '').' '.($address['city'] ?? '').(filled($address['province'] ?? null) ? ' ('.$address['province'].')' : ''));
         $lines = array_values(array_filter([(string) ($address['address'] ?? ''), $city, $country !== 'IT' ? $country : null]));
-        $order->loadMissing('items');
+        $order->loadMissing('items', 'buyer.profile');
         $company = config('lamess.company');
 
         return [
             'number' => (string) $order->number,
             'name' => $name,
             'lines' => $lines,
-            'phone' => $ship['phone'] ?? null,
+            // Telefono: quello della consegna, altrimenti quello del profilo dell'acquirente. Email: quella dell'ordine, altrimenti dell'acquirente.
+            'phone' => (filled($ship['phone'] ?? null) ? $ship['phone'] : null) ?? (filled($order->buyer?->profile?->phone) ? $order->buyer->profile->phone : null),
+            'email' => filled($billing['email'] ?? null) ? $billing['email'] : (filled($order->buyer?->email) ? $order->buyer->email : null),
             'items' => $order->items->map(fn ($i) => $i->qty.' × '.$i->name)->all(),
             'pieces' => (int) $order->items->sum('qty'),
             'sender' => trim($company['name'].' — '.$company['address']),

@@ -37,11 +37,22 @@ final class ShippingLabelsTest extends TestCase
         $this->assertSame('Anna Verdi', $label['name']);
         $this->assertContains('53100 Siena (SI)', $label['lines']);
         $this->assertSame(2, $label['pieces']);
+        $this->assertSame('333 1234567', $label['phone']);
+        $this->assertSame($o->buyer->email, $label['email']);
 
         $o->update(['billing' => ['name' => 'Mario Rossi', 'address' => 'Via Roma 1', 'city' => 'Arezzo', 'zip' => '52100']]);
         $label = app(ShippingLabelService::class)->label($o->refresh());
         $this->assertSame('Mario Rossi', $label['name']);
         $this->assertContains('Via Roma 1', $label['lines']);
+        $this->assertSame($o->buyer->email, $label['email']);
+    }
+
+    public function test_label_phone_falls_back_to_the_buyer_profile(): void
+    {
+        $o = $this->order('ORD-L8');
+        $o->update(['billing' => ['name' => 'Mario Rossi', 'address' => 'Via Roma 1', 'city' => 'Arezzo', 'zip' => '52100']]);
+        \App\Models\Profile::create(['user_id' => $o->buyer_user_id, 'type' => 'private', 'phone' => '320 7654321']);
+        $this->assertSame('320 7654321', app(ShippingLabelService::class)->label($o->refresh())['phone']);
     }
 
     public function test_admin_prints_bulk_sheet_and_unpaid_orders_are_skipped(): void

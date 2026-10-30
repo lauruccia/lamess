@@ -1,5 +1,8 @@
 # Registro aggiornamenti
 
+## 2026-10-30 — Etichette di spedizione con email e telefono
+- Sull'etichetta, sotto l'indirizzo, ora compaiono **telefono** (della consegna, altrimenti del profilo del cliente) ed **email** del cliente. Formato invariato (8 per foglio A4). Nessuna migrazione. Test: `ShippingLabelsTest`.
+
 ## 2026-10-28 — Ruoli e permessi in dettaglio
 - Corretto: «Agenti regalati» (Compensi) non compariva tra le «Voci di menu visibili» di un utente perché mancava nel `FeatureRegistry`. Ora c'è (`backoffice.resource.rank_helps`) e un test verifica che ogni risorsa del back-office abbia la sua voce.
 - Nuovo: pagina **Sistema → Ruoli e permessi** (solo super_admin, slug `ruoli-permessi`, `RolesPermissionsPage`). Tre viste: **Matrice dei permessi** (ogni permesso per area, con cosa sblocca, se è sensibile e quali profili lo includono), **Profili** (preimpostati e personalizzati) e **Accessi degli utenti** (per ogni admin: profilo corrispondente, numero di permessi e di sensibili, voci di menu visibili su totali, 2FA, avvisi; il «Dettaglio» elenca permessi per area e menu visibile/nascosto). Esportazioni CSV della matrice e degli accessi (`;`, UTF-8 con BOM, celle protette dalle formule); pulsante **Sincronizza permessi**.

@@ -23,7 +23,7 @@
     <div>Destinatario</div>
     <div class="to">{{ $l['name'] }}</div>
     <div class="addr">@foreach($l['lines'] as $line){{ $line }}<br>@endforeach</div>
-    @if($l['phone'])<div class="meta">Tel. {{ $l['phone'] }}</div>@endif
+    @if($l['phone'] || $l['email'])<div class="meta">@if($l['phone'])Tel. {{ $l['phone'] }}@endif @if($l['phone'] && $l['email']) · @endif @if($l['email']){{ $l['email'] }}@endif</div>@endif
     <div class="meta"><span class="num">Ordine {{ $l['number'] }}</span> · {{ $l['pieces'] }} {{ $l['pieces'] === 1 ? 'pezzo' : 'pezzi' }}
      @if($perPage === 1)<br>{{ implode(' · ', $l['items']) }}@endif</div>
    </div></td>

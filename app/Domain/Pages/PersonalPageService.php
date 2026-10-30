@@ -35,7 +35,7 @@ final class PersonalPageService
 
     public function enabled(): bool
     {
-        return (bool) config('lamess.personal_pages.enabled');
+        return (bool) config('lamess.personal_pages.enabled') && \App\Domain\Features\Feature::enabled('area.personal_page');
     }
 
     public function approvalRequired(): bool

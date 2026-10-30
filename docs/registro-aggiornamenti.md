@@ -1,5 +1,8 @@
 # Registro aggiornamenti
 
+## 2026-10-30 — Pagine personali: interruttore in «Funzionalità e viste»
+- Nuova voce **Pagine personali degli incaricati** (`area.personal_page`) in *Sistema → Funzionalità e viste*: spenta, sparisce il link «La mia pagina» dall'area dell'incaricato (anche per il super admin) e le pagine `/area/pagina` e `/i/nome` non si aprono. I contenuti restano. Prima la voce «Elenco Pagine personali» spegneva solo l'elenco del back-office, non il link dell'area. Vale insieme all'interruttore in Impostazioni di sistema → Rete (`LAMESS_PERSONAL_PAGES`). Nessuna migrazione.
+
 ## 2026-10-30 — Checkout: codice fiscale solo per l'Italia (campo in pagina)
 - Il campo **Codice fiscale** del passo 1 (Fatturazione) è obbligatorio (asterisco e `required`) **solo se la nazione è Italia**; per le altre nazioni è facoltativo e l'etichetta dice «(solo per l'Italia)». Il controllo del server era già così: il modulo in pagina però lo imponeva a tutti, e un cliente estero non riusciva a salvare i dati.
 - Nel checkout la **Nazione** di fatturazione resta modificabile anche con i dati già salvati (prima era bloccata): cambiandola si aggiorna il profilo e si ricalcolano spedizione e prodotti; gli altri dati restano bloccati. Senza una scelta nel checkout vale la nazione del profilo, non più sempre l'Italia.

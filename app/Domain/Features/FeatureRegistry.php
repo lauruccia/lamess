@@ -34,6 +34,8 @@ final class FeatureRegistry
         $bo = self::GROUP_BACKOFFICE;
 
         $defs = [
+            // ---- Area dell'incaricato: pagina personale (spenta, sparisce il link «La mia pagina» e le pagine /i/nome non si aprono)
+            'area.personal_page' => ['type' => 'module', 'group' => 'Area incaricato e sito', 'label' => 'Pagine personali degli incaricati', 'help' => 'Il link «La mia pagina» nell\'area dell\'incaricato e le pagine pubbliche /i/nome. I contenuti restano.', 'bypass' => false],
             // ---- Scheda incaricato: tab
             'consultant360.tab.overview' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Riepilogo e carriera»', 'help' => 'Avanzamento di carriera, cosa manca per il livello successivo, attività del mese.'],
             'consultant360.tab.profile' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Anagrafica e contratto»', 'help' => 'Dati personali, sponsor, contratto IVD, canone annuale, onboarding.'],

@@ -94,6 +94,51 @@ final class CheckoutBillingLockTest extends TestCase
         $this->assertSame($saved->last_name, $user->profile->refresh()->last_name);
     }
 
+    public function test_foreign_customer_can_save_billing_and_checkout_without_a_tax_code(): void
+    {
+        config(['lamess.shop_countries' => ['IT', 'NL']]);
+        \App\Models\ShippingRate::create(['country_code' => 'NL', 'amount_net' => '15.00', 'vat_rate' => '22.00']);
+        $user = $this->buyer($this->activeSponsor());
+        Profile::where('user_id', $user->id)->update(['address' => null, 'city' => null, 'zip' => null, 'tax_code' => null, 'country_code' => 'NL']);
+        $p = $this->product('A', '100.00');
+        $nl = ['country' => 'NL', 'tax_code' => '', 'zip' => '1012 AB', 'city' => 'Amsterdam', 'address' => 'Damrak 1', 'province' => ''];
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1], 'checkout_country' => 'NL'])->post('/area/checkout/dati', $this->form($nl))
+            ->assertRedirect('/area/checkout/spedizione')->assertSessionHasNoErrors();
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1], 'checkout_country' => 'NL'])->post('/area/checkout', $this->form($nl))
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame('NL', Order::firstOrFail()->country_code);
+    }
+
+    public function test_italian_checkout_marks_the_tax_code_as_required_and_foreign_does_not(): void
+    {
+        config(['lamess.shop_countries' => ['IT', 'NL']]);
+        $user = $this->buyer($this->activeSponsor());
+        Profile::where('user_id', $user->id)->update(['address' => null, 'city' => null, 'zip' => null, 'tax_code' => null]);
+        $p = $this->product('A', '100.00');
+
+        $it = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/<input[^>]*required[^>]*name="tax_code"/', $it);
+        $nl = $this->actingAs($user)->withSession(['cart' => [$p->id => 1], 'checkout_country' => 'NL'])->get('/area/checkout')->assertOk()->getContent();
+        $this->assertDoesNotMatchRegularExpression('/<input[^>]*required[^>]*name="tax_code"/', $nl);
+    }
+
+    public function test_the_country_of_the_locked_billing_address_can_be_changed_from_the_checkout(): void
+    {
+        config(['lamess.shop_countries' => ['IT', 'NL']]);
+        \App\Models\ShippingRate::create(['country_code' => 'NL', 'amount_net' => '15.00', 'vat_rate' => '22.00']);
+        $user = $this->buyer($this->activeSponsor());
+        $p = $this->product('A', '100.00');
+        $this->assertSame('IT', $user->profile->country_code ?: 'IT');
+
+        $html = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout')->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/<select name="country"[^>]*data-country-reload/', $html);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout/nazione', ['country' => 'NL', 'ship_to' => 'billing'])
+            ->assertSessionHas('checkout_country', 'NL');
+        $this->assertSame('NL', $user->profile->refresh()->country_code);
+    }
+
     public function test_incomplete_data_must_be_saved_before_the_order(): void
     {
         $user = $this->buyer($this->activeSponsor());

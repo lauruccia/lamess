@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-10-30 — Checkout: codice fiscale solo per l'Italia (campo in pagina)
+- Il campo **Codice fiscale** del passo 1 (Fatturazione) è obbligatorio (asterisco e `required`) **solo se la nazione è Italia**; per le altre nazioni è facoltativo e l'etichetta dice «(solo per l'Italia)». Il controllo del server era già così: il modulo in pagina però lo imponeva a tutti, e un cliente estero non riusciva a salvare i dati.
+- Nel checkout la **Nazione** di fatturazione resta modificabile anche con i dati già salvati (prima era bloccata): cambiandola si aggiorna il profilo e si ricalcolano spedizione e prodotti; gli altri dati restano bloccati. Senza una scelta nel checkout vale la nazione del profilo, non più sempre l'Italia.
+- Una nazione vale solo se è tra i **mercati aperti** (`LAMESS_SHOP_COUNTRIES` nel `.env`, es. `IT,NL`): per le altre il checkout tratta il cliente come italiano. Il telefono resta obbligatorio per tutti. Nessuna migrazione. Test: `CheckoutBillingLockTest` (due nuovi).
+
 ## 2026-10-30 — Bonus di Struttura: dati fino alla domenica precedente
 - Il calcolo settimanale usa solo i dati **fino alla fine dell'ultima domenica già trascorsa** (23:59:59, ora di Roma): un calcolo di lunedì o di mercoledì considera i dati fino a domenica sera, uno di domenica quelli fino alla domenica prima. Gli ordini registrati dopo entrano nel calcolo della settimana successiva.
 - Nuova impostazione *Bonus di Struttura (settimanale) → Dati considerati fino a* (`lamess.structure_bonus_cutoff_weekday`, default 7 = domenica; 0 = nessun taglio). Vale anche per **Calcola ora**; la pagina mostra la data del taglio. La chiusura del mese aggiorna il registro con tutti i dati del mese. I bonus già confermati non cambiano.

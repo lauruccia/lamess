@@ -46,7 +46,7 @@ class ShopController extends Controller
     /** Nazione di spedizione scelta nel checkout (in sessione): decide tariffa e prodotti vendibili. Senza scelta o se non aperta: Italia. */
     private function country(Request $r): string
     {
-        $c = strtoupper((string) $r->session()->get('checkout_country', self::COUNTRY));
+        $c = strtoupper((string) $r->session()->get('checkout_country', $r->user()?->profile?->country_code ?: self::COUNTRY));
 
         return in_array($c, (array) config('lamess.shop_countries'), true) ? $c : self::COUNTRY;
     }
@@ -721,7 +721,13 @@ class ShopController extends Controller
         } else {
             $c = $to === 'new' ? ($all['ship_country'] ?? null) : ($all['country'] ?? null);
         }
-        $r->session()->put('checkout_country', app(ShippingAddressBook::class)->country($c));
+        $country = app(ShippingAddressBook::class)->country($c);
+        // La nazione di fatturazione è l'unico dato bloccato che si cambia dal checkout (es. cliente dai Paesi Bassi registrata come Italia): si salva nel profilo.
+        $profile = $r->user()->profile;
+        if ($to === 'billing' && $profile !== null && BillingData::addressLocked($profile) && filled($all['country'] ?? null) && $country === strtoupper((string) $all['country']) && $country !== ($profile->country_code ?: 'IT')) {
+            $profile->update(['country_code' => $country]);
+        }
+        $r->session()->put('checkout_country', $country);
         $step = (int) $r->input('_step', 1);
 
         return redirect((self::STEPS[$step] ?? self::STEPS[1])[0]);

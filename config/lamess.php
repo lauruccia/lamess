@@ -11,6 +11,8 @@ return [
     'referral_cookie_name' => 'lm_ref',
     'referral_cookie_days' => (int) env('LAMESS_REFERRAL_COOKIE_DAYS', 15),
     'referral_invite_cookie_name' => 'lm_inv',
+    // pagine personali pubbliche degli incaricati (/i/{slug}); con «approval» ogni modifica passa dal Consorzio prima di andare online
+    'personal_pages' => ['enabled' => (bool) env('LAMESS_PERSONAL_PAGES', true), 'approval' => (bool) env('LAMESS_PERSONAL_PAGES_APPROVAL', true)],
     // massimo di inviti che un incaricato può creare in 24 ore (0 = nessun limite)
     'referral_invites_per_day' => (int) env('LAMESS_REFERRAL_INVITES_PER_DAY', 50),
     // OPEN-20: incaricato "casa" per i FAN senza referral (codice attività); null = nessuno
@@ -180,6 +182,8 @@ return [
     'structure_bonus_auto' => false,
     'structure_bonus_weekday' => 1,
     'structure_bonus_hour' => 6,
+    // Taglio dei dati del Bonus di Struttura: giorno ISO (1-7) fino a cui si considerano i dati (a fine giornata); 0 = nessun taglio
+    'structure_bonus_cutoff_weekday' => 7,
     // Interruttore «nascondi il vecchio piano di marketing» (PV/PR): nasconde senza cancellare. Modificabile da pannello.
     'legacy_plan_hidden' => (bool) env('LAMESS_LEGACY_PLAN_HIDDEN', true),
     // Bonifici SEPA (pain.001): conto dell'azienda da cui partono i pagamenti agli incaricati

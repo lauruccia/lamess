@@ -46,6 +46,7 @@ final class StructureBonusTest extends TestCase
 
     private function network(string $mode = 'monthly_auto'): void
     {
+        config(['lamess.structure_bonus_cutoff_weekday' => 0]); // i test creano ordini «adesso»: il taglio settimanale ha i suoi test
         $data = json_decode((string) file_get_contents(base_path('config/lamess/'.PlanLoader::INCARICATI_FILE)), true);
         $data['policies'] = ['activity_month_rule' => 'current_or_previous', 'kosmos_rank_maintenance' => 'none'];
         $data['settings']['payout_mode'] = $mode;
@@ -80,6 +81,31 @@ final class StructureBonusTest extends TestCase
 
         $run = app(PeriodService::class)->calculate($this->period);
         $this->assertSame(0, CommissionLine::where('run_id', $run->id)->where('bonus_type', 'structure')->count());
+    }
+
+    public function test_cutoff_is_the_end_of_the_last_elapsed_cutoff_day(): void
+    {
+        config(['lamess.structure_bonus_cutoff_weekday' => 7]);
+        $fmt = static fn (?CarbonImmutable $d) => $d?->format('Y-m-d H:i:s');
+        $this->assertSame('2026-11-01 23:59:59', $fmt(StructureBonusService::cutoff(CarbonImmutable::parse('2026-11-04 09:00', 'Europe/Rome'))), 'mercoledì: dati fino a domenica');
+        $this->assertSame('2026-11-01 23:59:59', $fmt(StructureBonusService::cutoff(CarbonImmutable::parse('2026-11-02 00:10', 'Europe/Rome'))), 'lunedì: domenica appena finita');
+        $this->assertSame('2026-11-01 23:59:59', $fmt(StructureBonusService::cutoff(CarbonImmutable::parse('2026-11-08 06:00', 'Europe/Rome'))), 'domenica: la domenica prima');
+        config(['lamess.structure_bonus_cutoff_weekday' => 0]);
+        $this->assertNull(StructureBonusService::cutoff(CarbonImmutable::parse('2026-11-04 09:00', 'Europe/Rome')), 'taglio spento');
+    }
+
+    public function test_calculation_uses_only_data_up_to_the_weekly_cutoff(): void
+    {
+        $this->network();
+        config(['lamess.structure_bonus_cutoff_weekday' => 7]);
+        $svc = app(StructureBonusService::class);
+
+        $this->assertSame(0, $svc->syncOpenPeriods()['new'], 'gli ordini di oggi sono dopo la domenica scorsa: non contano ancora');
+        $this->assertSame(0, StructureBonus::count());
+
+        $this->travelTo(CarbonImmutable::now('Europe/Rome')->next(CarbonImmutable::WEDNESDAY)->setTime(9, 0));
+        $this->assertSame(1, $svc->syncOpenPeriods()['new'], 'mercoledì successivo: gli ordini sono entro la domenica');
+        $this->assertSame('60.00', (string) StructureBonus::firstOrFail()->amount);
     }
 
     public function test_confirmation_records_who_and_when_and_a_bonus_is_paid_only_once(): void

@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Bonus di Struttura del piano Incaricati: fuori dal calcolo mensile.
  *
- * Ogni settimana (giorno e ora scelti dall'admin) i bonus maturati vengono calcolati e scritti nel registro. Un bonus
+ * Ogni settimana (giorno e ora scelti dall'admin) i bonus maturati vengono calcolati e scritti nel registro, con i dati fino al
+ * taglio settimanale (di default la domenica precedente a mezzanotte). Un bonus
  * ha una chiave unica: finché è «calcolato» si aggiorna a ogni calcolo, dopo la conferma dell'admin (con chi e quando)
  * non cambia più e si paga una sola volta. Alla chiusura del mese il registro viene aggiornato un'ultima volta,
  * così nessun bonus maturato negli ultimi giorni si perde.
@@ -30,20 +31,40 @@ final class StructureBonusService
 {
     public const CACHE_KEY = 'lamess.structure_bonus.last';
 
-    /** Calcola e registra i bonus dei mesi non ancora chiusi. @return array{new:int, updated:int} */
-    public function syncOpenPeriods(): array
+    /**
+     * Fine dei dati con cui si calcola il bonus: la fine (23:59:59) dell'ultimo giorno «di taglio» (impostazione, di default domenica)
+     * già trascorso. Es. con taglio domenica, un calcolo di mercoledì usa i dati fino a domenica; un calcolo di domenica, fino alla domenica prima.
+     * Null se il taglio è spento (0): si usano tutti i dati fino al momento del calcolo.
+     */
+    public static function cutoff(?CarbonImmutable $now = null): ?CarbonImmutable
     {
+        $weekday = (int) config('lamess.structure_bonus_cutoff_weekday');
+        if ($weekday < 1 || $weekday > 7) {
+            return null;
+        }
+        $d = ($now ?? CarbonImmutable::now('Europe/Rome'))->setTimezone('Europe/Rome')->startOfDay()->subDay();
+        while ($d->dayOfWeekIso !== $weekday) {
+            $d = $d->subDay();
+        }
+
+        return $d->endOfDay();
+    }
+
+    /** Calcola e registra i bonus dei mesi non ancora chiusi, con i dati fino al taglio settimanale. @return array{new:int, updated:int} */
+    public function syncOpenPeriods(?CarbonImmutable $cutoff = null): array
+    {
+        $cutoff ??= self::cutoff();
         $new = $updated = 0;
         foreach (Period::where('status', '!=', Period::CLOSED)->orderBy('code')->get() as $period) {
             if ($period->planVersion->plan()->kosmos === null) {
                 continue;
             }
-            $result = PeriodCalculator::calculate(SnapshotBuilder::build($period));
+            $result = PeriodCalculator::calculate(SnapshotBuilder::build($period, null, false, $cutoff));
             [$n, $u] = $this->syncFromResult($period, $result);
             $new += $n;
             $updated += $u;
         }
-        Cache::forever(self::CACHE_KEY, ['at' => now()->toIso8601String(), 'new' => $new, 'updated' => $updated]);
+        Cache::forever(self::CACHE_KEY, ['at' => now()->toIso8601String(), 'new' => $new, 'updated' => $updated, 'cutoff' => $cutoff?->toIso8601String()]);
         if ($new + $updated > 0) {
             AuditLog::record('structure_bonus.calculated', "Bonus di Struttura calcolati: {$new} nuovi, {$updated} aggiornati", null, ['nuovi' => $new, 'aggiornati' => $updated]);
         }

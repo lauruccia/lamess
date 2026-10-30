@@ -34,15 +34,17 @@ final class SnapshotBuilder
     /**
      * @param  PlanConfig|null  $planOverride  piano diverso da quello del periodo (simulazioni e confronti)
      * @param  bool  $freshCareer  ignora le qualifiche già registrate e ricalcola la carriera da zero
+     * @param  \DateTimeInterface|null  $cutoff  considera solo i dati fino a questo istante (incluso), se precedente alla fine del periodo
      */
-    public static function build(Period $period, ?PlanConfig $planOverride = null, bool $freshCareer = false): PeriodInput
+    public static function build(Period $period, ?PlanConfig $planOverride = null, bool $freshCareer = false, ?\DateTimeInterface $cutoff = null): PeriodInput
     {
         $key = PeriodKey::parse($period->code);
         $plan = $planOverride ?? $period->planVersion->plan();
+        $until = self::until($period, $cutoff);
 
         $nodes = Consultant::query()
             ->where('status', '!=', 'pending')
-            ->whereRaw('coalesce(network_since, since) <= ?', [$period->ends_at->setTimezone('UTC')->format('Y-m-d H:i:s')])
+            ->whereRaw('coalesce(network_since, since) <= ?', [$until->setTimezone('UTC')->format('Y-m-d H:i:s')])
             ->orderBy('id')
             ->get()
             ->map(static fn (Consultant $c) => new Node(
@@ -55,33 +57,45 @@ final class SnapshotBuilder
 
         $dbMovements = PvMovement::query()
             ->where('period_id', $period->id)->where('status', 'confirmed')
+            ->when($cutoff !== null, static fn ($q) => $q->where('event_at', '<=', $until))
             ->orderBy('id')->get();
         $customers = $plan->kosmos !== null ? self::customerIds($dbMovements->pluck('id')->all()) : [];
         $movements = $dbMovements->map(static fn (PvMovement $m) => self::movement($m, $customers[$m->id] ?? null))->all();
-        $firstPurchase = $plan->kosmos !== null ? self::firstPurchases($period, $plan) : [];
+        $firstPurchase = $plan->kosmos !== null ? self::firstPurchases($until, $plan) : [];
 
         $prior = self::prior($period, $key, $dbMovements->all());
         if ($freshCareer) {
             $prior = $prior->with(['achievedRanks' => [], 'personalPrOpening' => [], 'rankAwards' => [], 'heldRankAwards' => [], 'installmentsDue' => []]);
         }
 
-        $coverage = $plan->kosmos !== null ? self::customerCoverage($period, $plan) : [];
+        $coverage = $plan->kosmos !== null ? self::customerCoverage($until, $plan) : [];
 
-        $helps = $plan->kosmos !== null ? self::rankHelps($period) : [];
+        $helps = $plan->kosmos !== null ? self::rankHelps($period, $until) : [];
 
         return new PeriodInput($key, $plan, $nodes, $movements, $prior, $firstPurchase, $coverage, $helps);
     }
 
+    /** Fine dei dati considerati: la fine del periodo, o il taglio se è precedente. */
+    private static function until(Period $period, ?\DateTimeInterface $cutoff): \DateTimeImmutable
+    {
+        if ($cutoff === null) {
+            return $period->ends_at;
+        }
+        $c = \DateTimeImmutable::createFromInterface($cutoff)->setTimezone($period->ends_at->getTimezone());
+
+        return $c < $period->ends_at ? $c : $period->ends_at;
+    }
+
     /**
-     * Agenti regalati validi nel periodo: partiti entro la fine del mese e non scaduti prima del suo inizio.
+     * Agenti regalati validi nel periodo: partiti entro la fine dei dati considerati e non scaduti prima dell'inizio del mese.
      *
      * @return array<string, array<string, int>> incaricato => codice qualifica => quanti
      */
-    private static function rankHelps(Period $period): array
+    private static function rankHelps(Period $period, \DateTimeInterface $until): array
     {
         $start = $period->starts_at->setTimezone('Europe/Rome')->format('Y-m-d');
         $out = [];
-        foreach (RankHelp::query()->where('status', 'confirmed')->where('starts_at', '<=', $period->ends_at)
+        foreach (RankHelp::query()->where('status', 'confirmed')->where('starts_at', '<=', $until)
             ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until', '>=', $start))->orderBy('id')->get() as $h) {
             $out[(string) $h->consultant_id][$h->rank_code] = ($out[(string) $h->consultant_id][$h->rank_code] ?? 0) + $h->quantity;
         }
@@ -133,10 +147,10 @@ final class SnapshotBuilder
      *
      * @return array<string, array<string, list<array{0:int,1:int,2:int}>>>
      */
-    private static function customerCoverage(Period $period, PlanConfig $plan): array
+    private static function customerCoverage(\DateTimeInterface $until, PlanConfig $plan): array
     {
         $out = [];
-        foreach (self::qualifyingOrders($period->ends_at, $plan) as $owner => $customers) {
+        foreach (self::qualifyingOrders($until, $plan) as $owner => $customers) {
             foreach ($customers as $customer => $valid) {
                 $out[$owner][$customer] = KosmosCalculator::coverageIntervals($valid);
             }
@@ -203,13 +217,13 @@ final class SnapshotBuilder
      *
      * @return array<string, array<string, DateTimeImmutable>>
      */
-    private static function firstPurchases(Period $period, PlanConfig $plan): array
+    private static function firstPurchases(\DateTimeInterface $until, PlanConfig $plan): array
     {
         $rows = PvMovement::query()
             ->leftJoin('orders as o', 'o.id', '=', 'pv_movements.order_id')
             ->leftJoin('order_items as oi', 'oi.id', '=', 'pv_movements.order_item_id')
             ->where('pv_movements.status', 'confirmed')->where('pv_movements.kind', 'pvf')->where('pv_movements.pv', '>', 0)
-            ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $period->ends_at)
+            ->where('pv_movements.excluded_from_bonus', false)->where('pv_movements.event_at', '<=', $until)
             ->where(fn ($q) => $q->whereNotNull('pv_movements.order_id')->orWhereNotNull('pv_movements.client_user_id'))
             ->orderBy('pv_movements.event_at')->orderBy('pv_movements.id')
             ->selectRaw('pv_movements.id as movement_id, pv_movements.consultant_id, pv_movements.event_at, pv_movements.order_id, pv_movements.pv, pv_movements.amount, pv_movements.makes_client, coalesce(oi.recipient_user_id, o.buyer_user_id, pv_movements.client_user_id) as customer')

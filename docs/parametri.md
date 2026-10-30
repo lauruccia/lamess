@@ -167,6 +167,7 @@ Si cambiano dal pannello (Impostazioni di sistema, che ha la precedenza sul `.en
 | `period_auto_close` | `calculate` | chiusura mensile automatica: `off` · `calculate` (solo calcolo ufficiale) · `close` |
 | `commission_calc_day`, `commission_calc_hour` | `1`, `1` | quando parte il calcolo del mese: `end` (ultimo giorno) oppure giorno 1–28 del mese successivo, all'ora indicata (ora italiana) |
 | `structure_bonus_auto`, `structure_bonus_weekday`, `structure_bonus_hour` | no, 1 (lunedì), 6 | calcolo settimanale del Bonus di Struttura |
+| `structure_bonus_cutoff_weekday` | 7 (domenica) | giorno ISO fino a cui si considerano i dati del calcolo settimanale (fino alle 23:59:59); 0 = nessun taglio |
 | `plan_four_eyes` (`LAMESS_PLAN_FOUR_EYES`) | sì | la pubblicazione del piano richiede un secondo amministratore |
 | `subscription.reminder_days` | 7 | giorni di preavviso del promemoria prima dell'addebito (0 = nessun promemoria) |
 | `network.downline_contacts`, `network.downline_place` | acceso, acceso | cosa vede l'incaricato dei sotto-incaricati: email/telefono e città/provincia |

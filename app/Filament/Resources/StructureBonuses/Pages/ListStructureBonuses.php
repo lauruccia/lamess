@@ -22,6 +22,8 @@ class ListStructureBonuses extends SuperadminListRecords
         $auto = (bool) config('lamess.structure_bonus_auto');
         $days = [1 => 'lunedì', 2 => 'martedì', 3 => 'mercoledì', 4 => 'giovedì', 5 => 'venerdì', 6 => 'sabato', 7 => 'domenica'];
         $when = $auto ? 'Calcolo automatico: ogni '.($days[(int) config('lamess.structure_bonus_weekday')] ?? '?').' alle '.str_pad((string) config('lamess.structure_bonus_hour'), 2, '0', STR_PAD_LEFT).':00.' : 'Calcolo automatico spento (impostazioni di sistema).';
+        $cut = StructureBonusService::cutoff();
+        $when .= $cut === null ? ' Dati considerati: tutti fino al momento del calcolo.' : ' Dati considerati fino a '.$days[$cut->dayOfWeekIso].' '.$cut->format('d/m/Y').' (fine giornata).';
         $done = $last ? ' Ultimo calcolo: '.CarbonImmutable::parse($last['at'])->setTimezone('Europe/Rome')->format('d/m/Y H:i').'.' : '';
 
         return $when.$done;
@@ -32,7 +34,7 @@ class ListStructureBonuses extends SuperadminListRecords
         return [
             Action::make('calculate')->label('Calcola ora')->icon('heroicon-o-calculator')
                 ->visible(fn () => (bool) auth()->user()?->can('payouts.manage'))
-                ->requiresConfirmation()->modalDescription('Calcola i Bonus di Struttura maturati finora e li scrive nel registro. I bonus già confermati non cambiano.')
+                ->requiresConfirmation()->modalDescription('Calcola i Bonus di Struttura maturati con i dati fino al taglio settimanale (vedi sopra) e li scrive nel registro. I bonus già confermati non cambiano.')
                 ->action(function (): void {
                     $r = app(StructureBonusService::class)->syncOpenPeriods();
                     Notification::make()->title("Calcolo fatto: {$r['new']} nuovi, {$r['updated']} aggiornati")->success()->send();

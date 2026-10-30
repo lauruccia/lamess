@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-10-30 — Bonus di Struttura: dati fino alla domenica precedente
+- Il calcolo settimanale usa solo i dati **fino alla fine dell'ultima domenica già trascorsa** (23:59:59, ora di Roma): un calcolo di lunedì o di mercoledì considera i dati fino a domenica sera, uno di domenica quelli fino alla domenica prima. Gli ordini registrati dopo entrano nel calcolo della settimana successiva.
+- Nuova impostazione *Bonus di Struttura (settimanale) → Dati considerati fino a* (`lamess.structure_bonus_cutoff_weekday`, default 7 = domenica; 0 = nessun taglio). Vale anche per **Calcola ora**; la pagina mostra la data del taglio. La chiusura del mese aggiorna il registro con tutti i dati del mese. I bonus già confermati non cambiano.
+- Tecnico: `SnapshotBuilder::build()` ha il nuovo parametro `cutoff`; `StructureBonusService::cutoff()`. Nessuna migrazione. Test: `StructureBonusTest` (due nuovi).
+
 ## 2026-10-30 — Checkout da telefono: campi affiancati
 - Passo 1 (Fatturazione): **codice fiscale e telefono sulla stessa riga**, come nome/cognome, città/CAP e provincia/nazione (la partita IVA delle aziende va su una riga sua). Sotto i 400 px il carattere dei due campi si riduce un poco perché i 16 caratteri del codice fiscale ci stiano; sotto i 340 px vanno uno sotto l'altro.
 - Da telefono: campi alti 46 px con carattere da 16 px (il telefono non ingrandisce la pagina quando si tocca un campo), pulsanti «Salva i dati» e «Avanti» a tutta larghezza, margini ridotti. Il codice fiscale si scrive in maiuscolo da solo, senza correzione automatica. Solo grafica: nessuna migrazione.

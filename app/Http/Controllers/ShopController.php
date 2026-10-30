@@ -745,10 +745,10 @@ class ShopController extends Controller
             'type' => 'required|in:private,company',
             'first_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')], 'last_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')],
             'company_name' => [Rule::requiredIf(fn () => $r->input('type') === 'company')], 'vat_number' => [Rule::requiredIf(fn () => $r->input('type') === 'company')],
-            'tax_code' => [Rule::requiredIf(fn () => $r->input('type') === 'private' && ($r->input('country') ?: 'IT') === 'IT')],
+            'tax_code' => [Rule::requiredIf(fn () => ($r->input('country') ?: 'IT') === 'IT')], 'phone' => 'required',
             'sdi_code' => 'nullable', 'pec' => 'nullable|email',
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
-        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP']);
+        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'phone' => 'telefono', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP']);
         $profile = $r->user()->profile ?? new Profile(['user_id' => $r->user()->id]);
         if (BillingData::missing($profile) === []) {
             $this->keepDraft($r);
@@ -800,11 +800,11 @@ class ShopController extends Controller
             // Dati obbligatori per la fattura: senza non si crea né l'ordine né l'abbonamento.
             'first_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')], 'last_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')],
             'company_name' => [Rule::requiredIf(fn () => $r->input('type') === 'company')], 'vat_number' => [Rule::requiredIf(fn () => $r->input('type') === 'company')],
-            'tax_code' => [Rule::requiredIf(fn () => $r->input('type') === 'private' && ($r->input('country') ?: 'IT') === 'IT')],
+            'tax_code' => [Rule::requiredIf(fn () => ($r->input('country') ?: 'IT') === 'IT')], 'phone' => 'required',
             'sdi_code' => 'nullable', 'pec' => 'nullable|email',
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
             'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => [Subscription::offeredCadences() === [] ? 'nullable' : 'required', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
-        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento', 'subscribe' => 'modalità di consegna']);
+        ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'phone' => 'telefono', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento', 'subscribe' => 'modalità di consegna']);
         // I dati di fatturazione si salvano prima («Salva i dati»): l'ordine usa quelli salvati e l'indirizzo di fatturazione non si cambia da qui.
         $saved = $r->user()->profile;
         $unsaved = BillingData::missing($saved);
@@ -846,7 +846,7 @@ class ShopController extends Controller
         $r->session()->put('checkout_country', $country);
         // Dati di fatturazione obbligatori: con la nazione di spedizione definitiva si ricontrollano prima di creare qualsiasi ordine o abbonamento.
         $missing = [];
-        if ($d['type'] === 'private' && $country === 'IT' && blank($d['tax_code'] ?? null)) {
+        if ($country === 'IT' && blank($d['tax_code'] ?? null)) {
             $missing['tax_code'] = 'Il campo «codice fiscale» è obbligatorio.';
         }
         if ($d['type'] === 'company' && $country === 'IT' && blank($d['sdi_code'] ?? null) && blank($d['pec'] ?? null)) {

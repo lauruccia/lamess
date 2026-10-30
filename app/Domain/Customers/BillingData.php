@@ -13,7 +13,7 @@ use App\Models\Profile;
 final class BillingData
 {
     /** Campi anagrafici/fiscali che il cliente può correggere nel checkout (e salvare). */
-    public const EDITABLE = ['type', 'first_name', 'last_name', 'company_name', 'tax_code', 'vat_number', 'sdi_code', 'pec'];
+    public const EDITABLE = ['type', 'first_name', 'last_name', 'company_name', 'tax_code', 'vat_number', 'sdi_code', 'pec', 'phone'];
 
     /** Indirizzo di fatturazione: bloccato nel checkout dopo il primo salvataggio. */
     public const ADDRESS = ['address', 'city', 'zip', 'province'];
@@ -36,8 +36,8 @@ final class BillingData
         $company = $profile->type === 'company';
         $italy = ($profile->country_code ?: 'IT') === 'IT';
         $need = $company ? ['company_name' => 'ragione sociale', 'vat_number' => 'partita IVA'] : ['first_name' => 'nome', 'last_name' => 'cognome'];
-        $need += ['address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP'];
-        if (! $company && $italy) {
+        $need += ['address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'phone' => 'telefono'];
+        if ($italy) {
             $need['tax_code'] = 'codice fiscale';
         }
         foreach ($need as $field => $label) {

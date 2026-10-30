@@ -716,7 +716,7 @@ final class OrderService
             'first_name' => $type === 'company' ? null : ($b['first_name'] ?? null), 'last_name' => $type === 'company' ? null : ($b['last_name'] ?? null),
             'tax_code' => $b['tax_code'] ?? null, 'vat_number' => $b['vat_number'] ?? null, 'sdi_code' => $b['sdi_code'] ?? null, 'pec' => $b['pec'] ?? null,
             'address' => $b['address'], 'city' => $b['city'], 'zip' => $b['zip'], 'province' => $b['province'] ?? null,
-            'country_code' => $country, 'email' => $buyer->email,
+            'country_code' => $country, 'email' => $buyer->email, 'phone' => $b['phone'] ?? null,
             // Dove consegnare: può essere diverso dalla fatturazione; se non indicato, vale l'indirizzo di fatturazione.
             'shipping' => $this->shippingSnapshot($b),
         ];

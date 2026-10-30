@@ -23,7 +23,7 @@ final class ShopPagesTest extends TestCase
     private function form(array $over = []): array
     {
         return $over + [
-            'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
+            'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U', 'phone' => '333 1234567',
             'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',
             'payment_method' => 'card', 'privacy' => '1', 'subscribe' => 'none',
         ];
@@ -137,6 +137,27 @@ final class ShopPagesTest extends TestCase
         $this->post('/area/checkout', $this->form(['tax_code' => '']))->assertSessionHasErrors('tax_code');
         $this->post('/area/checkout', $this->form(['first_name' => '', 'last_name' => '']))->assertSessionHasErrors(['first_name', 'last_name']);
         $this->post('/area/checkout', $this->form(['type' => 'company', 'company_name' => '', 'vat_number' => '']))->assertSessionHasErrors(['company_name', 'vat_number']);
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_checkout_requires_tax_code_and_phone_for_everyone_in_italy(): void
+    {
+        $this->plan();
+        $p = $this->product('A', '100.00');
+        $this->actingAs($this->buyer())->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
+        $this->post('/area/checkout', $this->form(['phone' => '']))->assertSessionHasErrors('phone');
+        $this->post('/area/checkout', $this->form(['type' => 'company', 'company_name' => 'Rossi Srl', 'vat_number' => '01234567890', 'pec' => 'rossi@pec.it', 'tax_code' => '']))->assertSessionHasErrors('tax_code');
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_a_saved_profile_without_phone_must_be_completed_before_confirming(): void
+    {
+        $this->plan();
+        $p = $this->product('A', '100.00');
+        $user = $this->buyer();
+        $user->profile->update(['phone' => null]);
+        $this->actingAs($user)->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
+        $this->post('/area/checkout', $this->form())->assertSessionHasErrors('phone');
         $this->assertSame(0, Order::count());
     }
 

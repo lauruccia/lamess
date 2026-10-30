@@ -202,7 +202,7 @@ final class OrderManagementTest extends TestCase
         $this->actingAs($user)->post('/carrello/aggiungi', ['product_id' => $p->id, 'qty' => 1]);
         $this->get('/area/checkout/pagamento')->assertOk()->assertSee('Carta di credito')->assertDontSee('Bonifico bancario');
         $this->post('/area/checkout', [
-            'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
+            'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U', 'phone' => '333 1234567',
             'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',
             'payment_method' => 'transfer', 'privacy' => '1', 'subscribe' => 'none',
         ])->assertSessionHasErrors('order');

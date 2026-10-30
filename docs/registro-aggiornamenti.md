@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-10-30 — Checkout: codice fiscale e telefono obbligatori
+- Per confermare un ordine o un abbonamento servono **codice fiscale** (per chi è in Italia, ora anche le aziende) e **telefono** (per tutti). Prima il telefono non era richiesto e il codice fiscale solo ai privati.
+- Il telefono è un nuovo campo del passo 1 (Fatturazione), si salva col profilo («Salva i dati») e finisce anche nei dati di fatturazione dell'ordine. Chi ha già il profilo senza telefono, al prossimo checkout deve inserirlo e salvare; il checkout non va avanti finché manca. Gli ordini creati a mano dall'admin e i rinnovi degli abbonamenti non cambiano.
+- Nessuna migrazione. Test: `ShopPagesTest` (due nuovi), `tests/Support/ShopDb` con telefono di prova.
+
 ## 2026-10-30 — Etichette di spedizione con email e telefono
 - Sull'etichetta, sotto l'indirizzo, ora compaiono **telefono** (della consegna, altrimenti del profilo del cliente) ed **email** del cliente. Formato invariato (8 per foglio A4). Nessuna migrazione. Test: `ShippingLabelsTest`.
 

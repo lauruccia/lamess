@@ -47,7 +47,7 @@
     @yield('nav_extra')
    @else
     @guest
-     <a class="hide-md" href="/#stop-time">Stop Time</a><a class="hide-md" href="/#prodotto">Prodotto</a><a class="hide-md" href="/#ambassador">Ambassador</a>
+     <a class="hide-md" href="/#stop-time">Stop Time</a><a class="hide-md" href="/#prodotto">Prodotto</a><a class="hide-md" href="/#ambassador">Incaricato</a>
     @endguest
    @endif
    <a href="/negozio" class="{{ str_starts_with($nav, 'negozio') ? 'on' : '' }}">Negozio</a>

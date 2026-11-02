@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/css/lamess-home.css?v={{ @filemtime(public_path('css/lamess-home.css')) ?: 1 }}">
 @endpush
 @section('nav_extra')
-<a class="hide-md" href="#stop-time">Stop Time</a><a class="hide-md" href="#prodotto">Prodotto</a><a class="hide-md" href="#ambassador">Ambassador</a>
+<a class="hide-md" href="#stop-time">Stop Time</a><a class="hide-md" href="#prodotto">Prodotto</a><a class="hide-md" href="#ambassador">Incaricato</a>
 @endsection
 @section('content')
 @php($co = config('lamess.company'))
@@ -100,10 +100,10 @@
   <div class="amb reveal">
    <div>
     <p class="kicker">Oltre il prodotto, un’appartenenza</p>
-    <h2>Che cos’è un Ambassador LAMÈSS?</h2>
+    <h2>Che cos’è un incaricato LAMÈSS?</h2>
     <p>È appartenenza: è chi sceglie di farsi interprete della filosofia Stop Time nella propria quotidianità, rappresentando l’unione tra scienza e piacere sensoriale.</p>
     <p>Un percorso di partecipazione consapevole, pensato per chi desidera contribuire alla diffusione di una visione di benessere unica al mondo.</p>
-    @unless($logged)<a class="hbtn dark" href="/registrazione">Scopri il percorso Ambassador</a>@else<a class="hbtn dark" href="/area/diventa-incaricato">Scopri il percorso Ambassador</a>@endunless
+    @unless($logged)<a class="hbtn dark" href="/registrazione">Scopri il percorso da incaricato</a>@else<a class="hbtn dark" href="/area/diventa-incaricato">Scopri il percorso da incaricato</a>@endunless
    </div>
    <div class="amb-card">
     <h3>Un progetto in continua evoluzione</h3>

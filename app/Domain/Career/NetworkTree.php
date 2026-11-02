@@ -114,7 +114,7 @@ final class NetworkTree
         $k = $p['kosmos'] ?? null;
         $req = static function (array $r): array {
             $detail = match ($r['key'] ?? '') {
-                'pearl' => 'Incaricati portati dalla persona con qualifica Pearl o superiore',
+                'pearl' => '',
                 'columns' => 'Una colonna è un diretto con tutta la sua discendenza: servono '.(int) ($r['target'] ?? 0).' clienti in totale in ciascuna (esclusi i personali)',
                 default => (string) ($r['detail'] ?? ''),
             };

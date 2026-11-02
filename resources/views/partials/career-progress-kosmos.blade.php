@@ -1,7 +1,7 @@
 @php
     $n = fn ($v) => number_format((float) $v, fmod((float) $v, 1.0) === 0.0 ? 0 : 2, ',', '.');
     $k = $p['kosmos'];
-    $stateLabel = ['done' => 'raggiunta', 'current' => 'la tua', 'next' => 'prossima', 'future' => ''];
+    $stateLabel = ['done' => 'già raggiunta', 'current' => 'la tua', 'next' => 'prossima', 'future' => ''];
 @endphp
 <style>
     .ck { font-size:.92rem; line-height:1.45; }
@@ -10,7 +10,7 @@
     .ck .row > span:last-child { font-weight:600; text-align:right; }
     .ck .bar { height:.55rem; border-radius:.3rem; background:rgba(127,127,127,.22); overflow:hidden; margin:.15rem 0 .1rem; }
     .ck .bar > i { display:block; height:100%; background:#C2663A; }
-    .ck .bar.ok > i { background:#2E9E5B; }
+    .ck .bar.done > i { background:#2E9E5B; }
     .ck .todo { border-left:3px solid #C2663A; padding:.1rem 0 .1rem .7rem; margin:.4rem 0; list-style:none; }
     .ck .todo li { margin:.25rem 0; }
     .ck .req { padding:.5rem 0; border-top:1px solid rgba(127,127,127,.2); }
@@ -29,9 +29,9 @@
     .ck .ladder small { display:block; opacity:.7; }
 </style>
 <div class="ck">
-    <div class="row"><span>Qualifica</span><span>{{ $p['rank']['name'] }}@if($p['effective_rank'] !== $p['rank']['name']) <span class="pill" title="Qualifica effettiva nel mese">effettiva: {{ $p['effective_rank'] }}</span>@endif</span></div>
+    <div class="row"><span>Qualifica attuale</span><span>{{ $p['rank']['name'] }}@if($p['effective_rank'] !== $p['rank']['name']) <span class="pill" title="Qualifica effettiva nel mese">effettiva: {{ $p['effective_rank'] }}</span>@endif</span></div>
     <div class="row"><span>Clienti personali</span><span>{{ $k['known'] ? $k['clients'] : '—' }}</span></div>
-    <div class="row"><span>Diretti Pearl (1° livello)</span><span>{{ $k['pearl'] ?? '—' }}</span></div>
+    <div class="row"><span>Incaricati diretti almeno Pearl al 1° livello</span><span>{{ $k['pearl'] ?? '—' }}</span></div>
     <div class="row"><span>Compenso diretto</span><span>{{ $k['known'] ? $n($p['rank']['direct_pct']).'%' : '—' }}</span></div>
     <div style="opacity:.65;font-size:.8rem">Cliente è {{ $k['client_rule'] }}. Dati del calcolo di {{ $k['period'] ?? '—' }}.</div>
 
@@ -46,7 +46,7 @@
             @php($cpct = $r['required'] > 0 ? (int) min(100, floor($r['counted'] / $r['required'] * 100)) : 100)
             <div class="req">
                 <div class="row"><span><span class="tick {{ ($r['ok'] || $r['disabled']) ? '' : 'no' }}">{{ ($r['ok'] || $r['disabled']) ? '✓' : '•' }}</span>{{ $r['label'] }}@if($r['disabled']) <span class="pill">non richiesto ora</span>@endif</span><span>{{ $r['counted'] }} / {{ $r['required'] }}</span></div>
-                <div class="bar {{ ($r['ok'] || $r['disabled']) ? 'ok' : '' }}"><i style="width:{{ $cpct }}%"></i></div>
+                <div class="bar {{ ($r['ok'] || $r['disabled']) ? 'done' : '' }}"><i style="width:{{ $cpct }}%"></i></div>
                 @if($r['detail'] !== '')<div class="hint">{{ $r['detail'] }}</div>@endif
             </div>
         @endforeach
@@ -54,12 +54,12 @@
 
     @if($k['next_name'])
         <h4>Requisiti per {{ $k['next_name'] }} · {{ $k['percent'] }}%</h4>
-        <div class="bar {{ $k['percent'] >= 100 ? 'ok' : '' }}" role="progressbar" aria-valuenow="{{ $k['percent'] }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $k['percent'] }}%"></i></div>
+        <div class="bar {{ $k['percent'] >= 100 ? 'done' : '' }}" role="progressbar" aria-valuenow="{{ $k['percent'] }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $k['percent'] }}%"></i></div>
         @foreach($k['requirements'] as $r)
             @php($pct = $r['required'] > 0 ? (int) min(100, floor($r['counted'] / $r['required'] * 100)) : 100)
             <div class="req">
                 <div class="row"><span><span class="tick {{ ($r['ok'] || $r['disabled']) ? '' : 'no' }}">{{ ($r['ok'] || $r['disabled']) ? '✓' : '•' }}</span>{{ $r['label'] }}@if($r['disabled']) <span class="pill">non richiesto ora</span>@endif</span><span>{{ $r['counted'] }} / {{ $r['required'] }}</span></div>
-                <div class="bar {{ ($r['ok'] || $r['disabled']) ? 'ok' : '' }}"><i style="width:{{ $pct }}%"></i></div>
+                <div class="bar {{ ($r['ok'] || $r['disabled']) ? 'done' : '' }}"><i style="width:{{ $pct }}%"></i></div>
                 @if($r['detail'] !== '')<div class="hint">{{ $r['detail'] }}</div>@endif
             </div>
         @endforeach
@@ -69,7 +69,7 @@
     @if($k['maintenance'])
         <h4>Mantenere la tua qualifica</h4>
         <div class="row"><span>Clienti per restare {{ $k['maintenance']['rank'] }}</span><span>{{ $k['maintenance']['counted'] }} / {{ $k['maintenance']['required'] }}</span></div>
-        <div class="bar {{ $k['maintenance']['ok'] ? 'ok' : '' }}"><i style="width:{{ min(100, (int) floor($k['maintenance']['counted'] / max(1, $k['maintenance']['required']) * 100)) }}%"></i></div>
+        <div class="bar {{ $k['maintenance']['ok'] ? 'done' : '' }}"><i style="width:{{ min(100, (int) floor($k['maintenance']['counted'] / max(1, $k['maintenance']['required']) * 100)) }}%"></i></div>
         @if($k['maintenance']['protected_until'])<div style="opacity:.7;font-size:.8rem">Le qualifiche attuali sono protette fino al {{ \Carbon\Carbon::parse($k['maintenance']['protected_until'])->format('d/m/Y') }}.</div>@endif
     @endif
 

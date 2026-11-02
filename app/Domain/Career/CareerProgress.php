@@ -293,19 +293,28 @@ final class CareerProgress
         // Compensi diretti: scaglioni per numero di clienti.
         $tiers = [];
         $current = null;
-        $nextTier = null;
         foreach ($cfg->directTiers as $t) {
             $reached = $known && $c >= $t['min_clients'];
-            $row = ['min_clients' => $t['min_clients'], 'pct' => (float) (string) $t['rate'] * 100, 'reached' => $reached, 'current' => false, 'missing' => max(0, $t['min_clients'] - $c)];
+            $row = ['min_clients' => $t['min_clients'], 'pct' => (float) (string) $t['rate'] * 100, 'reached' => $reached, 'current' => false, 'is_next' => false, 'missing' => max(0, $t['min_clients'] - $c)];
             if ($reached) {
                 $current = count($tiers);
-            } elseif ($nextTier === null) {
-                $nextTier = count($tiers);
             }
             $tiers[] = $row;
         }
         if ($current !== null) {
             $tiers[$current]['current'] = true;
+        }
+        // Prossimo scaglione = il primo non raggiunto che paga DAVVERO di più: due scaglioni con la stessa percentuale
+        // non devono dare «sale dal 20% al 20%».
+        $nextTier = null;
+        $curPctNow = $current !== null ? $tiers[$current]['pct'] : -1.0;
+        foreach ($tiers as $i => $row) {
+            if (! $row['reached'] && $row['pct'] > $curPctNow) {
+                $nextTier = $i;
+                $tiers[$i]['is_next'] = true;
+
+                break;
+            }
         }
         if ($known && $nextTier !== null) {
             $curPct = $current !== null ? $tiers[$current]['pct'] : 0.0;
@@ -443,7 +452,7 @@ final class CareerProgress
             $counted = (int) ($d['pearl_first_level_counted'] ?? 0);
             $dis = ! $next->requires('pearl');
             $miss = max(0, $next->minPearlFirstLevel - $counted);
-            $out[] = ['key' => 'pearl', 'label' => 'Diretti Pearl (1° livello)', 'required' => $next->minPearlFirstLevel, 'counted' => $counted, 'ok' => $miss === 0, 'disabled' => $dis, 'detail' => 'Incaricati portati da te con qualifica Pearl o superiore',
+            $out[] = ['key' => 'pearl', 'label' => 'Incaricati diretti almeno Pearl al 1° livello', 'required' => $next->minPearlFirstLevel, 'counted' => $counted, 'ok' => $miss === 0, 'disabled' => $dis, 'detail' => '',
                 'todo' => "Per {$next->name} ti ".($miss === 1 ? 'manca 1 incaricato diretto Pearl' : "mancano {$miss} incaricati diretti Pearl").' al 1° livello.'];
         }
         $reqCodes = (array) ($d['structure_required'] ?? []);

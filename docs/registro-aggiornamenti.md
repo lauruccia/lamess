@@ -1,5 +1,13 @@
 # Registro aggiornamenti
 
+## 2026-11-02 — Panoramica e «Il mio ramo»: etichette, ordine fisso, barre, albero
+- **Panoramica**: il riquadro «Ordini» si chiama **I miei ordini**; **Qualifica** compare sempre ed è sempre il primo dei tre riquadri Qualifica → Clienti personali → Incaricati diretti (prima spariva, e l'ordine cambiava, quando il mese non aveva ancora un calcolo). «Diretti Pearl» diventa **Incaricati diretti** con sottotitolo «Almeno Pearl al 1° livello».
+- **Scaglioni dei compensi diretti**: il «prossimo scaglione» è il primo non raggiunto che paga **di più**; due scaglioni con la stessa percentuale non danno più «Ne mancano 3 per il 20%» / «sale dal 20% al 20%».
+- **Pannello di avanzamento**: titolo **Verso la prossima qualifica** (a qualifica massima: «Qualifica massima raggiunta»); la riga «Qualifica» diventa **Qualifica attuale**; il requisito Pearl si chiama «Incaricati diretti almeno Pearl al 1° livello» senza la riga «Incaricati portati da te…»; nella scala delle qualifiche «raggiunta» diventa **già raggiunta**.
+- **Barre di avanzamento**: quelle complete (requisito soddisfatto) apparivano grigie perché la classe `ok` prendeva lo stile del riquadro verde di conferma (sfondo chiaro e margini) e copriva il riempimento verde. Ora le barre usano la classe `done` e `.meter.ok` è neutralizzato. Nell'albero la barra vuota ha un contorno, per distinguerla dal grigio perla.
+- **Albero personale**: la radice (tu) mostra anche i **clienti**, come gli altri nodi: «Pearl · tu · 3 clienti».
+- Solo viste, testi e CSS/JS: nessuna migrazione. Test: `IncaricatiCareerProgressTest` (uno nuovo).
+
 ## 2026-10-30 — Pagine personali: interruttore in «Funzionalità e viste»
 - Nuova voce **Pagine personali degli incaricati** (`area.personal_page`) in *Sistema → Funzionalità e viste*: spenta, sparisce il link «La mia pagina» dall'area dell'incaricato (anche per il super admin) e le pagine `/area/pagina` e `/i/nome` non si aprono. I contenuti restano. Prima la voce «Elenco Pagine personali» spegneva solo l'elenco del back-office, non il link dell'area. Vale insieme all'interruttore in Impostazioni di sistema → Rete (`LAMESS_PERSONAL_PAGES`). Nessuna migrazione.
 

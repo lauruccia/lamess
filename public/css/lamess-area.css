@@ -92,6 +92,7 @@ a.item:hover{background:rgb(194 102 58/.05);color:inherit}
 .dl dd{margin:0;font-weight:500;overflow-wrap:anywhere;text-align:right}
 .meter{height:8px;border-radius:99px;background:#eadfd8;overflow:hidden}
 .meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--lm-terracotta),var(--lm-sand))}
+.meter.ok{padding:0;margin:0;border:0;border-radius:99px;background:#eadfd8;color:inherit}
 .meter.ok i{background:var(--ok)}
 .avatar{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--lm-ink);color:var(--lm-cream);font:600 15px var(--lm-font-text);letter-spacing:.02em}
 .who{display:flex;align-items:center;gap:12px}

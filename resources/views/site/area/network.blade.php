@@ -119,7 +119,7 @@
         <td data-l="Qualifica">{{ $col['rank'] ?? '—' }}@if($col['best_rank'] && $col['best_rank'] !== $col['rank']) <span class="muted">· migliore {{ $col['best_rank'] }}</span>@endif</td>
         <td data-l="Persone" class="num">{{ $col['persons'] }}</td>
         <td data-l="Clienti" class="num"><strong>{{ $col['clients'] }}</strong></td>
-        @if($target > 0)<td data-l="Verso {{ $target }}"><div class="mini-bar" role="progressbar" aria-valuenow="{{ min(100, (int) floor($col['clients'] / $target * 100)) }}" aria-valuemin="0" aria-valuemax="100"><i class="{{ $col['clients'] >= $target ? 'ok' : '' }}" style="width:{{ min(100, (int) floor($col['clients'] / $target * 100)) }}%"></i></div></td>@endif
+        @if($target > 0)<td data-l="Verso {{ $target }}"><div class="mini-bar" role="progressbar" aria-valuenow="{{ min(100, (int) floor($col['clients'] / $target * 100)) }}" aria-valuemin="0" aria-valuemax="100"><i class="{{ $col['clients'] >= $target ? 'done' : '' }}" style="width:{{ min(100, (int) floor($col['clients'] / $target * 100)) }}%"></i></div></td>@endif
         <td data-l="Venduto mese" class="num">{{ $col['eur'] > 0 ? '€ '.$eur($col['eur']) : '—' }}</td>
        </tr>
       @endforeach
@@ -151,7 +151,7 @@
   </div>
   <div class="stack">
    <section class="panel">
-    <header><h2>Verso {{ $k['next_name'] ?? 'la qualifica massima' }}</h2></header>
+    <header><h2>{{ ($k['next_name'] ?? null) === null && $k !== null ? 'Qualifica massima raggiunta' : 'Verso la prossima qualifica' }}</h2></header>
     <div class="panel-body">@include('partials.career-progress', ['p' => $progress])</div>
    </section>
   </div>
@@ -187,7 +187,7 @@
  .srt i{display:inline-block;width:.9em;font-style:normal;opacity:.55}
  th[aria-sort=ascending] .srt i:after{content:'▲'}th[aria-sort=descending] .srt i:after{content:'▼'}
  .mini-bar{height:8px;min-width:90px;border-radius:5px;background:rgba(127,127,127,.22);overflow:hidden}
- .mini-bar>i{display:block;height:100%;background:#C2663A}.mini-bar>i.ok{background:#2E9E5B}
+ .mini-bar>i{display:block;height:100%;background:#C2663A}.mini-bar>i.done{background:#2E9E5B}
 </style>
 <script>
  (function(){

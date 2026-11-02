@@ -11,7 +11,7 @@
     $first = $user->profile?->type === 'company' ? $user->profile->company_name : ($user->profile?->first_name ?: $user->name);
     $lastOrder = $d['orders']['recent']->first();
     $kk = $progress['kosmos'] ?? null;
-    $nt = $kk ? collect($kk['tiers'])->firstWhere('reached', false) : null;
+    $nt = $kk ? collect($kk['tiers'])->firstWhere('is_next', true) : null;
     $walletOn = $c && $c->status === 'active' && \App\Domain\Wallet\WithdrawalService::enabled();
 @endphp
 
@@ -60,11 +60,18 @@
   <div class="kpi"><small>PVF di {{ $month['period'] }}</small><strong>{{ $n($month['pvf']) }}</strong><span>Personali {{ $n($month['pvc']) }} · gruppo {{ $n($month['group_pv']) }}</span></div>
   <div class="kpi"><small>PR del mese</small><strong>{{ $n($month['pr']) }}</strong><span>Gruppo {{ $n($month['group_pr']) }} PR</span></div>
   @endif
-  <div class="kpi {{ $month['active'] ? 'k-ok' : 'k-warn' }}"><small>Qualifica</small><strong>{{ $month['rank'] ? (strtolower($month['rank']) === 'consultant' ? 'Incaricato' : ucfirst(strtolower($month['rank']))) : '—' }}</strong>@if($kk)<span>{{ $kk['known'] ? 'Compenso diretto '.$n($progress['rank']['direct_pct']).'%' : 'Calcolo in arrivo' }}@if($kk['next_name']) · prossima {{ $kk['next_name'] }} al {{ $kk['percent'] }}%@endif</span>@elseif(\App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
+ @endif
+ @if($c)
+  {{-- Ordine fisso dei riquadri: Qualifica, Clienti personali, Incaricati diretti. La Qualifica c'è sempre, anche prima del primo calcolo del mese. --}}
+  @php
+      $rankRaw = ($month['rank'] ?? null) ?: ($progress['rank']['name'] ?? null);
+      $rankLabel = $rankRaw ? (strtolower($rankRaw) === 'consultant' ? 'Incaricato' : ucfirst(strtolower($rankRaw))) : '—';
+  @endphp
+  <div class="kpi {{ $month ? ($month['active'] ? 'k-ok' : 'k-warn') : '' }}"><small>Qualifica</small><strong>{{ $rankLabel }}</strong>@if($kk)<span>{{ $kk['known'] ? 'Compenso diretto '.$n($progress['rank']['direct_pct']).'%' : 'Calcolo in arrivo' }}@if($kk['next_name']) · prossima {{ $kk['next_name'] }} al {{ $kk['percent'] }}%@endif</span>@elseif($month && \App\Domain\Plan\LegacyPlan::visible())<span>{{ $month['active'] ? 'Attivo questo mese' : 'Non ancora attivo questo mese' }}</span>@endif</div>
  @endif
  @if($c && $kk)
   <a class="kpi" href="/area/clienti"><small>Clienti personali</small><strong>{{ $kk['known'] ? $kk['clients'] : '—' }}</strong><span>@if($kk['known'] && $nt)Ne mancano {{ $nt['missing'] }} per il {{ $n($nt['pct']) }}% diretto @elseif($kk['known'])Scaglione massimo raggiunto @else In attesa del calcolo @endif</span></a>
-  <a class="kpi" href="/area/rete"><small>Diretti Pearl</small><strong>{{ $kk['pearl'] ?? '—' }}</strong><span>Incaricati del tuo 1° livello con qualifica Pearl o superiore</span></a>
+  <a class="kpi" href="/area/rete"><small>Incaricati diretti</small><strong>{{ $kk['pearl'] ?? '—' }}</strong><span>Almeno Pearl al 1° livello</span></a>
   @if($earn)
    <a class="kpi" href="/area/statini"><small>Compensi {{ $earn['period'] }}{{ $earn['closed'] ? '' : ' · provvisori' }}</small><strong>€ {{ $eur($earn['accrued']) }}</strong><span>@if($earn['held'] != 0)€ {{ $eur($earn['held']) }} trattenuti · @endif{{ $earn['closed'] ? 'Mese chiuso: importo definitivo' : 'Non definitivi: si aggiornano a ogni ordine e possono cambiare con nuovi clienti fino alla chiusura del mese' }}@if(! $earn['closed'] && $earn['calculated_at']) · calcolo del {{ $earn['calculated_at']->setTimezone('Europe/Rome')->format('d/m H:i') }}@endif</span></a>
    @if($earn['structure']['count'] > 0)
@@ -76,7 +83,7 @@
   <a class="kpi" href="/area/rete"><small>La mia rete</small><strong>{{ $x['network'] }}</strong><span>{{ $x['direct'] }} {{ $x['direct'] === 1 ? 'diretta' : 'dirette' }} · {{ $x['clients'] }} {{ $x['clients'] === 1 ? 'cliente' : 'clienti' }}</span></a>
   <a class="kpi" href="/area/statini"><small>Ultimo statino</small><strong>{{ $x['settlement'] ? '€ '.$eur($x['settlement']->accrued) : '—' }}</strong><span>{{ $x['settlement'] ? 'Mese '.$x['settlement']->period->code.' · '.($x['settlement']->status === 'paid' ? 'pagato' : 'da pagare o cumulato') : 'Compare alla prima chiusura mese' }}</span></a>
  @endif
- <a class="kpi" href="/area/ordini"><small>Ordini</small><strong>{{ $d['orders']['count'] }}</strong><span>{{ $lastOrder ? 'Ultimo il '.\App\Support\Ui::date($lastOrder->created_at) : 'Nessun ordine ancora' }}</span></a>
+ <a class="kpi" href="/area/ordini"><small>I miei ordini</small><strong>{{ $d['orders']['count'] }}</strong><span>{{ $lastOrder ? 'Ultimo il '.\App\Support\Ui::date($lastOrder->created_at) : 'Nessun ordine ancora' }}</span></a>
  @unless($c)
   <a class="kpi" href="/area/ordini"><small>Totale acquistato</small><strong>€ {{ $eur($d['orders']['spent']) }}</strong><span>Ordini pagati, IVA inclusa</span></a>
  @endunless

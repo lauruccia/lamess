@@ -13,7 +13,7 @@
     .cp h4 { margin:.9rem 0 .35rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; opacity:.65; }
     .cp .cp-bar { height:.6rem; border-radius:.3rem; background:rgba(127,127,127,.22); overflow:hidden; }
     .cp .cp-bar > i { display:block; height:100%; background:#C2663A; }
-    .cp .cp-bar.ok > i { background:#2E9E5B; }
+    .cp .cp-bar.done > i { background:#2E9E5B; }
     .cp .cp-row { display:flex; justify-content:space-between; gap:.75rem; padding:.12rem 0; }
     .cp .cp-row span:last-child { font-weight:600; text-align:right; }
     .cp ul { margin:.2rem 0 0 1.1rem; padding:0; }
@@ -27,7 +27,7 @@
     .cp tr.cap td { color:#C2663A; }
 </style>
 <div class="cp">
-    <div class="cp-row"><span>Qualifica</span><span>{{ $p['rank']['name'] }}@if($p['effective_rank'] !== $p['rank']['name']) <span class="cp-pill" title="Qualifica effettiva nel mese">effettiva: {{ $p['effective_rank'] }}</span>@endif</span></div>
+    <div class="cp-row"><span>Qualifica attuale</span><span>{{ $p['rank']['name'] }}@if($p['effective_rank'] !== $p['rank']['name']) <span class="cp-pill" title="Qualifica effettiva nel mese">effettiva: {{ $p['effective_rank'] }}</span>@endif</span></div>
     @if($leg)<div class="cp-row"><span>Percentuale Direct</span><span>{{ $n($p['rank']['direct_pct']) }}%</span></div>@endif
 
     @if(! empty($p['todo']))
@@ -39,7 +39,7 @@
         <h4>Verso {{ $next['name'] }}</h4>
         @if($leg)
         <div class="cp-row"><span>PR di gruppo conteggiati</span><span>{{ $n($p['pr']['counted']) }} / {{ $n($p['pr']['required']) }}</span></div>
-        <div class="cp-bar {{ $p['pr']['missing'] <= 0 ? 'ok' : '' }}" role="progressbar" aria-valuenow="{{ $p['pr']['percent'] }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $p['pr']['percent'] }}%"></i></div>
+        <div class="cp-bar {{ $p['pr']['missing'] <= 0 ? 'done' : '' }}" role="progressbar" aria-valuenow="{{ $p['pr']['percent'] }}" aria-valuemin="0" aria-valuemax="100"><i style="width:{{ $p['pr']['percent'] }}%"></i></div>
         <div class="cp-row"><span>Mancano</span><span>{{ $n($p['pr']['missing']) }} PR</span></div>
         <div class="cp-row"><span>PR personali</span><span>{{ $n($p['pr']['personal']) }}</span></div>
         @endif
@@ -64,7 +64,7 @@
     @if($leg && ($p['activity']['applies'] ?? true))
     <h4>Attività del mese</h4>
     <div class="cp-row"><span>Punti</span><span>{{ $n($p['activity']['points']) }} / {{ $n($p['activity']['threshold']) }}</span></div>
-    <div class="cp-bar {{ $p['activity']['active'] ? 'ok' : '' }}"><i style="width:{{ $p['activity']['threshold'] > 0 ? (int) min(100, floor($p['activity']['points'] / $p['activity']['threshold'] * 100)) : 100 }}%"></i></div>
+    <div class="cp-bar {{ $p['activity']['active'] ? 'done' : '' }}"><i style="width:{{ $p['activity']['threshold'] > 0 ? (int) min(100, floor($p['activity']['points'] / $p['activity']['threshold'] * 100)) : 100 }}%"></i></div>
     <div class="cp-row"><span>Stato</span><span>{{ $p['activity']['active'] ? 'Attivo' : 'Non attivo' }}@if($p['activity']['reason'] && ! $p['activity']['active']) <div style="font-weight:400;opacity:.7;font-size:.8rem">{{ preg_replace(['/^Non attivo:\s*/i', '/\s*\(regola:[^)]*\)/'], '', $p['activity']['reason']) }}</div>@endif</span></div>
     @endif
 

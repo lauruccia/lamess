@@ -100,13 +100,13 @@
       el('text', { x: 28, y: H / 2 + 1, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: ink }, gr).textContent = ini(d.name);
       var nm = d.name; if (nm.length > 20) { nm = nm.slice(0, 19) + '…'; }
       el('text', { x: 52, y: H / 2 - 9, 'font-size': 12, 'font-weight': 700, fill: 'var(--lt-ink)' }, gr).textContent = nm;
-      var line2 = isMe ? r.name + ' · tu' : r.name + ' · ' + plural(d.clients, 'cliente', 'clienti');
-      if (line2.length > 26) { line2 = line2.slice(0, 25) + '…'; }
+      var line2 = isMe ? r.name + ' · tu · ' + plural(d.clients, 'cliente', 'clienti') : r.name + ' · ' + plural(d.clients, 'cliente', 'clienti');
+      if (line2.length > 28) { line2 = line2.slice(0, 27) + '…'; }
       el('text', { x: 52, y: H / 2 + 5, 'font-size': 10.5, 'font-weight': 600, fill: 'var(--lt-muted)' }, gr).textContent = line2;
       if (d.status !== 'active') { el('circle', { cx: W - 9, cy: 9, r: 4.5, fill: '#C62828' }, gr); }
       else if (d.active) { el('circle', { cx: W - 9, cy: 9, r: 4.5, fill: '#2E9E5B' }, gr); }
       /* avanzamento verso la qualifica successiva */
-      el('rect', { x: 52, y: H - 12, width: W - 64, height: 5, rx: 2.5, fill: 'rgba(127,127,127,.25)' }, gr);
+      el('rect', { x: 52, y: H - 12, width: W - 64, height: 5, rx: 2.5, fill: 'rgba(127,127,127,.22)', stroke: 'rgba(127,127,127,.45)', 'stroke-width': 0.6 }, gr);
       if (d.next) { el('rect', { x: 52, y: H - 12, width: Math.max(2, (W - 64) * d.pct / 100), height: 5, rx: 2.5, fill: d.pct >= 100 ? '#2E9E5B' : '#C2663A' }, gr); }
       else { el('rect', { x: 52, y: H - 12, width: W - 64, height: 5, rx: 2.5, fill: '#2E9E5B' }, gr); }
       var tip = d.name + ' — ' + r.name;
@@ -366,7 +366,7 @@
     if (d.waiting > 0) { row(dl, 'Senza primo ordine', String(d.waiting)); }
     if (d.last_order) { row(dl, 'Ultimo ordine dei clienti', d.last_order); }
     row(dl, 'Venduto del mese', d.eur > 0 ? '€ ' + eur(d.eur) : '—');
-    if (nk) { row(dl, 'Diretti Pearl', String(d.pearl_first)); }
+    if (nk) { row(dl, 'Incaricati diretti almeno Pearl', String(d.pearl_first)); }
     if (d.team > 0 && id !== ME) { row(dl, 'Il suo ramo', plural(d.team, 'persona', 'persone')); }
     row(dl, d.next ? 'Verso ' + d.next : 'Prossima qualifica', d.next ? (d.missing.length ? d.missing.join(' · ') : 'requisiti soddisfatti') : 'qualifica massima');
     mbody.appendChild(dl);

@@ -91,7 +91,7 @@ body.is-home .cart-count{background:var(--lm-gold);color:#1a100a}
 
 .home .steps-sec{background:#fff;border-top:1px solid rgb(187 180 175/.45);border-bottom:1px solid rgb(187 180 175/.45)}
 .home .steps-sec h2{font-size:clamp(1.9rem,3.6vw,2.8rem);margin:0 0 50px;max-width:16em;line-height:1.15}
-.home .how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;counter-reset:s}
+.home .how-steps{display:grid;grid-template-columns:repeat(2,1fr);gap:34px;counter-reset:s}
 .home .how-step{position:relative;padding-top:26px;border-top:1.5px solid #C2663A}
 .home .how-step .n{font:400 .95rem var(--lm-font-display);color:#C2663A;letter-spacing:.2em}
 .home .how-step h3{font-size:1.35rem;margin:10px 0 8px}

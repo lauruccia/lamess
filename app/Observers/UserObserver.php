@@ -24,7 +24,7 @@ final class UserObserver
             }
         }
         if ($user->wasChanged('password')) {
-            $changes['password'] = 'modificata';
+            $changes['password_modificata'] = 'sì';   // chiave diversa da «password»: AuditLog::sanitize() la sostituirebbe con «[omesso]»
         }
         if ($user->wasChanged('app_authentication_secret')) {
             $had = filled($user->getOriginal('app_authentication_secret'));

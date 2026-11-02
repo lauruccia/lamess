@@ -179,6 +179,7 @@ final class AuditLogTest extends TestCase
         $this->assertStringContainsString('user.updated', $dump);
         $this->assertStringContainsString('b@example.test', $dump);
         $this->assertStringNotContainsString('NuovaPassword123', $dump);
+        $this->assertStringContainsString('password_modificata', $dump);
         $this->assertTrue(AuditLog::verify()->ok);
     }
 

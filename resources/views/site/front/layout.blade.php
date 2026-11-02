@@ -19,15 +19,13 @@
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
     <nav id="nav" aria-label="Principale"><ul><li><a href="/"{{ request()->is('/') ? ' aria-current=page' : '' }}>Home</a></li><li><a href="/il-prodotto"{{ request()->is('il-prodotto') ? ' aria-current=page' : '' }}>Prodotto</a></li><li><a href="/perche-lamess"{{ request()->is('perche-lamess') ? ' aria-current=page' : '' }}>Perché Lamèss</a></li><li><a href="/la-scienza"{{ request()->is('la-scienza') ? ' aria-current=page' : '' }}>La scienza</a></li><li><a href="/negozio"{{ request()->is('negozio', 'negozio/*') ? ' aria-current=page' : '' }}>Shop</a></li><li><a href="/lavora-con-noi"{{ request()->is('lavora-con-noi') ? ' aria-current=page' : '' }}>Lavora con noi</a></li><li><a href="/chi-siamo"{{ request()->is('chi-siamo') ? ' aria-current=page' : '' }}>Chi siamo</a></li><li><a href="/domande"{{ request()->is('domande') ? ' aria-current=page' : '' }}>Domande</a></li>
       <li class="nav-cart"><a class="cart-ic" href="/carrello" aria-label="Carrello, {{ $cartCount }} prodotti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span class="cnt"@if($cartCount < 1) hidden @endif>{{ $cartCount }}</span><span class="cart-lbl">Carrello</span></a></li>
-      <li class="acct"><details id="acct"><summary class="hbtn gold sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.2 4.2-6 8-6s7 1.8 8 6"/></svg>Il mio account</summary>
-        <div class="acct-menu">
-          @auth
-          <a href="/area">La mia area</a><a href="/area/ordini">I miei ordini</a><a href="/area/abbonamenti">Abbonamenti</a><a href="/area/profilo">I miei dati</a>
-          <form method="post" action="/esci">@csrf<button type="submit">Esci</button></form>
-          @else
-          <a href="/accedi">Accedi</a><a href="/registrazione"><b>Registrati</b> <small>gratis, senza obblighi</small></a>
-          @endauth
-        </div></details></li>
+      @auth
+      <li class="acct"><details id="acct"><summary class="acct-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.2 4.2-6 8-6s7 1.8 8 6"/></svg>Il mio account</summary>
+        <div class="acct-menu"><a href="/area">La mia area</a><a href="/area/ordini">I miei ordini</a><a href="/area/abbonamenti">Abbonamenti</a><a href="/area/profilo">I miei dati</a>
+          <form method="post" action="/esci">@csrf<button type="submit">Esci</button></form></div></details></li>
+      @else
+      <li class="acct"><a class="acct-btn" href="/accedi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.2 4.2-6 8-6s7 1.8 8 6"/></svg>Accedi</a></li>
+      @endauth
     </ul></nav>
   </div>
 </header>

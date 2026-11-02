@@ -473,6 +473,10 @@ input,select,textarea{font-size:16px}
 @media(hover:none){.btn:hover,.hbtn:hover{transform:none}}
 
 /* ---- integrazione nel portale ---- */
+.acct-btn{display:inline-flex;align-items:center;gap:8px;padding:0 18px;min-height:42px;border:1.5px solid rgba(252,246,243,.4);border-radius:999px;color:#FCF6F3;font:500 14px var(--body);text-decoration:none;cursor:pointer;background:none;transition:background .2s,border-color .2s}
+.acct-btn:hover,.acct details[open] .acct-btn{background:rgba(252,246,243,.1);border-color:rgba(252,246,243,.7)}
+.acct-btn svg{flex:none}
+
 .nav-cart a,.cart-ic{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;color:inherit}
 .cart-ic .cnt{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--gold);color:#13110E;font:600 11px/18px var(--body);text-align:center}
 .cart-lbl{display:none}
@@ -491,7 +495,7 @@ input,select,textarea{font-size:16px}
   .cart-lbl{display:inline}
   .cart-ic .cnt{position:static;margin-left:-2px}
   .acct{margin-top:10px}
-  .acct summary{font-size:16px;min-height:46px}
+  .acct-btn{font-size:16px;min-height:46px}
   .acct-menu{position:static;box-shadow:none;border:0;background:none;padding:6px 0 0;min-width:0}
 }
 

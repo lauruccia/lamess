@@ -47,7 +47,7 @@
     @yield('nav_extra')
    @else
     @guest
-     <a class="hide-md" href="/#stop-time">Stop Time</a><a class="hide-md" href="/#prodotto">Prodotto</a><a class="hide-md" href="/#ambassador">Incaricato</a>
+     <a class="hide-lg" href="/">Home</a><a class="hide-lg" href="/il-prodotto">Prodotto</a><a class="hide-lg" href="/perche-lamess">Perché Lamèss</a><a class="hide-lg" href="/la-scienza">La scienza</a><a class="hide-lg" href="/lavora-con-noi">Lavora con noi</a><a class="hide-lg" href="/chi-siamo">Chi siamo</a><a class="hide-lg" href="/domande">Domande</a>
     @endguest
    @endif
    <a href="/negozio" class="{{ str_starts_with($nav, 'negozio') ? 'on' : '' }}">Negozio</a>

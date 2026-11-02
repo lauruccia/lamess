@@ -269,3 +269,7 @@ body.is-auth .auth-wrap{min-height:calc(100vh - 118px)}
 .pw-wrap .pw-eye:hover{background:rgb(194 102 58/.1);box-shadow:none;color:var(--lm-brown)}
 .pw-wrap .pw-eye:focus-visible{outline:0;box-shadow:0 0 0 3px rgb(194 102 58/.3)}
 .pw-wrap .pw-eye[aria-pressed=true]{color:var(--lm-terracotta)}
+
+/* menu pubblico esteso: sotto questa larghezza restano solo Negozio, carrello e accesso */
+@media(max-width:1280px){.top-links a.hide-lg{display:none}}
+@media(min-width:1281px){.top-links a.hide-lg{white-space:nowrap;padding:8px 10px}.site-header .bar:has(a.hide-lg){max-width:1240px}}

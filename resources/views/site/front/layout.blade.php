@@ -12,18 +12,22 @@
 <link rel="stylesheet" href="/css/lamess-front.css?v={{ @filemtime(public_path('css/lamess-front.css')) ?: 1 }}">
 </head>
 <body>
+@php($cartCount = array_sum((array) session('cart', [])) + array_sum(array_map('array_sum', (array) session('cart_others', []))))
 <header class="site-header @yield('headerclass')">
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Lamèss, home"><img src="/img/lamess-logo.png" alt="" width="38" height="38"><b>Lamèss</b></a>
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
     <nav id="nav" aria-label="Principale"><ul><li><a href="/"{{ request()->is('/') ? ' aria-current=page' : '' }}>Home</a></li><li><a href="/il-prodotto"{{ request()->is('il-prodotto') ? ' aria-current=page' : '' }}>Prodotto</a></li><li><a href="/perche-lamess"{{ request()->is('perche-lamess') ? ' aria-current=page' : '' }}>Perché Lamèss</a></li><li><a href="/la-scienza"{{ request()->is('la-scienza') ? ' aria-current=page' : '' }}>La scienza</a></li><li><a href="/negozio"{{ request()->is('negozio', 'negozio/*') ? ' aria-current=page' : '' }}>Shop</a></li><li><a href="/lavora-con-noi"{{ request()->is('lavora-con-noi') ? ' aria-current=page' : '' }}>Lavora con noi</a></li><li><a href="/chi-siamo"{{ request()->is('chi-siamo') ? ' aria-current=page' : '' }}>Chi siamo</a></li><li><a href="/domande"{{ request()->is('domande') ? ' aria-current=page' : '' }}>Domande</a></li>
-      <li><a href="/carrello">Carrello</a></li>
-      @auth
-      <li><a href="/area">La mia area</a></li>
-      <li><form method="post" action="/esci" style="margin:0">@csrf<button type="submit" class="linkbtn">Esci</button></form></li>
-      @else
-      <li><a href="/accedi">Accedi</a></li><li><a class="hbtn gold sm" href="/registrazione">Registrati</a></li>
-      @endauth
+      <li class="nav-cart"><a class="cart-ic" href="/carrello" aria-label="Carrello, {{ $cartCount }} prodotti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span class="cnt"@if($cartCount < 1) hidden @endif>{{ $cartCount }}</span><span class="cart-lbl">Carrello</span></a></li>
+      <li class="acct"><details id="acct"><summary class="hbtn gold sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.2 4.2-6 8-6s7 1.8 8 6"/></svg>Il mio account</summary>
+        <div class="acct-menu">
+          @auth
+          <a href="/area">La mia area</a><a href="/area/ordini">I miei ordini</a><a href="/area/abbonamenti">Abbonamenti</a><a href="/area/profilo">I miei dati</a>
+          <form method="post" action="/esci">@csrf<button type="submit">Esci</button></form>
+          @else
+          <a href="/accedi">Accedi</a><a href="/registrazione"><b>Registrati</b> <small>gratis, senza obblighi</small></a>
+          @endauth
+        </div></details></li>
     </ul></nav>
   </div>
 </header>
@@ -54,7 +58,8 @@
   </div>
 </footer>
 <script src="/js/lamess-front.js?v={{ @filemtime(public_path('js/lamess-front.js')) ?: 1 }}"></script>
-<script>var __h=document.querySelector(".site-header.home-top");if(__h){var __f=function(){__h.classList.toggle("solid",scrollY>24)};__f();addEventListener("scroll",__f,{passive:true})}</script>
+<script>var __h=document.querySelector(".site-header.home-top");if(__h){var __f=function(){__h.classList.toggle("solid",scrollY>24)};__f();addEventListener("scroll",__f,{passive:true})}
+document.addEventListener('click',function(e){var d=document.getElementById('acct');if(d&&d.open&&!d.contains(e.target))d.open=false});document.addEventListener('keydown',function(e){var d=document.getElementById('acct');if(e.key==='Escape'&&d)d.open=false})</script>
 @stack('scripts')
 </body>
 </html>

@@ -13,7 +13,7 @@
     <div class="pils" style="margin-top:56px">
       <div class="pil"><h3>Peptidi di collagene VERISOL®</h3><span class="dose">2,5 g</span><p>per dose giornaliera. Peptidi bioattivi di collagene, oggetto di studi clinici randomizzati sull’uomo.</p></div>
       <div class="pil"><h3>Acido ialuronico</h3><span class="dose">190 mg</span><p>per dose giornaliera. Sostanza presente nell’organismo, con una forte capacità di legare l’acqua.</p></div>
-      <div class="pil"><h3>Coenzima Q10</h3><span class="dose">20 mg</span><p>per dose giornaliera. Molecola presente nell’organismo, coinvolta nella produzione di energia delle cellule.</p></div>
+      <div class="pil"><h3>Coenzima <span class="num">Q10</span></h3><span class="dose">20 mg</span><p>per dose giornaliera. Molecola presente nell’organismo, coinvolta nella produzione di energia delle cellule.</p></div>
     </div>
     <p class="note-box" style="margin-top:44px"><b>Come leggere questa pagina.</b> Gli studi citati riguardano i singoli ingredienti, a certe dosi, per certe durate e su certe persone. Non sono studi sul prodotto finito Lamèss Cosmetic Coffee e non ne dimostrano gli effetti. Quando la dose di Lamèss coincide con quella di uno studio lo diciamo, e lo diciamo anche quando è diversa.</p>
   </div>

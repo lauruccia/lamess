@@ -7,9 +7,9 @@
 <section class="light band">
   <div class="wrap">
     <div class="paths" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
-      <article><h3>Lamèss Point</h3><p style="color:var(--brown)">Centri estetici, attività per il benessere e strutture ricettive possono avere Lamèss nella propria offerta e diventare il riferimento della zona. Lo sviluppo è calibrato sulle singole città e può prevedere esclusività territoriale, definita negli accordi.</p><a class="btn solid" href="/contatti">Apri un Lamèss Point</a></article>
-      <article style="border-color:var(--line)"><h3>Incaricato</h3><p style="color:var(--brown)">Affianchi Lamèss nella diffusione con un link referral personale, una pagina tua e un’area riservata. Ogni cliente che arriva dal tuo link entra nella tua struttura.</p><a class="btn solid" href="/contatti">Diventa incaricato</a></article>
-      <article style="border-color:var(--line)"><h3>Socio del Consorzio</h3><p style="color:var(--brown)">Chi vuole un coinvolgimento nel progetto può candidarsi come socio del Consorzio Kadeo Group, oggi 51 soci con esperienze diverse. Requisiti e modalità si spiegano in un incontro.</p><a class="btn solid" href="/contatti">Chiedi un incontro</a></article>
+      <article><h3>Lamèss Point</h3><p>Centri estetici, attività per il benessere e strutture ricettive possono avere Lamèss nella propria offerta. Lo sviluppo è calibrato sulle singole città e può prevedere esclusività territoriale, definita negli accordi.</p><a class="btn solid" href="/contatti">Apri un Lamèss Point</a></article>
+      <article style="border-color:var(--line)"><h3>Incaricato</h3><p>Affianchi Lamèss nella diffusione con un link referral personale, una pagina tua e un’area riservata. Ogni cliente che arriva dal tuo link entra nella tua struttura e lo segui dal tuo spazio.</p><a class="btn solid" href="/contatti">Diventa incaricato</a></article>
+      <article style="border-color:var(--line)"><h3>Socio del Consorzio</h3><p>Chi vuole un coinvolgimento nel progetto può candidarsi come socio del Consorzio Kadeo Group, oggi 51 soci con esperienze diverse. Requisiti e modalità si spiegano in un incontro.</p><a class="btn solid" href="/contatti">Chiedi un incontro</a></article>
     </div>
   </div>
 </section>
@@ -34,14 +34,14 @@
   <div class="wrap">
     <h2 style="margin-bottom:44px;max-width:20ch">Cosa trovi nella tua area riservata.</h2>
     <div class="feat">
-      <div><h3>Qualifica e requisiti</h3><p>La qualifica attuale, cosa hai e cosa manca per la prossima.</p></div>
+      <div><h3>Qualifica e requisiti</h3><p>La tua qualifica attuale, cosa hai già raggiunto e cosa manca per la prossima.</p></div>
       <div><h3>Il mio ramo</h3><p>L’albero della tua rete, con elenco filtrabile, per capire chi aiutare a crescere.</p></div>
-      <div><h3>Statini e Tasca</h3><p>Statino mensile e bonus settimanali. Nella Tasca trovi i tuoi documenti e chiedi il prelievo.</p></div>
-      <div><h3>Pagina personale</h3><p>Una pagina pubblica tua, facile da modificare, con il tuo link referral.</p></div>
-      <div><h3>Inviti</h3><p>L’elenco degli inviti spediti e se la persona si è registrata.</p></div>
-      <div><h3>Tesserino agente</h3><p>Da stampare, per la vendita porta a porta.</p></div>
+      <div><h3>Statini e Tasca</h3><p>Statino mensile e bonus settimanali, con i tuoi documenti e la richiesta di prelievo.</p></div>
+      <div><h3>Pagina personale</h3><p>Una pagina pubblica tua, facile da modificare, con il tuo link referral personale.</p></div>
+      <div><h3>Inviti</h3><p>L’elenco degli inviti spediti e se la persona si è già registrata dal tuo link.</p></div>
+      <div><h3>Tesserino agente</h3><p>Il tesserino da stampare, con QR code di verifica, per la vendita porta a porta.</p></div>
     </div>
-    <p class="sample" style="margin-top:34px">Qui non compaiono importi o percentuali dei compensi: si presentano in incontro, con il Regolamento Incaricati.</p>
+    <p class="lead" style="margin-top:40px;max-width:60ch">Compensi e condizioni si presentano in un incontro, insieme al Regolamento Incaricati.</p>
   </div>
 </section>
 <section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>Parliamone in un incontro.</h2><a class="btn solid" href="/contatti">Scrivici</a></div></section>

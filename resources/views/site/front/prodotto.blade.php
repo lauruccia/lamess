@@ -46,12 +46,12 @@
   <div class="wrap">
     <h2 style="margin-bottom:44px;max-width:18ch">Ingrediente per ingrediente.</h2>
     <div class="ingr">
-      <article><h3>Collagene VERISOL®</h3><span class="dose">2,5 g per dose giornaliera</span><p>Collagene idrolizzato. La quantità è quella usata in uno studio su 114 donne, che ha riguardato il solo ingrediente. I riferimenti sono nella pagina <a href="/la-scienza">La scienza</a>.</p></article>
-      <article><h3>Acido ialuronico</h3><span class="dose">190 mg</span><p>Uno degli ingredienti cardine della nutricosmetica, presente in dose dichiarata in etichetta.</p></article>
-      <article><h3>Coenzima Q10</h3><span class="dose">20 mg</span><p>Affianca collagene e acido ialuronico nella formulazione.</p></article>
-      <article><h3>Vitamina C da rosa canina</h3><span class="dose">80 mg, 100% VNR</span><p>La vitamina C contribuisce alla normale formazione del collagene per la normale funzione della pelle.</p></article>
+      <article><h3>Collagene VERISOL®</h3><span class="dose">2,5 g per dose giornaliera</span><p>Collagene idrolizzato, nella quantità usata in uno studio su 114 donne. Le fonti sono nella pagina <a href="/la-scienza">La scienza</a>.</p></article>
+      <article><h3>Acido ialuronico</h3><span class="dose">190 mg</span><p>Uno degli ingredienti cardine della nutricosmetica, presente nella dose dichiarata in etichetta.</p></article>
+      <article><h3>Coenzima <span class="num">Q10</span></h3><span class="dose">20 mg</span><p>Presente nella formulazione insieme a collagene e acido ialuronico, in dose dichiarata.</p></article>
+      <article><h3>Vitamina C da rosa canina</h3><span class="dose">80 mg, 100% VNR</span><p>Contribuisce alla normale formazione del collagene per la normale funzione della pelle.</p></article>
       <article><h3>Vitamina E e selenio</h3><span class="dose">30 mg e 50 mcg</span><p>Vitamina E e selenio contribuiscono alla protezione delle cellule dallo stress ossidativo.</p></article>
-      <article><h3>Beta-carotene e biotina</h3><span class="dose">3,7 mg e 50 mcg</span><p>La biotina contribuisce al mantenimento della pelle normale. Il beta-carotene apporta vitamina A.</p></article>
+      <article><h3>Beta-carotene e biotina</h3><span class="dose">3,7 mg e 50 mcg</span><p>La biotina contribuisce al mantenimento di una pelle normale; il beta-carotene apporta vitamina A.</p></article>
     </div>
     <p class="disclaimer" style="color:var(--brown);margin-top:26px">Lo studio su VERISOL® riguarda il solo ingrediente e non dimostra gli effetti del prodotto finito. <a href="/la-scienza" style="color:var(--brown)">Tutti gli studi e le fonti</a>.</p>
   </div>
@@ -61,9 +61,9 @@
   <div class="wrap">
     <h2 style="margin-bottom:40px">Come si prepara.</h2>
     <div class="feat">
-      <div><h3>Calda</h3><p>Scioglila in acqua calda. Il caffè resta caffè.</p></div>
-      <div><h3>Fredda</h3><p>Scioglila in acqua fredda, anche in borraccia.</p></div>
-      <div><h3>Ricette</h3><p>Con il nostro Coffee Specialist abbiamo lavorato a preparazioni calde e fredde e a proposte per eventi.</p></div>
+      <div><h3>Calda</h3><p>Scioglila in acqua calda e mescola: il caffè resta caffè, con tutto il suo aroma.</p></div>
+      <div><h3>Fredda</h3><p>Scioglila in acqua fredda, anche in borraccia: pronta da bere ovunque tu sia.</p></div>
+      <div><h3>Ricette</h3><p>Ricette calde e fredde create con il nostro Coffee Specialist, anche per gli eventi.</p></div>
     </div>
   </div>
 </section>

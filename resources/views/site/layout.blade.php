@@ -88,12 +88,13 @@
     ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza'), 'Account'],
     ['/area/profilo', 'I miei dati', fn ($p) => str_starts_with($p, 'area/profilo'), 'Account'],
   ]))
-  @php
+  {{-- PHP puro: con un blocco Blade lungo i php di riga sopra ne inghiottirebbero il contenuto. --}}
+  <?php
       $navGroups = [];
       foreach ($items as [$href, $label, $on, $group]) {
           $navGroups[$group ?? $label][] = ['href' => $href, 'label' => $label, 'on' => (bool) $on($nav)];
       }
-  @endphp
+  ?>
   @foreach($navGroups as $gName => $links)
    @if(count($links) === 1)
     <a href="{{ $links[0]['href'] }}" class="{{ $links[0]['on'] ? 'on' : '' }}">{{ $links[0]['label'] }}</a>

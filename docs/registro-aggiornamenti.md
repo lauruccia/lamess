@@ -1,5 +1,20 @@
 # Registro aggiornamenti
 
+## 2026-11-02 — Bonifici in sospeso a fine mese e «Riapri ordine»
+- **Bonifici in sospeso** (*Compensi → Bonifici in sospeso*, permesso `periods.manage`, nascondibile da *Funzionalità e viste*): prima del runtime ufficiale l'admin decide, **ordine per ordine**, che cosa fare dei bonifici ancora in attesa del mese: **Conferma nel mese** (le provvigioni valgono nel mese della data dell'ordine; incasso e fattura restano alla data reale), **Sposta al mese successivo** (l'ordine resta in attesa e la chiusura del mese non lo annulla) oppure **Annulla**. Ogni scelta chiede un motivo e finisce in cronologia ordine e nel registro audit (`period.transfer_confirmed`, `period.transfer_deferred`, `period.transfer_cancelled`). Si apre anche dal pulsante **Bonifici in sospeso (n)** nel dettaglio del mese.
+- **Blocco del runtime ufficiale**: se il mese è già finito e restano bonifici non decisi, il runtime ufficiale non parte (la stima live sì) e il messaggio indica la pagina. Anche la chiusura automatica si ferma con lo stesso motivo (la vedi nel Cruscotto). Per un mese ancora in corso non cambia nulla. Il controllo riguarda solo i bonifici: carta e KMoney non completati si annullano alla chiusura come prima.
+- **Riapri ordine** (solo `super_admin`, nella riga e nel dettaglio dell'ordine annullato, con motivo obbligatorio; audit `order.reopened`): l'ordine torna «In attesa di pagamento», si riprenotano le giacenze, si riattivano i codici sconto e i movimenti PV annullati tornano in attesa (nel loro mese, o nel mese corrente se quel mese è chiuso). Non si riapre se la merce non c'è più, se uno sconto è esaurito, se la quota KMoney è già stata riaccreditata o se l'ordine è di un abbonamento: in quei casi l'ordine resta annullato e un messaggio spiega perché.
+- Tecnico: `PendingTransfers` (`App\Domain\Periods`), `OrderService::markPaid(..., $competenceAt)` (il mese delle provvigioni può differire dalla data di incasso), `OrderService::reopen()`, nuovo campo `orders.deferred_to_period`. Test: `PendingTransfersTest`, `PendingTransfersPageTest`, `ReopenOrderTest`.
+- Migrazione `2026_11_17_100000_orders_deferred_to_period` (una colonna). Sul sito live (senza terminale) esegui in phpMyAdmin → scheda SQL sul database `lamess_portale`, meglio **prima del deploy** (una colonna vuota non rompe il codice vecchio):
+  ```sql
+  ALTER TABLE orders
+    ADD COLUMN deferred_to_period VARCHAR(7) NULL,
+    ADD INDEX orders_deferred_to_period_index (deferred_to_period);
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_17_100000_orders_deferred_to_period', MAX(batch) + 1 FROM migrations;
+  ```
+
 ## 2026-11-02 — Panoramica e «Il mio ramo»: etichette, ordine fisso, barre, albero
 - **Panoramica**: il riquadro «Ordini» si chiama **I miei ordini**; **Qualifica** compare sempre ed è sempre il primo dei tre riquadri Qualifica → Clienti personali → Incaricati diretti (prima spariva, e l'ordine cambiava, quando il mese non aveva ancora un calcolo). «Diretti Pearl» diventa **Incaricati diretti** con sottotitolo «Almeno Pearl al 1° livello».
 - **Scaglioni dei compensi diretti**: il «prossimo scaglione» è il primo non raggiunto che paga **di più**; due scaglioni con la stessa percentuale non danno più «Ne mancano 3 per il 20%» / «sale dal 20% al 20%».

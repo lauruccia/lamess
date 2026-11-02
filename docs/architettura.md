@@ -70,7 +70,7 @@ App\Models                 Consultant, CompPlanVersion, Period, PvMovement, Calc
                            LegalDocument / LegalDocumentEdit (Regolamento modificabile)
 App\Domain\Ledger          PvLedger  → unico punto di scrittura dei movimenti PV
 App\Domain\Periods         SnapshotBuilder (DB → PeriodInput), PeriodService (apri / calcola / chiudi / riapri),
-                           PeriodAutomation (chiusura mensile automatica), NightlyRecalculation (ricalcolo notturno),
+                           PeriodAutomation (chiusura mensile automatica), PendingTransfers (bonifici in sospeso a fine mese), NightlyRecalculation (ricalcolo notturno),
                            CommissionLineLocker, PeriodStateException
 ```
 

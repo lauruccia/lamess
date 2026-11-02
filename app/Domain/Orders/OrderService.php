@@ -14,6 +14,7 @@ use App\Domain\Plan\LegacyPlan;
 use App\Models\BundleRule;
 use App\Models\Consultant;
 use App\Models\Customer;
+use App\Domain\Audit\AuditLog;
 use App\Models\Discount;
 use App\Models\DiscountRedemption;
 use App\Models\Order;
@@ -530,6 +531,80 @@ final class OrderService
         });
 
         return $order->refresh();
+    }
+
+    /**
+     * Riapre un ordine annullato (solo super admin, dal pannello): torna «in attesa di pagamento».
+     * Si riprenotano le giacenze (se la merce non c'è più l'ordine resta annullato), si riattivano i codici sconto
+     * (se uno è esaurito idem) e i movimenti PV annullati tornano in attesa nel loro mese, o nel mese corrente se quel mese è chiuso.
+     * Non si riapre un ordine la cui quota KMoney è già stata riaccreditata, né un ordine di un abbonamento.
+     */
+    public function reopen(Order $order, string $reason): Order
+    {
+        $reason = trim($reason);
+        if (mb_strlen($reason) < 5) {
+            throw new OrderException('Scrivi il motivo della riapertura (almeno 5 caratteri).');
+        }
+
+        $order = DB::transaction(function () use ($order, $reason): Order {
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($order->status !== 'cancelled') {
+                throw new OrderException("L'ordine {$order->number} non è annullato.");
+            }
+            if ($order->subscription_id !== null) {
+                throw new OrderException("L'ordine {$order->number} appartiene a un abbonamento: si gestisce dall'abbonamento.");
+            }
+            if ($order->payments()->where('status', 'refunded')->exists()) {
+                throw new OrderException("La quota KMoney dell'ordine {$order->number} è già stata riaccreditata al cliente: non si può riaprire. Crea un nuovo ordine.");
+            }
+
+            $order->load('items.product', 'buyer');
+            $stock = [];
+            foreach ($order->items->whereNull('parent_item_id') as $it) {
+                if ($it->product !== null) {
+                    $stock[] = ['product' => $it->product, 'gift' => (bool) $it->is_gift, 'qty' => (int) $it->qty];
+                }
+            }
+            $this->reserveStock($stock);
+            $this->restoreRedemptions($order);
+
+            foreach (PvMovement::where('order_id', $order->id)->where('status', 'cancelled')->get() as $m) {
+                $period = $m->period_id ? Period::find($m->period_id) : null;
+                if ($period === null || $period->isClosed()) {
+                    $period = $this->periods->forDate(CarbonImmutable::now());
+                }
+                $m->update(['status' => 'pending_payment', 'period_id' => $period->id]);
+            }
+
+            $order->update(['status' => 'pending_payment', 'deferred_to_period' => null]);
+            OrderEvent::log($order, 'reopened', "Ordine riaperto: {$reason}", true);
+            AuditLog::record('order.reopened', "Ordine {$order->number} riaperto", $order, [], $reason);
+
+            return $order;
+        });
+
+        return $order->refresh();
+    }
+
+    /** Riattiva gli utilizzi dei codici sconto di un ordine riaperto, ricontrollando i limiti. */
+    private function restoreRedemptions(Order $order): void
+    {
+        foreach ((array) $order->discounts as $applied) {
+            $d = isset($applied['id']) ? Discount::whereKey($applied['id'])->lockForUpdate()->first() : null;
+            if ($d === null) {
+                continue;
+            }
+            if ($d->usage_limit !== null && DiscountRedemption::where('discount_id', $d->id)->count() >= $d->usage_limit) {
+                throw new OrderException("Lo sconto «{$d->name}» usato da questo ordine è ormai esaurito: l'ordine non si può riaprire.");
+            }
+            if ($d->usage_limit_per_user !== null && DiscountRedemption::where('discount_id', $d->id)->where('user_id', $order->buyer_user_id)->count() >= $d->usage_limit_per_user) {
+                throw new OrderException("Il cliente ha già usato lo sconto «{$d->name}» il numero massimo di volte: l'ordine non si può riaprire.");
+            }
+            DiscountRedemption::create([
+                'discount_id' => $d->id, 'order_id' => $order->id, 'user_id' => $order->buyer_user_id,
+                'amount_net' => Num::money(Num::of($applied['items_net'] ?? '0')->plus(Num::of($applied['shipping_net'] ?? '0'))),
+            ]);
+        }
     }
 
     /** Etichetta italiana del metodo di pagamento. */

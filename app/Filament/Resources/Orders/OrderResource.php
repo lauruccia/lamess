@@ -262,6 +262,14 @@ class OrderResource extends Resource
             Action::make('cancel')->authorize('orders.manage')->label('Annulla')->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (Order $record) => $record->status === 'pending_payment')->requiresConfirmation()
                 ->action(fn (Order $record) => self::run(fn () => app(OrderService::class)->cancel($record), 'Ordine annullato')),
+            Action::make('reopen')->authorize('orders.manage')->label('Riapri ordine')->icon('heroicon-o-arrow-path')->color('warning')
+                ->visible(fn (Order $record) => $record->status === 'cancelled' && (auth()->user()?->isSuperAdmin() ?? false))
+                ->modalDescription('Riservato al super_admin. L\'ordine torna «in attesa di pagamento»: si riprenotano le giacenze e si riattivano i codici sconto e i punti in attesa. Non si può riaprire se la merce non c\'è più, se uno sconto è esaurito o se la quota KMoney è già stata riaccreditata.')
+                ->schema([Textarea::make('reason')->label('Motivo della riapertura')->required()->minLength(5)->maxLength(500)])
+                ->action(function (Order $record, array $data): void {
+                    abort_unless(auth()->user()?->isSuperAdmin(), 403);
+                    self::run(fn () => app(OrderService::class)->reopen($record, (string) $data['reason']), 'Ordine riaperto: è di nuovo in attesa di pagamento');
+                }),
             Action::make('refund')->authorize('orders.manage')->label('Reso e rimborso')->icon('heroicon-o-arrow-uturn-left')->color('warning')
                 ->visible(fn (Order $record) => in_array($record->status, Order::PAID_STATES, true))
                 ->modalDescription(LegacyPlan::hidden() ? 'Emette una nota di credito e storna i compensi (se il periodo è già chiuso lo storno va nel mese corrente). Puoi anche restituire i soldi al cliente e rimettere la merce in giacenza.' : 'Emette una nota di credito e storna i punti (se il periodo è già chiuso lo storno va nel mese corrente). Puoi anche restituire i soldi al cliente e rimettere la merce in giacenza.')

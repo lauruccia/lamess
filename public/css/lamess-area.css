@@ -245,4 +245,18 @@ a.item:hover{background:rgb(194 102 58/.05);color:inherit}
 .only-mobile{display:none}
 @media(max-width:980px){.only-mobile{display:grid}}
 /* Menu area: su schermo largo le voci vanno a capo invece di uscire dallo schermo (su mobile resta lo scorrimento laterale) */
-@media(min-width:900px){.subnav{flex-wrap:wrap;overflow-x:visible}}
+/* Menu raggruppato: su schermo largo sei voci con menu a tendina; su mobile i gruppi si dissolvono e resta la fila scorrevole. */
+.sn-group{display:contents}.sn-btn{display:none}.sn-menu{display:contents}
+@media(min-width:900px){
+ .subnav{flex-wrap:nowrap;overflow:visible}
+ .sn-group{display:block;position:relative}
+ .sn-btn{display:block;font:inherit;font-size:14px;font-weight:500;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent;border-radius:0;box-shadow:none;margin:0;padding:11px 14px;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
+ .sn-btn:hover,.sn-group.open .sn-btn{color:var(--ink);border-bottom-color:var(--lm-sand)}
+ .sn-btn.on{color:var(--lm-brown);border-bottom-color:var(--lm-terracotta)}
+ .sn-car{font-size:11px;opacity:.7}
+ .sn-menu{display:none;position:absolute;top:100%;left:0;z-index:60;min-width:190px;padding:6px;background:var(--white,#fff);border:1px solid var(--hair);border-radius:12px;box-shadow:0 10px 28px rgb(60 40 30/.14)}
+ .sn-group:hover .sn-menu,.sn-group:focus-within .sn-menu,.sn-group.open .sn-menu{display:block}
+ .sn-menu a{display:block;padding:9px 12px;border-bottom:0;border-radius:8px}
+ .sn-menu a:hover{background:rgb(194 102 58/.08);color:var(--ink)}
+ .sn-menu a.on{background:rgb(194 102 58/.12);color:var(--lm-brown)}
+}

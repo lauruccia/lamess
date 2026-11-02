@@ -69,27 +69,55 @@
  @auth
  <div class="subnav" aria-label="Area personale">
   @php($items = array_filter([
-    ['/area', 'Panoramica', fn ($p) => $p === 'area'],
-    $isConsultant ? ['/area/rete', 'Il mio ramo', fn ($p) => str_starts_with($p, 'area/rete')] : null,
-    $isConsultant ? ['/area/clienti', 'I miei clienti', fn ($p) => str_starts_with($p, 'area/clienti')] : null,
-    $isConsultant ? ['/area/statini', 'Statini', fn ($p) => str_starts_with($p, 'area/statini')] : null,
-    $isConsultant && \App\Domain\Wallet\WithdrawalService::enabled() ? ['/area/wallet', 'Tasca', fn ($p) => str_starts_with($p, 'area/wallet')] : null,
-    $isConsultant && (config('lamess.fiscal.receipts_enabled') || \App\Models\CommissionReceipt::where('consultant_id', $me->consultant->id)->exists()) ? ['/area/ricevute', 'Ricevute', fn ($p) => str_starts_with($p, 'area/ricevute')] : null,
-    ['/area/ordini', 'Ordini', fn ($p) => str_starts_with($p, 'area/ordini')],
-    ['/area/abbonamenti', 'Abbonamenti', fn ($p) => str_starts_with($p, 'area/abbonamenti')],
-    ['/area/novita', 'Novità', fn ($p) => str_starts_with($p, 'area/novita')],
-    $isConsultant ? ['/area/materiali', 'Materiali', fn ($p) => str_starts_with($p, 'area/materiali')] : null,
-    ['/area/eventi', 'Eventi', fn ($p) => str_starts_with($p, 'area/eventi')],
-    $isConsultant ? ['/area/conformita', 'Conformità', fn ($p) => str_starts_with($p, 'area/conformita')] : null,
-    $isConsultant ? ['/area/referral', 'Referral', fn ($p) => str_starts_with($p, 'area/referral')] : null,
-    $isConsultant && app(\App\Domain\Pages\PersonalPageService::class)->enabled() ? ['/area/pagina', 'La mia pagina', fn ($p) => str_starts_with($p, 'area/pagina')] : null,
-    $isConsultant ? ['/area/onboarding', 'Documenti', fn ($p) => str_starts_with($p, 'area/onboarding')] : null,
-    $isConsultant ? ['/piano-compensi', 'Il piano compensi', fn ($p) => $p === 'piano-compensi'] : null,
-    ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza')],
-    ['/area/profilo', 'I miei dati', fn ($p) => str_starts_with($p, 'area/profilo')],
+    ['/area', 'Panoramica', fn ($p) => $p === 'area', null],
+    $isConsultant ? ['/area/rete', 'Il mio ramo', fn ($p) => str_starts_with($p, 'area/rete'), 'La mia rete'] : null,
+    $isConsultant ? ['/area/clienti', 'I miei clienti', fn ($p) => str_starts_with($p, 'area/clienti'), 'La mia rete'] : null,
+    $isConsultant ? ['/area/statini', 'Statini', fn ($p) => str_starts_with($p, 'area/statini'), 'Compensi'] : null,
+    $isConsultant && \App\Domain\Wallet\WithdrawalService::enabled() ? ['/area/wallet', 'Tasca', fn ($p) => str_starts_with($p, 'area/wallet'), 'Compensi'] : null,
+    $isConsultant && (config('lamess.fiscal.receipts_enabled') || \App\Models\CommissionReceipt::where('consultant_id', $me->consultant->id)->exists()) ? ['/area/ricevute', 'Ricevute', fn ($p) => str_starts_with($p, 'area/ricevute'), 'Compensi'] : null,
+    ['/area/ordini', 'Ordini', fn ($p) => str_starts_with($p, 'area/ordini'), 'Acquisti'],
+    ['/area/abbonamenti', 'Abbonamenti', fn ($p) => str_starts_with($p, 'area/abbonamenti'), 'Acquisti'],
+    ['/area/novita', 'Novità', fn ($p) => str_starts_with($p, 'area/novita'), 'Consorzio'],
+    $isConsultant ? ['/area/materiali', 'Materiali', fn ($p) => str_starts_with($p, 'area/materiali'), 'Consorzio'] : null,
+    ['/area/eventi', 'Eventi', fn ($p) => str_starts_with($p, 'area/eventi'), 'Consorzio'],
+    $isConsultant ? ['/area/conformita', 'Conformità', fn ($p) => str_starts_with($p, 'area/conformita'), 'Consorzio'] : null,
+    $isConsultant ? ['/area/referral', 'Referral', fn ($p) => str_starts_with($p, 'area/referral'), 'La mia rete'] : null,
+    $isConsultant && app(\App\Domain\Pages\PersonalPageService::class)->enabled() ? ['/area/pagina', 'La mia pagina', fn ($p) => str_starts_with($p, 'area/pagina'), 'La mia rete'] : null,
+    $isConsultant ? ['/area/onboarding', 'Documenti', fn ($p) => str_starts_with($p, 'area/onboarding'), 'Consorzio'] : null,
+    $isConsultant ? ['/piano-compensi', 'Il piano compensi', fn ($p) => $p === 'piano-compensi', 'Compensi'] : null,
+    ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza'), 'Account'],
+    ['/area/profilo', 'I miei dati', fn ($p) => str_starts_with($p, 'area/profilo'), 'Account'],
   ]))
-  @foreach($items as [$href, $label, $on])<a href="{{ $href }}" class="{{ $on($nav) ? 'on' : '' }}">{{ $label }}</a>@endforeach
+  @php
+      $navGroups = [];
+      foreach ($items as [$href, $label, $on, $group]) {
+          $navGroups[$group ?? $label][] = ['href' => $href, 'label' => $label, 'on' => (bool) $on($nav)];
+      }
+  @endphp
+  @foreach($navGroups as $gName => $links)
+   @if(count($links) === 1)
+    <a href="{{ $links[0]['href'] }}" class="{{ $links[0]['on'] ? 'on' : '' }}">{{ $links[0]['label'] }}</a>
+   @else
+    <div class="sn-group">
+     <button type="button" class="sn-btn {{ collect($links)->contains('on', true) ? 'on' : '' }}" aria-haspopup="true" aria-expanded="false">{{ $gName }} <span class="sn-car" aria-hidden="true">▾</span></button>
+     <div class="sn-menu">@foreach($links as $l)<a href="{{ $l['href'] }}" class="{{ $l['on'] ? 'on' : '' }}">{{ $l['label'] }}</a>@endforeach</div>
+    </div>
+   @endif
+  @endforeach
  </div>
+ <script>
+ (function () {
+   var bar = document.querySelector('.subnav'); if (!bar) { return; }
+   var groups = [].slice.call(bar.querySelectorAll('.sn-group'));
+   function closeAll(except) { groups.forEach(function (g) { if (g !== except) { g.classList.remove('open'); g.querySelector('.sn-btn').setAttribute('aria-expanded', 'false'); } }); }
+   groups.forEach(function (g) {
+     var b = g.querySelector('.sn-btn');
+     b.addEventListener('click', function (e) { e.stopPropagation(); var o = !g.classList.contains('open'); closeAll(g); g.classList.toggle('open', o); b.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+   });
+   document.addEventListener('click', function () { closeAll(null); });
+   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeAll(null); } });
+ })();
+ </script>
  @endauth
  @endif
  @endunless

@@ -243,3 +243,5 @@ a.item:hover{background:rgb(194 102 58/.05);color:inherit}
 /* Dati fissi (CF/P.IVA) in cima al form: solo telefono, dove il pannello laterale finisce in fondo */
 .only-mobile{display:none}
 @media(max-width:980px){.only-mobile{display:grid}}
+/* Menu area: su schermo largo le voci vanno a capo invece di uscire dallo schermo (su mobile resta lo scorrimento laterale) */
+@media(min-width:900px){.subnav{flex-wrap:wrap;overflow-x:visible}}

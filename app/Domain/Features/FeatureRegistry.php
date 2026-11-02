@@ -98,6 +98,7 @@ final class FeatureRegistry
             'albero_rete' => ['Albero della rete', 'Rete'], 'lettera_incarico' => ['Lettera di incarico', 'Rete'], 'regolamento_incaricati' => ['Regolamento incaricati', 'Rete'], 'elenco_livelli' => ['Elenco per livelli', 'Rete'],
             'confronto_qualifiche' => ['Confronto qualifiche', 'Compensi'],
             'compensi_mese' => ['Compensi del mese', 'Compensi'],
+            'bonifici_in_sospeso' => ['Bonifici in sospeso', 'Compensi'],
             'simulazione_incaricati' => ['Simulazione incaricati', 'Compensi'],
             'cruscotto_vendite' => ['Cruscotto vendite', 'Vendite'], 'negozio_pagamenti' => ['Pagamenti e spedizioni', 'Vendite'],
             'statistiche_sito' => ['Statistiche sito', 'Sistema'],

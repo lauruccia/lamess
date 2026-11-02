@@ -462,12 +462,18 @@ final class OrderService
         return $session;
     }
 
-    /** Conferma del pagamento (carta riuscita o bonifico riconciliato dall'admin). */
-    public function markPaid(Order $order, ?string $reference = null, ?DateTimeImmutable $at = null): Order
+    /**
+     * Conferma del pagamento (carta riuscita o bonifico riconciliato dall'admin).
+     *
+     * $at è il momento reale dell'incasso (pagamento, fattura). $competenceAt è il momento che decide il MESE delle provvigioni:
+     * di norma coincide con $at, ma l'admin può farlo valere nel mese dell'ordine (controllo bonifici in sospeso).
+     */
+    public function markPaid(Order $order, ?string $reference = null, ?DateTimeImmutable $at = null, ?DateTimeImmutable $competenceAt = null): Order
     {
         $at ??= CarbonImmutable::now();
+        $competenceAt ??= $at;
 
-        $order = DB::transaction(function () use ($order, $reference, $at): Order {
+        $order = DB::transaction(function () use ($order, $reference, $at, $competenceAt): Order {
             $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
             if ($order->status !== 'pending_payment') {
                 throw new OrderException("L'ordine {$order->number} non è in attesa di pagamento.");
@@ -478,8 +484,8 @@ final class OrderService
             }
             $order->load('items');
             if (Num::of($order->pv_total)->isPositive()) {
-                $period = $this->periods->forDate($at);
-                $this->confirmMovements($order, $order->beneficiary, $period, $at);
+                $period = $this->periods->forDate($competenceAt);
+                $this->confirmMovements($order, $order->beneficiary, $period, $competenceAt);
             }
             $payment = $order->payments()->where('status', 'pending')->latest('id')->first()
                 ?? $order->payments()->create(['provider' => 'manual', 'method' => $order->payment_method, 'amount' => $order->total]);

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Periods\Pages;
 
 use App\Domain\Payouts\PayoutService;
+use App\Domain\Periods\PendingTransfers;
 use App\Domain\Periods\PeriodService;
 use App\Domain\Periods\PeriodStateException;
+use App\Filament\Pages\PendingTransfersPage;
 use App\Filament\Resources\Periods\PeriodResource;
 use App\Models\Period;
 use App\Models\Settlement;
@@ -43,6 +45,10 @@ class ViewPeriod extends ViewRecord
             Action::make('live')->authorize('periods.manage')->label('Stima (live)')->icon('heroicon-o-calculator')->color('gray')
                 ->visible(fn () => $open($this->record))
                 ->action(fn () => $this->run(fn (PeriodService $s, Period $p) => $s->calculate($p, 'live'), 'Stima aggiornata (non definitiva)')),
+            Action::make('transfers')->authorize('periods.manage')->color('warning')->icon('heroicon-o-clock')
+                ->label(fn () => 'Bonifici in sospeso ('.app(PendingTransfers::class)->count($this->record).')')
+                ->visible(fn () => $open($this->record) && app(PendingTransfers::class)->count($this->record) > 0)
+                ->url(fn () => PendingTransfersPage::getUrl(['mese' => $this->record->code])),
             Action::make('runtime')->authorize('periods.manage')->label('Runtime ufficiale')->icon('heroicon-o-cog-6-tooth')
                 ->visible(fn () => $open($this->record))
                 ->action(fn () => $this->run(fn (PeriodService $s, Period $p) => $s->calculate($p, 'official'), 'Runtime completato: periodo in revisione')),

@@ -21,6 +21,7 @@ use App\Filament\Pages\IvdLetterPage;
 use App\Filament\Pages\RegolamentoPage;
 use App\Filament\Pages\RolesPermissionsPage;
 use App\Filament\Pages\NetworkTreePage;
+use App\Filament\Pages\PendingTransfersPage;
 use App\Filament\Pages\RankComparisonPage;
 use App\Filament\Pages\SalesDashboardPage;
 use App\Filament\Pages\SiteStatsPage;
@@ -100,6 +101,7 @@ class AdminPanelProvider extends PanelProvider
                 IvdLetterPage::class,
                 RegolamentoPage::class,
                 CompensiMesePage::class,
+                PendingTransfersPage::class,
                 CompensoDettaglioPage::class,
                 ConsultantLevelsPage::class,
                 SystemSettingsPage::class,

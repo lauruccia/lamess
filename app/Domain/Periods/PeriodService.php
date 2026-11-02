@@ -61,6 +61,9 @@ final class PeriodService
     public function calculate(Period $period, string $type = 'live', bool $syncRanks = false): CalculationRun
     {
         $this->assertNotClosed($period);
+        if ($type === 'official') {
+            app(PendingTransfers::class)->assertResolved($period);
+        }
 
         return $this->locked($period, function () use ($period, $type, $syncRanks): CalculationRun {
             $previous = $period->status;
@@ -125,7 +128,8 @@ final class PeriodService
         $orders = app(\App\Domain\Orders\OrderService::class);
         $ids = PvMovement::where('period_id', $period->id)->where('status', 'pending_payment')->whereNotNull('order_id')->pluck('order_id');
         $query = \App\Models\Order::query()->where('status', 'pending_payment')
-            ->where(fn ($q) => $q->whereIn('id', $ids)->orWhere('created_at', '<=', $period->ends_at));
+            ->where(fn ($q) => $q->whereIn('id', $ids)->orWhere('created_at', '<=', $period->ends_at))
+            ->where(fn ($q) => $q->whereNull('deferred_to_period')->orWhere('deferred_to_period', '<=', $period->code));   // i bonifici rimandati al mese dopo restano in attesa
         $done = 0;
         foreach ($query->orderBy('id')->get() as $order) {
             try {

@@ -49,7 +49,7 @@ class SiteController extends Controller
     {
         $featured = Product::onShelf()->with(['category', 'variants'])->orderBy('id')->limit(3)->get();
 
-        return view('site.home', ['featured' => $featured]);
+        return view('site.front.home', ['featured' => $featured]);
     }
 
     public function referral(Request $request, string $code, ReferralResolver $resolver, ReferralInviteService $invites): RedirectResponse

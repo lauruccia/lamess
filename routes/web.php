@@ -44,6 +44,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 Route::get('/', [SiteController::class, 'home'])->name('home');
+// pagine pubbliche del sito vetrina (layout site.front.*)
+Route::view('/il-prodotto', 'site.front.prodotto')->name('front.prodotto');
+Route::view('/perche-lamess', 'site.front.perche')->name('front.perche');
+Route::view('/la-scienza', 'site.front.scienza')->name('front.scienza');
+Route::view('/lavora-con-noi', 'site.front.lavora')->name('front.lavora');
+Route::view('/chi-siamo', 'site.front.chi-siamo')->name('front.chi-siamo');
+Route::view('/domande', 'site.front.faq')->name('front.faq');
+Route::view('/contatti', 'site.front.contatti')->name('front.contatti');
 Route::get('/installazione', [InstallController::class, 'show']);
 Route::post('/installazione', [InstallController::class, 'run'])->middleware('throttle:6,1');
 Route::get('/negozio', [ShopController::class, 'index']);

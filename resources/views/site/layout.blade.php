@@ -130,6 +130,7 @@
   <h2>@yield('side_title', 'Il tuo spazio Lamèss')</h2>
   <p>@yield('side_text', 'Ordini, abbonamenti e, se sei incaricato, rete e compensi: tutto in un unico posto.')</p>
   <ul><li>Registrazione gratuita, nessun obbligo di acquisto</li><li>I tuoi dati restano tuoi e sono protetti</li><li>Assistenza diretta dall'area personale</li></ul>
+  @yield('side_extra')
  </aside>
  <section class="auth-form"><div class="auth-inner">
   @if(session('status'))<div class="ok">{{ session('status') }}</div>@endif

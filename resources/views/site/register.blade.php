@@ -3,6 +3,12 @@
 @section('width','auth')
 @section('side_title','Crea il tuo account Lamèss')
 @section('side_text','Registrati gratis e acquista dal negozio. Se vuoi, potrai poi candidarti come incaricato.')
+@push('styles')
+<link rel="stylesheet" href="/css/lamess-benefits.css?v={{ @filemtime(public_path('css/lamess-benefits.css')) ?: 1 }}">
+@endpush
+@section('side_extra')
+<a class="side-how" href="/il-prodotto" target="_blank" rel="noopener" data-benefits><span>Cosa c’è in una bustina?</span><b>Scoprilo in 30 secondi <i aria-hidden="true">→</i></b></a>
+@endsection
 @section('content')
 @php
     $isCompany = old('type') === 'company';
@@ -16,6 +22,7 @@
   <span class="reg-count" aria-hidden="true"><b data-n>{{ $startStep }}</b> / 2</span>
  </div>
  <p class="muted reg-sub">La registrazione è gratuita e non obbliga ad alcun acquisto.</p>
+ <a class="reg-how-m" href="/il-prodotto" target="_blank" rel="noopener" data-benefits>Scopri cosa c’è in una bustina</a>
  <div class="reg-bar" aria-hidden="true"><i></i><i></i></div>
 
  <form method="post" action="/registrazione" class="reg card" id="reg" novalidate>
@@ -217,4 +224,6 @@
   checkPw();
 })();
 </script>
+@include('partials.benefits-dialog')
+<script src="/js/lamess-benefits.js?v={{ @filemtime(public_path('js/lamess-benefits.js')) ?: 1 }}" defer></script>
 @endsection

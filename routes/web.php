@@ -52,6 +52,7 @@ Route::view('/lavora-con-noi', 'site.front.lavora')->name('front.lavora');
 Route::view('/chi-siamo', 'site.front.chi-siamo')->name('front.chi-siamo');
 Route::view('/domande', 'site.front.faq')->name('front.faq');
 Route::view('/contatti', 'site.front.contatti')->name('front.contatti');
+Route::get('/come-funziona', [SiteController::class, 'howItWorks'])->name('front.come-funziona');
 Route::get('/installazione', [InstallController::class, 'show']);
 Route::post('/installazione', [InstallController::class, 'run'])->middleware('throttle:6,1');
 Route::get('/negozio', [ShopController::class, 'index']);

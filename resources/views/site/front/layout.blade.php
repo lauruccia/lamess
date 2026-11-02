@@ -10,6 +10,7 @@
 <link rel="icon" href="/favicon.ico?v=2">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Marcellus&display=swap">
 <link rel="stylesheet" href="/css/lamess-front.css?v={{ @filemtime(public_path('css/lamess-front.css')) ?: 1 }}">
+@stack('head')
 </head>
 <body>
 @php($cartCount = array_sum((array) session('cart', [])) + array_sum(array_map('array_sum', (array) session('cart_others', []))))

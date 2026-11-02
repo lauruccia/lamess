@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Domain\Customers\CustomerService;
 use App\Domain\Customers\ReferralInviteService;
 use App\Domain\Customers\ReferralResolver;
+use App\Domain\Plan\HowItWorksData;
 use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Models\Product;
 use App\Models\User;
@@ -68,6 +69,18 @@ class SiteController extends Controller
         }
 
         return $response;
+    }
+
+    /** Presentazione pubblica del sistema per chi riceve un link referral (valori letti dal piano in vigore). */
+    public function howItWorks(Request $request, ReferralResolver $resolver): View
+    {
+        [$sponsor, $source] = $resolver->resolve($request->query('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), null);
+
+        return view('site.front.come-funziona', [
+            'plan' => HowItWorksData::build(),
+            'sponsor' => in_array($source, ['referral', 'cookie'], true) ? $sponsor : null,
+            'ref' => (string) $request->query('ref'),
+        ]);
     }
 
     public function registerForm(Request $request, ReferralResolver $resolver)

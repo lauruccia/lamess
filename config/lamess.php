@@ -66,6 +66,9 @@ return [
         'iban_proof' => 'Prova di intestazione IBAN',
     ],
 
+    // Pagina pubblica «Come funziona» (/come-funziona): mostra anche gli importi in euro negli esempi? Spento: solo percentuali e qualifiche
+    'how_it_works_show_euro' => (bool) env('LAMESS_HOW_IT_WORKS_SHOW_EURO', false),
+
     // Canone annuale (RF-020…023)
     'annual_fee_enabled' => (bool) env('LAMESS_ANNUAL_FEE_ENABLED', true),   // spento: nessun canone, i rinnovi sono gratuiti
     'annual_fee_amount' => env('LAMESS_ANNUAL_FEE', '19.00'),               // IVA compresa

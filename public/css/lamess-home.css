@@ -130,3 +130,10 @@ body.is-home .cart-count{background:var(--lm-gold);color:#1a100a}
 }
 @media(max-width:520px){.home .pillars{grid-template-columns:1fr}.home .wrap{padding:0 18px}}
 @media(prefers-reduced-motion:reduce){.home .scroll::after{animation:none}.js .home .reveal{opacity:1;transform:none;transition:none}}
+
+/* ottimizzazione mobile: aree di tocco più comode */
+@media(max-width:900px){
+ .home .more,.home .hero-note a{display:inline-block;padding-block:10px}
+ .home .hbtn{min-height:46px}
+ .home .hero-note{line-height:1.6}
+}

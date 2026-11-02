@@ -79,8 +79,8 @@
      </div>
      <div class="tbl-wrap"><table class="tbl cards" id="act-t">
       <thead><tr>
-       @foreach(['name' => 'Persona', 'level' => 'Liv.', 'rank' => 'Qualifica', 'clients' => 'Clienti', 'registered' => 'Iscritti', 'persons' => 'Il suo ramo'] as $k => $lbl)
-        <th @if(in_array($k, ['clients', 'persons'], true))class="num"@endif aria-sort="none"><button type="button" class="srt" data-k="{{ $k }}">{{ $lbl }}<i aria-hidden="true"></i></button></th>
+       @foreach(['name' => 'Persona', 'level' => 'Liv.', 'rank' => 'Qualifica', 'clients' => 'Clienti', 'registered' => 'Iscritti', 'persons' => 'Il suo ramo'] as $sortKey => $lbl)
+        <th @if(in_array($sortKey, ['clients', 'persons'], true))class="num"@endif aria-sort="none"><button type="button" class="srt" data-k="{{ $sortKey }}">{{ $lbl }}<i aria-hidden="true"></i></button></th>
        @endforeach
        <th>Prossima qualifica e cosa manca</th>
        <th class="num" aria-sort="none"><button type="button" class="srt" data-k="eur">Venduto mese<i aria-hidden="true"></i></button></th>
@@ -151,7 +151,7 @@
   </div>
   <div class="stack">
    <section class="panel">
-    <header><h2>{{ ($k['next_name'] ?? null) === null && $k !== null ? 'Qualifica massima raggiunta' : 'Verso la prossima qualifica' }}</h2></header>
+    <header><h2>Verso la prossima qualifica</h2></header>
     <div class="panel-body">@include('partials.career-progress', ['p' => $progress])</div>
    </section>
   </div>

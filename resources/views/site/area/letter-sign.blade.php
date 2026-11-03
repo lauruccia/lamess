@@ -53,11 +53,12 @@
 
     </form>
 
-    <h3 style="margin:18px 0 8px;font-size:1rem">4 · Firma</h3>
-    <form method="post" action="/area/lettera/codice" style="margin:0 0 16px">@csrf
+    <h3 id="firma" style="margin:18px 0 8px;font-size:1rem">4 · Firma</h3>
+    <div style="margin:0 0 16px">
      <p style="margin:.2rem 0 .6rem;font-size:.9rem;opacity:.8">Prima chiedi il codice: ti arriva per email e lo scrivi qui sotto. Se non arriva puoi chiederne un altro dopo un minuto.</p>
-     <button class="btn accent" type="submit" style="margin-top:0">Invia il codice</button>
-    </form>
+     {{-- Stesso form delle dichiarazioni: le scelte viaggiano con la richiesta e tornano compilate --}}
+     <button class="btn accent" type="submit" form="sign-form" formaction="/area/lettera/codice" formnovalidate style="margin-top:0">Invia il codice</button>
+    </div>
     @if($hint)<div class="note note-info"><div>{{ $hint }}</div></div>@endif
     <label for="l-otp">Codice OTP</label><input id="l-otp" name="otp" form="sign-form" inputmode="numeric" autocomplete="one-time-code" style="max-width:240px;font-size:20px;letter-spacing:.2em">
     @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach

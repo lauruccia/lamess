@@ -39,10 +39,11 @@ class LetterSignatureController extends Controller
         try {
             $req = $signing->requestCode($sig);
         } catch (OnboardingException $e) {
-            return redirect('/area/lettera')->withErrors(['otp' => $e->getMessage()]);
+            return redirect('/area/lettera#firma')->withInput($request->except(['_token', 'otp']))->withErrors(['otp' => $e->getMessage()]);
         }
 
-        return redirect('/area/lettera')->with('signature_hint', $req->hint);
+        // Le scelte già fatte (dichiarazioni e accettazioni) tornano compilate e la pagina resta sulla firma.
+        return redirect('/area/lettera#firma')->withInput($request->except(['_token', 'otp']))->with('signature_hint', $req->hint);
     }
 
     public function sign(Request $request, IvdLetterSigning $signing): RedirectResponse
@@ -75,7 +76,7 @@ class LetterSignatureController extends Controller
         try {
             $signing->sign($sig, (string) $request->input('otp'), $request->ip(), (string) $request->userAgent(), $declarations, $accepted);
         } catch (OnboardingException $e) {
-            return back()->withErrors(['otp' => $e->getMessage()]);
+            return redirect('/area/lettera#firma')->withInput($request->except(['_token', 'otp']))->withErrors(['otp' => $e->getMessage()]);
         }
 
         return redirect('/area')->with('status', 'Lettera firmata: grazie. Trovi la copia firmata tra i tuoi documenti.');

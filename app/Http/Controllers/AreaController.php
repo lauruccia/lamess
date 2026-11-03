@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Access\AccountSuspension;
 use App\Domain\Career\CareerProgress;
+use App\Domain\Career\CommissionExplainer;
 use App\Domain\Career\EarningsSummary;
 use App\Domain\Career\NetworkOverview;
 use App\Domain\Career\NetworkTree;
@@ -428,6 +429,25 @@ class AreaController extends Controller
         $request->user()->update(['password' => $data['password']]);
 
         return back()->with('status', 'Password cambiata.');
+    }
+
+    /**
+     * «Dettaglio compensi»: ogni compenso del mese dell'incaricato (diretti, indiretti, Bonus di Struttura, storni) con la frase
+     * che dice da quale ordine nasce, a che livello e con quale regola; più i compensi non maturati e che cosa manca per sbloccarli.
+     * Sola lettura, solo i propri. Stessa spiegazione della pagina admin «Dettaglio compensi».
+     */
+    public function earnings(Request $request)
+    {
+        $me = $this->activeConsultant($request);
+        $periods = Period::query()
+            ->where(fn ($q) => $q->whereNotNull('official_run_id')->orWhereIn('id', CalculationRun::query()->where('status', 'completed')->select('period_id')))
+            ->orderByDesc('code')->limit(24)->get();
+        $code = (string) $request->query('mese', '');
+        $period = $periods->firstWhere('code', $code) ?? $periods->first();
+        $data = $period ? $this->safely(static fn () => app(CommissionExplainer::class)->for($me, $period, true)) : null;
+        $hasStatement = $period && $period->isClosed() && Settlement::where('period_id', $period->id)->where('consultant_id', $me->id)->exists();
+
+        return view('site.area.earnings', ['periods' => $periods, 'period' => $period, 'd' => $data, 'hasStatement' => $hasStatement]);
     }
 
     /** Statini dell’incaricato (Fase 6): solo mesi chiusi, solo i propri. */

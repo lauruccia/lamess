@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Period;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -21,6 +22,9 @@ use Throwable;
 final class CommissionExplainer
 {
     /** Ordine con cui si mostrano i gruppi. */
+    /** Vista dell'incaricato (area riservata): niente link al back-office, niente nomi dei clienti altrui, niente avvisi per l'admin. */
+    private bool $own = false;
+
     private const ORDER = ['direct', 'indirect', 'indirect_ext', 'structure', 'clawback', 'team', 'matching', 'rank', 'rank_installment', 'fsb'];
 
     /**
@@ -32,8 +36,9 @@ final class CommissionExplainer
      *   accrued: float, held: float, excluded: float, rules: list<string>
      * }
      */
-    public function for(Consultant $consultant, Period $period): array
+    public function for(Consultant $consultant, Period $period, bool $forConsultant = false): array
     {
+        $this->own = $forConsultant;
         $runId = $period->official_run_id ?? DB::table('calculation_runs')->where('period_id', $period->id)->where('status', 'completed')->max('id');
         $runId = $runId === null ? null : (int) $runId;
 
@@ -119,10 +124,10 @@ final class CommissionExplainer
         } elseif ($l->mov_type === 'refund') {
             $origin = "il reso (movimento #{$l->mov_id})".($when ? " del {$when}" : '').($volume !== null ? ', '.$this->eur($volume) : '');
         } else {
-            $origin = "il movimento #{$l->mov_id}".($when ? " del {$when}" : '').($volume !== null ? ', '.$this->eur($volume).' IVA inclusa' : '').' — NESSUN ORDINE COLLEGATO (inserito a mano o ordine eliminato)';
+            $origin = "il movimento #{$l->mov_id}".($when ? " del {$when}" : '').($volume !== null ? ', '.$this->eur($volume).' IVA inclusa' : '').($this->own ? '' : ' — NESSUN ORDINE COLLEGATO (inserito a mano o ordine eliminato)');
         }
-        $orderUrl = $l->order_id !== null && Order::query()->whereKey($l->order_id)->exists() ? OrderResource::getUrl('view', ['record' => $l->order_id]) : null;
-        $warning = $l->mov_id !== null && $l->order_id === null && $l->mov_type !== 'refund' && $l->mov_type !== 'adjustment';
+        $orderUrl = ! $this->own && $l->order_id !== null && Order::query()->whereKey($l->order_id)->exists() ? OrderResource::getUrl('view', ['record' => $l->order_id]) : null;
+        $warning = ! $this->own && $l->mov_id !== null && $l->order_id === null && $l->mov_type !== 'refund' && $l->mov_type !== 'adjustment';
 
         $baseTxt = ($volume !== null && $volume > 0 && $kosmos !== null)
             ? 'base '.$this->eur($base).' ('.$this->pct((float) $kosmos->vapShare->toFloat()).' di '.$this->eur($volume).')'
@@ -146,7 +151,7 @@ final class CommissionExplainer
             case 'indirect':
                 $level = (int) $l->level;
                 $title = "Compenso indiretto — livello {$level}";
-                $sentence = ($src ? "{$src} ha generato" : 'Un incaricato della rete ha generato').": {$origin}".($l->buyer_name ? " (cliente {$l->buyer_name})" : '').". Livello {$level} del piano = {$pctLabel} su {$baseTxt} = ".$this->eur($amount).'.';
+                $sentence = ($src ? "{$src} ha generato" : 'Un incaricato della rete ha generato').": {$origin}".(! $this->own && $l->buyer_name ? " (cliente {$l->buyer_name})" : '').". Livello {$level} del piano = {$pctLabel} su {$baseTxt} = ".$this->eur($amount).'.';
                 $this->pathDetails($details, (int) $l->source_consultant_id, $beneficiaryId, $level, $sponsors, $names);
                 if (isset($ex['min_clients'])) {
                     $details[] = "Requisiti del livello {$level}: clienti personali ".(int) ($ex['clients'] ?? 0).'/'.(int) $ex['min_clients'].', Pearl al 1° livello '.(int) ($ex['pearl_first_level'] ?? 0).'/'.(int) ($ex['min_pearl'] ?? 0).'.';
@@ -214,6 +219,7 @@ final class CommissionExplainer
             'order_number' => $l->order_number, 'order_url' => $orderUrl, 'movement_id' => $l->mov_id !== null ? (int) $l->mov_id : null,
             'amount' => $amount, 'base' => $base, 'pct' => $pctLabel, 'level' => $l->level !== null ? (int) $l->level : null,
             'status' => (string) $l->engine_status, 'status_label' => $statusLabel, 'warning' => $warning, 'missing' => $miss,
+            'state_label' => null, 'confirmed_at' => null,
         ];
     }
 
@@ -268,9 +274,10 @@ final class CommissionExplainer
     /** @return list<array<string, mixed>> */
     private function structureRows(Consultant $consultant, Period $period): array
     {
+        $credited = Schema::hasColumn('structure_bonuses', 'wallet_credited_at');
         $rows = DB::table('structure_bonuses as b')->leftJoin('consultants as s', 's.id', '=', 'b.source_consultant_id')
             ->where('b.beneficiary_id', $consultant->id)->where('b.period_id', $period->id)->where('b.status', '!=', 'cancelled')
-            ->get(['b.id', 'b.amount', 'b.engine_status', 'b.status', 'b.explanation', 's.name as source_name', 's.code as source_code']);
+            ->get(array_merge(['b.id', 'b.amount', 'b.engine_status', 'b.status', 'b.confirmed_at', 'b.explanation', 's.name as source_name', 's.code as source_code'], $credited ? ['b.wallet_credited_at'] : []));
         $out = [];
         foreach ($rows as $b) {
             $ex = is_string($b->explanation) ? (json_decode($b->explanation, true) ?: []) : [];
@@ -282,6 +289,12 @@ final class CommissionExplainer
             if (isset($ex['window_ends'])) {
                 $details[] = 'Finestra di 30 giorni dall\'attivazione chiusa il '.Carbon::parse($ex['window_ends'])->format('d/m/Y').'.';
             }
+            $state = match (true) {
+                $credited && $b->wallet_credited_at !== null => 'In Tasca',
+                $b->status === 'paid' => 'Pagato',
+                $b->status === 'confirmed' => 'Confermato',
+                default => 'In calcolo',
+            };
             $out[] = [
                 'id' => (int) $b->id, 'type' => 'structure', 'date' => isset($ex['reached_at']) ? Carbon::parse($ex['reached_at'])->format('d/m/Y') : null,
                 'title' => 'Bonus di Struttura',
@@ -289,6 +302,7 @@ final class CommissionExplainer
                 'details' => $details, 'order_number' => null, 'order_url' => null, 'movement_id' => null,
                 'amount' => (float) $b->amount, 'base' => null, 'pct' => null, 'level' => null,
                 'status' => (string) $b->engine_status, 'status_label' => match ($b->engine_status) { 'accrued' => 'Maturato', 'held' => 'Trattenuto', default => 'Non spettante' }, 'warning' => false, 'missing' => null,
+                'state_label' => $state, 'confirmed_at' => $b->confirmed_at ? Carbon::parse($b->confirmed_at, 'UTC')->setTimezone('Europe/Rome')->format('d/m/Y') : null,
             ];
         }
 

@@ -141,4 +141,37 @@ final class CommissionExplainerTest extends TestCase
         $this->assertStringContainsString('Compensi non maturati: requisiti mancanti', $html);
         $this->assertStringContainsString('1 cliente in più', $html);
     }
+
+    public function test_the_consultant_opens_the_own_detail_page(): void
+    {
+        [$sponsor, $period, $order] = $this->setUpMonth();
+        $user = User::factory()->create();
+        $sponsor->update(['user_id' => $user->id]);
+
+        $html = $this->actingAs($user)->get('/area/compensi?mese='.$period->code)->assertOk()->getContent();
+
+        $this->assertStringContainsString('Dettaglio compensi', $html);
+        $this->assertStringContainsString('Compensi diretti', $html);
+        $this->assertStringContainsString('Bonus istantaneo', $html);
+        $this->assertStringContainsString((string) $order->number, $html);
+        $this->assertStringNotContainsString('/admin/', $html, 'nessun link al back-office');
+    }
+
+    public function test_a_user_without_consultant_profile_gets_404_on_the_detail_page(): void
+    {
+        $this->actingAs(User::factory()->create())->get('/area/compensi')->assertNotFound();
+    }
+
+    public function test_the_own_view_hides_back_office_hints(): void
+    {
+        [$sponsor, $period, $order] = $this->setUpMonth();
+        PvMovement::where('order_id', $order->id)->update(['order_id' => null, 'order_item_id' => null]);
+        app(PeriodService::class)->calculate($period);
+
+        $line = collect(app(CommissionExplainer::class)->for($sponsor, $period->refresh(), true)['groups'])->firstWhere('type', 'direct')['lines'][0];
+
+        $this->assertFalse($line['warning']);
+        $this->assertNull($line['order_url']);
+        $this->assertStringNotContainsString('NESSUN ORDINE COLLEGATO', $line['sentence']);
+    }
 }

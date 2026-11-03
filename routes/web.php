@@ -119,6 +119,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/indirizzi/{address}', [AreaController::class, 'updateAddress'])->middleware('throttle:20,1');
     Route::post('/indirizzi/{address}/{action}', [AreaController::class, 'addressAction'])->whereIn('action', ['elimina', 'predefinito'])->middleware('throttle:20,1');
     Route::post('/profilo/password', [AreaController::class, 'savePassword'])->middleware('impersonation.safe')->middleware('throttle:6,1');
+    Route::get('/compensi', [AreaController::class, 'earnings']);
     Route::get('/statini-bonus', [BonusStatementController::class, 'index']);
     Route::get('/statini-bonus/{week}', [BonusStatementController::class, 'show']);
     Route::get('/statini-bonus/{week}/pdf', [BonusStatementController::class, 'pdf']);

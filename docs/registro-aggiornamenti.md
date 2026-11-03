@@ -831,3 +831,9 @@
 - «I miei clienti»: l'incaricato è il primo cliente (acquisti propri), filtro per mese, colori per chi dà il punto / sta per scadere / senza ordine (vale 0). «Team 1° liv.» diventa «1° liv.».
 - Super admin: «Accedi come» da Utenti, Clienti, Incaricati (fascia di avviso, pagamenti/password/firme/IBAN/prelievi bloccati, log di audit `impersonation.*`).
 - Etichette di spedizione: singola (ordine) o in blocco su foglio A4 (8 per foglio) dall'elenco ordini.
+
+## 2026-11-03 — «Dettaglio compensi» nell'area dell'incaricato
+- Nuova pagina **`/area/compensi`** (solo incaricati, sola lettura): per il mese scelto mostra **diretti**, **indiretti** (con riepilogo per livello), **Bonus istantaneo** (Bonus di Struttura, con stato In calcolo / Confermato / Pagato / In Tasca), storni, **compensi non maturati** con ciò che manca per sbloccarli e le regole del piano. Ogni riga ha la frase che dice da quale ordine nasce, base, percentuale, catena e requisiti: la stessa spiegazione della pagina admin «Dettaglio compensi».
+- Il riquadro **Compensi provvisori** della panoramica e quello della pagina «Il mio ramo» ora aprono questa pagina; il riquadro Bonus di Struttura porta alla sua sezione. Nuova voce **Dettaglio compensi** nel menu *Compensi*.
+- `CommissionExplainer::for()` ha un terzo parametro `$forConsultant`: nella vista dell'incaricato non ci sono link al back-office, nomi dei clienti altrui sugli indiretti né avvisi per l'admin. L'admin non cambia.
+- Codice: `AreaController::earnings`, viste `site/area/earnings` e `_earning-line`. Nessuna migrazione. Test aggiunti a `CommissionExplainerTest` (da eseguire sulla macchina di sviluppo).

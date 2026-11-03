@@ -13,8 +13,10 @@ use App\Filament\Resources\KycDocuments\Pages\EditKycDocument;
 use App\Models\KycDocument;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -75,15 +77,21 @@ class KycDocumentResource extends Resource
                 ->action(fn (KycDocument $record) => self::review($record, true)),
             Action::make('reject')->authorize('kyc.manage')->label('Rifiuta')->iconButton()->tooltip('Rifiuta')->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (KycDocument $record) => $record->status === 'pending')
-                ->schema([Textarea::make('notes')->label('Motivazione (visibile all’incaricato)')->required()])
-                ->action(fn (KycDocument $record, array $data) => self::review($record, false, (string) $data['notes'])),
+                ->schema([
+                    Select::make('reason')->label('Motivo del rifiuto')->required()->live()
+                        ->options(fn () => collect((array) config('lamess.kyc_reject_reasons'))->map(fn ($r) => $r['label'])->all()),
+                    Textarea::make('notes')->label('Nota per l’incaricato (visibile a lui)')
+                        ->required(fn (Get $get) => $get('reason') === 'other')
+                        ->helperText('Facoltativa: aggiunge dettagli al motivo scelto. Obbligatoria con «Altro motivo».'),
+                ])
+                ->action(fn (KycDocument $record, array $data) => self::review($record, false, (string) ($data['notes'] ?? ''), (string) $data['reason'])),
         ]);
     }
 
-    private static function review(KycDocument $doc, bool $approve, string $notes = ''): void
+    private static function review(KycDocument $doc, bool $approve, string $notes = '', ?string $reason = null): void
     {
         try {
-            app(KycService::class)->review($doc, $approve, Actor::label(), $notes);
+            app(KycService::class)->review($doc, $approve, Actor::label(), $notes, $reason);
             Notification::make()->title($approve ? 'Documento approvato' : 'Documento rifiutato')->success()->send();
         } catch (OnboardingException $e) {
             Notification::make()->title($e->getMessage())->danger()->send();

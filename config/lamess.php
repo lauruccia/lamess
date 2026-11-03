@@ -59,6 +59,18 @@ return [
     // Richiesta documenti dall'admin: giorni per rispondere (0 = nessuna scadenza) e promemoria (giorni dalla richiesta)
     'kyc_request_due_days' => (int) env('LAMESS_KYC_REQUEST_DUE_DAYS', 7),
     'kyc_request_reminder_days' => [3, 6],
+    // Documento rifiutato e non ricaricato: promemoria (giorni dal rifiuto)
+    'kyc_rejected_reminder_days' => [3, 7],
+    // Motivi predefiniti di rifiuto: etichetta (visibile all'incaricato) e consiglio per ricaricare
+    'kyc_reject_reasons' => [
+        'unreadable' => ['label' => 'Immagine non leggibile o sfocata', 'hint' => 'Fotografa il documento con buona luce, a fuoco e senza riflessi.'],
+        'expired' => ['label' => 'Documento scaduto', 'hint' => 'Carica un documento in corso di validità.'],
+        'mismatch' => ['label' => 'Dati non corrispondenti al tuo profilo', 'hint' => 'Controlla che nome, cognome e dati del documento coincidano con quelli del profilo, oppure aggiorna il profilo.'],
+        'incomplete' => ['label' => 'Documento incompleto', 'hint' => 'Carica il documento intero, fronte e retro, senza parti tagliate.'],
+        'wrong_type' => ['label' => 'Tipo di documento non corretto', 'hint' => 'Carica il documento indicato nella richiesta.'],
+        'photo_not_compliant' => ['label' => 'Foto non conforme', 'hint' => 'Foto formato tessera, volto ben visibile, sfondo neutro e abbigliamento professionale.'],
+        'other' => ['label' => 'Altro motivo', 'hint' => ''],
+    ],
     'kyc_document_types' => [
         'photo' => 'Foto formato tessera (abbigliamento professionale)',
         'id_document' => "Documento d'identità",

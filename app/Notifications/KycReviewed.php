@@ -22,7 +22,7 @@ class KycReviewed extends Notification implements ShouldQueueAfterCommit
         return [60, 300];
     }
 
-    public function __construct(public readonly KycDocument $document) {}
+    public function __construct(public readonly KycDocument $document, public readonly bool $reminder = false) {}
 
     /** @return list<string> */
     public function via(object $notifiable): array
@@ -32,10 +32,29 @@ class KycReviewed extends Notification implements ShouldQueueAfterCommit
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject('Verifica documenti: '.($this->document->status === 'approved' ? 'approvato' : 'da correggere'))
-            ->line('Documento: '.(config('lamess.kyc_document_types')[$this->document->type] ?? $this->document->type))
-            ->line($this->document->status === 'approved' ? 'Il documento è stato approvato.' : 'Il documento è stato rifiutato: '.($this->document->notes ?: 'ricaricalo seguendo le indicazioni.'))
-            ->action('Vai alla tua area', url('/area/onboarding'));
+        $doc = $this->document;
+        $label = config('lamess.kyc_document_types')[$doc->type] ?? $doc->type;
+        if ($doc->status === 'approved') {
+            return (new MailMessage)
+                ->subject('Verifica documenti: approvato')
+                ->line('Documento: '.$label)
+                ->line('Il documento è stato approvato.')
+                ->action('Vai alla tua area', url('/area/onboarding'));
+        }
+
+        $mail = (new MailMessage)
+            ->subject(($this->reminder ? 'Promemoria: ' : '').'documento da correggere: '.$label)
+            ->line($this->reminder
+                ? 'Il documento «'.$label.'» che ci hai inviato non è stato accettato e non lo abbiamo ancora ricevuto di nuovo.'
+                : 'Il documento «'.$label.'» che ci hai inviato non è stato accettato.')
+            ->line('Motivo: '.($doc->notes ?: 'ricaricalo seguendo le indicazioni.'));
+        $hint = (string) (config('lamess.kyc_reject_reasons')[$doc->reject_reason]['hint'] ?? '');
+        if ($hint !== '') {
+            $mail->line('Cosa fare: '.$hint);
+        }
+
+        return $mail
+            ->line('Come ricaricarlo: accedi alla tua area, apri «Onboarding» e carica il file al posto di quello rifiutato (JPG, PNG o PDF). Finché non è approvato non puoi ricevere pagamenti.')
+            ->action('Ricarica il documento', url('/area/onboarding'));
     }
 }

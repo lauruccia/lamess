@@ -161,13 +161,36 @@ final class KycService
         return $status;
     }
 
-    public function review(KycDocument $doc, bool $approve, string $by, string $notes = ''): KycDocument
+    public function review(KycDocument $doc, bool $approve, string $by, string $notes = '', ?string $reason = null): KycDocument
     {
         if ($doc->status !== 'pending') {
             throw new OnboardingException('Documento già esaminato.');
         }
-        $doc->update(['status' => $approve ? 'approved' : 'rejected', 'reviewed_by' => $by, 'reviewed_at' => now(), 'notes' => $notes]);
+        $reasons = (array) config('lamess.kyc_reject_reasons');
+        if (! $approve && $reason !== null) {
+            if (! isset($reasons[$reason])) {
+                throw new OnboardingException('Motivo di rifiuto non valido.');
+            }
+            if ($reason === 'other' && trim($notes) === '') {
+                throw new OnboardingException('Spiega il motivo del rifiuto.');
+            }
+            // Il testo mostrato all'incaricato: motivo predefinito + eventuale nota dell'admin
+            $extra = trim($notes);
+            $notes = $reason === 'other' ? $extra : ($extra !== '' ? $reasons[$reason]['label'].': '.$extra : $reasons[$reason]['label']);
+        }
+        $doc->update([
+            'status' => $approve ? 'approved' : 'rejected', 'reviewed_by' => $by, 'reviewed_at' => now(), 'notes' => $notes,
+            'reject_reason' => $approve ? null : $reason, 'reminders_sent' => 0, 'last_reminder_at' => null,
+        ]);
         $c = $doc->consultant;
+        $label = (array) config('lamess.kyc_document_types');
+        AuditLog::record(
+            $approve ? 'kyc.document_approved' : 'kyc.document_rejected',
+            'Documento «'.($label[$doc->type] ?? $doc->type).'» di '.$c->code.($approve ? ' approvato' : ' rifiutato'),
+            $c,
+            ['document_id' => $doc->id, 'type' => $doc->type, 'reason' => $approve ? null : $reason],
+            $notes ?: null,
+        );
         $this->onboarding->recompute($c);
         $c->user?->notify(new KycReviewed($doc));
         if ($approve && $doc->type === 'photo' && $c->badge_path !== null) {
@@ -175,5 +198,42 @@ final class KycService
         }
 
         return $doc->refresh();
+    }
+
+    /**
+     * Promemoria a chi ha un documento rifiutato e non lo ha ancora sostituito.
+     * Esclusi: documenti già sostituiti da un nuovo caricamento, incarichi cessati, tipi già coperti da una richiesta aperta dell'amministrazione
+     * (quella ha i suoi promemoria) e il documento d'identità se l'identità è stata verificata online.
+     *
+     * @return int promemoria inviati
+     */
+    public function sendRejectionReminders(): int
+    {
+        $days = array_values((array) config('lamess.kyc_rejected_reminder_days', [3, 7]));
+        $sent = 0;
+        $docs = KycDocument::where('status', 'rejected')->where('reminders_sent', '<', count($days))->with('consultant.user')->get();
+        foreach ($docs as $doc) {
+            $n = (int) $doc->reminders_sent;
+            $c = $doc->consultant;
+            if ($c === null || $c->status === 'terminated' || $doc->reviewed_at === null || $doc->reviewed_at->addDays((int) $days[$n])->isFuture()) {
+                continue;
+            }
+            $latest = $this->onboarding->latestDocuments($c)[$doc->type] ?? null;
+            if ($latest === null || $latest->id !== $doc->id) {
+                continue; // già sostituito da un nuovo caricamento
+            }
+            if ($doc->type === 'id_document' && IdentityVerification::where('consultant_id', $c->id)->where('status', 'verified')->exists()) {
+                continue;
+            }
+            $req = $this->openRequest($c);
+            if ($req !== null && in_array($doc->type, (array) $req->types, true)) {
+                continue;
+            }
+            $c->user?->notify(new KycReviewed($doc, true));
+            $doc->update(['reminders_sent' => $n + 1, 'last_reminder_at' => now()]);
+            $sent++;
+        }
+
+        return $sent;
     }
 }

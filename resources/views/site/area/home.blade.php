@@ -40,7 +40,11 @@
 @if($c && $contract?->status === 'signed')
  <div class="note note-info"><div><strong>Domanda firmata</strong>È in attesa di accettazione da parte del Consorzio: ti avvisiamo appena è pronta.</div></div>
 @endif
-@if($c && ! $c->onboarding_complete)
+@if($c && ($rejectedDocs ?? collect())->isNotEmpty())
+ <div class="note note-err"><div><strong>{{ $rejectedDocs->count() === 1 ? 'Un documento è stato rifiutato' : 'Alcuni documenti sono stati rifiutati' }}</strong>
+  <ul class="todo" style="margin:4px 0 0;padding-left:18px">@foreach($rejectedDocs as $rd)<li>{{ config('lamess.kyc_document_types')[$rd->type] ?? $rd->type }}@if($rd->notes) — {{ $rd->notes }}@endif</li>@endforeach</ul>
+  <p style="margin:6px 0 0">Ricaricali per poter ricevere pagamenti e commissioni.</p></div><a class="btn" href="/area/onboarding">Ricarica ora</a></div>
+@elseif($c && ! $c->onboarding_complete)
  <div class="note"><div><strong>Onboarding da completare</strong>Senza onboarding non puoi ricevere pagamenti né commissioni indirette.</div><a class="btn" href="/area/onboarding">Completa ora</a></div>
 @endif
 @foreach($d['orders']['pending'] as $o)

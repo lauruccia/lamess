@@ -16,6 +16,7 @@ final class LamessKycPromemoria extends Command
     public function handle(KycService $kyc): int
     {
         $this->info('Promemoria KYC inviati: '.$kyc->sendReminders());
+        $this->info('Promemoria documenti rifiutati inviati: '.$kyc->sendRejectionReminders());
 
         return self::SUCCESS;
     }

@@ -39,6 +39,7 @@
       <span class="main"><span class="t">{{ $label }}
        @if($d)<span class="st st-{{ ['pending' => 'warn', 'approved' => 'ok', 'rejected' => 'err'][$d->status] ?? '' }}">{{ ['pending' => 'in verifica', 'approved' => 'approvato', 'rejected' => 'rifiutato'][$d->status] }}</span>@endif</span>
        @if($d && $d->notes)<span class="m" style="color:var(--err)">{{ $d->notes }}</span>@endif
+       @if($d && $d->status === 'rejected' && ($h = config('lamess.kyc_reject_reasons')[$d->reject_reason]['hint'] ?? ''))<span class="m">{{ $h }}</span>@endif
        <span class="m">JPG, PNG o PDF</span></span>
       <span class="end" style="display:flex;gap:8px;align-items:center"><input type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" style="max-width:220px;padding:6px;font-size:13px"><button class="btn ghost" style="margin:0;padding:9px 16px;font-size:14px">Carica</button></span>
      </form>

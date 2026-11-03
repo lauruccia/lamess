@@ -72,7 +72,7 @@ class AreaController extends Controller
 
         return view('site.area.home', [
             'letterToSign' => $this->safely(static fn () => app(IvdLetterSigning::class)->pendingFor($user)),
-            'user' => $user, 'contract' => $this->contract($request), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
+            'user' => $user, 'contract' => $this->contract($request), 'signedLetter' => \App\Models\IvdLetterSignature::with('version')->where('user_id', $user->id)->where('status', 'signed')->whereNotNull('pdf_path')->latest('signed_at')->first(), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
             // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
             'progress' => $live ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($live->id)) : null,
             'earn' => $live ? $this->safely(static fn () => app(EarningsSummary::class)->for($live->id)) : null,

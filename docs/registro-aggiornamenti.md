@@ -832,6 +832,12 @@
 - Super admin: «Accedi come» da Utenti, Clienti, Incaricati (fascia di avviso, pagamenti/password/firme/IBAN/prelievi bloccati, log di audit `impersonation.*`).
 - Etichette di spedizione: singola (ordine) o in blocco su foglio A4 (8 per foglio) dall'elenco ordini.
 
+## 2026-11-03 — Esportazione ZIP per il commercialista (ECONS di TeamSystem)
+- **Fatture → «Esporta per il commercialista (ZIP)»**: dato un periodo, scarica uno ZIP con gli XML FatturaPA delle fatture e note di credito emesse (cartella `xml/`, gli stessi file dello SdI), un `riepilogo.csv` (una riga per documento e aliquota IVA: tipo TD01/TD04, numero, data, cliente, CF, P.IVA, paese, aliquota, natura, imponibile, imposta, totale, metodo di pagamento, ordine, file XML, esito) e un `LEGGIMI.txt`. Note di credito con importi negativi, ricevute dei privati escluse (contate nel messaggio), documenti con dati incompleti senza XML e con «ERRORE» nella colonna Esito.
+- Non segna i documenti come esportati e non cambia nulla nel portale: si sceglie il periodo. Operazione nel log di audit (`export.accounting`). Nessuna migrazione.
+- Richiede l'estensione PHP `zip` sul server (se manca il pulsante non compare).
+- Codice: `AccountingExport`, azione `accountingZip` in `ListInvoices`. Test: `AccountingExportTest` (da eseguire sulla macchina di sviluppo).
+
 ## 2026-11-03 — «Dettaglio compensi» nell'area dell'incaricato
 - Nuova pagina **`/area/compensi`** (solo incaricati, sola lettura): per il mese scelto mostra **diretti**, **indiretti** (con riepilogo per livello), **Bonus istantaneo** (Bonus di Struttura, con stato In calcolo / Confermato / Pagato / In Tasca), storni, **compensi non maturati** con ciò che manca per sbloccarli e le regole del piano. Ogni riga ha la frase che dice da quale ordine nasce, base, percentuale, catena e requisiti: la stessa spiegazione della pagina admin «Dettaglio compensi».
 - Il riquadro **Compensi provvisori** della panoramica e quello della pagina «Il mio ramo» ora aprono questa pagina; il riquadro Bonus di Struttura porta alla sua sezione. Nuova voce **Dettaglio compensi** nel menu *Compensi*.

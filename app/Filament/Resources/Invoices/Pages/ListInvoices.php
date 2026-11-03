@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Invoices\Pages;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Billing\AccountingExport;
 use App\Domain\Billing\EasyfattXmlBuilder;
 use App\Domain\Billing\InvoiceService;
 use App\Filament\Pages\Base\SuperadminListRecords;
@@ -51,6 +52,32 @@ class ListInvoices extends SuperadminListRecords
                     }
 
                     return response()->streamDownload(fn () => print ($r['xml']), 'easyfatt-lamess-'.$data['from'].'_'.$data['until'].'.xml', ['Content-Type' => 'application/xml']);
+                }),
+            Action::make('accountingZip')
+                ->authorize('orders.manage')
+                ->label('Esporta per il commercialista (ZIP)')
+                ->icon('heroicon-o-archive-box-arrow-down')
+                ->color('gray')
+                ->visible(fn () => AccountingExport::available())
+                ->modalHeading('Esporta le fatture per il commercialista')
+                ->modalDescription('Crea uno ZIP con gli XML delle fatture elettroniche e delle note di credito emesse nel periodo (gli stessi file dello SdI, da importare in ECONS di TeamSystem o nel gestionale del commercialista) e un riepilogo CSV con imponibile, IVA per aliquota e metodo di pagamento. Non cambia nulla nel portale. Le ricevute dei privati restano fuori.')
+                ->schema([
+                    DatePicker::make('from')->label('Dal')->required()->default(now('Europe/Rome')->startOfMonth()->toDateString())->native(false),
+                    DatePicker::make('until')->label('Al')->required()->default(now('Europe/Rome')->toDateString())->native(false)->afterOrEqual('from'),
+                ])
+                ->action(function (array $data) {
+                    $r = app(AccountingExport::class)->forPeriod((string) $data['from'], (string) $data['until']);
+                    if ($r['invoices'] + $r['credit_notes'] === 0) {
+                        Notification::make()->title('Nessuna fattura nel periodo')->body($r['receipts_skipped'] > 0 ? "Ci sono solo {$r['receipts_skipped']} ricevute di privati, che non sono fatture." : 'Controlla le date.')->warning()->send();
+
+                        return null;
+                    }
+                    AuditLog::record('export.accounting', "Esportazione ZIP per il commercialista {$data['from']} – {$data['until']}: {$r['invoices']} fatture, {$r['credit_notes']} note di credito", ['Invoice', 'elenco'], ['dal' => $data['from'], 'al' => $data['until'], 'fatture' => $r['invoices'], 'note_credito' => $r['credit_notes'], 'ricevute_escluse' => $r['receipts_skipped'], 'errori' => count($r['errors'])]);
+                    if ($r['errors'] !== []) {
+                        Notification::make()->title(count($r['errors']).' documenti senza XML')->body('Mancano nello ZIP perché i dati non sono completi (vedi LEGGIMI.txt e la colonna Esito del CSV): '.implode(' · ', array_slice($r['errors'], 0, 3)).(count($r['errors']) > 3 ? '…' : ''))->warning()->persistent()->send();
+                    }
+
+                    return response()->streamDownload(fn () => print ($r['zip']), 'fatture-lamess-'.$data['from'].'_'.$data['until'].'.zip', ['Content-Type' => 'application/zip']);
                 }),
             Action::make('sendPending')
                 ->authorize('orders.manage')

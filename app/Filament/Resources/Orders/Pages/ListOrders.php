@@ -102,7 +102,18 @@ class ListOrders extends SuperadminListRecords
 
                     return;
                 }
-                Notification::make()->title('Ordine '.$order->number.' creato'.(($data['paid'] ?? false) ? ' e pagamento confermato' : ''))->success()->send();
+                if ($data['paid'] ?? false) {
+                    Notification::make()->title('Ordine '.$order->number.' creato e pagamento confermato')->success()->send();
+                } else {
+                    // Come in un e-commerce: l'ordine non ancora pagato parte con l'email di richiesta di pagamento al cliente
+                    // (IBAN e causale per il bonifico, link all'ordine per carta o KMoney). Se non riesce, l'ordine resta e l'admin lo vede.
+                    try {
+                        $to = $orders->sendPaymentDetails($order);
+                        Notification::make()->title('Ordine '.$order->number.' creato · richiesta di pagamento inviata a '.$to)->success()->send();
+                    } catch (OrderException $e) {
+                        Notification::make()->title('Ordine '.$order->number.' creato, ma la richiesta di pagamento NON è partita')->body($e->getMessage().' Puoi inviarla dopo con «Invia di nuovo i dati di pagamento».')->warning()->persistent()->send();
+                    }
+                }
                 $this->redirect(OrderResource::getUrl('view', ['record' => $order]));
             });
     }

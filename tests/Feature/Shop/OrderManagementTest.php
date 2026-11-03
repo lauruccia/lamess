@@ -20,6 +20,8 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Refund;
 use App\Models\User;
+use App\Notifications\NewOrderAdmin;
+use App\Notifications\OrderPaymentDetails;
 use App\Notifications\OrderShipped;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -381,5 +383,46 @@ final class OrderManagementTest extends TestCase
         $this->assertSame(2, (int) $order->items->first()->qty);
         $this->assertNotNull($order->invoice);
         $this->assertTrue($order->events()->where('type', 'created_by_admin')->exists());
+    }
+
+    public function test_admin_created_unpaid_order_emails_payment_request_to_customer_and_new_order_to_admins(): void
+    {
+        Notification::fake();
+        config(['lamess.mail_enabled' => true, 'lamess.bank_transfer_instructions' => 'IBAN IT60X0542811101000000123456', 'lamess.orders.admin_mail_to' => 'amministrazione@example.test']);
+        $this->plan();
+        $this->shipping('5.00');
+        $p = $this->product('A', '100.00');
+        $customer = $this->buyer($this->activeSponsor());
+        $this->actingAs(User::factory()->role('admin_finance')->create());
+
+        Livewire::test(ListOrders::class)->callAction('createOrder', [
+            'user_id' => $customer->id, 'lines' => [['product_id' => $p->id, 'qty' => 1]], 'country' => 'IT', 'method' => 'transfer', 'paid' => false,
+            'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
+            'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',
+        ])->assertHasNoActionErrors();
+
+        $order = Order::latest('id')->firstOrFail();
+        $this->assertSame('pending_payment', $order->status);
+        Notification::assertSentTo($customer, OrderPaymentDetails::class, fn ($n) => $n->order->is($order) && ! $n->reminder);
+        Notification::assertSentOnDemand(NewOrderAdmin::class, fn ($n) => $n->order->is($order));
+    }
+
+    public function test_admin_created_paid_order_does_not_send_payment_request(): void
+    {
+        Notification::fake();
+        config(['lamess.mail_enabled' => true]);
+        $this->plan();
+        $this->shipping('5.00');
+        $p = $this->product('A', '100.00');
+        $customer = $this->buyer($this->activeSponsor());
+        $this->actingAs(User::factory()->role('admin_finance')->create());
+
+        Livewire::test(ListOrders::class)->callAction('createOrder', [
+            'user_id' => $customer->id, 'lines' => [['product_id' => $p->id, 'qty' => 1]], 'country' => 'IT', 'method' => 'transfer', 'paid' => true,
+            'type' => 'private', 'first_name' => 'Mario', 'last_name' => 'Rossi', 'tax_code' => 'RSSMRA80A01H501U',
+            'address' => 'Via Roma 1', 'city' => 'Reggio Calabria', 'zip' => '89100', 'province' => 'RC',
+        ])->assertHasNoActionErrors();
+
+        Notification::assertNotSentTo($customer, OrderPaymentDetails::class);
     }
 }

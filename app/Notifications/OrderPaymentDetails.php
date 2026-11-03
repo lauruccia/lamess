@@ -39,7 +39,7 @@ class OrderPaymentDetails extends Notification implements ShouldQueueAfterCommit
     {
         $o = $this->order;
         $url = url("/area/ordini/{$o->id}");
-        $mail = (new MailMessage)->subject(($this->reminder ? 'Promemoria · ' : '')."Ordine {$o->number}: come completare il pagamento")
+        $mail = (new MailMessage)->subject($this->reminder ? "Promemoria · Ordine {$o->number}: come completare il pagamento" : "Nuovo ordine {$o->number} e richiesta di pagamento")
             ->greeting($this->reminder ? 'Il tuo ordine è ancora in attesa di pagamento' : 'Abbiamo registrato il tuo ordine')
             ->line("Ordine {$o->number}: l'ordine sarà confermato e preparato appena riceviamo il pagamento.");
 

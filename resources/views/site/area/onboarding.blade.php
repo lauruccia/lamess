@@ -43,6 +43,10 @@
       <span class="end" style="display:flex;gap:8px;align-items:center"><input type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" style="max-width:220px;padding:6px;font-size:13px"><button class="btn ghost" style="margin:0;padding:9px 16px;font-size:14px">Carica</button></span>
      </form>
     @endforeach
+    @php($signedLetter = \App\Models\IvdLetterSignature::with('version')->where('user_id', auth()->id())->where('status', 'signed')->whereNotNull('pdf_path')->latest('signed_at')->first())
+    @if($signedLetter)
+     <a class="item" href="/area/lettera/{{ $signedLetter->id }}/pdf" target="_blank" rel="noopener"><span class="ico">@include('site.area._i', ['n' => 'doc'])</span><span class="main"><span class="t">Lettera di incarico firmata</span><span class="m">Versione {{ $signedLetter->version->version }} · firmata il {{ \App\Support\Ui::date($signedLetter->signed_at) }} · PDF</span></span></a>
+    @endif
    </div>
   </section>
  </div>

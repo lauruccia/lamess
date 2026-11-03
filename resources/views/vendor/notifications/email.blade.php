@@ -46,7 +46,7 @@ Il team {{ config('app.name') }}
 {{-- Subcopy --}}
 @isset($actionText)
 <x-slot:subcopy>
-Se il pulsante «{{ $actionText }}» non funziona, copia e incolla questo indirizzo nel tuo browser: <span class="break-all">[{{ $displayableActionUrl }}]({{ $actionUrl }})</span>
+Se il pulsante «{{ $actionText }}» non funziona, copia e incolla questo indirizzo nel tuo browser: <span class="break-all">[{{ \App\Support\Idn::pretty($displayableActionUrl) }}]({{ $actionUrl }})</span>
 </x-slot:subcopy>
 @endisset
 </x-mail::message>

@@ -215,7 +215,7 @@ final class NetworkOverview
         $orders = DB::table('orders')->whereIn('status', \App\Models\Order::PAID_STATES)
             ->selectRaw('buyer_user_id, count(*) as n, max(total) as biggest, max(paid_at) as last_paid, sum(total) as spent')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
         $out = [];
-        foreach (DB::table('customers')->whereIn('assigned_consultant_id', $ids)->get(['assigned_consultant_id', 'user_id']) as $c) {
+        foreach (DB::table('customers')->whereNotIn('user_id', DB::table('consultants')->where('status', '!=', 'terminated')->whereNotNull('user_id')->select('user_id'))->whereIn('assigned_consultant_id', $ids)->get(['assigned_consultant_id', 'user_id']) as $c) {
             $row = &$out[(int) $c->assigned_consultant_id];
             $row ??= ['registered' => 0, 'buyers' => 0, 'valid' => 0, 'waiting' => 0, 'last_order' => null, 'spent' => 0.0];
             $row['registered']++;

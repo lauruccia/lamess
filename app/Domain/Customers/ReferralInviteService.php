@@ -216,7 +216,7 @@ final class ReferralInviteService
             'expired' => (clone $invites)->where('status', 'expired')->count(),
             'pending' => (clone $invites)->whereIn('status', ['created', 'sent', 'opened'])->count(),
             // registrati dal link generico o dal QR: assegnati a lui senza un invito personale
-            'direct' => Customer::where('assigned_consultant_id', $consultant->id)->whereIn('source', ['referral', 'cookie'])->whereNotIn('user_id', $viaInvite)->count(),
+            'direct' => Customer::notConsultants()->where('assigned_consultant_id', $consultant->id)->whereIn('source', ['referral', 'cookie'])->whereNotIn('user_id', $viaInvite)->count(),
         ];
     }
 

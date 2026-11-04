@@ -103,7 +103,7 @@ final class AreaDashboard
         $paths = DB::table('network_paths')->where('ancestor_id', $consultantId)->where('depth', '>', 0);
 
         return [
-            'clients' => Customer::where('assigned_consultant_id', $consultantId)->count(),
+            'clients' => Customer::notConsultants()->where('assigned_consultant_id', $consultantId)->count(),
             'network' => (clone $paths)->count(),
             'direct' => (clone $paths)->where('depth', 1)->count(),
             'settlement' => Settlement::with('period')->where('consultant_id', $consultantId)->get()->sortByDesc(fn (Settlement $r) => $r->period->code)->first(),

@@ -55,10 +55,10 @@
   @endif
   @if($rows->isEmpty() && ! $selfRow)<p class="muted" style="padding:14px 16px">Nessun cliente corrisponde ai filtri scelti ({{ $all->count() }} in totale).</p>@endif
   <div class="tbl-wrap"><table class="tbl cards">
-   <thead><tr><th>Cliente</th><th>Contatti</th><th>Iscritto dal</th><th class="num">Ordini pagati</th><th>Primo ordine</th><th>Ultimo ordine</th>@if($kosmos !== null)<th class="num">Ordine più alto</th><th>In {{ $monthLabel }}</th>@endif</tr></thead>
+   <thead><tr><th>Cliente</th><th>Contatti</th><th>Iscritto dal</th><th class="num">Ordini in {{ $monthLabel }}</th><th>Primo ordine</th><th>Ultimo ordine</th>@if($kosmos !== null)<th class="num">Ordine più alto</th><th>In {{ $monthLabel }}</th>@endif</tr></thead>
    <tbody>
    @foreach(collect([$selfRow])->filter()->concat($rows) as $r)
-    @php($o = $orders[$r->user_id] ?? null)
+    @php($o = $monthOrders[$r->user_id] ?? null)
     @php($isSelf = (bool) $r->getAttribute('is_self'))
     @php($st = $states[$r->user_id][0] ?? null)
     @php($w = $states[$r->user_id][1] ?? 0)
@@ -66,7 +66,7 @@
      <td data-l="Cliente"><div class="who"><span class="avatar" style="width:36px;height:36px;font-size:13px">{{ \App\Support\Ui::initials($r->user?->profile?->fullName() ?: (string) $r->user?->name) }}</span><div style="text-align:left"><b>{{ $r->user?->profile?->fullName() ?: $r->user?->name }}</b>@if($isSelf)<span class="st st-ok">tu</span>@elseif($r->user?->profile?->type === 'company')<span>azienda</span>@endif</div></div></td>
      <td data-l="Contatti"><a href="mailto:{{ $r->user?->email }}">{{ $r->user?->email }}</a>@if($r->user?->profile?->phone)<br><span class="muted">{{ $r->user->profile->phone }}</span>@endif</td>
      <td data-l="Iscritto dal">{{ \App\Support\Ui::date($r->registered_at) }}</td>
-     <td data-l="Ordini pagati" class="num">@if($o)<strong>{{ $o->n }}</strong> · € {{ $eur($o->spent) }}@else<span class="st">nessuno</span>@endif</td>
+     <td data-l="Ordini del mese" class="num">@if($o)<strong>{{ $o->n }}</strong> · € {{ $eur($o->spent) }}@else<span class="st">nessuno</span>@endif</td>
      <td data-l="Primo ordine">{{ $o?->first_paid ? \App\Support\Ui::date(\Carbon\Carbon::parse($o->first_paid, 'UTC')) : '—' }}</td>
      <td data-l="Ultimo ordine">{{ $o?->last_paid ? \App\Support\Ui::date(\Carbon\Carbon::parse($o->last_paid, 'UTC')) : '—' }}</td>
      @if($kosmos !== null)

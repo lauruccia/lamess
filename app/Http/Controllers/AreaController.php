@@ -247,6 +247,11 @@ class AreaController extends Controller
         krsort($monthOptions);
         $monthIndex = KosmosCalculator::monthIndex($month->toDateTimeImmutable());
 
+        // Le colonne degli ordini mostrano solo il mese scelto (stati e filtri restano sullo storico completo).
+        $monthOrders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->whereIn('status', \App\Models\Order::PAID_STATES)
+            ->where('paid_at', '>=', $month->utc()->format('Y-m-d H:i:s'))->where('paid_at', '<', $month->addMonth()->utc()->format('Y-m-d H:i:s'))
+            ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
+
         // Come il piano conta ciascuno nel mese scelto.
         $states = [];
         if ($kosmos !== null) {
@@ -310,7 +315,7 @@ class AreaController extends Controller
         $rows = new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'pageName' => 'pagina', 'query' => $request->except('pagina')]);
 
         return view('site.area.customers', [
-            'rows' => $rows, 'selfRow' => $page === 1 ? $selfRow : null, 'all' => $all, 'orders' => $orders, 'kosmos' => $kosmos, 'progress' => $progress,
+            'rows' => $rows, 'selfRow' => $page === 1 ? $selfRow : null, 'all' => $all, 'orders' => $orders, 'monthOrders' => $monthOrders, 'kosmos' => $kosmos, 'progress' => $progress,
             'search' => $search, 'state' => $state, 'filters' => self::CUSTOMER_FILTERS, 'planFilters' => self::CUSTOMER_PLAN_FILTERS,
             'month' => $month->format('Y-m'), 'monthLabel' => $month->locale('it')->translatedFormat('F Y'), 'monthOptions' => $monthOptions, 'states' => $states, 'tally' => $tally,
         ]);

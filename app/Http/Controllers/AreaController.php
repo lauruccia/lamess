@@ -216,7 +216,7 @@ class AreaController extends Controller
     public function customers(Request $request)
     {
         $me = $this->activeConsultant($request);
-        $all = Customer::query()->where('assigned_consultant_id', $me->id)->with('user.profile')->orderByDesc('registered_at')->get();
+        $all = Customer::query()->notConsultants()->where('assigned_consultant_id', $me->id)->with('user.profile')->orderByDesc('registered_at')->get();
         $period = Period::query()->orderByDesc('code')->first();
         $plan = $period?->planVersion->plan();
         $kosmos = $plan?->kosmos;

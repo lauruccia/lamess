@@ -230,7 +230,7 @@ class AreaController extends Controller
         $self->setAttribute('is_self', true);
         $people = collect([$self])->concat($all);
 
-        $orders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->where('status', 'paid')
+        $orders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->whereIn('status', \App\Models\Order::PAID_STATES)
             ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
 
         // Mese scelto (ora italiana): di default quello in corso; dal passato più recente fino al prossimo, per vedere chi scade.

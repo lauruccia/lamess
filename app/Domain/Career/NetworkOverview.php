@@ -212,7 +212,7 @@ final class NetworkOverview
         if ($ids === []) {
             return [];
         }
-        $orders = DB::table('orders')->where('status', 'paid')
+        $orders = DB::table('orders')->whereIn('status', \App\Models\Order::PAID_STATES)
             ->selectRaw('buyer_user_id, count(*) as n, max(total) as biggest, max(paid_at) as last_paid, sum(total) as spent')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
         $out = [];
         foreach (DB::table('customers')->whereIn('assigned_consultant_id', $ids)->get(['assigned_consultant_id', 'user_id']) as $c) {

@@ -8,7 +8,7 @@
   <div class="wrap">
     <div class="paths" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
       <article><h3>Lamèss Point</h3><p>Centri estetici, attività per il benessere e strutture ricettive possono avere Lamèss nella propria offerta. Lo sviluppo è calibrato sulle singole città e può prevedere esclusività territoriale, definita negli accordi.</p><a class="btn solid" href="/contatti">Apri un Lamèss Point</a></article>
-      <article style="border-color:var(--line)"><h3>Incaricato</h3><p>Affianchi Lamèss nella diffusione con un link referral personale, una pagina tua e un’area riservata. Ogni cliente che arriva dal tuo link entra nella tua struttura e lo segui dal tuo spazio.</p><a class="btn solid" href="/contatti">Diventa incaricato</a> <a class="btn" href="/come-funziona" style="margin-top:10px">Guarda come funziona</a></article>
+      <article style="border-color:var(--line)"><h3>Incaricato</h3><p>Affianchi Lamèss nella diffusione con un link referral personale, una pagina tua e un’area riservata. Ogni cliente che arriva dal tuo link entra nella tua struttura e lo segui dal tuo spazio.</p><a class="btn solid" href="/contatti">Diventa incaricato</a></article>
       <article style="border-color:var(--line)"><h3>Socio del Consorzio</h3><p>Chi vuole un coinvolgimento nel progetto può candidarsi come socio del Consorzio Kadeo Group, oggi 51 soci con esperienze diverse. Requisiti e modalità si spiegano in un incontro.</p><a class="btn solid" href="/contatti">Chiedi un incontro</a></article>
     </div>
   </div>
@@ -41,7 +41,7 @@
       <div><h3>Inviti</h3><p>L’elenco degli inviti spediti e se la persona si è già registrata dal tuo link.</p></div>
       <div><h3>Tesserino agente</h3><p>Il tesserino da stampare, con QR code di verifica, per la vendita porta a porta.</p></div>
     </div>
-    <p class="lead" style="margin-top:40px;max-width:60ch">Compensi e condizioni si presentano in un incontro, insieme al Regolamento Incaricati. Intanto puoi vedere <a href="/come-funziona" style="text-decoration:underline">come funziona, in due minuti</a>.</p>
+    <p class="lead" style="margin-top:40px;max-width:60ch">Compensi e condizioni si presentano in un incontro, insieme al Regolamento Incaricati.</p>
   </div>
 </section>
 <section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>Parliamone in un incontro.</h2><a class="btn solid" href="/contatti">Scrivici</a></div></section>

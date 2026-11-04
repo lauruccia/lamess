@@ -11,6 +11,7 @@ class HowItWorksPageTest extends TestCase
 
     public function test_page_is_public_and_shows_the_plan(): void
     {
+        $this->markTestSkipped('Pagina /come-funziona nascosta.');
         $this->get('/come-funziona')
             ->assertOk()
             ->assertSee('Come funziona, in due minuti.', false)
@@ -26,6 +27,7 @@ class HowItWorksPageTest extends TestCase
 
     public function test_euro_amounts_are_hidden_unless_enabled(): void
     {
+        $this->markTestSkipped('Pagina /come-funziona nascosta.');
         $this->get('/come-funziona')->assertOk()->assertDontSee('148,50', false)->assertSee('€ •••', false);
 
         config(['lamess.how_it_works_show_euro' => true]);
@@ -34,6 +36,7 @@ class HowItWorksPageTest extends TestCase
 
     public function test_referral_code_is_kept_on_the_links(): void
     {
+        $this->markTestSkipped('Pagina /come-funziona nascosta.');
         $this->get('/come-funziona?ref=LM00001')->assertOk()->assertSee('href="/registrazione?ref=LM00001"', false);
     }
 
@@ -52,6 +55,7 @@ class HowItWorksPageTest extends TestCase
 
     public function test_work_with_us_page_links_to_the_presentation(): void
     {
+        $this->markTestSkipped('Pagina /come-funziona nascosta.');
         $this->get('/lavora-con-noi')->assertOk()->assertSee('href="/come-funziona"', false);
     }
 

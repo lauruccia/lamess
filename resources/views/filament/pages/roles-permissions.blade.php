@@ -7,7 +7,7 @@
     <div class="fi-section" style="padding:1.1rem 1.5rem">
         <p style="margin:0;font-size:.9rem;opacity:.85">
             Qui vedi <strong>chi può fare cosa</strong> nel back-office. I permessi si concedono a ogni admin dalla pagina <strong>Utenti</strong>;
-            i <strong>profili</strong> sono modelli per partire in fretta. Un permesso «gestire» include sempre il corrispondente «vedere». Le voci di menu visibili si scelgono a parte, sempre in Utenti.
+            i <strong>profili</strong> sono modelli per partire in fretta. Ogni area ha fino a tre livelli: <strong>vedere</strong>, <strong>modificare</strong> («gestire») e <strong>creare ed eliminare</strong>; ogni livello include i precedenti. Le voci di menu visibili si scelgono a parte, sempre in Utenti.
         </p>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.9rem" role="tablist">
             @foreach($tabs as $key => $label)

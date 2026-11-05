@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Support;
 
 use App\Domain\Access\Actor;
+use App\Domain\Access\Superadmin;
 use App\Domain\Features\Feature;
 use App\Domain\Network\ConsultantConversion;
 use App\Domain\Network\NetworkException;
@@ -13,14 +14,14 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 
-/** «Fai diventare cliente»: l'incaricato torna solo cliente (declassato se senza storico, altrimenti cessato). Stesso gesto in lista e nella scheda. */
+/** «Fai diventare cliente»: l'incaricato torna solo cliente (declassato se senza storico, altrimenti cessato). Stesso gesto in lista e nella scheda. Solo super_admin. */
 final class MakeCustomerAction
 {
     public static function forRow(?callable $after = null): Action
     {
         return Action::make('makeCustomer')->authorize('network.manage')
             ->label('Fai diventare cliente')->icon('heroicon-o-arrow-uturn-down')->color('danger')
-            ->visible(fn (Consultant $record): bool => $record->status !== 'terminated' && $record->user_id !== null && Feature::enabled('consultant360.action.make_customer'))
+            ->visible(fn (Consultant $record): bool => Superadmin::is() && $record->status !== 'terminated' && $record->user_id !== null && Feature::enabled('consultant360.action.make_customer'))
             ->modalHeading(fn (Consultant $record): string => "Fai diventare cliente {$record->name}")
             ->modalDescription(fn (Consultant $record): string => app(ConsultantConversion::class)->history($record) === []
                 ? 'Non ha storico economico: esce dall\'elenco e dall\'albero, i suoi diretti e i suoi clienti passano al suo sponsor, e la persona resta cliente.'
@@ -29,6 +30,9 @@ final class MakeCustomerAction
             ->schema([Textarea::make('reason')->label('Motivazione')->required()])
             ->action(function (Consultant $record, array $data) use ($after): void {
                 try {
+                    if (! Superadmin::is()) {
+                        throw new NetworkException('Solo il super admin può far diventare cliente un incaricato.');
+                    }
                     $mode = app(ConsultantConversion::class)->makeCustomer($record, (string) $data['reason'], Actor::label());
                     Notification::make()->title("{$record->name} è ora cliente")
                         ->body($mode === 'removed' ? 'Tolto dall\'elenco incaricati e dall\'albero.' : 'Incarico cessato: resta nello storico come cessato.')->success()->send();

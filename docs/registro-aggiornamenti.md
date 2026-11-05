@@ -1,7 +1,33 @@
 # Registro aggiornamenti
 
+## 2026-11-05 — Permessi a tre livelli: vedere / modificare / creare ed eliminare
+- Per ogni area con «gestire» c'è ora un terzo permesso **`area.create`** (rete, KYC, canoni, periodi, ordini, catalogo, pagamenti, assistenza, conformità, contenuti): **vedere** (`.view`) < **modificare** (`.manage`) < **creare ed eliminare** (`.create`, include modificare). Nella pagina *Ruoli e permessi* (matrice, profili, accessi degli utenti) compare come nuova riga sotto ogni «gestire». Le azioni delicate (Fai diventare cliente, Sposta sponsor, ecc.) restano solo del super_admin.
+- Nel back-office il pulsante «Nuovo» e l'eliminazione dipendono da `.create`; la modifica da `.manage`. Piano compensi e «Funzionalità e viste» restano a due livelli.
+- Per non togliere nulla a nessuno, chi ha già `.manage` (profili preimpostati, profili personalizzati, permessi diretti) riceve anche `.create`: poi il super_admin potrà togliere `.create` dove serve.
+- **SQL da lanciare a mano in phpMyAdmin** (il deploy non lancia `migrate`; poi in *Ruoli e permessi* premere «Sincronizza»):
+```sql
+INSERT IGNORE INTO permissions (name, guard_name, created_at, updated_at) VALUES
+('network.create','web',NOW(),NOW()),
+('kyc.create','web',NOW(),NOW()),
+('fees.create','web',NOW(),NOW()),
+('periods.create','web',NOW(),NOW()),
+('orders.create','web',NOW(),NOW()),
+('catalog.create','web',NOW(),NOW()),
+('payouts.create','web',NOW(),NOW()),
+('support.create','web',NOW(),NOW()),
+('compliance.create','web',NOW(),NOW()),
+('content.create','web',NOW(),NOW());
+INSERT IGNORE INTO role_has_permissions (permission_id, role_id)
+  SELECT c.id, rp.role_id FROM role_has_permissions rp JOIN permissions m ON m.id = rp.permission_id
+  JOIN permissions c ON c.name = REPLACE(m.name, '.manage', '.create') AND c.guard_name = 'web' WHERE m.name IN ('network.manage', 'kyc.manage', 'fees.manage', 'periods.manage', 'orders.manage', 'catalog.manage', 'payouts.manage', 'support.manage', 'compliance.manage', 'content.manage');
+INSERT IGNORE INTO model_has_permissions (permission_id, model_type, model_id)
+  SELECT c.id, mp.model_type, mp.model_id FROM model_has_permissions mp JOIN permissions m ON m.id = mp.permission_id
+  JOIN permissions c ON c.name = REPLACE(m.name, '.manage', '.create') AND c.guard_name = 'web' WHERE m.name IN ('network.manage', 'kyc.manage', 'fees.manage', 'periods.manage', 'orders.manage', 'catalog.manage', 'payouts.manage', 'support.manage', 'compliance.manage', 'content.manage');
+```
+- Tecnico: `Roles::PERMISSIONS` e `MATRIX`, `PermissionCatalog`, `GatedByPermission::createPermission()`, migrazione `2026_11_18_100000_permissions_create_level`.
+
 ## 2026-11-05 — Pulsante «Fai diventare cliente» sugli incaricati
-- Nuovo pulsante **«Fai diventare cliente»** nel menu della riga di *Rete → Incaricati* e tra le azioni della scheda incaricato (motivo obbligatorio, finisce nel log; nascondibile da *Funzionalità e viste*: «Pulsante Fai diventare cliente»).
+- Nuovo pulsante **«Fai diventare cliente»** nel menu della riga di *Rete → Incaricati* e tra le azioni della scheda incaricato (motivo obbligatorio, finisce nel log; **solo super_admin**: l'admin non lo vede e, anche forzando la chiamata, l'azione viene rifiutata).
 - **Senza storico economico**: l'incaricato esce da elenco e albero (come «Declassa»), i suoi diretti e i suoi clienti passano al suo sponsor, la persona resta cliente.
 - **Con storico** (ordini, commissioni, prelievi…): non si cancella nulla. L'incarico è **cessato** (diretti al primo ascendente in essere, Reg. 2.8), l'utente perde il ruolo di incaricato, ha il ruolo cliente ed è assegnato a quell'ascendente; i suoi clienti passano allo stesso ascendente e i suoi percorsi nell'albero vengono tolti.
 - Non occorre migrazione. Tecnico: `ConsultantConversion::makeCustomer`, `App\Filament\Support\MakeCustomerAction`, chiave `consultant360.action.make_customer`, test `tests/Feature/Network/MakeCustomerTest.php` (non ancora eseguito: PHP non disponibile nel terminale usato).

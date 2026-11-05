@@ -93,4 +93,14 @@ final class MakeCustomerTest extends TestCase
         $this->assertNull(Consultant::find($this->b->id));
         $this->assertNotNull(Customer::where('user_id', $this->b->user_id)->first());
     }
+
+    public function test_l_admin_non_vede_ne_esegue_il_pulsante(): void
+    {
+        $admin = User::factory()->role('admin')->create();
+        $admin->givePermissionTo(['network.view', 'network.manage']);
+        $this->actingAs($admin);
+
+        Livewire::test(ListConsultants::class)->assertTableActionHidden('makeCustomer', $this->b);
+        $this->assertNotNull(Consultant::find($this->b->id));
+    }
 }

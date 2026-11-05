@@ -16,6 +16,7 @@ use App\Domain\Plan\LegacyPlan;
 use App\Filament\Resources\Consultants\ConsultantResource;
 use App\Filament\Support\ConsultantAccessAction;
 use App\Filament\Support\KycRequestAction;
+use App\Filament\Support\MakeCustomerAction;
 use App\Filament\Support\RankHoldAction;
 use App\Filament\Support\SendDocumentsAction;
 use App\Models\CompPlanVersion;
@@ -207,6 +208,7 @@ class ViewConsultant extends ViewRecord
             Action::make('terminate')->authorize('network.manage')->label('Cessa')->color('danger')->schema($reason)
                 ->modalDescription('Gli incaricati diretti vengono ricollegati al primo ascendente con contratto in essere (Reg. 2.8). L\'operazione non si annulla.')
                 ->visible(fn () => $this->record->status !== 'terminated' && Feature::enabled('consultant360.action.terminate'))->action(fn (array $data) => $this->change('terminated', $data)),
+            MakeCustomerAction::forRow(fn (string $mode) => $mode === 'removed' ? $this->redirect(ConsultantResource::getUrl('index')) : $this->record->refresh()),
             Action::make('addNote')->authorize('network.manage')->label('Aggiungi nota')->icon('heroicon-o-pencil-square')->color('gray')
                 ->visible(fn () => Feature::enabled('consultant360.section.notes'))
                 ->modalDescription('Nota interna: la vedono solo gli amministratori, non si modifica né si cancella.')

@@ -104,6 +104,49 @@ final class ConsultantConversion
         });
     }
 
+    /**
+     * «Fai diventare cliente»: un solo gesto per qualunque incaricato.
+     * - senza storico economico: «Declassa» (sparisce da elenco e albero, la persona resta cliente);
+     * - con storico (commissioni, ordini, prelievi…): non si cancella nulla: l'incarico viene cessato (Reg. 2.8: i diretti salgono
+     *   al primo ascendente in essere), l'utente perde il ruolo di incaricato e resta cliente, assegnato a quell'ascendente.
+     *
+     * @return 'removed'|'terminated' cosa è successo
+     */
+    public function makeCustomer(Consultant $c, string $reason, ?string $by = null): string
+    {
+        if ($c->status === 'terminated') {
+            throw new NetworkException("«{$c->name}» è già cessato.");
+        }
+        if ($c->user_id === null) {
+            throw new NetworkException("«{$c->name}» non ha un account: non può diventare cliente.");
+        }
+        if ($this->history($c) === []) {
+            $this->demoteToCustomer($c, $reason);
+
+            return 'removed';
+        }
+
+        DB::transaction(function () use ($c, $reason, $by): void {
+            $target = $this->network->effectiveSponsor($c);
+            $user = User::findOrFail($c->user_id);
+            $this->network->terminate($c, 'Passato a cliente: '.$reason, null, $by);
+            // niente più clienti: passano all'ascendente in essere; e fuori dai percorsi dell'albero
+            DB::table('customers')->where('assigned_consultant_id', $c->id)->where('user_id', '!=', $user->id)->update(['assigned_consultant_id' => $target?->id]);
+            DB::table('network_paths')->where('ancestor_id', $c->id)->orWhere('descendant_id', $c->id)->orWhere('leg_root_id', $c->id)->delete();
+            $user->removeRole('consultant');
+            if (! $user->hasRole('customer')) {
+                $user->assignRole('customer');
+            }
+            $customer = $this->customers->ensureCustomer($user, $target);
+            if ($customer->assigned_consultant_id === null || $customer->assigned_consultant_id === $c->id) {
+                $customer->update(['assigned_consultant_id' => $target?->id]);
+            }
+            AuditLog::record('consultant.made_customer', "Incaricato passato a cliente: {$c->code} {$c->name}", $user, ['codice' => $c->code, 'assegnato_a' => $target?->code], $reason !== '' ? $reason : null);
+        });
+
+        return 'terminated';
+    }
+
     /** Il cliente diventa incaricato attivo. Senza sponsor esplicito usa l'incaricato a cui è assegnato. */
     public function promoteToConsultant(User $user, ?Consultant $sponsor, string $reason): Consultant
     {

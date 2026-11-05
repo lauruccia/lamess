@@ -66,6 +66,7 @@ final class FeatureRegistry
             'consultant360.action.force_rank' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Forza qualifica»'],
             'consultant360.action.hold_rank' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Mantieni qualifica»', 'help' => 'Piano Incaricati: mantiene la qualifica attuale di un incaricato fino a una data scelta, senza ricalcolo al ribasso.'],
             'consultant360.action.suspend' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsanti «Sospendi» e «Riattiva»'],
+            'consultant360.action.make_customer' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Fai diventare cliente»', 'help' => 'Nella lista incaricati e nella scheda: l\'incaricato torna solo cliente (declassato se senza storico, altrimenti cessato).'],
             'consultant360.action.terminate' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Cessa»'],
             'consultant360.action.reveal_iban' => ['type' => 'button', 'group' => $card, 'label' => 'Mostra l\'IBAN per intero', 'help' => 'Spento: l\'IBAN resta sempre mascherato. Acceso: chi ha il permesso può mostrarlo, e ogni visualizzazione finisce nel log.', 'default' => false],
         ];

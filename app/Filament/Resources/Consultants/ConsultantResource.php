@@ -26,6 +26,7 @@ use App\Filament\Support\ConsultantFilter;
 use App\Filament\Support\ConsultantList;
 use App\Filament\Support\FounderAction;
 use App\Filament\Support\KycRequestAction;
+use App\Filament\Support\MakeCustomerAction;
 use App\Filament\Support\PasswordResetAction;
 use App\Filament\Support\RankHoldAction;
 use App\Filament\Support\SendDocumentsAction;
@@ -337,6 +338,7 @@ class ConsultantResource extends Resource
                     FounderAction::forRow()->visible(fn (Consultant $record): bool => $record->status !== 'terminated'),
                     AccountStatus::suspendAction(),
                     AccountStatus::reinstateAction(),
+                    MakeCustomerAction::forRow(),
                     Action::make('printBadge')->authorize('network.manage')->label('Stampa tesserino')->icon('heroicon-o-identification')->color('gray')
                         ->visible(fn (Consultant $record): bool => app(BadgeService::class)->isIssuable($record))
                         ->url(fn (Consultant $record): string => url("/admin-files/badge/{$record->id}"), shouldOpenInNewTab: true),

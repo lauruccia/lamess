@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-05 — Pulsante «Fai diventare cliente» sugli incaricati
+- Nuovo pulsante **«Fai diventare cliente»** nel menu della riga di *Rete → Incaricati* e tra le azioni della scheda incaricato (motivo obbligatorio, finisce nel log; nascondibile da *Funzionalità e viste*: «Pulsante Fai diventare cliente»).
+- **Senza storico economico**: l'incaricato esce da elenco e albero (come «Declassa»), i suoi diretti e i suoi clienti passano al suo sponsor, la persona resta cliente.
+- **Con storico** (ordini, commissioni, prelievi…): non si cancella nulla. L'incarico è **cessato** (diretti al primo ascendente in essere, Reg. 2.8), l'utente perde il ruolo di incaricato, ha il ruolo cliente ed è assegnato a quell'ascendente; i suoi clienti passano allo stesso ascendente e i suoi percorsi nell'albero vengono tolti.
+- Non occorre migrazione. Tecnico: `ConsultantConversion::makeCustomer`, `App\Filament\Support\MakeCustomerAction`, chiave `consultant360.action.make_customer`, test `tests/Feature/Network/MakeCustomerTest.php` (non ancora eseguito: PHP non disponibile nel terminale usato).
+
 ## 2026-11-02 — Pagina pubblica «Come funziona» per chi riceve il link referral
 - Nuova pagina **/come-funziona** (sito vetrina): cinque passi, simulazione «Prova tu» (clienti e incaricati del team → percentuale, qualifica Pearl/Crystal, 1° livello della rete), tabelle di scaglioni e livelli, qualifiche con il colore della pietra, anteprima dell'area riservata con dati di esempio (Qualifica, Il mio ramo, Statino, Tasca), costi e disclaimer.
 - I numeri sono letti dal **piano in vigore** (scaglioni, livelli, requisiti, importo minimo del cliente, canone): se si modificano dal pannello, la pagina si aggiorna. Se il piano in vigore non è quello Incaricati si usa il file `config/lamess/plan-incaricati-2026-10-08.json`.

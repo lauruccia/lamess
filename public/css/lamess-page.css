@@ -179,14 +179,14 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 
 /* ti spiego Lamèss */
 .pp .intro{background:var(--cream)}
-.pp .intro-in{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:72px;align-items:center}
+.pp .intro-in{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:56px;align-items:center}
 .pp .intro-text p{font-size:1.12rem;line-height:1.85;color:#3d3833;margin:0 0 20px}
 .pp .intro-text .sec-head{margin-bottom:28px}
 .pp .intro-text .sec-head h2{font-size:clamp(2rem,4vw,3.1rem);line-height:1.1}
-.pp .intro-facts{list-style:none;display:flex;flex-wrap:wrap;gap:12px;margin:34px 0 0;padding:0}
-.pp .intro-facts li{display:flex;align-items:baseline;gap:10px;border:1px solid var(--line);border-radius:999px;padding:10px 20px;background:#fff}
-.pp .intro-facts b{font:300 1.6rem/1 var(--lm-font-text);color:var(--terra)}
-.pp .intro-facts span{font-size:.85rem;color:#4d453e}
+.pp .intro-facts{list-style:none;display:flex;flex-wrap:nowrap;gap:8px;margin:34px 0 0;padding:0}
+.pp .intro-facts li{display:flex;align-items:baseline;gap:8px;border:1px solid var(--line);border-radius:999px;padding:10px 14px;background:#fff;white-space:nowrap}
+.pp .intro-facts b{font:300 1.45rem/1 var(--lm-font-text);color:var(--terra)}
+.pp .intro-facts span{font-size:.8rem;color:#4d453e}
 .pp .scene{background:radial-gradient(80% 80% at 50% 30%,#2a2018,#13110E);border-radius:28px;padding:30px 26px 22px;border:1px solid rgba(194,102,58,.45);box-shadow:0 40px 80px -40px rgba(19,17,14,.7)}
 .pp .cup-scene{display:block;width:100%;height:auto;overflow:visible}
 .pp .cup-scene .cup{fill:none;stroke:#E3AA8D;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
@@ -286,6 +286,7 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
  .pp .contact-in .qr{max-width:220px}
 
  .pp .intro-in,.pp .trust-grid{grid-template-columns:1fr;gap:44px}
+ .pp .intro-facts{flex-wrap:wrap}
  .pp .ing-list,.pp .for-grid,.pp .stat-grid{grid-template-columns:1fr}
  .pp .terms{grid-template-columns:1fr 1fr}
  .pp .ing-title{margin-top:52px}

@@ -24,8 +24,8 @@ return [
         'L’idea è semplice: l’integrazione quotidiana funziona se la fai ogni giorno, e il caffè lo bevi già. Con tutto nella stessa bustina non hai niente in più da ricordare.',
     ],
     'intro_facts' => [
-        ['value' => '50', 'label' => 'buste in ogni box'],
-        ['value' => '2', 'label' => 'buste al giorno, al massimo'],
+        ['value' => '50', 'label' => 'buste per box'],
+        ['value' => '2', 'label' => 'buste al giorno max'],
         ['value' => '0', 'label' => 'zuccheri aggiunti'],
     ],
 

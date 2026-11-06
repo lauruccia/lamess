@@ -38,6 +38,18 @@ final class PersonalPageService
         return (bool) config('lamess.personal_pages.enabled') && \App\Domain\Features\Feature::enabled('area.personal_page');
     }
 
+    /** Fase di prova: le pagine sono solo del Consorzio, nessuna è pubblica e gli incaricati non vedono «La mia pagina». */
+    public function staffOnly(): bool
+    {
+        return (bool) config('lamess.personal_pages.staff_only');
+    }
+
+    /** Chi può aprire «La mia pagina» in area: con la fase di prova solo chi ha accesso al back-office. */
+    public function areaAvailable(?User $user): bool
+    {
+        return $this->enabled() && (! $this->staffOnly() || ($user !== null && $user->can('compliance.view')));
+    }
+
     public function approvalRequired(): bool
     {
         return (bool) config('lamess.personal_pages.approval');
@@ -74,7 +86,7 @@ final class PersonalPageService
     /** Visibile al pubblico adesso? */
     public function isPublic(ConsultantPage $p): bool
     {
-        if (! $this->enabled() || ! $p->enabled || $p->blocked || $p->approved_at === null) {
+        if (! $this->enabled() || $this->staffOnly() || ! $p->enabled || $p->blocked || $p->approved_at === null) {
             return false;
         }
         $c = $p->consultant;

@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-06 — Pagine personali: fase di prova «solo il Consorzio» e anteprima admin
+- Nuova impostazione **Pagine personali: solo il Consorzio (fase di prova)** in *Impostazioni di sistema → Rete* (`LAMESS_PERSONAL_PAGES_STAFF_ONLY`, spenta di default). Accesa: la voce *La mia pagina* compare solo a chi ha accesso al back-office (permesso `compliance.view`), gli altri incaricati non vedono nulla e **nessuna pagina `/i/nome` è pubblica**, nemmeno se già approvata e online. Spenta: torna il normale flusso (incaricato → approvazione → online).
+- Nuovo pulsante **Anteprima** in *Assistenza → Pagine personali*: apre `/anteprima-pagina/{id}` in una nuova scheda, con le modifiche in attesa, anche se la pagina non è approvata o non è online. La vede solo chi ha `compliance.view` (gli altri e i visitatori non collegati: 404 o accesso); la pagina è `noindex`. Serve che l'interruttore generale delle pagine sia acceso.
+- Per preparare una pagina di prova: accendere l'interruttore generale e la fase di prova, aprire *La mia pagina* con un account incaricato e admin, compilare e salvare, poi guardarla da *Anteprima* nell'elenco. Quando si è pronti, spegnere la fase di prova e approvare/mettere online le pagine.
+- Nessuna migrazione. Test: `PersonalPageTest` (2 test nuovi).
+
 ## 2026-11-05 — Permessi a tre livelli: vedere / modificare / creare ed eliminare
 - Per ogni area con «gestire» c'è ora un terzo permesso **`area.create`** (rete, KYC, canoni, periodi, ordini, catalogo, pagamenti, assistenza, conformità, contenuti): **vedere** (`.view`) < **modificare** (`.manage`) < **creare ed eliminare** (`.create`, include modificare). Nella pagina *Ruoli e permessi* (matrice, profili, accessi degli utenti) compare come nuova riga sotto ogni «gestire». Le azioni delicate (Fai diventare cliente, Sposta sponsor, ecc.) restano solo del super_admin.
 - Nel back-office il pulsante «Nuovo» e l'eliminazione dipendono da `.create`; la modifica da `.manage`. Piano compensi e «Funzionalità e viste» restano a due livelli.

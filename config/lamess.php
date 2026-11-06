@@ -12,7 +12,8 @@ return [
     'referral_cookie_days' => (int) env('LAMESS_REFERRAL_COOKIE_DAYS', 15),
     'referral_invite_cookie_name' => 'lm_inv',
     // pagine personali pubbliche degli incaricati (/i/{slug}); con «approval» ogni modifica passa dal Consorzio prima di andare online
-    'personal_pages' => ['enabled' => (bool) env('LAMESS_PERSONAL_PAGES', true), 'approval' => (bool) env('LAMESS_PERSONAL_PAGES_APPROVAL', true)],
+    // «staff_only»: fase di prova, le pagine le vede e le modifica solo chi ha accesso al back-office (nessuna pagina è pubblica)
+    'personal_pages' => ['enabled' => (bool) env('LAMESS_PERSONAL_PAGES', true), 'approval' => (bool) env('LAMESS_PERSONAL_PAGES_APPROVAL', true), 'staff_only' => (bool) env('LAMESS_PERSONAL_PAGES_STAFF_ONLY', false)],
     // massimo di inviti che un incaricato può creare in 24 ore (0 = nessun limite)
     'referral_invites_per_day' => (int) env('LAMESS_REFERRAL_INVITES_PER_DAY', 50),
     // OPEN-20: incaricato "casa" per i FAN senza referral (codice attività); null = nessuno

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Pages\PageException;
 use App\Domain\Pages\PersonalPageService;
+use App\Filament\Resources\ConsultantPages\ConsultantPageResource;
 use App\Models\Consultant;
 use App\Models\ConsultantPage;
 use Illuminate\Http\RedirectResponse;
@@ -26,14 +27,14 @@ class PersonalPageController extends Controller
         return $this->render($page, $svc, false);
     }
 
-    private function render(ConsultantPage $page, PersonalPageService $svc, bool $preview)
+    private function render(ConsultantPage $page, PersonalPageService $svc, bool $preview, string $backUrl = '/area/pagina', string $backLabel = '← Torna alla modifica')
     {
         $c = $page->consultant;
         $content = $svc->content($page, $preview);
         $wa = PersonalPageService::whatsappDigits($content['whatsapp']);
 
         return view('site.personal', [
-            'page' => $page, 'c' => $c, 'd' => $content, 'preview' => $preview,
+            'page' => $page, 'c' => $c, 'd' => $content, 'preview' => $preview, 'backUrl' => $backUrl, 'backLabel' => $backLabel,
             'refUrl' => '/r/'.$c->ensureReferralCode(), 'wa' => $wa,
             'photoUrl' => $content['photo_path'] ? '/media/pagine/'.$page->id.'/'.basename((string) $content['photo_path']) : null,
             'shared' => (array) config('personal-page'),
@@ -61,7 +62,7 @@ class PersonalPageController extends Controller
     private function mine(Request $request, PersonalPageService $svc): Consultant
     {
         $c = $request->user()->consultant;
-        abort_if($c === null || ! $svc->enabled() || ! $svc->eligible($c), 404);
+        abort_if($c === null || ! $svc->areaAvailable($request->user()) || ! $svc->eligible($c), 404);
 
         return $c;
     }
@@ -83,6 +84,14 @@ class PersonalPageController extends Controller
         $c = $this->mine($request, $svc);
 
         return $this->render($svc->forConsultant($c), $svc, true);
+    }
+
+    /** Anteprima per il Consorzio della pagina di un incaricato, anche non approvata o non online (con le modifiche in attesa). */
+    public function adminPreview(Request $request, ConsultantPage $page, PersonalPageService $svc)
+    {
+        abort_unless($request->user()?->can('compliance.view') && $svc->enabled() && $page->consultant !== null, 404);
+
+        return $this->render($page, $svc, true, ConsultantPageResource::getUrl('index'), '← Torna all\'elenco');
     }
 
     public function save(Request $request, PersonalPageService $svc): RedirectResponse

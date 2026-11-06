@@ -76,6 +76,7 @@ Route::get('/liberatoria-foto', [LegalController::class, 'show'])->defaults('pag
 Route::redirect('/terms', '/termini', 301);
 Route::get('/r/{code}', [SiteController::class, 'referral'])->name('referral');
 Route::get('/i/{slug}', [PersonalPageController::class, 'show'])->where('slug', '[A-Za-z0-9-]+')->middleware('throttle:120,1')->name('personal-page');
+Route::get('/anteprima-pagina/{page}', [PersonalPageController::class, 'adminPreview'])->whereNumber('page')->middleware(['auth', 'throttle:60,1']);
 Route::get('/media/pagine/{page}/{file}', [PersonalPageController::class, 'photo'])->whereNumber('page')->where('file', '[A-Za-z0-9._-]+');
 Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware('throttle:30,1');
 

@@ -216,4 +216,40 @@ final class PersonalPageTest extends TestCase
         $this->assertSame('4915112345678', PersonalPageService::whatsappDigits('0049 1511 2345678'));
         $this->assertNull(PersonalPageService::whatsappDigits('abc'));
     }
+
+    public function test_staff_only_mode_hides_the_pages_from_consultants_and_from_the_public(): void
+    {
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina', $this->form())->assertRedirect();
+        $page = ConsultantPage::firstOrFail();
+        $page->update(['enabled' => true, 'approved_at' => now()]);
+        auth()->logout();
+        $this->get('/i/maria-rossi')->assertOk();   // senza fase di prova la pagina approvata è pubblica
+
+        config(['lamess.personal_pages.staff_only' => true]);
+        $this->get('/i/maria-rossi')->assertNotFound();
+        $this->actingAs($u)->get('/area/pagina')->assertNotFound();
+        $this->actingAs($u)->get('/area/pagina/anteprima')->assertNotFound();
+        $this->actingAs($u)->get('/area')->assertDontSee('La mia pagina');
+        $this->assertTrue(app(PersonalPageService::class)->staffOnly());
+    }
+
+    public function test_admin_preview_is_only_for_the_back_office_and_shows_pending_changes(): void
+    {
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina', $this->form())->assertRedirect();
+        $page = ConsultantPage::firstOrFail();
+        $this->assertNull($page->approved_at);
+        config(['lamess.personal_pages.staff_only' => true]);
+
+        auth()->logout();
+        $this->get('/anteprima-pagina/'.$page->id)->assertRedirect();                       // non collegato
+        $this->actingAs(User::factory()->create())->get('/anteprima-pagina/'.$page->id)->assertNotFound();
+        $this->actingAs($u)->get('/anteprima-pagina/'.$page->id)->assertNotFound();          // nemmeno il proprietario
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create())
+            ->get('/anteprima-pagina/'.$page->id)->assertOk()->assertSee('Anteprima')->assertSee('Ti aiuto a scegliere.')->assertSee('noindex', false);
+
+        config(['lamess.personal_pages.staff_only' => false]);
+        $this->get('/i/maria-rossi')->assertNotFound();                                       // la pagina non è comunque pubblica
+    }
 }

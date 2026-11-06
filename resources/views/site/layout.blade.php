@@ -83,7 +83,7 @@
     ['/area/eventi', 'Eventi', fn ($p) => str_starts_with($p, 'area/eventi'), 'Consorzio'],
     $isConsultant ? ['/area/conformita', 'Conformità', fn ($p) => str_starts_with($p, 'area/conformita'), 'Consorzio'] : null,
     $isConsultant ? ['/area/referral', 'Referral', fn ($p) => str_starts_with($p, 'area/referral'), 'La mia rete'] : null,
-    $isConsultant && app(\App\Domain\Pages\PersonalPageService::class)->enabled() ? ['/area/pagina', 'La mia pagina', fn ($p) => str_starts_with($p, 'area/pagina'), 'La mia rete'] : null,
+    $isConsultant && app(\App\Domain\Pages\PersonalPageService::class)->areaAvailable($me) ? ['/area/pagina', 'La mia pagina', fn ($p) => str_starts_with($p, 'area/pagina'), 'La mia rete'] : null,
     $isConsultant ? ['/area/onboarding', 'Documenti', fn ($p) => str_starts_with($p, 'area/onboarding'), 'Consorzio'] : null,
     $isConsultant ? ['/piano-compensi', 'Il piano compensi', fn ($p) => $p === 'piano-compensi', 'Compensi'] : null,
     ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza'), 'Account'],

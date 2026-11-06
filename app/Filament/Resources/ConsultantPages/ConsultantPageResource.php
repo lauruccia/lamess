@@ -113,6 +113,8 @@ class ConsultantPageResource extends Resource
                     }),
                 ConsultantFilter::make('consultant_id'),
             ])->recordActions([
+                Action::make('preview')->label('Anteprima')->iconButton()->tooltip('Apri l\'anteprima (la vede solo il Consorzio)')->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url(fn (ConsultantPage $p) => url('/anteprima-pagina/'.$p->id), shouldOpenInNewTab: true),
                 Action::make('approve')->label('Approva')->iconButton()->tooltip('Approva le modifiche')->icon('heroicon-o-check')->color('success')->authorize('compliance.manage')
                     ->visible(fn (ConsultantPage $p) => is_array($p->proposal))
                     ->modalDescription(fn (ConsultantPage $p) => 'Presentazione proposta: '.($p->proposal['bio'] ?? '—'))

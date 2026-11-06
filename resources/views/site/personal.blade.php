@@ -25,7 +25,7 @@
 <a class="hide-md" href="#prodotto">Il prodotto</a>@if($d['media'] !== [])<a class="hide-md" href="#contenuti">Da vedere</a>@endif<a class="hide-md" href="#contatti">Contatti</a><a class="hide-md" href="#faq">Domande</a>
 @endsection
 @section('content')
-@if($preview)<div class="preview-bar" role="status">Anteprima: così vedrà la pagina chi la visita, comprese le modifiche in attesa di approvazione. <a href="/area/pagina">← Torna alla modifica</a></div>@endif
+@if($preview)<div class="preview-bar" role="status">Anteprima: così vedrà la pagina chi la visita, comprese le modifiche in attesa di approvazione. <a href="{{ $backUrl ?? '/area/pagina' }}">{{ $backLabel ?? '← Torna alla modifica' }}</a></div>@endif
 
 <header class="hero" id="top">
  <div class="wrap hero-in">

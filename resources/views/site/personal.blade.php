@@ -4,7 +4,6 @@
  $headline = $d['headline'] ?: 'Incaricato Lamèss';
  $title = $name.' — '.$headline.' | LAMÈSS';
  $desc = \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', (string) ($d['bio'] ?: $shared['hero_lead'])), 155);
- $initial = mb_strtoupper(mb_substr($name, 0, 1));
  $first = trim(explode(' ', $name)[0] ?? $name);
  $waHello = $wa ? 'https://wa.me/'.$wa.'?text='.rawurlencode('Ciao '.$name.', vorrei saperne di più su LAMÈSS.') : null;
  $waJoin = $wa ? 'https://wa.me/'.$wa.'?text='.rawurlencode('Ciao '.$name.', mi piacerebbe sapere come diventare incaricato LAMÈSS.') : null;
@@ -38,15 +37,17 @@
    <p class="eyebrow">LAMÈSS · Cosmetic Coffee</p>
    <h1>{{ $name }}</h1>
    <p class="role">{{ $headline }}</p>
-   <p class="lead">{{ $d['bio'] ?: $shared['hero_lead'] }}</p>
+   <p class="hero-claim">{{ $shared['hero_claim'] }}</p>
+   <p class="pp-lead">{{ $d['bio'] ?: $shared['hero_lead'] }}</p>
    <div class="cta-row">
     <a class="btn-p gold" href="{{ $refUrl }}">Registrati con me</a>
     <a class="btn-p line" href="#perche">Scopri Lamèss</a>
    </div>
-   <p class="hero-note">Registrazione gratuita · nessun obbligo di acquisto</p>
+   <ul class="chips">@foreach($shared['hero_chips'] as $chip)<li>{{ $chip }}</li>@endforeach</ul>
   </div>
   <div class="hero-visual">
-   <div class="photo {{ $photoUrl ? '' : 'empty' }}">@if($photoUrl)<img src="{{ $photoUrl }}" alt="{{ $name }}" width="640" height="800" fetchpriority="high">@else<span aria-hidden="true">{{ $initial }}</span>@endif</div>
+   <div class="photo {{ $photoUrl ? '' : 'empty' }}">@if($photoUrl)<img src="{{ $photoUrl }}" alt="{{ $name }}" width="640" height="800" fetchpriority="high">@else<img src="{{ $shared['product_image'] }}" alt="Box Lamèss Cosmetic Coffee" width="640" height="800" fetchpriority="high">@endif</div>
+   @if($photoUrl)<div class="product-card"><img src="{{ $shared['product_image'] }}" alt="Box Lamèss Cosmetic Coffee" width="300" height="300"></div>@endif
    <div class="seal"><span>Incaricato</span><b>LAMÈSS</b><small>{{ $c->code }}</small></div>
   </div>
  </div>
@@ -67,7 +68,7 @@
   </div>
   <ol class="why-list">
    @foreach($shared['why'] as $i => $w)
-    <li class="reveal"><span class="num">{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span><div><h3>{{ $w['title'] }}</h3><p>{{ $w['text'] }}</p></div></li>
+    <li class="reveal"><span class="pp-num">{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span><div><h3>{{ $w['title'] }}</h3><p>{{ $w['text'] }}</p></div></li>
    @endforeach
   </ol>
  </div>
@@ -107,15 +108,15 @@
 </section>
 
 {{-- 5. Come ordinare --}}
-<section class="steps" id="ordina">
+<section class="pp-steps" id="ordina">
  <div class="wrap">
   <div class="sec-head reveal">
    <p class="kicker">{{ $shared['steps_kicker'] }}</p>
    <h2>{{ $shared['steps_title'] }}</h2>
   </div>
-  <div class="steps-grid">
+  <div class="pp-steps-grid">
    @foreach($shared['steps'] as $i => $s)
-    <div class="step reveal"><span class="num">{{ $i + 1 }}</span><h3>{{ $s['title'] }}</h3><p>{{ $s['text'] }}</p></div>
+    <div class="pp-step reveal"><span class="pp-num">{{ $i + 1 }}</span><h3>{{ $s['title'] }}</h3><p>{{ $s['text'] }}</p></div>
    @endforeach
   </div>
   <div class="cta-row center reveal">
@@ -144,8 +145,8 @@
   </div>
   <div class="cards">
    @foreach($d['media'] as $m)
-    <article class="card reveal">
-     <span class="tag">{{ \App\Domain\Pages\PersonalPageService::MEDIA_KINDS[$m['kind'] ?? 'article'] ?? 'Articolo' }}</span>
+    <article class="pp-card reveal">
+     <span class="pp-tag">{{ \App\Domain\Pages\PersonalPageService::MEDIA_KINDS[$m['kind'] ?? 'article'] ?? 'Articolo' }}</span>
      <h3>{{ $m['title'] }}</h3>
      @if(!empty($m['description']))<p>{{ $m['description'] }}</p>@endif
      <a href="{{ $m['url'] }}" target="_blank" rel="noopener noreferrer nofollow">{{ ($m['kind'] ?? '') === 'video' ? 'Guarda il video' : 'Leggi l’articolo' }} →</a>

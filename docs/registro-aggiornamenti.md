@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-11-06 — Pagina personale: header di impatto e correzione «Come ordinare»
+- Header a tutta altezza con frase d'impatto, nome grande con sfumatura oro, pulsante principale luminoso, punti di fiducia, foto in arco con sigillo e box del prodotto in primo piano (se l'incaricato non ha una foto, nell'arco compare la foto del prodotto). Ingresso animato, disattivato con «riduci movimento». Testi e immagine in `config/personal-page.php` (`hero_claim`, `hero_chips`, `product_image`).
+- Corretto «Come ordinare»: le classi `.steps`, `.step`, `.num`, `.card`, `.tag`, `.lead` si sovrapponevano a quelle del negozio; ora quelle della pagina hanno il prefisso `pp-`.
+- Nessuna migrazione.
+
 ## 2026-11-06 — Pagina personale dell'incaricato: nuovo look premium rivolto al cliente finale
 - La pagina `/i/{slug}` è stata ridisegnata come sito one-page di alto livello (apertura scura con foto e sigillo «Incaricato LAMÈSS», fascia scorrevole, «Perché Lamèss» in sei ragioni, «Nella bustina» con le dosi in etichetta, Stop Time, «Come ordinare» in tre passi, storia e contenuti consigliati dell'incaricato, contatti con QR, FAQ) e termina con l'invito **«Ti piace Lamèss? Fanne parte»**: contatto via WhatsApp o email per diventare incaricato, senza cifre né promesse di guadagno. Barra fissa «WhatsApp / Registrati con me» su mobile; animazioni disattivate con «riduci movimento».
 - I testi comuni (perché, dosi, passi, invito finale, FAQ, avvertenze) sono in `config/personal-page.php` e sono allineati al sito pubblico: integratore alimentare, dosi come in etichetta, nessuna promessa di risultato. Le chiavi precedenti (`pillars`, `product_title`, `product_text`, `banner_*`) sono sostituite.

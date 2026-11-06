@@ -9,8 +9,11 @@ return [
     // Fascia scorrevole sotto l'apertura.
     'ribbon' => ['Cosmetic Coffee', 'Arabica 100% AAA', 'Zero zuccheri', 'Formulazione protetta', 'Stop Time'],
 
-    // Apertura: frase rivolta al cliente finale, sotto il nome dell'incaricato.
-    'hero_lead' => 'Il caffè che trasforma un gesto quotidiano in un rituale di bellezza. Ti accompagno nella scelta, con la cura che merita.',
+    // Apertura: frase d'impatto, punti di fiducia e foto del prodotto (mostrata nell'arco se l'incaricato non ha una foto sua).
+    'hero_claim' => 'Il caffè che trasforma una pausa in un rituale di bellezza.',
+    'hero_chips' => ['Arabica 100% AAA', 'Zero zuccheri', 'Registrazione gratuita'],
+    'product_image' => '/img/front/6d7674f3-4694-4e1a-a026-df050525cb7a.webp',
+    'hero_lead' => 'Ti accompagno nella scelta della tua box, con la cura che un gesto quotidiano merita.',
 
     'why_kicker' => 'Perché Lamèss',
     'why_title' => 'Sei ragioni per fare di ogni pausa un rituale.',

@@ -30,23 +30,45 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 .pp .btn-p.gold-dark:hover{filter:brightness(1.08);transform:translateY(-2px)}
 
 /* 1 · apertura */
-.pp .hero{background:radial-gradient(90% 80% at 85% 15%,#3a2c20 0%,rgba(58,44,32,0) 60%),radial-gradient(70% 70% at 0% 100%,#241a12 0%,rgba(36,26,18,0) 60%),#0d0a08;color:var(--cream);padding:88px 0 112px;overflow:hidden}
+.pp .hero{background:radial-gradient(70% 70% at 82% 38%,#5a4128 0%,rgba(90,65,40,0) 62%),radial-gradient(60% 60% at 0% 100%,#2a1d12 0%,rgba(42,29,18,0) 60%),#0d0a08;color:var(--cream);padding:72px 0 96px;overflow:hidden;min-height:min(92vh,860px);display:flex;align-items:center}
 .pp .hero::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(217,178,124,.05) 0 1px,transparent 1px 160px);pointer-events:none;mask-image:linear-gradient(180deg,#000,transparent 85%)}
-.pp .hero-in{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:72px;align-items:center;position:relative;z-index:1}
+.pp .hero-in{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:72px;align-items:center;position:relative;z-index:1;width:100%}
 .pp .eyebrow{font-size:.76rem;letter-spacing:.4em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:16px;margin:0}
 .pp .eyebrow::before{content:"";width:56px;height:1px;background:var(--gold)}
-.pp .hero h1{font-size:clamp(3rem,7.4vw,6rem);line-height:1;margin:26px 0 14px;letter-spacing:.01em;background:linear-gradient(180deg,#fff 30%,#e9d3b3);-webkit-background-clip:text;background-clip:text;color:transparent}
-.pp .hero .role{font-size:1.05rem;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;margin:0 0 28px}
-.pp .hero .lead{font-size:1.2rem;font-weight:300;line-height:1.75;color:var(--on-dark);max-width:33em;margin:0;white-space:pre-line}
-.pp .hero-note{margin:22px 0 0;font-size:.85rem;letter-spacing:.08em;color:rgba(252,246,243,.6)}
-.pp .hero-visual{position:relative;justify-self:center;width:100%;max-width:420px}
-.pp .photo{aspect-ratio:4/5;border-radius:220px 220px 28px 28px;overflow:hidden;background:#1d1814;border:1px solid rgb(217 178 124/.5);box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 14px rgba(217,178,124,.05)}
-.pp .photo img{width:100%;height:100%;object-fit:cover;display:block}
-.pp .photo.empty{display:grid;place-items:center;font:400 6rem var(--lm-font-display);color:var(--gold)}
-.pp .seal{position:absolute;left:-34px;bottom:34px;width:128px;height:128px;border-radius:50%;background:#0d0a08;border:1px solid var(--gold);display:grid;place-content:center;text-align:center;gap:2px;box-shadow:0 18px 40px -16px rgba(0,0,0,.9)}
+.pp .hero h1{font-size:clamp(3.2rem,8vw,6.8rem);line-height:.98;margin:22px 0 14px;letter-spacing:.005em;background:linear-gradient(180deg,#fff 25%,#e6c995);-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance}
+.pp .hero .role{font-size:.95rem;color:var(--gold);letter-spacing:.22em;text-transform:uppercase;margin:0 0 30px}
+.pp .hero-claim{font:400 clamp(1.5rem,2.8vw,2.3rem)/1.25 var(--lm-font-display);color:var(--cream);margin:0;max-width:20em;padding-left:22px;border-left:2px solid var(--gold)}
+.pp .hero .pp-lead{font-size:1.1rem;font-weight:300;line-height:1.75;color:var(--on-dark);max-width:34em;margin:22px 0 0;white-space:pre-line}
+.pp .hero .cta-row{margin-top:34px}
+.pp .hero .btn-p{min-height:58px;padding:0 38px;font-size:.95rem}
+.pp .hero .btn-p.gold{animation:pp-glow 3.2s ease-in-out infinite}
+.pp .chips{list-style:none;display:flex;flex-wrap:wrap;gap:10px 22px;margin:30px 0 0;padding:0;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(252,246,243,.7)}
+.pp .chips li{display:flex;align-items:center;gap:10px}
+.pp .chips li::before{content:"✦";color:var(--gold);font-size:.7rem}
+.pp .hero-visual{position:relative;justify-self:center;width:100%;max-width:440px}
+.pp .hero-visual::before{content:"";position:absolute;inset:-9%;border-radius:50%;border:1px dashed rgb(217 178 124/.45);animation:pp-spin 60s linear infinite}
+.pp .hero-visual::after{content:"";position:absolute;left:50%;top:48%;width:120%;aspect-ratio:1;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(217,178,124,.28),rgba(217,178,124,0) 62%);z-index:-1;animation:pp-pulse 6s ease-in-out infinite}
+.pp .photo{aspect-ratio:4/5;border-radius:230px 230px 30px 30px;overflow:hidden;background:#1d1814;border:1px solid rgb(217 178 124/.6);box-shadow:0 50px 100px -30px rgba(0,0,0,.95),0 0 0 14px rgba(217,178,124,.06);position:relative}
+.pp .photo{padding:0;display:block}
+.pp .photo img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;display:block;margin:0;border:0;padding:0}
+.pp .photo.empty img{object-position:center 60%;filter:saturate(1.05)}
+.pp .photo.empty::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,10,8,.05),rgba(13,10,8,.35))}
+.pp .seal{position:absolute;left:-38px;top:46%;width:132px;height:132px;border-radius:50%;background:#0d0a08;border:1px solid var(--gold);display:grid;place-content:center;text-align:center;gap:2px;box-shadow:0 18px 40px -16px rgba(0,0,0,.9);z-index:2}
 .pp .seal span{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
 .pp .seal b{font:400 1.05rem var(--lm-font-display);letter-spacing:.12em;color:var(--cream)}
 .pp .seal small{font-size:.62rem;letter-spacing:.14em;color:rgba(252,246,243,.55)}
+.pp .product-card{position:absolute;right:-46px;bottom:-34px;width:46%;aspect-ratio:1;border-radius:22px;overflow:hidden;border:1px solid rgb(217 178 124/.7);box-shadow:0 30px 60px -20px rgba(0,0,0,.9);transform:rotate(4deg);z-index:2;animation:pp-float 7s ease-in-out infinite}
+.pp .product-card img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ingresso a cascata dell'apertura */
+.pp .hero-text>*,.pp .hero-visual{animation:pp-rise .9s cubic-bezier(.2,.7,.2,1) both}
+.pp .hero-text>*:nth-child(2){animation-delay:.08s}.pp .hero-text>*:nth-child(3){animation-delay:.16s}.pp .hero-text>*:nth-child(4){animation-delay:.26s}.pp .hero-text>*:nth-child(5){animation-delay:.36s}.pp .hero-text>*:nth-child(6){animation-delay:.46s}.pp .hero-text>*:nth-child(7){animation-delay:.56s}
+.pp .hero-visual{animation-delay:.2s}
+@keyframes pp-rise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@keyframes pp-spin{to{transform:rotate(360deg)}}
+@keyframes pp-pulse{50%{opacity:.6;transform:translate(-50%,-50%) scale(1.06)}}
+@keyframes pp-float{50%{transform:rotate(4deg) translateY(-10px)}}
+@keyframes pp-glow{50%{box-shadow:0 14px 44px -8px rgba(240,207,159,.95)}}
 
 /* fascia scorrevole */
 .pp .ribbon{background:var(--gold);color:#1a100a;overflow:hidden;white-space:nowrap;padding:16px 0;border-block:1px solid rgba(0,0,0,.15)}
@@ -58,7 +80,7 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 .pp .why{background:var(--cream)}
 .pp .why-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;column-gap:72px}
 .pp .why-list li{display:grid;grid-template-columns:72px 1fr;gap:20px;padding:34px 0;border-top:1px solid var(--line)}
-.pp .why-list .num{font:300 2.2rem/1 var(--lm-font-text);color:var(--terra);letter-spacing:-.02em}
+.pp .why-list .pp-num{font:300 2.2rem/1 var(--lm-font-text);color:var(--terra);letter-spacing:-.02em}
 .pp .why-list h3{font-size:1.45rem;margin-bottom:10px}
 .pp .why-list p{margin:0;color:#4d453e;line-height:1.7}
 
@@ -91,14 +113,14 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 .pp .stop small{display:block;margin-top:20px;color:var(--muted);font-size:.82rem}
 
 /* 5 · come ordinare */
-.pp .steps{background:#fff}
-.pp .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-block:1px solid var(--line)}
-.pp .step{padding:44px 34px 44px 0;border-right:1px solid var(--line)}
-.pp .step+.step{padding-left:34px}
-.pp .step:last-child{border-right:0}
-.pp .step .num{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid var(--terra);color:var(--terra);font:400 1.05rem var(--lm-font-text);margin-bottom:22px}
-.pp .step h3{font-size:1.45rem;margin-bottom:10px}
-.pp .step p{margin:0;color:#4d453e;line-height:1.7}
+.pp .pp-steps{background:#fff}
+.pp .pp-steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-block:1px solid var(--line)}
+.pp .pp-step{padding:44px 34px 44px 0;border-right:1px solid var(--line)}
+.pp .pp-step+.pp-step{padding-left:34px}
+.pp .pp-step:last-child{border-right:0}
+.pp .pp-step .pp-num{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid var(--terra);color:var(--terra);font:400 1.05rem var(--lm-font-text);margin-bottom:22px}
+.pp .pp-step h3{font-size:1.45rem;margin-bottom:10px}
+.pp .pp-step p{margin:0;color:#4d453e;line-height:1.7}
 
 /* 6 · chi sono + contenuti */
 .pp .about{background:var(--cream)}
@@ -108,12 +130,12 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 .pp .media{background:var(--cream)}
 .pp .about+.media{padding-top:0}
 .pp .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.pp .card{background:#fff;border:1px solid rgb(187 180 175/.5);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:12px;transition:transform .25s,box-shadow .25s}
-.pp .card:hover{transform:translateY(-4px);box-shadow:0 24px 50px -28px rgba(19,17,14,.4)}
-.pp .card .tag{align-self:flex-start;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--link);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
-.pp .card h3{font-size:1.25rem}
-.pp .card p{margin:0;color:#4d453e;font-size:.96rem;flex:1}
-.pp .card a{font-weight:600;color:var(--link)}
+.pp .pp-card{background:#fff;border:1px solid rgb(187 180 175/.5);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:12px;transition:transform .25s,box-shadow .25s}
+.pp .pp-card:hover{transform:translateY(-4px);box-shadow:0 24px 50px -28px rgba(19,17,14,.4)}
+.pp .pp-card .pp-tag{align-self:flex-start;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--link);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.pp .pp-card h3{font-size:1.25rem}
+.pp .pp-card p{margin:0;color:#4d453e;font-size:.96rem;flex:1}
+.pp .pp-card a{font-weight:600;color:var(--link)}
 
 /* 7 · contatti */
 .pp .contact{background:#fff;border-top:1px solid rgb(187 180 175/.45)}
@@ -152,18 +174,20 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 /* comparsa allo scorrimento (attiva solo se il JS parte e senza «riduci movimento») */
 .pp-anim .pp .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
 .pp-anim .pp .reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.pp .ribbon-track{animation:none}.pp *{transition:none!important}}
+@media(prefers-reduced-motion:reduce){.pp *,.pp *::before,.pp *::after{animation:none!important;transition:none!important}}
 
 @media(max-width:960px){
  .pp section{padding:76px 0}
- .pp .hero{padding:48px 0 72px}
+ .pp .hero{padding:40px 0 72px;min-height:0;display:block}
  .pp .hero-in,.pp .about-in,.pp .contact-in{grid-template-columns:1fr;gap:44px}
- .pp .hero-visual{order:-1;max-width:300px}
- .pp .seal{left:-12px;width:104px;height:104px}
+ .pp .hero-visual{order:-1;max-width:300px;margin-bottom:18px}
+ .pp .product-card{right:-14px;bottom:-22px;width:42%}
+ .pp .hero-claim{padding-left:16px}
+ .pp .seal{left:-12px;top:auto;bottom:36px;width:104px;height:104px}
  .pp .why-list{grid-template-columns:1fr}
  .pp .dose-grid,.pp .prepare,.pp .cards{grid-template-columns:1fr}
- .pp .steps-grid{grid-template-columns:1fr;border-bottom:0}
- .pp .step,.pp .step+.step{padding:32px 0;border-right:0;border-bottom:1px solid var(--line)}
+ .pp .pp-steps-grid{grid-template-columns:1fr;border-bottom:0}
+ .pp .pp-step,.pp .pp-step+.pp-step{padding:32px 0;border-right:0;border-bottom:1px solid var(--line)}
  .pp .stop{padding:96px 0}
  .pp .contact-in .qr{max-width:220px}
  body.is-pp{padding-bottom:78px}

@@ -97,4 +97,5 @@
             <small>{{ $r['requirements'] ? implode(' · ', $r['requirements']) : 'nessun requisito' }}@if($r['structure_bonus'] > 0) · Bonus di Struttura € {{ $n($r['structure_bonus']) }}@endif @if($r['extended_pct'] > 0) · estesi {{ $n($r['extended_pct']) }}%@endif</small></li>
     @endforeach
     </ul>
+    <p class="career-note" style="margin-top:.8rem;padding:.6rem .8rem;font-size:.84rem;line-height:1.45;border-left:3px solid #c2603a;background:rgba(194,96,58,.07)"><strong>NOTA:</strong> Per opportunità commerciale, l'azienda Kadeo Group riconoscerà fino al 31/12/2026 i bonus e i compensi diretti e indiretti in base alle qualifiche già acquisite anche in assenza dei requisiti previsti dall'attuale piano marketing. Unico requisito richiesto è che dai propri clienti (o dall'incaricato stesso) venga ordinata almeno una box al mese.</p>
 </div>

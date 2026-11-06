@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-06 — Pagina personale: spiega tutto quello che direbbe l'incaricato a voce, con animazioni
+- La pagina `/i/{slug}` ora racconta il prodotto come lo racconterebbe l'incaricato: «Ti spiego Lamèss» (cos'è e perché «caffè cosmetico»), sei ragioni, ingrediente per ingrediente con dosi e indicazioni autorizzate, «Cosa dice la ricerca» (con chiaro cosa lo studio non dimostra), «Per chi è» e avvertenze (caffeina, gravidanza, vegani, dose massima), Stop Time, come ordinare con spedizione, abbonamento, pagamenti ed estero, «Io e Lamèss» (cosa fa l'incaricato e chi c'è dietro il marchio), contatti, FAQ ampliata (16 domande) e invito finale a diventare incaricato.
+- Animazioni leggere in SVG/CSS, senza librerie: chicchi che fluttuano nell'header, tazza con bustina che versa, numeri che salgono (dosi, studio, Consorzio), orologio Stop Time che rallenta fino a fermarsi. Tutte si fermano con «riduci movimento».
+- I testi sono in `config/personal-page.php` e seguono il sito pubblico (integratore, dosi in etichetta, nessuna promessa di risultato, nessun nome di persona). I numeri del Consorzio (anni, soci, box) hanno la data nel testo: da aggiornare lì.
+- Classi della pagina rinominate con prefisso `pp-` dove coincidevano con quelle del negozio (`.stat`, `.chips`, `.trust`). Nessuna migrazione.
+
 ## 2026-11-06 — Pagina personale: header di impatto e correzione «Come ordinare»
 - Header a tutta altezza con frase d'impatto, nome grande con sfumatura oro, pulsante principale luminoso, punti di fiducia, foto in arco con sigillo e box del prodotto in primo piano (se l'incaricato non ha una foto, nell'arco compare la foto del prodotto). Ingresso animato, disattivato con «riduci movimento». Testi e immagine in `config/personal-page.php` (`hero_claim`, `hero_chips`, `product_image`).
 - Corretto «Come ordinare»: le classi `.steps`, `.step`, `.num`, `.card`, `.tag`, `.lead` si sovrapponevano a quelle del negozio; ora quelle della pagina hanno il prefisso `pp-`.

@@ -124,6 +124,13 @@
  @endif
  @endunless
 </header>
+@if(! $minimalHeader && ! $isAuth && ! request()->is('i/*', 'anteprima-pagina/*', 'area*', 'admin*') && session()->has('pp_back') && ($ppBack = app(\App\Domain\Pages\PersonalPageService::class)->backLink(request())))
+<div class="pp-back" id="pp-back" role="navigation" aria-label="Torna alla pagina dell'Incaricato" hidden>
+ <a href="{{ $ppBack['url'] }}">← Torna alla pagina di {{ $ppBack['name'] }}</a>
+ <button type="button" id="pp-back-x" aria-label="Chiudi">×</button>
+</div>
+<script>(function(){var b=document.getElementById('pp-back');if(!b)return;try{if(sessionStorage.getItem('pp-back-off')==='1')return}catch(e){}b.hidden=false;document.getElementById('pp-back-x').addEventListener('click',function(){b.hidden=true;try{sessionStorage.setItem('pp-back-off','1')}catch(e){}})})();</script>
+@endif
 <main class="@yield('width')">
 @if($isAuth)
 <div class="auth-wrap">

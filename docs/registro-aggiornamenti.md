@@ -1,5 +1,9 @@
 # Registro aggiornamenti
 
+## 2026-11-06 — Pagina personale: dal negozio si torna alla pagina dell'incaricato
+- Chi arriva da `/i/{slug}` e va nel negozio o nel carrello vede una barra «← Torna alla pagina di {nome}». La pagina è ricordata in sessione (`pp_back`), la barra si può chiudere ed è nascosta in checkout, area riservata, back-office e anteprime. Se la pagina non è più online (incaricato sospeso, pagina nascosta) la barra sparisce.
+- Codice: `PersonalPageService::backLink()`, `PersonalPageController::show`, `site/layout.blade.php`, stile in `lamess-front.css`. Nessuna migrazione.
+
 ## 2026-11-06 — Pagina personale: spiega tutto quello che direbbe l'incaricato a voce, con animazioni
 - La pagina `/i/{slug}` ora racconta il prodotto come lo racconterebbe l'incaricato: «Ti spiego Lamèss» (cos'è e perché «caffè cosmetico»), sei ragioni, ingrediente per ingrediente con dosi e indicazioni autorizzate, «Cosa dice la ricerca» (con chiaro cosa lo studio non dimostra), «Per chi è» e avvertenze (caffeina, gravidanza, vegani, dose massima), Stop Time, come ordinare con spedizione, abbonamento, pagamenti ed estero, «Io e Lamèss» (cosa fa l'incaricato e chi c'è dietro il marchio), contatti, FAQ ampliata (16 domande) e invito finale a diventare incaricato.
 - Animazioni leggere in SVG/CSS, senza librerie: chicchi che fluttuano nell'header, tazza con bustina che versa, numeri che salgono (dosi, studio, Consorzio), orologio Stop Time che rallenta fino a fermarsi. Tutte si fermano con «riduci movimento».

@@ -23,6 +23,7 @@ class PersonalPageController extends Controller
         $page = $svc->findPublic($slug);
         abort_if($page === null, 404);
         ConsultantPage::whereKey($page->id)->increment('views');
+        session(['pp_back' => $page->slug]);
 
         return $this->render($page, $svc, false);
     }

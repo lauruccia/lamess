@@ -144,6 +144,23 @@ final class PersonalPageTest extends TestCase
         $this->get('/media/pagine/'.$page->id.'/altro.jpg')->assertNotFound();
     }
 
+    public function test_shop_shows_a_way_back_to_the_personal_page_only_while_it_is_public(): void
+    {
+        config(['lamess.personal_pages.approval' => false]);
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina', $this->form());
+        $this->actingAs($u)->post('/area/pagina/online', ['online' => 1]);
+        auth()->logout();
+
+        $this->get('/negozio')->assertDontSee('Torna alla pagina di', false);
+
+        $this->get('/i/maria-rossi')->assertOk();
+        $this->get('/negozio')->assertOk()->assertSee('Torna alla pagina di Maria Rossi', false)->assertSee('href="/i/maria-rossi"', false);
+
+        $u->forceFill(['suspended_at' => now()])->save();
+        $this->get('/negozio')->assertDontSee('Torna alla pagina di', false);
+    }
+
     public function test_hidden_suspended_or_terminated_pages_are_not_public(): void
     {
         config(['lamess.personal_pages.approval' => false]);

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Pages;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Features\Feature;
 use App\Models\Consultant;
 use App\Models\ConsultantPage;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -35,7 +37,7 @@ final class PersonalPageService
 
     public function enabled(): bool
     {
-        return (bool) config('lamess.personal_pages.enabled') && \App\Domain\Features\Feature::enabled('area.personal_page');
+        return (bool) config('lamess.personal_pages.enabled') && Feature::enabled('area.personal_page');
     }
 
     /** Fase di prova: le pagine sono solo del Consorzio, nessuna è pubblica e gli incaricati non vedono «La mia pagina». */
@@ -99,6 +101,27 @@ final class PersonalPageService
         $p = ConsultantPage::with('consultant.user.profile')->where('slug', Str::lower($slug))->first();
 
         return $p !== null && $this->isPublic($p) ? $p : null;
+    }
+
+    /**
+     * Pagina personale da cui il cliente è arrivato (ricordata in sessione): solo se è ancora online.
+     *
+     * @return array{url: string, name: string}|null
+     */
+    public function backLink(Request $request): ?array
+    {
+        $slug = $request->session()->get('pp_back');
+        if (! is_string($slug) || $slug === '') {
+            return null;
+        }
+        $page = $this->findPublic($slug);
+        if ($page === null) {
+            $request->session()->forget('pp_back');
+
+            return null;
+        }
+
+        return ['url' => '/i/'.$page->slug, 'name' => (string) $this->content($page)['display_name']];
     }
 
     /**

@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-06 — Pagina personale dell'incaricato: nuovo look premium rivolto al cliente finale
+- La pagina `/i/{slug}` è stata ridisegnata come sito one-page di alto livello (apertura scura con foto e sigillo «Incaricato LAMÈSS», fascia scorrevole, «Perché Lamèss» in sei ragioni, «Nella bustina» con le dosi in etichetta, Stop Time, «Come ordinare» in tre passi, storia e contenuti consigliati dell'incaricato, contatti con QR, FAQ) e termina con l'invito **«Ti piace Lamèss? Fanne parte»**: contatto via WhatsApp o email per diventare incaricato, senza cifre né promesse di guadagno. Barra fissa «WhatsApp / Registrati con me» su mobile; animazioni disattivate con «riduci movimento».
+- I testi comuni (perché, dosi, passi, invito finale, FAQ, avvertenze) sono in `config/personal-page.php` e sono allineati al sito pubblico: integratore alimentare, dosi come in etichetta, nessuna promessa di risultato. Le chiavi precedenti (`pillars`, `product_title`, `product_text`, `banner_*`) sono sostituite.
+- Visibilità invariata: la pagina si disattiva da sola se l'incaricato non è attivo o l'account è sospeso/cessato, oppure se il Consorzio la nasconde; resta valida la fase di prova «solo il Consorzio».
+- Nessuna migrazione. Test: `PersonalPageTest` invariato (12 verdi).
+
 ## 2026-11-06 — Pagine personali: fase di prova «solo il Consorzio» e anteprima admin
 - Nuova impostazione **Pagine personali: solo il Consorzio (fase di prova)** in *Impostazioni di sistema → Rete* (`LAMESS_PERSONAL_PAGES_STAFF_ONLY`, spenta di default). Accesa: la voce *La mia pagina* compare solo a chi ha accesso al back-office (permesso `compliance.view`), gli altri incaricati non vedono nulla e **nessuna pagina `/i/nome` è pubblica**, nemmeno se già approvata e online. Spenta: torna il normale flusso (incaricato → approvazione → online).
 - Nuovo pulsante **Anteprima** in *Assistenza → Pagine personali*: apre `/anteprima-pagina/{id}` in una nuova scheda, con le modifiche in attesa, anche se la pagina non è approvata o non è online. La vede solo chi ha `compliance.view` (gli altri e i visitatori non collegati: 404 o accesso); la pagina è `noindex`. Serve che l'interruttore generale delle pagine sia acceso.

@@ -14,7 +14,7 @@
    </div>
    <h3 style="margin:22px 0 8px">Come funziona</h3>
    <ul class="todo" style="margin:0;padding-left:18px;line-height:1.7">
-    <li>La persona apre il link e si registra: diventa tuo cliente per 15 giorni dal primo click.</li>
+    <li>La persona apre il link e si registra.</li>
     <li>I suoi ordini compaiono in «I miei clienti».</li>
     <li>Se in seguito diventa incaricato, entra nella tua rete.</li>
    </ul>

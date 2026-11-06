@@ -148,7 +148,9 @@ return [
     'order_prefix' => 'ORD',
     // Abbonamento e spedizione gratuita sugli ordini ripetitivi (RF-A01, RF-A03). Modificabili da Impostazioni di sistema.
     'orders' => [
-        'admin_mail_to' => env('LAMESS_ORDINI_MAIL_TO', ''), // destinatari dell'avviso «Nuovo ordine» (virgole); vuoto = utenti admin e super admin
+        'admin_mail_to' => env('LAMESS_ORDINI_MAIL_TO', 'ordini@lamèss.it'), // destinatari dell'avviso «Nuovo ordine» (virgole); vuoto = utenti admin e super admin
+        'admin_mail_cc' => env('LAMESS_ORDINI_MAIL_CC', 'katiarossi@lamèss.it'), // in copia (virgole)
+        'admin_mail_bcc' => env('LAMESS_ORDINI_MAIL_BCC', 'knmkosmos@gmail.com'), // in copia nascosta (virgole)
     ],
     'subscription' => [
         'monthly_enabled' => true,   // il cliente può attivare l'abbonamento mensile (nuove sottoscrizioni; quelli già attivi proseguono)

@@ -237,10 +237,16 @@ final class OrderService
         return $order;
     }
 
+    /** @return list<string> indirizzi di una voce di config separata da virgole (cc e ccn dell'avviso ordini) */
+    public static function mailList(string $key): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) config($key)))));
+    }
+
     /** @return list<string> LAMESS_ORDINI_MAIL_TO (virgole) oppure, se vuoto, email degli utenti admin e super admin */
     public function newOrderRecipients(): array
     {
-        $list = array_values(array_filter(array_map('trim', explode(',', (string) config('lamess.orders.admin_mail_to')))));
+        $list = self::mailList('lamess.orders.admin_mail_to');
         if ($list !== []) {
             return $list;
         }
@@ -249,7 +255,7 @@ final class OrderService
     }
 
     /** Avvisa l'amministrazione di un nuovo ordine; non blocca mai chi ordina. */
-    private function notifyAdminsNewOrder(Order $order): void
+    private function notifyAdminsNewOrder(Order $order, ?string $paymentStatus = null): void
     {
         try {
             if (! config('lamess.mail_enabled')) {
@@ -257,7 +263,7 @@ final class OrderService
             }
             $to = $this->newOrderRecipients();
             if ($to !== []) {
-                Notification::route('mail', $to)->notify(new NewOrderAdmin($order));
+                Notification::route('mail', $to)->notify(new NewOrderAdmin($order, $paymentStatus));
             }
         } catch (Throwable $e) {
             Log::warning('Avviso nuovo ordine agli admin non inviato', ['ordine' => $order->number, 'errore' => $e->getMessage()]);
@@ -293,6 +299,16 @@ final class OrderService
         return (string) $buyer->email;
     }
 
+    /** Avvisa l'amministrazione dell'esito negativo di un addebito (carta rifiutata o errore del circuito). Gli addebiti automatici degli abbonamenti non generano avvisi. */
+    private function notifyPaymentFailed(Order $order, ?string $error): void
+    {
+        if ($order->subscription_id !== null) {
+            return;
+        }
+        $declined = $error !== null && preg_match('/declin|rifiut|insufficient|expired|incorrect|card_/i', $error) === 1;
+        $this->notifyAdminsNewOrder($order, $declined ? 'Pagamento rifiutato' : 'Errore di pagamento');
+    }
+
     /** Come sendPaymentDetails ma senza mai bloccare chi ordina: se l'invio non riesce resta una riga nel log e l'ordine prosegue (l'admin può rimandarla). */
     public function trySendPaymentDetails(Order $order): void
     {
@@ -314,6 +330,7 @@ final class OrderService
         if (! $r->paid) {
             $order->payments()->where('status', 'pending')->update(['status' => 'failed']);
             $order->payments()->create(['provider' => $this->payments->name(), 'method' => 'card', 'amount' => $order->restDue(), 'status' => 'pending']);
+            $this->notifyPaymentFailed($order, $r->error);
 
             return false;
         }
@@ -361,6 +378,7 @@ final class OrderService
             if ($r->redirectUrl === null && $r->error !== 'not_linked') {
                 $order->payments()->where('method', 'kmoney')->where('status', 'pending')->update(['status' => 'failed']);
                 $order->payments()->create(['provider' => $this->kmoney->name(), 'method' => 'kmoney', 'amount' => $order->kmoney_amount, 'status' => 'pending']);
+                $this->notifyPaymentFailed($order, $r->error);
             }
 
             return $r;
@@ -499,6 +517,9 @@ final class OrderService
         $this->invoices->issueForOrder($order->load('items'));
         OrderEvent::log($order, 'paid', 'Pagamento confermato'.(filled($reference) ? " (rif. {$reference})" : '').(LegacyPlan::hidden() ? ': fattura generata' : ': fattura e punti generati'));
         Notification::send($order->buyer, new OrderPaid($order));
+        if ($order->subscription_id === null) {
+            $this->notifyAdminsNewOrder($order, 'Pagamento accettato');
+        }
         $this->refreshCareerAfterPayment();
 
         return $order->refresh();

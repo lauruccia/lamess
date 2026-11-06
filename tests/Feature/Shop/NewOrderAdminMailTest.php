@@ -67,4 +67,25 @@ final class NewOrderAdminMailTest extends TestCase
         $svc->place($this->buyer($this->activeSponsor()), [$p->id => 1], 'IT', 'card', $this->billing());
         Notification::assertNothingSent();
     }
+
+    public function test_mail_has_cc_bcc_and_payment_status(): void
+    {
+        config([
+            'lamess.mail_enabled' => true, 'lamess.orders.admin_mail_to' => 'ordini@example.test',
+            'lamess.orders.admin_mail_cc' => 'cc@example.test', 'lamess.orders.admin_mail_bcc' => 'ccn@example.test',
+        ]);
+        $this->plan();
+        $this->shipping('0.00');
+        $p = $this->product('A', '123.00');
+        $o = app(OrderService::class)->place($this->buyer($this->activeSponsor()), [$p->id => 1], 'IT', 'transfer', $this->billing());
+
+        $n = new NewOrderAdmin($o);
+        $mail = $n->toMail(new \Illuminate\Notifications\AnonymousNotifiable);
+
+        $this->assertSame('In attesa di bonifico', $n->paymentStatusLabel());
+        $this->assertSame('Pagamento rifiutato', (new NewOrderAdmin($o, 'Pagamento rifiutato'))->paymentStatusLabel());
+        $this->assertSame('cc@example.test', $mail->cc[0][0]);
+        $this->assertSame('ccn@example.test', $mail->bcc[0][0]);
+        $this->assertContains('**Stato del pagamento:** In attesa di bonifico', $mail->introLines);
+    }
 }

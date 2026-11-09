@@ -42,12 +42,12 @@ class MembershipApplicationApproved extends Notification implements ShouldQueueA
         if (filled($a->decision_note)) {
             $mail->line($a->decision_note);
         }
+        $mail->action('Crea il tuo account', app(ApplicationService::class)->url($a))
+            ->line('Il link è personale e vale '.ApplicationService::LINK_DAYS.' giorni: usalo solo tu.');
         if ($a->interest === 'consultant') {
-            $mail->line('Hai detto di essere interessato a diventare incaricato alla vendita: una volta registrato troverai nella tua area la sezione per candidarti come incaricato.');
+            $mail->line('**Vuoi diventare incaricato alla vendita?** Prima crei il tuo account da questo link (si parte da cliente). Poi, dalla tua area personale, apri «Diventa incaricato» e invii la domanda: è quel passaggio che ti rende incaricato, con la firma della lettera d\'incarico.');
         }
 
-        return $mail
-            ->action('Crea il tuo account', app(ApplicationService::class)->url($a))
-            ->line('Il link è personale e vale '.ApplicationService::LINK_DAYS.' giorni: usalo solo tu.');
+        return $mail;
     }
 }

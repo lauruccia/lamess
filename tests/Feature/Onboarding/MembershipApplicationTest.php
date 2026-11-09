@@ -97,7 +97,8 @@ final class MembershipApplicationTest extends TestCase
         $this->assertSame('approved', $a->status);
         $this->assertNotNull($a->email_sent_at);
 
-        $this->get('/registrazione?candidatura='.$a->token)->assertOk()->assertSee('luca@example.test')->assertSee('Luca');
+        $this->get('/registrazione?candidatura='.$a->token)->assertOk()->assertSee('luca@example.test')->assertSee('Luca')->assertSee('Diventa incaricato');
+        $this->assertStringContainsString('Diventa incaricato', (new MembershipApplicationApproved($a))->toMail(new \stdClass)->render()->toHtml());
         $this->get('/registrazione?candidatura=sbagliato')->assertForbidden();
     }
 

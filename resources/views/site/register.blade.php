@@ -99,6 +99,9 @@
    </div>
    <p class="hint" id="pw-hint" aria-live="polite">Almeno 10 caratteri.</p>
 
+   @if(!empty($application) && $application->interest === 'consultant')
+    <div class="reg-sponsor"><strong>Vuoi diventare incaricato alla vendita?</strong> Prima crea il tuo account (si parte da cliente). Poi, dalla tua area personale, apri «Diventa incaricato» e invia la domanda: è quel passaggio che ti rende incaricato.</div>
+   @endif
    @if($sponsor)
     <div class="reg-sponsor">Il tuo incaricato di riferimento: <strong>{{ $sponsor->name }}</strong> <span>[{{ $sponsor->code }}]</span></div>
    @else

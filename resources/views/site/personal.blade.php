@@ -28,7 +28,7 @@
 <a class="hide-md" href="#lamess">Lamèss</a><a class="hide-md" href="#bustina">Ingredienti</a><a class="hide-md" href="#ricerca">La ricerca</a><a class="hide-md" href="#ordina">Come ordinare</a>@if($d['media'] !== [])<a class="hide-md" href="#contenuti">Da vedere</a>@endif<a class="hide-md" href="#faq">Domande</a>
 @endsection
 @section('content')
-@if($preview)<div class="preview-bar" role="status">Anteprima: così vedrà la pagina chi la visita, comprese le modifiche in attesa di approvazione. <a href="{{ $backUrl ?? '/area/pagina' }}">{{ $backLabel ?? '← Torna alla modifica' }}</a></div>@endif
+@if($preview)<div class="preview-bar" role="status">Anteprima: così vedrà la pagina chi la visita, comprese le modifiche in attesa di approvazione.@if(($backUrl ?? '/area/pagina') !== '') <a href="{{ $backUrl ?? '/area/pagina' }}">{{ $backLabel ?? '← Torna alla modifica' }}</a>@endif</div>@endif
 
 {{-- 1. Apertura --}}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="pp-bean" viewBox="0 0 24 34"><ellipse cx="12" cy="17" rx="10" ry="15" fill="currentColor"/><path d="M12 3c-5 8 5 20 0 28" fill="none" stroke="#0d0a08" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/></symbol></svg>

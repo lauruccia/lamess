@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ConsultantPages;
 
+use App\Domain\Audit\AuditLog;
 use App\Domain\Pages\PageException;
 use App\Domain\Pages\PersonalPageService;
 use App\Filament\Concerns\GatedByPermission;
@@ -25,6 +26,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\URL;
 use UnitEnum;
 
 /** Pagine personali pubbliche degli incaricati: approvazione delle modifiche, nascondere una pagina, correggere un testo. */
@@ -115,6 +117,13 @@ class ConsultantPageResource extends Resource
             ])->recordActions([
                 Action::make('preview')->label('Anteprima')->iconButton()->tooltip('Apri l\'anteprima (la vede solo il Consorzio)')->icon('heroicon-o-arrow-top-right-on-square')
                     ->url(fn (ConsultantPage $p) => url('/anteprima-pagina/'.$p->id), shouldOpenInNewTab: true),
+                Action::make('shareLink')->label('Copia link di anteprima')->iconButton()->tooltip('Copia un link di anteprima valido 7 giorni, che si apre anche senza accesso')->icon('heroicon-o-link')->authorize('compliance.manage')
+                    ->action(function (ConsultantPage $p, $livewire): void {
+                        $url = URL::temporarySignedRoute('personal-page.shared-preview', now()->addDays(7), ['page' => $p->id]);
+                        AuditLog::record('page.preview_link', "Pagina personale di {$p->consultant?->code}: creato un link di anteprima (7 giorni)", $p);
+                        $livewire->js('navigator.clipboard?.writeText('.json_encode($url).')');
+                        Notification::make()->title('Link copiato: vale 7 giorni')->body($url)->success()->persistent()->send();
+                    }),
                 Action::make('approve')->label('Approva')->iconButton()->tooltip('Approva le modifiche')->icon('heroicon-o-check')->color('success')->authorize('compliance.manage')
                     ->visible(fn (ConsultantPage $p) => is_array($p->proposal))
                     ->modalDescription(fn (ConsultantPage $p) => 'Presentazione proposta: '.($p->proposal['bio'] ?? '—'))

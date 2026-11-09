@@ -11,7 +11,9 @@ use App\Models\Consultant;
 use App\Models\ConsultantPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 /** Pagina personale pubblica dell'incaricato (/i/{slug}) e la sua gestione dall'area riservata (/area/pagina). */
 class PersonalPageController extends Controller
@@ -28,7 +30,7 @@ class PersonalPageController extends Controller
         return $this->render($page, $svc, false);
     }
 
-    private function render(ConsultantPage $page, PersonalPageService $svc, bool $preview, string $backUrl = '/area/pagina', string $backLabel = '← Torna alla modifica')
+    private function render(ConsultantPage $page, PersonalPageService $svc, bool $preview, string $backUrl = '/area/pagina', string $backLabel = '← Torna alla modifica', ?\DateTimeInterface $photoExpires = null)
     {
         $c = $page->consultant;
         $content = $svc->content($page, $preview);
@@ -37,10 +39,18 @@ class PersonalPageController extends Controller
         return view('site.personal', [
             'page' => $page, 'c' => $c, 'd' => $content, 'preview' => $preview, 'backUrl' => $backUrl, 'backLabel' => $backLabel,
             'refUrl' => '/r/'.$c->ensureReferralCode(), 'wa' => $wa,
-            'photoUrl' => $content['photo_path'] ? '/media/pagine/'.$page->id.'/'.basename((string) $content['photo_path']) : null,
+            'photoUrl' => $content['photo_path'] ? $this->photoUrl($page, basename((string) $content['photo_path']), $photoExpires) : null,
             'shared' => (array) config('personal-page'),
             'socials' => array_filter(array_intersect_key($content, PersonalPageService::SOCIALS)),
         ]);
+    }
+
+    /** Indirizzo della foto; nell'anteprima condivisa è firmato, con la stessa scadenza del link, così la vede anche chi non è collegato. */
+    private function photoUrl(ConsultantPage $page, string $file, ?\DateTimeInterface $expires): string
+    {
+        return $expires !== null
+            ? URL::temporarySignedRoute('personal-page.photo', $expires, ['page' => $page->id, 'file' => $file])
+            : '/media/pagine/'.$page->id.'/'.$file;
     }
 
     /** Foto della pagina: pubblica se la pagina è online, altrimenti solo per il proprietario e per chi in back-office controlla le pagine. */
@@ -52,7 +62,7 @@ class PersonalPageController extends Controller
 
         $user = $request->user();
         $isLive = $path === $page->photo_path && $svc->isPublic($page);
-        $mayPreview = $user !== null && ($user->id === $page->consultant?->user_id || $user->can('compliance.view'));
+        $mayPreview = $request->hasValidSignature() || ($user !== null && ($user->id === $page->consultant?->user_id || $user->can('compliance.view')));
         abort_unless($isLive || $mayPreview, 404);
 
         return Storage::response($path, null, ['Cache-Control' => $isLive ? 'public, max-age=3600' : 'private, no-store']);
@@ -93,6 +103,14 @@ class PersonalPageController extends Controller
         abort_unless($request->user()?->can('compliance.view') && $svc->enabled() && $page->consultant !== null, 404);
 
         return $this->render($page, $svc, true, ConsultantPageResource::getUrl('index'), '← Torna all\'elenco');
+    }
+
+    /** Anteprima condivisa dal Consorzio con un link firmato a scadenza: non richiede accesso né permessi. */
+    public function sharedPreview(Request $request, ConsultantPage $page, PersonalPageService $svc)
+    {
+        abort_unless($svc->enabled() && $page->consultant !== null, 404);
+
+        return $this->render($page, $svc, true, '', '', Carbon::createFromTimestamp((int) $request->query('expires')));
     }
 
     public function save(Request $request, PersonalPageService $svc): RedirectResponse

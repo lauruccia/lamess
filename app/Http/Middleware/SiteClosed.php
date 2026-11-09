@@ -22,6 +22,10 @@ final class SiteClosed
 
     public function handle(Request $request, Closure $next): Response
     {
+        // link di anteprima condiviso dal Consorzio (e la sua foto): validi solo con la firma e fino alla scadenza
+        if ($request->is('anteprima-pagina/*/condivisa', 'media/pagine/*/*') && $request->hasValidSignature()) {
+            return $next($request);
+        }
         if (config('site.open') || $request->is(...self::ALWAYS_OPEN)) {
             return $next($request);
         }

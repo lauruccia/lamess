@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Tests\Support\NetworkDb;
 use Tests\TestCase;
@@ -268,5 +269,45 @@ final class PersonalPageTest extends TestCase
 
         config(['lamess.personal_pages.staff_only' => false]);
         $this->get('/i/maria-rossi')->assertNotFound();                                       // la pagina non è comunque pubblica
+    }
+
+    public function test_shared_preview_link_opens_without_login_expires_and_works_while_the_site_is_closed(): void
+    {
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina', $this->form(['photo' => UploadedFile::fake()->image('me.jpg', 400, 500)]))->assertRedirect();
+        $page = ConsultantPage::firstOrFail();
+        $url = URL::temporarySignedRoute('personal-page.shared-preview', now()->addDays(7), ['page' => $page->id]);
+        auth()->logout();
+
+        $this->get($url)->assertOk()->assertSee('Ti aiuto a scegliere.')->assertSee('noindex', false)->assertDontSee('Torna alla modifica');
+        $this->get('/anteprima-pagina/'.$page->id.'/condivisa')->assertForbidden();                     // senza firma
+        $this->get($url.'x')->assertForbidden();                                                         // firma manomessa
+
+        $path = $page->proposal['photo_path'] ?? $page->photo_path;
+        $file = basename((string) $path);
+        $signedPhoto = URL::temporarySignedRoute('personal-page.photo', now()->addDay(), ['page' => $page->id, 'file' => $file]);
+        $this->get($signedPhoto)->assertOk();
+        $this->get('/media/pagine/'.$page->id.'/'.$file)->assertNotFound();                              // la foto senza firma resta privata
+
+        config(['site.open' => false]);
+        $this->get($url)->assertOk();                                                                    // anche a sito chiuso
+        $this->get($signedPhoto)->assertOk();
+        $this->get('/i/maria-rossi')->assertStatus(503);                                                 // il resto del sito resta chiuso
+
+        $this->travel(8)->days();
+        $this->get($url)->assertStatus(503);                                                             // scaduto a sito chiuso: pagina «apre presto»
+        config(['site.open' => true]);
+        $this->get($url)->assertForbidden();                                                             // scaduto a sito aperto: 403
+    }
+
+    public function test_admin_can_create_a_preview_link_from_the_list_and_it_is_audited(): void
+    {
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina', $this->form())->assertRedirect();
+        $page = ConsultantPage::firstOrFail();
+
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+        Livewire::test(ListConsultantPages::class)->removeTableFilter('review')->callTableAction('shareLink', $page)->assertHasNoTableActionErrors();
+        $this->assertDatabaseHas('audit_logs', ['action' => 'page.preview_link']);
     }
 }

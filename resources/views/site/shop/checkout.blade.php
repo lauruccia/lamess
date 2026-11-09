@@ -96,9 +96,10 @@
    @php($useTasca = old('use_tasca', '0') === '1')
    <div class="tasca-box card" data-tasca-box @if($pay === 'kmoney') hidden @endif>
     <input type="hidden" name="use_tasca" value="0">
-    <label class="chk"><input type="checkbox" name="use_tasca" value="1" data-tasca-check @checked($useTasca)><span><b>{{ __('Usa i compensi della Tasca') }}</b>@if($tascaBonus > 0) <em class="oc-tag oc-tag-accent">+{{ $tascaBonus }}%</em>@endif<br>
+    <label class="chk"><input type="checkbox" name="use_tasca" value="1" data-tasca-check @checked($useTasca)><span><b>{{ __('Usa i compensi della Tasca') }}</b>@if($tascaBonus > 0) <em class="oc-tag oc-tag-accent">+{{ $tascaBonus }}%</em>@endif @if($priced->shippingNet->isPositive())<em class="oc-tag oc-tag-accent">{{ __('Spedizione gratuita') }}</em>@endif<br>
+     @if($priced->shippingNet->isPositive())<span class="tasca-ship" style="display:block;margin:4px 0;font-weight:600;color:var(--accent,#c4663a)">{{ __('Se usi i compensi, la spedizione (€ :s) diventa gratuita.', ['s' => \App\Support\Money::eur($priced->shippingGross())]) }}</span>@endif
      <small class="muted">{{ __('Compensi utilizzabili: € :u (mesi chiusi, senza trattenute).', ['u' => \App\Support\Money::eur($tasca['usable'])]) }}
-     <span data-sum-single @if($subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['single']['used']), 'a' => \App\Support\Money::eur($tasca['single']['amount'])]) }}{{ __('La spedizione è gratuita.') }} @if($tasca['single']['covers_all']){{ __('L\'ordine è pagato per intero.') }}@else{{ __('Il resto lo paghi con il metodo scelto sopra.') }}@endif</span>
+     <span data-sum-single @if($subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['single']['used']), 'a' => \App\Support\Money::eur($tasca['single']['amount'])]) }}@if($tasca['single']['covers_all']){{ __('L\'ordine è pagato per intero.') }}@else{{ __('Il resto lo paghi con il metodo scelto sopra.') }}@endif</span>
      <span data-sum-sub @if(! $subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['sub']['used']), 'a' => \App\Support\Money::eur($tasca['sub']['amount'])]) }}</span>
      {{ __('La scelta è definitiva: i compensi usati non si possono più prelevare.') }}</small></span></label>
     <p class="muted small" data-tasca-kmoney-note hidden>{{ __('I compensi della Tasca non si possono usare insieme a KMoney.') }}</p>
@@ -107,8 +108,9 @@
    (function () {
     var box = document.querySelector('[data-tasca-box]'); if (!box) return;
     var f = document.getElementById('checkout-form');
-    function sync() { var m = f.querySelector('input[name=payment_method]:checked'); var km = m && m.value === 'kmoney'; box.hidden = km; var c = box.querySelector('[data-tasca-check]'); if (km && c) { c.checked = false; } }
+    function sync() { var m = f.querySelector('input[name=payment_method]:checked'); var km = m && m.value === 'kmoney'; box.hidden = km; var c = box.querySelector('[data-tasca-check]'); if (km && c) { c.checked = false; } var on = !!(c && c.checked); document.querySelectorAll('[data-tasca-on]').forEach(function (e) { e.hidden = !on; }); document.querySelectorAll('[data-tasca-off]').forEach(function (e) { e.hidden = on; }); }
     f.querySelectorAll('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    box.querySelector('[data-tasca-check]').addEventListener('change', sync);
     sync();
    })();
    </script>
@@ -160,8 +162,14 @@
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  <div data-sum-single @if($subOn) hidden @endif>@include('site.shop._totals', ['priced' => ! empty($tascaOn) ? $tasca['single']['priced'] : $priced, 'tascaOn' => $tascaOn ?? false, 'tascaPlan' => $tasca['single'] ?? null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
-  <div data-sum-sub @if(! $subOn) hidden @endif>@include('site.shop._totals', ['priced' => ! empty($tascaOn) ? $tasca['sub']['priced'] : $pricedSub, 'tascaOn' => $tascaOn ?? false, 'tascaPlan' => $tasca['sub'] ?? null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-single @if($subOn) hidden @endif>
+   <div data-tasca-off @if(! empty($tascaOn)) hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'tascaOn' => false, 'tascaPlan' => null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+   @if(! empty($tasca))<div data-tasca-on @if(empty($tascaOn)) hidden @endif>@include('site.shop._totals', ['priced' => $tasca['single']['priced'], 'tascaOn' => true, 'tascaPlan' => $tasca['single'], 'showKmoney' => false, 'kmoneyPicked' => false])</div>@endif
+  </div>
+  <div data-sum-sub @if(! $subOn) hidden @endif>
+   <div data-tasca-off @if(! empty($tascaOn)) hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'tascaOn' => false, 'tascaPlan' => null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+   @if(! empty($tasca))<div data-tasca-on @if(empty($tascaOn)) hidden @endif>@include('site.shop._totals', ['priced' => $tasca['sub']['priced'], 'tascaOn' => true, 'tascaPlan' => $tasca['sub'], 'showKmoney' => false, 'kmoneyPicked' => false])</div>@endif
+  </div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>

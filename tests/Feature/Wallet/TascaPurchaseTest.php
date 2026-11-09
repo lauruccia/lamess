@@ -139,7 +139,7 @@ final class TascaPurchaseTest extends TestCase
         $form = $this->billing() + ['payment_method' => 'card', 'privacy' => '1', 'subscribe' => 'none', 'use_tasca' => '1'];
 
         $this->actingAs($user)->withSession(['cart' => [$box->id => 1], 'checkout_draft' => ['payment_method' => 'card', 'subscribe' => 'none']])
-            ->get('/area/checkout/pagamento')->assertOk()->assertSee('Usa i compensi della Tasca')->assertSee('+25%');
+            ->get('/area/checkout/pagamento')->assertOk()->assertSee('Usa i compensi della Tasca')->assertSee('+25%')->assertSee('Spedizione gratuita')->assertSee('diventa gratuita')->assertSee('data-tasca-on', false);
 
         $this->actingAs($user)->withSession(['cart' => [$box->id => 1]])->post('/area/checkout', $form)->assertSessionHasErrors('tasca_consent');
         $this->assertSame(0, Order::count());

@@ -83,7 +83,9 @@ final class TascaPurchaseTest extends TestCase
         $this->assertSame('40.00', $o->tasca_used);
         $this->assertSame('transfer', $o->payment_method);
         $this->assertSame('pending_payment', $o->status);
-        $this->assertSame('110.98', (string) $o->restDue());   // 150 + 10,98 spedizione IVA incl. − 50
+        $this->assertSame('100.00', (string) $o->restDue());   // spedizione gratuita con la Tasca: 150 − 50
+        $this->assertSame('0.00', (string) $o->shipping_net);
+        $this->assertSame('150.00', $o->total);
     }
 
     public function test_cancelling_gives_the_compensi_back(): void
@@ -164,8 +166,8 @@ final class TascaPurchaseTest extends TestCase
         $o = app(OrderService::class)->place($user, [$this->box()->id => 1], 'IT', 'transfer', $this->billing(), useTasca: true);
 
         $mail = (new \App\Notifications\OrderPaymentDetails($o))->toMail($user);
-        $this->assertStringContainsString('110,98', implode(' ', array_map('strval', $mail->introLines)));
-        $this->actingAs($user)->get("/area/ordini/{$o->id}")->assertOk()->assertSee('110,98');
+        $this->assertStringContainsString('100,00', implode(' ', array_map('strval', $mail->introLines)));
+        $this->actingAs($user)->get("/area/ordini/{$o->id}")->assertOk()->assertSee('100,00');
     }
 
     public function test_customer_can_cancel_a_pending_card_order_that_holds_compensi(): void

@@ -139,7 +139,7 @@ final class OrderService
             }
         }
 
-        // Tasca (Regolamento 6.2): compensi dei mesi chiusi; se coprono tutto l'ordine la spedizione è gratuita.
+        // Tasca (Regolamento 6.2): compensi dei mesi chiusi; con la Tasca la spedizione è gratuita.
         // Per gli ordini degli abbonamenti, se la Tasca non basta o non si può usare, si paga tutto col metodo dell'abbonamento (carta).
         $tascaConsultant = null;
         $cover = ['amount' => Num::zero(), 'used' => Num::zero(), 'bonus' => Num::zero()];

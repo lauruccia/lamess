@@ -93,7 +93,7 @@ final class TascaPurchase
     }
 
     /**
-     * Piano di pagamento di un carrello: se la Tasca copre tutto l'ordine la spedizione è gratuita (si usa il carrello senza spedizione).
+     * Piano di pagamento di un carrello: se si usa la Tasca la spedizione è gratuita (si usa il carrello senza spedizione).
      *
      * @param  PricedCart|null  $waived  lo stesso carrello con la spedizione gratuita (null se non serve)
      * @return array{priced: PricedCart, amount: BigDecimal, used: BigDecimal, bonus: BigDecimal, covers_all: bool}
@@ -101,11 +101,9 @@ final class TascaPurchase
     public function plan(BigDecimal $usable, PricedCart $standard, ?PricedCart $waived = null): array
     {
         $pick = $standard;
-        if ($waived !== null && $standard->shippingNet->isPositive() && $waived->allTasca()) {
-            $waivedTotal = Num::of($waived->totals()['total']);
-            if ($this->cover($usable, $waived->tascaEligibleGross(), $waivedTotal)['amount']->isEqualTo($waivedTotal)) {
-                $pick = $waived;
-            }
+        if ($waived !== null && $standard->shippingNet->isPositive()
+            && $this->cover($usable, $waived->tascaEligibleGross(), Num::of($waived->totals()['total']))['amount']->isPositive()) {
+            $pick = $waived;
         }
         $total = Num::of($pick->totals()['total']);
         $cover = $this->cover($usable, $pick->tascaEligibleGross(), $total);

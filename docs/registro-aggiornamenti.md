@@ -1,7 +1,7 @@
 # Registro aggiornamenti
 
 ## 2026-11-09 — Compensi della Tasca come metodo di pagamento (+25%)
-- Al checkout l'incaricato attivo trova, **dopo gli altri metodi**, l'interruttore **«Usa i compensi della Tasca»** (+25%): sceglie carta o bonifico per l'eventuale resto. Con 120 € di compensi paga 150 € di prodotti; se la Tasca copre tutto l'ordine la **spedizione è gratuita** e l'ordine risulta pagato subito.
+- Al checkout l'incaricato attivo trova, **dopo gli altri metodi**, l'interruttore **«Usa i compensi della Tasca»** (+25%): sceglie carta o bonifico per l'eventuale resto. Con 120 € di compensi paga 150 € di prodotti; usando la Tasca la **spedizione è gratuita** (anche se paghi solo una parte con i compensi); se la Tasca copre tutto l'ordine questo risulta pagato subito.
 - Si usano solo i compensi **liberi**: mesi chiusi, estratto conto pubblicato con i 10 giorni di reclamo passati, nessuna contestazione, nessuna sospensione (`bonus_hold`), né prelievi già richiesti. Vale su tutti i prodotti (abbonamenti compresi) senza tetto mensile; non si combina con KMoney.
 - La scelta è **definitiva**: al riepilogo serve la spunta di consenso, registrata come evento dell'ordine (`tasca_consent`). La parte pagata con la Tasca genera commissioni e fa «cliente» sul valore di listino. La maggiorazione è sull'ordine (`orders.tasca_bonus`): è il costo per l'azienda.
 - Annullo prima del pagamento: i compensi tornano nella Tasca. Reso: tornano **senza la maggiorazione** e restano spendibili solo per acquisti (non prelevabili).

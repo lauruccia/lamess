@@ -43,6 +43,7 @@
    <p class="pp-lead">{{ $d['bio'] ?: $shared['hero_lead'] }}</p>
    <div class="cta-row">
     <a class="btn-p gold" href="{{ $refUrl }}">Registrati con me</a>
+    @if($waHello)<a class="btn-p line pp-hero-wa" href="{{ $waHello }}" target="_blank" rel="noopener">Scrivimi su WhatsApp</a>@endif
     <a class="btn-p line" href="#perche">Scopri Lamèss</a>
    </div>
    <ul class="pp-chips">@foreach($shared['hero_chips'] as $chip)<li>{{ $chip }}</li>@endforeach</ul>

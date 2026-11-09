@@ -27,6 +27,8 @@ main.pp{max-width:none;padding:0;color:#13110E;--ink:#13110E;--deep:#0d0a08;--cr
 .pp .btn-p.outline{border-color:var(--ink);color:var(--ink);background:transparent}
 .pp .btn-p.outline:hover{background:var(--ink);color:var(--cream)}
 .pp .btn-p.gold-dark{background:var(--terra);color:#13110E}
+/* WhatsApp nell'apertura: su telefono c'è già la barra fissa in basso */
+@media(max-width:960px){.pp .pp-hero-wa{display:none}}
 .pp .btn-p.gold-dark:hover{filter:brightness(1.08);transform:translateY(-2px)}
 
 /* 1 · apertura */

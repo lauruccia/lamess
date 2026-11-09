@@ -67,6 +67,6 @@
     </div>
   </div>
 </section>
-<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>Pronto a provarlo?</h2><a class="btn solid" href="/negozio">Scegli la tua box</a></div></section>
+<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>Pronto a provarlo?</h2>@endverbatim@if(\App\Support\ShopAccess::canBuy())<a class="btn solid" href="/negozio">Scegli la tua box</a>@else<a class="btn solid" href="/accedi">Accedi per acquistare</a>@endif@verbatim</div></section>
 @endverbatim
 @endsection

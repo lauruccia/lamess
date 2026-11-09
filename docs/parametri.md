@@ -198,6 +198,8 @@ Sono quelle lette da `config/lamess.php`, `config/site.php` e `config/services.p
 |---|---|---|---|---|
 | **Sito, accesso e sicurezza** | | | | |
 | `LAMESS_SITE_OPEN` | `false` | sito aperto al pubblico (`config/site.php`); il valore salvato in Impostazioni → Sito vince sul `.env` | sì | sì |
+| `LAMESS_REGISTRATION_INVITE_ONLY` | `true` | registrazione solo da link referral o invito; il valore salvato in Impostazioni → Sito vince sul `.env` | — | — |
+| `LAMESS_SHOP_LOGIN_REQUIRED` | `true` | negozio senza prezzi né carrello per chi non è collegato; il valore salvato in Impostazioni → Sito vince sul `.env` | — | — |
 | `ADMIN_2FA_REQUIRED` | `true` | 2FA (app di autenticazione) obbligatoria per tutto il back-office | — | sì |
 | `LAMESS_INSTALL_TOKEN` | vuoto | token di almeno 24 caratteri che abilita `/installazione` (una volta); da togliere dopo l'uso | — | sì |
 | `LAMESS_AUDIT_KEY` | vuoto (usa `APP_KEY`) | chiave della catena di hash del log di audit; cambiarla rende illeggibile il log precedente | — | sì |
@@ -234,9 +236,9 @@ Sono quelle lette da `config/lamess.php`, `config/site.php` e `config/services.p
 | `LAMESS_PAYMENT_DRIVER` | `stripe` se `APP_ENV=production`, altrimenti `fake` | carta: `fake` (solo sviluppo) · `stripe` | — | — |
 | `STRIPE_SECRET` | vuoto | chiave segreta Stripe (solo `.env`, `config/services.php`) | — | — |
 | `STRIPE_WEBHOOK_SECRET` | vuoto | segreto di firma del webhook Stripe (senza, i pagamenti non si confermano) | — | — |
-| `LAMESS_KMONEY_DRIVER` | `fake` | `fake` · `api` · `off` | sì | — |
-| `KMONEY_BASE_URL` | vuoto | indirizzo di KMoney (anche `KMONEY_CLIENT_ID`, `KMONEY_CLIENT_SECRET`, `KMONEY_SELLER_ACCOUNT`, `KMONEY_API_TOKEN`, `KMONEY_WEBHOOK_SECRET`: solo `.env`) | sì | — |
-| `KMONEY_MANDATE_LIMIT_KY` | `1500` | tetto per acquisto proposto nel mandato (KY; 0 = non proporre) | sì | — |
+| `LAMESS_KMONEY_DRIVER` | `fake` | `fake` · `api` · `off` | — | — |
+| `KMONEY_BASE_URL` | vuoto | indirizzo di KMoney (anche `KMONEY_CLIENT_ID`, `KMONEY_CLIENT_SECRET`, `KMONEY_SELLER_ACCOUNT`, `KMONEY_API_TOKEN`, `KMONEY_WEBHOOK_SECRET`: solo `.env`) | — | — |
+| `KMONEY_MANDATE_LIMIT_KY` | `1500` | tetto per acquisto proposto nel mandato (KY; 0 = non proporre) | — | — |
 | `KMONEY_REGISTER_URL` | vuoto | pagina «Registrati» di KMoney; vuoto = `{KMONEY_BASE_URL}/register` | — | — |
 | `LAMESS_SHOP_COUNTRIES` | `IT` | nazioni aperte nello shop, separate da virgola | — | — |
 | `LAMESS_EUR_PER_PV` | `1.23` | solo storico: PV suggerito = imponibile / 1,23 | — | — |
@@ -246,7 +248,7 @@ Sono quelle lette da `config/lamess.php`, `config/site.php` e `config/services.p
 | `LAMESS_INVOICE_SINK` | `fake` | consegna dell'XML: `fake` · `file` · `mail` | — | — |
 | `LAMESS_SDI_MAIL_TO` | vuoto | destinatario del driver `mail` | — | — |
 | `LAMESS_SDI_SEND_MODE` | `immediate` | `immediate` · `batch` (in blocco) | — | — |
-| `LAMESS_ORDER_FOR_OTHERS` | `false` | «Ordine per altri» nel carrello: spento = nascosto (codice e rotte restano) | sì | — |
+| `LAMESS_ORDER_FOR_OTHERS` | `false` | «Ordine per altri» nel carrello: spento = nascosto (codice e rotte restano) | — | — |
 | `LAMESS_ORDINI_MAIL_TO` | vuoto | destinatari dell'avviso «Nuovo ordine» (indirizzi separati da virgola); vuoto = tutti gli utenti admin e super admin | — | — |
 | `LAMESS_ABBONAMENTI_MAIL_TO` | vuoto | destinatari del riepilogo giornaliero degli abbonamenti (08:15); vuoto = admin e super admin | — | — |
 | **Compensi, fisco, pagamenti agli incaricati** | | | | |

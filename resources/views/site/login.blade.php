@@ -12,5 +12,5 @@
 @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
 <button>Accedi</button></form>
 <p class="muted"><a href="/password-dimenticata">Password dimenticata?</a></p>
-<p class="muted">Non hai un account? <a href="/registrazione">Registrati</a></p>
+@if(\App\Domain\Customers\RegistrationGate::linksVisible())<p class="muted">Non hai un account? <a href="/registrazione">Registrati</a></p>@else<p class="muted">La registrazione è riservata a chi riceve un invito da un incaricato Lamèss.</p>@endif
 @endsection

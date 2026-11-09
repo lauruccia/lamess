@@ -35,6 +35,6 @@
       </tbody></table></div>
   </div>
 </section>
-<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>Provalo con una box.</h2><a class="btn solid" href="/negozio">Vai allo shop</a></div></section>
+<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>Provalo con una box.</h2>@endverbatim@if(\App\Support\ShopAccess::canBuy())<a class="btn solid" href="/negozio">Vai allo shop</a>@else<a class="btn solid" href="/accedi">Accedi per acquistare</a>@endif@verbatim</div></section>
 @endverbatim
 @endsection

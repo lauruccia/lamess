@@ -59,13 +59,16 @@ Route::post('/installazione', [InstallController::class, 'run'])->middleware('th
 Route::get('/negozio', [ShopController::class, 'index']);
 Route::get('/negozio/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+');
 Route::get('/media/{path}', [ShopController::class, 'media'])->where('path', 'shop/.*');
-Route::get('/carrello', [ShopController::class, 'cartView']);
-Route::get('/carrello/mini', [ShopController::class, 'mini']);
-Route::post('/carrello/aggiungi', [ShopController::class, 'add'])->middleware('throttle:60,1');
-Route::post('/carrello/aggiorna', [ShopController::class, 'update']);
-Route::post('/carrello/riga', [ShopController::class, 'line'])->middleware('throttle:120,1');
-Route::post('/carrello/codice', [ShopController::class, 'applyCode'])->middleware('throttle:20,1');
-Route::post('/carrello/codice/rimuovi', [ShopController::class, 'removeCode']);
+// carrello: con «Negozio visibile con prezzi solo dopo l'accesso» acceso serve il login (Impostazioni di sistema → Sito)
+Route::middleware('shop.login')->group(function () {
+    Route::get('/carrello', [ShopController::class, 'cartView']);
+    Route::get('/carrello/mini', [ShopController::class, 'mini']);
+    Route::post('/carrello/aggiungi', [ShopController::class, 'add'])->middleware('throttle:60,1');
+    Route::post('/carrello/aggiorna', [ShopController::class, 'update']);
+    Route::post('/carrello/riga', [ShopController::class, 'line'])->middleware('throttle:120,1');
+    Route::post('/carrello/codice', [ShopController::class, 'applyCode'])->middleware('throttle:20,1');
+    Route::post('/carrello/codice/rimuovi', [ShopController::class, 'removeCode']);
+});
 Route::get('/privacy', [LegalController::class, 'show'])->defaults('page', 'privacy');
 Route::get('/termini', [LegalController::class, 'show'])->defaults('page', 'termini');
 Route::get('/politiche-di-reso', [LegalController::class, 'show'])->defaults('page', 'politiche-di-reso');

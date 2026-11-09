@@ -191,7 +191,7 @@
   <div class="terms">@foreach($shared['terms'] as $t)<div class="reveal"><h4>{{ $t['title'] }}</h4><p>{{ $t['text'] }}</p></div>@endforeach</div>
   <div class="cta-row center reveal">
    <a class="btn-p dark" href="{{ $refUrl }}">Registrati con me</a>
-   <a class="btn-p outline" href="/negozio">Vai al negozio</a>
+   @if(\App\Support\ShopAccess::canBuy())<a class="btn-p outline" href="/negozio">Vai al negozio</a>@else<a class="btn-p outline" href="/accedi">Accedi per acquistare</a>@endif
   </div>
  </div>
 </section>

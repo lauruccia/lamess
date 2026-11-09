@@ -22,6 +22,8 @@
         <env name="ADMIN_2FA_REQUIRED" value="false"/>
         <env name="LAMESS_PLAN_FOUR_EYES" value="false"/>
         <env name="LAMESS_SITE_OPEN" value="true"/>
+        <env name="LAMESS_REGISTRATION_INVITE_ONLY" value="false"/>
+        <env name="LAMESS_SHOP_LOGIN_REQUIRED" value="false"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

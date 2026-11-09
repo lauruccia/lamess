@@ -40,6 +40,10 @@ final class SystemSettings
     public const DEFINITIONS = [
         'site_open' => ['config' => 'site.open', 'type' => 'bool', 'group' => 'Sito', 'label' => 'Sito aperto al pubblico',
             'help' => 'Spento: i visitatori vedono la pagina «Lamèss apre presto» e nessuno può registrarsi o ordinare. Il back-office (/admin) resta raggiungibile e chi è già collegato come amministratore vede il sito normalmente, per provarlo. Accendere solo quando si decide di aprire.', 'rules' => 'boolean'],
+        'registration_invite_only' => ['config' => 'lamess.registration_invite_only', 'type' => 'bool', 'group' => 'Sito', 'label' => 'Registrazione solo su invito',
+            'help' => 'Acceso: ci si registra soltanto dal link referral di un incaricato (o da un suo invito personale); chi apre /registrazione senza invito vede un avviso. Chi è già registrato accede normalmente. Spento: la registrazione è aperta a tutti.', 'rules' => 'boolean'],
+        'shop_login_required' => ['config' => 'lamess.shop_login_required', 'type' => 'bool', 'group' => 'Sito', 'label' => 'Negozio visibile con prezzi solo dopo l\'accesso',
+            'help' => 'Acceso: chi non è collegato vede le pagine dei prodotti (restano trovabili da Google) ma senza prezzi e senza carrello, con il pulsante «Accedi per acquistare»; il link «Negozio» sparisce dai menu. Chi ha effettuato l\'accesso vede prezzi e acquista come sempre. Spento: prezzi e carrello visibili a tutti.', 'rules' => 'boolean'],
         'legacy_plan_hidden' => ['config' => 'lamess.legacy_plan_hidden', 'type' => 'bool', 'group' => 'Piano di marketing', 'label' => 'Nascondi il vecchio piano di marketing',
             'help' => 'Acceso: in tutto il portale non compare più nessun riferimento al vecchio piano (punti PV/PVF/PVC/PR, Team, Matching, Rank Bonus, Fast Start). Non si cancella e non si ricalcola nulla: i dati restano e tornano visibili spegnendo l\'interruttore.', 'rules' => 'boolean'],
         'mail_enabled' => ['config' => 'lamess.mail_enabled', 'type' => 'bool', 'group' => 'Email', 'label' => 'Invio email attivo',

@@ -50,16 +50,18 @@
      <a class="hide-lg" href="/">Home</a><a class="hide-lg" href="/il-prodotto">Prodotto</a><a class="hide-lg" href="/perche-lamess">Perché Lamèss</a><a class="hide-lg" href="/la-scienza">La scienza</a><a class="hide-lg" href="/lavora-con-noi">Lavora con noi</a><a class="hide-lg" href="/chi-siamo">Chi siamo</a><a class="hide-lg" href="/domande">Domande</a>
     @endguest
    @endif
+   @if(\App\Support\ShopAccess::canBuy())
    <a href="/negozio" class="{{ str_starts_with($nav, 'negozio') ? 'on' : '' }}">Negozio</a>
    <a class="cart-btn" href="/carrello" data-cart-open aria-label="Carrello, {{ $cartCount }} prodotti">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
     <span class="cart-count" data-cart-count @if($cartCount < 1) hidden @endif>{{ $cartCount }}</span>
    </a>
+   @endif
    @auth
     <a class="hide-sm" href="/area">La mia area</a>
     <form method="post" action="/esci">@csrf<button class="link">Esci</button></form>
    @else
-    <a href="/accedi">Accedi</a><a class="cta" href="/registrazione">Registrati</a>
+    <a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">Registrati</a>@endif
    @endauth
   </nav>
   @endif
@@ -156,7 +158,7 @@
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 @if($isAuth || $minimalHeader)
-<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; <a href="/negozio">Negozio</a>@auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a> · <a href="/piano-compensi">Il piano compensi</a> · <a href="/regolamento">Regolamento</a>
+<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; @if(\App\Support\ShopAccess::canBuy())<a href="/negozio">Negozio</a>@endif @auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a> · <a href="/piano-compensi">Il piano compensi</a> · <a href="/regolamento">Regolamento</a>
  @php($co = config('lamess.company'))
  <br><small>© {{ date('Y') }} {{ $co['brand_owner'] }} – Tutti i diritti riservati. {{ $co['name'] }} - {{ $co['address'] }} - P.IVA {{ $co['vat'] }} ● PEC: <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> ● Designed by <a href="https://gruppokosmos.it" target="_blank" rel="noopener">Gruppo Kosmos</a></small>
 </footer>
@@ -167,10 +169,10 @@
    <a class="brand" href="/" aria-label="Lamèss"><img src="/img/lamess-logo.png" width="34" height="34" alt=""><b>Lamèss</b></a>
    <p>I prodotti Lamèss, spediti a casa tua.</p>
   </div>
-  <nav aria-label="Negozio"><h4>Negozio</h4><a href="/negozio">Tutti i prodotti</a><a href="/carrello">Carrello</a></nav>
+  @if(\App\Support\ShopAccess::canBuy())<nav aria-label="Negozio"><h4>Negozio</h4><a href="/negozio">Tutti i prodotti</a><a href="/carrello">Carrello</a></nav>@endif
   <nav aria-label="Il tuo spazio"><h4>Il tuo spazio</h4>
    @auth<a href="/area">La mia area</a><a href="/area/ordini">I miei ordini</a><a href="/area/abbonamenti">Abbonamenti</a><a href="/area/assistenza">Assistenza</a>
-   @else<a href="/accedi">Accedi</a><a href="/registrazione">Registrati</a>@endauth
+   @else<a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">Registrati</a>@endif @endauth
   </nav>
   <nav aria-label="Collegamenti utili"><h4>Collegamenti utili</h4><a href="/privacy">Privacy Policy</a><a href="/politiche-di-reso">Politiche di Reso</a><a href="/termini">Termini e Condizioni</a></nav>
   <div><h4>Acquisti sicuri</h4><p>Pagamento con carta, bonifico o KMoney. I tuoi dati restano tuoi e sono protetti.</p></div>

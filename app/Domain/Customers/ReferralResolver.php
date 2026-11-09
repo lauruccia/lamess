@@ -27,6 +27,17 @@ final class ReferralResolver
         return $default !== null ? [$default, 'default'] : [null, 'manual'];
     }
 
+    /**
+     * Come find(), ma solo per codice referral: il codice attività (LM00123) è consecutivo e quindi indovinabile,
+     * non può servire da invito. Lo usa la registrazione «solo su invito».
+     */
+    public function findByReferralCode(?string $code): ?Consultant
+    {
+        $found = $this->find($code);
+
+        return $found !== null && filled($found->referral_code) && mb_strtoupper(trim((string) $code)) === mb_strtoupper((string) $found->referral_code) ? $found : null;
+    }
+
     /** Cerca per codice referral o codice attività (senza distinguere maiuscole); solo incaricati che possono sponsorizzare. */
     public function find(?string $code): ?Consultant
     {

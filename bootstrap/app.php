@@ -3,6 +3,7 @@
 use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Http\Middleware\BlockWhileImpersonating;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\ShopLoginRequired;
 use App\Http\Middleware\SiteClosed;
 use App\Http\Middleware\TrackVisit;
 use Illuminate\Foundation\Application;
@@ -27,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [SiteClosed::class, BlockSuspendedAccounts::class, TrackVisit::class]);
         // e prima del controllo di accesso: anche /area deve mostrare «Lamèss apre presto», non il rinvio al login
         $middleware->appendToPriorityList(after: StartSession::class, append: SiteClosed::class);
-        $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class]);
+        $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class, 'shop.login' => ShopLoginRequired::class]);
         $middleware->validateCsrfTokens(except: ['webhooks/*']); // chiamate server-to-server, autenticate dalla firma
     })
     ->withExceptions(function (Exceptions $exceptions): void {

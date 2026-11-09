@@ -16,6 +16,12 @@ return [
     'personal_pages' => ['enabled' => (bool) env('LAMESS_PERSONAL_PAGES', true), 'approval' => (bool) env('LAMESS_PERSONAL_PAGES_APPROVAL', true), 'staff_only' => (bool) env('LAMESS_PERSONAL_PAGES_STAFF_ONLY', false)],
     // massimo di inviti che un incaricato può creare in 24 ore (0 = nessun limite)
     'referral_invites_per_day' => (int) env('LAMESS_REFERRAL_INVITES_PER_DAY', 50),
+    // Registrazione solo su invito: ci si iscrive soltanto da un link referral (/r/CODICE), da un invito personale o con un cookie referral valido.
+    // Spento: la registrazione è aperta a tutti. Modificabile da Impostazioni di sistema → Sito.
+    'registration_invite_only' => (bool) env('LAMESS_REGISTRATION_INVITE_ONLY', true),
+    // Negozio: i non collegati vedono le pagine dei prodotti (restano indicizzabili) ma senza prezzi, e non possono usare il carrello.
+    // Spento: prezzi e carrello visibili a tutti, come prima. Modificabile da Impostazioni di sistema → Sito.
+    'shop_login_required' => (bool) env('LAMESS_SHOP_LOGIN_REQUIRED', true),
     // OPEN-20: incaricato "casa" per i FAN senza referral (codice attività); null = nessuno
     'default_consultant_code' => env('LAMESS_DEFAULT_CONSULTANT_CODE'),
     // Il cliente può inviare la richiesta di diventare incaricato solo dopo aver pagato il primo ordine (la prima box).

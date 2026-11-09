@@ -15,7 +15,7 @@
    <div class="eyebrow">Cosmetic Coffee</div>
    <h1>Stop <em class="grad">Time</em></h1>
    <p class="lead">Il caffè che trasforma un gesto quotidiano in un rituale di bellezza.</p>
-   <div class="hero-cta"><a class="hbtn gold" href="/negozio">Scegli la tua box</a><a class="hbtn line" href="/perche-lamess">Perché Lamèss</a></div>
+   <div class="hero-cta">@endverbatim@if(\App\Support\ShopAccess::canBuy())<a class="hbtn gold" href="/negozio">Scegli la tua box</a>@else<a class="hbtn gold" href="/accedi">Accedi per acquistare</a>@endif@verbatim<a class="hbtn line" href="/perche-lamess">Perché Lamèss</a></div>
    <p class="top-note">Lamèss è un integratore alimentare.</p>
   </div>
  </div>
@@ -44,13 +44,14 @@
     <div class="pgrid">
       @endverbatim
 @foreach($featured as $p)
-@php($range = $p->hasVariants() ? $p->variantPriceRange(auth()->user()) : null)
-@php($saving = $p->hasVariants() ? null : $p->savingPercent(auth()->user()))
+@php($showPrices = \App\Support\ShopAccess::canBuy())
+@php($range = $showPrices && $p->hasVariants() ? $p->variantPriceRange(auth()->user()) : null)
+@php($saving = $showPrices && ! $p->hasVariants() ? $p->savingPercent(auth()->user()) : null)
 <article class="pcard"><a class="pcard-img" href="{{ $p->shopUrl() }}" tabindex="-1" aria-hidden="true">@include('site.shop._thumb', ['product' => $p, 'alt' => $p->displayName()])@if($saving)<span class="tags"><span class="tag hot">−{{ $saving }}%</span></span>@endif @if(($km = $p->kmoneyPercent()) > 0)<span class="tags bottom"><span class="tag km">{{ $km }}% in KMoney</span></span>@endif</a>
 <div class="pcard-body"><h3>{{ $p->displayName() }}</h3>
-@if($range)<p class="price">@if($range[0] !== $range[1])<small>da</small> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b><small>IVA inclusa</small></p>
+@if(! $showPrices)@elseif($range)<p class="price">@if($range[0] !== $range[1])<small>da</small> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b><small>IVA inclusa</small></p>
 @else<p class="price"><b>€ {{ \App\Support\Money::eur($p->grossPriceFor(auth()->user())) }}</b>@if($p->compareAtGross()) <s>€ {{ \App\Support\Money::eur($p->compareAtGross()) }}</s>@endif<small>IVA inclusa</small></p>@endif
-<a class="hbtn dark" href="{{ $p->shopUrl() }}">Acquista nel negozio</a></div></article>
+<a class="hbtn dark" href="{{ $p->shopUrl() }}">{{ $showPrices ? 'Acquista nel negozio' : 'Scopri il prodotto' }}</a></div></article>
 @endforeach
 @verbatim
     </div>
@@ -63,7 +64,7 @@
       <p class="kicker">La nostra filosofia</p>
       <h2>Stop <span class="grad">Time</span></h2>
       <div class="state" aria-live="polite"><p id="stateText">Stop Time è un invito a rallentare e a vivere il tempo con maggiore consapevolezza. È la scelta di fermarsi, anche solo per un momento, e trasformare un gesto abituale in un rituale di bellezza personale.</p></div>
-      <div class="hero-cta" style="margin-top:0"><button class="hbtn gold" id="stopBtn" type="button">Ferma il tempo</button><a class="hbtn line" href="/negozio">Entra in Lamèss</a></div>
+      <div class="hero-cta" style="margin-top:0"><button class="hbtn gold" id="stopBtn" type="button">Ferma il tempo</button>@endverbatim@if(\App\Support\ShopAccess::canBuy())<a class="hbtn line" href="/negozio">Entra in Lamèss</a>@else<a class="hbtn line" href="/accedi">Accedi</a>@endif@verbatim</div>
       <p style="margin-top:26px;font-size:.95rem;color:rgba(252,246,243,.7)">“Stop Time” è il concept del progetto e non promette di fermare l’invecchiamento.</p>
     </div>
     <div class="clock" id="clock">
@@ -136,7 +137,8 @@
     <h2>Pronto a fermare il tempo?</h2>
     <p>Accedi al tuo spazio o creane uno nuovo: ordini, abbonamenti e assistenza in un unico posto.</p>
     <div class="hero-cta">@endverbatim
-@auth<a class="hbtn gold" href="/area">La mia area</a><a class="hbtn line" href="/negozio">Vai al negozio</a>@else<a class="hbtn gold" href="/registrazione">Registrati</a><a class="hbtn line" href="/accedi">Accedi</a>@endauth
+@auth<a class="hbtn gold" href="/area">La mia area</a><a class="hbtn line" href="/negozio">Vai al negozio</a>@else
+@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="hbtn gold" href="/registrazione">Registrati</a>@endif<a class="hbtn line" href="/accedi">Accedi</a>@endauth
 @verbatim</div>
     <p class="contact">Vuoi saperne di più o parlare con il team? <a href="/contatti">Scrivici</a>.</p>
   </div>

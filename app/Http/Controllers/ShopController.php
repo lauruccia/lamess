@@ -32,6 +32,7 @@ use App\Models\ShippingAddress;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Money;
+use App\Support\ShopAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -240,8 +241,10 @@ class ShopController extends Controller
                 ->orWhereHas('variants', fn ($v) => $v->where('sku', 'like', $like)->orWhere('variant_label', 'like', $like)));
         }
         // Filtro prezzo (IVA inclusa): net_price × (100 + IVA) equivale al prezzo lordo × 100.
-        $min = $this->priceFilter($r->query('prezzo_min'));
-        $max = $this->priceFilter($r->query('prezzo_max'));
+        // Chi non è collegato (negozio «solo dopo l'accesso») non vede prezzi: niente filtro né ordinamento per prezzo, che li farebbero intuire.
+        $prices = ShopAccess::canBuy();
+        $min = $prices ? $this->priceFilter($r->query('prezzo_min')) : null;
+        $max = $prices ? $this->priceFilter($r->query('prezzo_max')) : null;
         $grossExpr = 'net_price * (100 + vat_rate)';
         foreach ([[$min, '>='], [$max, '<=']] as [$bound, $op]) {
             if ($bound !== null) {
@@ -255,8 +258,9 @@ class ShopController extends Controller
         }
         $kmoneyAvailable = $kmoneyMin !== null || Product::whereIn('id', $visibleIds)->where('kmoney_percent', '>', 0)->exists();
         $bounds = Product::whereIn('id', $visibleIds)->selectRaw("min($grossExpr) as lo, max($grossExpr) as hi")->first();
-        $priceBounds = $bounds && $bounds->hi !== null && $bounds->lo != $bounds->hi ? [(int) floor($bounds->lo / 100), (int) ceil($bounds->hi / 100)] : null;
-        $sort = array_key_exists((string) $r->query('ordina'), self::SORTS) ? (string) $r->query('ordina') : 'consigliati';
+        $priceBounds = $prices && $bounds && $bounds->hi !== null && $bounds->lo != $bounds->hi ? [(int) floor($bounds->lo / 100), (int) ceil($bounds->hi / 100)] : null;
+        $sorts = $prices ? self::SORTS : array_filter(self::SORTS, fn (string $key) => ! str_starts_with($key, 'prezzo'), ARRAY_FILTER_USE_KEY);
+        $sort = array_key_exists((string) $r->query('ordina'), $sorts) ? (string) $r->query('ordina') : 'consigliati';
         match ($sort) {
             'novita' => $query->orderByDesc('id'),
             'prezzo-asc' => $query->orderByRaw('net_price * (100 + vat_rate) asc'),
@@ -288,10 +292,10 @@ class ShopController extends Controller
 
         return view('site.shop.index', [
             'products' => $page, 'cols' => $cols, 'view' => $view, 'perPage' => $perPage, 'perPageOptions' => $perPageOptions, 'categories' => $categories, 'category' => $category, 'navRoot' => $navRoot,
-            'term' => $term, 'sort' => $sort, 'sorts' => self::SORTS, 'totalVisible' => $visibleIds->count(),
+            'term' => $term, 'sort' => $sort, 'sorts' => $sorts, 'showPrices' => $prices, 'totalVisible' => $visibleIds->count(),
             'priceMin' => $min, 'priceMax' => $max, 'priceBounds' => $priceBounds,
             'kmoneyMin' => $kmoneyMin, 'kmoneyFilters' => self::KMONEY_FILTERS, 'kmoneyAvailable' => $kmoneyAvailable,
-            'shippingPromo' => $this->shippingPromo(),
+            'shippingPromo' => $prices ? $this->shippingPromo() : null,
         ]);
     }
 
@@ -329,7 +333,7 @@ class ShopController extends Controller
             ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
             ->orderByDesc('featured')->orderBy('sort_order')->limit(8)->get()->filter(fn (Product $p) => $p->sellableIn(self::COUNTRY))->take(4);
 
-        return view('site.shop.show', ['product' => $product, 'variants' => $variants, 'chosen' => $chosen, 'related' => $related, 'offers' => $this->offersFor($product), 'shippingPromo' => $this->shippingPromo()]);
+        return view('site.shop.show', ['product' => $product, 'variants' => $variants, 'chosen' => $chosen, 'related' => $related, 'offers' => ShopAccess::canBuy() ? $this->offersFor($product) : [], 'shippingPromo' => ShopAccess::canBuy() ? $this->shippingPromo() : null, 'showPrices' => ShopAccess::canBuy()]);
     }
 
     /**

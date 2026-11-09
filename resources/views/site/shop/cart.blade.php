@@ -44,7 +44,7 @@
   @include('site.shop._totals')
   <a class="btn accent wide cta-lock" href="/area/checkout?nuovo=1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Procedi al checkout</a>
   <p class="secure-note">Pagamento sicuro · Carta, bonifico o KMoney</p>
-  @guest<p class="muted small center">Per ordinare serve un account: <a href="/accedi">accedi</a> oppure <a href="/registrazione">registrati</a>. Il carrello resta salvato.</p>@endguest
+  @guest<p class="muted small center">Per ordinare serve un account: <a href="/accedi">accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible()) oppure <a href="/registrazione">registrati</a>@endif. Il carrello resta salvato.</p>@endguest
  </aside>
 </div>
 @endif

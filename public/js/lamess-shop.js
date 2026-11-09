@@ -221,16 +221,19 @@
     function apply() {
       var sel = picked(), v = find(sel)[0];
       refreshPills();
-      if (!v || sel.indexOf(null) !== -1) { form.hidden = true; naEl.hidden = false; return; }
-      naEl.hidden = true; select.value = String(v.id);
-      var html = '<b>' + money(v.price) + '</b>';
-      if (v.was) { html += ' <s>' + money(v.was) + '</s> <span class="save">Risparmi il ' + v.saving + '%</span>'; }
-      priceEl.innerHTML = html;
+      if (!v || sel.indexOf(null) !== -1) { if (form) form.hidden = true; naEl.hidden = false; return; }
+      naEl.hidden = true; if (select) select.value = String(v.id);
+      if (priceEl) {
+        var html = '<b>' + money(v.price) + '</b>';
+        if (v.was) { html += ' <s>' + money(v.was) + '</s> <span class="save">Risparmi il ' + v.saving + '%</span>'; }
+        priceEl.innerHTML = html;
+      }
       stockEl.className = 'stock ' + (v.soldOut ? 'out' : (v.low ? 'low' : 'in'));
       stockEl.textContent = v.soldOut ? 'Esaurito al momento' : (v.low ? 'Ultimi ' + v.max + ' pezzi disponibili' : 'Disponibile');
-      form.hidden = v.soldOut;
+      if (form) form.hidden = v.soldOut;
+      var login = $('.buy-login'); if (login) login.hidden = v.soldOut;
       if (skuEl) skuEl.textContent = v.sku;
-      qty.max = v.max === null ? 99 : Math.max(1, v.max); if (!(parseInt(qty.value, 10) >= 1)) qty.value = 1; if (parseInt(qty.value, 10) > parseInt(qty.max, 10)) qty.value = qty.max;
+      if (qty) { qty.max = v.max === null ? 99 : Math.max(1, v.max); if (!(parseInt(qty.value, 10) >= 1)) qty.value = 1; if (parseInt(qty.value, 10) > parseInt(qty.max, 10)) qty.value = qty.max; }
       var img = $('#gallery-img'), ph = $('.gallery-main .ph'), thumbs = $$('.gallery-thumbs button'), want = v.img || (thumbs[0] ? thumbs[0].getAttribute('data-src') : null);
       if (img) { if (want) { img.src = want; } img.hidden = !want; if (ph) ph.hidden = !!want; thumbs.forEach(function (b, i) { b.classList.toggle('on', !v.img && i === 0); }); }
       if (tagsEl) { var hot = tagsEl.querySelector('.hot, .dark'); if (hot) hot.remove(); if (v.soldOut) tagsEl.insertAdjacentHTML('afterbegin', '<span class="tag dark">Esaurito</span>'); else if (v.saving) tagsEl.insertAdjacentHTML('afterbegin', '<span class="tag hot">−' + v.saving + '%</span>'); }

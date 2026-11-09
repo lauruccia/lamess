@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Customers\CustomerService;
+use App\Domain\Customers\RegistrationGate;
 use App\Domain\Customers\ReferralInviteService;
 use App\Domain\Customers\ReferralResolver;
 use App\Domain\Plan\HowItWorksData;
@@ -55,7 +56,8 @@ class SiteController extends Controller
 
     public function referral(Request $request, string $code, ReferralResolver $resolver, ReferralInviteService $invites): RedirectResponse
     {
-        $consultant = $resolver->find($code);
+        // Registrazione solo su invito: il link vale solo con il codice referral, non con il codice attività (indovinabile)
+        $consultant = RegistrationGate::inviteOnly() ? $resolver->findByReferralCode($code) : $resolver->find($code);
         if ($consultant === null) {
             return redirect('/registrazione');
         }
@@ -83,15 +85,35 @@ class SiteController extends Controller
         ]);
     }
 
-    public function registerForm(Request $request, ReferralResolver $resolver)
+    public function registerForm(Request $request, ReferralResolver $resolver, RegistrationGate $gate)
     {
-        [$sponsor] = $resolver->resolve($request->query('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), null);
+        // Solo su invito: senza un link referral (o un invito) valido si vede l'avviso, mai il modulo
+        $invitedBy = RegistrationGate::inviteOnly() ? $gate->sponsor($request) : null;
+        if (RegistrationGate::inviteOnly() && $invitedBy === null) {
+            return $this->registrationClosed();
+        }
+        [$sponsor] = $invitedBy !== null ? [$invitedBy] : $resolver->resolve($request->query('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), null);
 
         return view('site.register', ['sponsor' => $sponsor]);
     }
 
-    public function register(Request $request, CustomerService $customers, ReferralResolver $resolver): RedirectResponse
+    /** Avviso «registrazione solo su invito»: stato 403 e nessuna indicizzazione. */
+    private function registrationClosed(): \Illuminate\Http\Response
     {
+        return response()->view('site.register-closed', [], 403, ['X-Robots-Tag' => 'noindex, nofollow']);
+    }
+
+    public function register(Request $request, CustomerService $customers, ReferralResolver $resolver, RegistrationGate $gate)
+    {
+        // Controllo sul server anche all'invio del modulo: nascondere la pagina non basta
+        $inviteOnly = RegistrationGate::inviteOnly();
+        if ($inviteOnly && $gate->sponsor($request, (string) $request->input('ref')) === null) {
+            return $this->registrationClosed();
+        }
+        if ($inviteOnly) {
+            // chi si registra su invito non sceglie lo sponsor a mano: vale quello del link
+            $request->merge(['sponsor_code' => null]);
+        }
         // spazi e minuscole non contano: si salva sempre in maiuscolo, senza spazi
         if ($request->filled('tax_code')) {
             $request->merge(['tax_code' => strtoupper((string) preg_replace('/\s+/', '', (string) $request->input('tax_code')))]);
@@ -117,8 +139,14 @@ class SiteController extends Controller
         return redirect()->intended($hasCart ? '/area/checkout' : '/area');
     }
 
-    public function loginForm()
+    public function loginForm(Request $request)
     {
+        // «Accedi per acquistare» dal negozio: dopo l'accesso si torna alla pagina di partenza (solo indirizzi interni del sito)
+        $next = (string) $request->query('dopo');
+        if ($next !== '' && str_starts_with($next, '/') && ! str_starts_with($next, '//') && ! str_contains($next, '\\')) {
+            $request->session()->put('url.intended', url($next));
+        }
+
         return view('site.login');
     }
 

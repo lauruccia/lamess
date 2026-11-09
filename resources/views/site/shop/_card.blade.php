@@ -1,7 +1,8 @@
 @php
+ $showPrices = \App\Support\ShopAccess::canBuy();
  $withVariants = $product->hasVariants();
- $range = $withVariants ? $product->variantPriceRange(auth()->user()) : null;
- $saving = $withVariants ? null : $product->savingPercent(auth()->user());
+ $range = $showPrices && $withVariants ? $product->variantPriceRange(auth()->user()) : null;
+ $saving = $showPrices && ! $withVariants ? $product->savingPercent(auth()->user()) : null;
  $cart = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.2l2 11h10.6l1.8-8H6.4"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>';
 @endphp
 <article class="pcard">
@@ -19,7 +20,8 @@
   @if($product->description)<p class="pcard-desc">{{ $product->description }}</p>@endif
   <div class="pcard-foot">
    <div class="pcard-price">
-    @if($withVariants && $range)
+    @if(! $showPrices)
+    @elseif($withVariants && $range)
      <p class="price">@if($range[0] !== $range[1])<span class="muted small">da</span> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b><span class="vat-note">IVA inclusa</span></p>
     @else
      <p class="price"><b>€ {{ \App\Support\Money::eur($product->grossPriceFor(auth()->user())) }}</b>@if($product->compareAtGross()) <s>€ {{ \App\Support\Money::eur($product->compareAtGross()) }}</s>@endif<span class="vat-note">IVA inclusa</span></p>
@@ -29,6 +31,8 @@
    <div class="pcard-act">
     @if($product->isSoldOut())
      <span class="muted small">Non disponibile</span>
+    @elseif(! $showPrices)
+     <a class="add" href="/accedi?dopo={{ urlencode('/negozio/'.$product->slug) }}">Accedi per acquistare</a>
     @elseif($withVariants)
      <a class="add icon" href="{{ $product->shopUrl() }}" title="Scegli le opzioni" aria-label="Scegli le opzioni di {{ $product->displayName() }}">{!! $cart !!}</a>
     @else

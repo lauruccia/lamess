@@ -37,6 +37,7 @@ class WalletController extends Controller
             'transactions' => WalletTransaction::where('consultant_id', $c->id)->orderByDesc('id')->limit(100)->get(),
             'requests' => WithdrawalRequest::where('consultant_id', $c->id)->orderByDesc('id')->limit(20)->get(),
             'fee' => (string) config('lamess.fiscal.bank_fee'),
+            'tascaUsable' => (string) app(\App\Domain\Wallet\TascaPurchase::class)->usable($c), 'tascaBonus' => \App\Domain\Wallet\TascaPurchase::bonusPercent(), 'tascaOn' => \App\Domain\Wallet\TascaPurchase::enabled(),
         ]);
     }
 

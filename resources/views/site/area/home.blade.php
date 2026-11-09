@@ -48,7 +48,7 @@
  <div class="note"><div><strong>Onboarding da completare</strong>Senza onboarding non puoi ricevere pagamenti né commissioni indirette.</div><a class="btn" href="/area/onboarding">Completa ora</a></div>
 @endif
 @foreach($d['orders']['pending'] as $o)
- <div class="note"><div><strong>Ordine {{ $o->number }} in attesa di pagamento</strong>€ {{ $eur($o->total) }} · {{ $o->payment_method === 'transfer' ? 'ti serve il bonifico: nell\'ordine trovi IBAN e causale.' : ($o->payment_method === 'kmoney' ? 'completa il pagamento con KMoney.' : 'completa il pagamento con carta.') }}</div><a class="btn" href="/area/ordini/{{ $o->id }}">{{ $o->payment_method === 'transfer' ? 'Vedi istruzioni' : 'Paga ora' }}</a></div>
+ <div class="note"><div><strong>Ordine {{ $o->number }} in attesa di pagamento</strong>€ {{ $eur($o->restDue()) }} · {{ $o->payment_method === 'transfer' ? 'ti serve il bonifico: nell\'ordine trovi IBAN e causale.' : ($o->payment_method === 'kmoney' ? 'completa il pagamento con KMoney.' : 'completa il pagamento con carta.') }}</div><a class="btn" href="/area/ordini/{{ $o->id }}">{{ $o->payment_method === 'transfer' ? 'Vedi istruzioni' : 'Paga ora' }}</a></div>
 @endforeach
 @if($d['subs']['failed'])
  <div class="note note-err"><div><strong>Ultimo addebito dell'abbonamento non riuscito</strong>{{ $d['subs']['failed']->last_error }}</div><a class="btn" href="/area/abbonamenti">Controlla</a></div>

@@ -24,4 +24,8 @@
    <div class="km-save km-save-eur" data-km-only @if(empty($kmoneyPicked)) hidden @endif><dt>Da pagare in euro</dt><dd>€ {{ \App\Support\Money::eur($priced->kmoneyRest()) }}</dd></div>
   @endif
  @endif
+@if(! empty($tascaOn) && ! empty($tascaPlan))
+ <div class="km-save"><dt>{{ __('Pagati con la Tasca') }}</dt><dd>− € {{ \App\Support\Money::eur($tascaPlan['amount']) }}</dd></div>
+ <div class="km-save km-save-eur"><dt>{{ __('Da pagare ora') }}</dt><dd>€ {{ \App\Support\Money::eur(max(0, (float) $t['total'] - (float) (string) $tascaPlan['amount'])) }}</dd></div>
+@endif
 </dl>

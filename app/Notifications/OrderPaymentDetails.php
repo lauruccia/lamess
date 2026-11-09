@@ -44,7 +44,7 @@ class OrderPaymentDetails extends Notification implements ShouldQueueAfterCommit
             ->line("Ordine {$o->number}: l'ordine sarà confermato e preparato appena riceviamo il pagamento.");
 
         $kmoneyDue = $o->payment_method === 'kmoney' && ! $o->payments()->where('method', 'kmoney')->where('status', 'paid')->exists();
-        $rest = $o->payment_method === 'kmoney' ? $o->restDue() : $o->total;
+        $rest = $o->restDue();
         $restMethod = $o->payment_method === 'kmoney' ? $o->kmoney_rest_method : $o->payment_method;
         $action = 'Vedi il tuo ordine';
 

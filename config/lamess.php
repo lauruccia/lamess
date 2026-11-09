@@ -141,6 +141,9 @@ return [
     ],
     // Vantaggio KMoney mostrato nel checkout: ricaricando 100 € si ricevono 100 + N % di KY (25 → 120 € = 150 KY). 0 = nessun messaggio.
     'kmoney_bonus_percent' => 25,
+    // Compensi della Tasca usati per acquistare (Regolamento 6.2): ogni € di compenso vale 1 + N % di prodotti a listino (25 → 120 € = 150 €).
+    'tasca_purchase_enabled' => true,
+    'tasca_bonus_percent' => 25,
     // Metodi di pagamento offerti nel checkout (modificabili da Negozio → Pagamenti e spedizioni)
     'payments' => ['card' => true, 'transfer' => true, 'kmoney' => true],
     'bank_transfer_instructions' => env('LAMESS_BANK_INSTRUCTIONS', 'IBAN da configurare — causale: numero ordine'),

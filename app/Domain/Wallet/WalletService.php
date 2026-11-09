@@ -27,6 +27,34 @@ final class WalletService
         return Num::money(BigDecimal::of((string) (WalletTransaction::where('consultant_id', $consultantId)->sum('amount') ?? 0)));
     }
 
+    /**
+     * Crediti da reso di acquisti pagati con i compensi: si possono spendere solo per nuovi acquisti, non si prelevano.
+     * Ogni acquisto con la Tasca consuma prima questi crediti.
+     */
+    public function purchaseOnlyCredit(int $consultantId): BigDecimal
+    {
+        // In ordine di data: un reso aggiunge al «fondo solo acquisti»; ogni nuovo acquisto lo consuma per primo; se l'ordine viene annullato la parte consumata ci torna.
+        $pool = Num::zero();
+        $usedFromPool = [];
+        $rows = WalletTransaction::where('consultant_id', $consultantId)->whereIn('type', ['purchase_refund', 'purchase_debit', 'purchase_release'])->orderBy('id')->get(['type', 'amount', 'order_id']);
+        foreach ($rows as $row) {
+            $amount = BigDecimal::of((string) $row->amount);
+            if ($row->type === 'purchase_refund') {
+                $pool = $pool->plus($amount);
+            } elseif ($row->type === 'purchase_debit') {
+                $take = Num::min($pool, $amount->abs());
+                $pool = $pool->minus($take);
+                $usedFromPool[$row->order_id] = $take;
+            } else {
+                $back = $usedFromPool[$row->order_id] ?? Num::zero();
+                $pool = $pool->plus($back);
+                $usedFromPool[$row->order_id] = Num::zero();
+            }
+        }
+
+        return Num::money($pool);
+    }
+
     /** Importo già impegnato da prelievi richiesti o approvati e non ancora pagati. */
     public function reserved(int $consultantId, ?int $exceptRequestId = null): BigDecimal
     {
@@ -58,7 +86,7 @@ final class WalletService
         if ($c->status === 'terminated') {
             $reasons[] = 'incarico cessato';
         }
-        $free = Num::max(Num::zero(), $balance->minus($reserved));
+        $free = Num::max(Num::zero(), $balance->minus($reserved)->minus($this->purchaseOnlyCredit($c->id)));
         $blocked = $reasons === [] ? Num::zero() : Num::max(Num::zero(), $balance);
 
         return [
@@ -100,8 +128,8 @@ final class WalletService
     public function assertReversible(Period $period): void
     {
         $closedAt = $period->closed_at;
-        if ($closedAt !== null && WalletTransaction::where('type', 'withdrawal')->where('created_at', '>=', $closedAt)->exists()) {
-            throw new WalletException('Dopo la chiusura di questo mese sono stati pagati prelievi dal wallet: non si può riaprire. Correggi con una rettifica.');
+        if ($closedAt !== null && WalletTransaction::whereIn('type', ['withdrawal', 'purchase_debit'])->where('created_at', '>=', $closedAt)->exists()) {
+            throw new WalletException('Dopo la chiusura di questo mese sono stati pagati prelievi o acquisti con i compensi dal wallet: non si può riaprire. Correggi con una rettifica.');
         }
     }
 

@@ -11,6 +11,7 @@ use App\Domain\Engine\Support\Num;
 use App\Domain\Ledger\PvLedger;
 use App\Domain\Periods\LiveRecalcDispatcher;
 use App\Domain\Plan\LegacyPlan;
+use App\Domain\Wallet\TascaPurchase;
 use App\Models\BundleRule;
 use App\Models\Consultant;
 use App\Models\Customer;
@@ -52,6 +53,7 @@ final class OrderService
         private readonly PaymentProvider $payments,
         private readonly KMoneyProvider $kmoney,
         private readonly CartPricer $pricer,
+        private readonly TascaPurchase $tasca,
     ) {}
 
     /**
@@ -61,8 +63,9 @@ final class OrderService
      * @param  Subscription|null  $subscription  ordine generato da un abbonamento (spedizione gratuita se prevista)
      * @param  list<string>  $discountCodes  codici sconto inseriti dal cliente (gli sconti automatici si applicano da soli)
      * @param  string|null  $kmoneyRest  con pagamento KMoney: metodo per il resto (card|transfer) quando la % KMoney dei prodotti non copre tutto
+     * @param  bool  $useTasca  paga con i compensi della Tasca (+ maggiorazione) quanto possibile; il resto col metodo scelto (card|transfer). Non insieme a KMoney.
      */
-    public function place(User $buyer, array $lines, string $country, string $method, array $billing, ?DateTimeImmutable $now = null, ?string $notes = null, array $forOthers = [], ?Subscription $subscription = null, array $discountCodes = [], ?string $kmoneyRest = null): Order
+    public function place(User $buyer, array $lines, string $country, string $method, array $billing, ?DateTimeImmutable $now = null, ?string $notes = null, array $forOthers = [], ?Subscription $subscription = null, array $discountCodes = [], ?string $kmoneyRest = null, bool $useTasca = false): Order
     {
         $now ??= CarbonImmutable::now();
         if (! in_array($method, ['card', 'transfer', 'kmoney'], true)) {
@@ -136,6 +139,42 @@ final class OrderService
             }
         }
 
+        // Tasca (Regolamento 6.2): compensi dei mesi chiusi; se coprono tutto l'ordine la spedizione è gratuita.
+        // Per gli ordini degli abbonamenti, se la Tasca non basta o non si può usare, si paga tutto col metodo dell'abbonamento (carta).
+        $tascaConsultant = null;
+        $cover = ['amount' => Num::zero(), 'used' => Num::zero(), 'bonus' => Num::zero()];
+        if ($useTasca) {
+            if ($method === 'kmoney') {
+                throw new OrderException('I compensi della Tasca si usano con carta o bonifico, non insieme a KMoney.');
+            }
+            $why = match (true) {
+                ! TascaPurchase::enabled() => 'Il pagamento con i compensi della Tasca non è attivo.',
+                $type !== 'consultant' || $beneficiary === null => 'La Tasca è riservata agli incaricati attivi.',
+                default => null,
+            };
+            if ($why === null) {
+                $usable = $this->tasca->usable($beneficiary);
+                if (! $usable->isPositive()) {
+                    $why = 'Nella Tasca non ci sono compensi utilizzabili: contano i mesi chiusi, con estratto conto non più contestabile.';
+                } else {
+                    $free = $priced->shippingNet->isPositive() ? $this->pricer->price($entries, $buyer, $discountCodes, $now, $country, true) : null;
+                    $plan = $this->tasca->plan($usable, $priced, $free);
+                    if (! $plan['amount']->isPositive()) {
+                        $why = 'Nessun prodotto del carrello si può pagare con i compensi della Tasca.';
+                    } else {
+                        $priced = $plan['priced'];
+                        $cover = ['amount' => $plan['amount'], 'used' => $plan['used'], 'bonus' => $plan['bonus']];
+                        $tascaConsultant = $beneficiary;
+                    }
+                }
+            }
+            if ($why !== null && $subscription === null) {
+                throw new OrderException($why);
+            }
+        }
+        $tascaCoversAll = $cover['amount']->isPositive() && $cover['amount']->isEqualTo(Num::of($priced->totals()['total']));
+        $storedMethod = $tascaCoversAll ? 'tasca' : $method;
+
         // Pagamento KMoney: la quota dipende dalla % impostata su ogni prodotto; con tutti i prodotti al 100% anche la spedizione è in KMoney; altrimenti il resto (spedizione inclusa) si paga con carta o bonifico.
         $kmoneyAmount = '0.00';
         if ($method === 'kmoney') {
@@ -159,11 +198,11 @@ final class OrderService
             $kmoneyRest = null;
         }
 
-        $order = DB::transaction(function () use ($buyer, $items, $country, $method, $snapshot, $now, $notes, $type, $beneficiary, $subscription, $priced, $kmoneyAmount, $kmoneyRest): Order {
+        $order = DB::transaction(function () use ($buyer, $items, $country, $method, $snapshot, $now, $notes, $type, $beneficiary, $subscription, $priced, $kmoneyAmount, $kmoneyRest, $cover, $tascaConsultant, $storedMethod, $tascaCoversAll): Order {
             $this->reserveStock($items);
             $order = Order::create([
                 'number' => 'tmp', 'buyer_user_id' => $buyer->id, 'buyer_type' => $type, 'beneficiary_consultant_id' => $beneficiary?->id,
-                'country_code' => $country, 'payment_method' => $method, 'subtotal_net' => 0, 'vat_total' => 0, 'total' => 0,
+                'country_code' => $country, 'payment_method' => $storedMethod, 'subtotal_net' => 0, 'vat_total' => 0, 'total' => 0,
                 'billing' => $snapshot, 'notes' => $notes, 'subscription_id' => $subscription?->id,
             ]);
             $pvTotal = Num::zero();
@@ -209,16 +248,23 @@ final class OrderService
                 'discounts' => $priced->applied === [] ? null : $priced->appliedSnapshot(),
                 'vat_total' => $t['vat'], 'total' => $t['total'], 'pv_total' => $pvTotal, 'cv_total' => $cvTotal,
                 'kmoney_amount' => $kmoneyAmount, 'kmoney_rest_method' => $kmoneyRest,
+                'tasca_amount' => (string) $cover['amount'], 'tasca_used' => (string) $cover['used'], 'tasca_bonus' => (string) $cover['bonus'],
             ]);
             $this->recordRedemptions($order, $buyer, $priced);
-            OrderEvent::log($order, 'created', 'Ordine creato · pagamento: '.self::methodLabel($method).($kmoneyRest ? ' + '.self::methodLabel($kmoneyRest) : ''));
+            OrderEvent::log($order, 'created', 'Ordine creato · pagamento: '.self::methodLabel($storedMethod).($kmoneyRest ? ' + '.self::methodLabel($kmoneyRest) : '').($cover['amount']->isPositive() && ! $tascaCoversAll ? ' + '.self::methodLabel('tasca') : '')
+                .($cover['amount']->isPositive() ? ' (compensi usati € '.$cover['used'].', maggiorazione € '.$cover['bonus'].')' : ''));
+            if ($cover['amount']->isPositive()) {
+                $this->tasca->debit($tascaConsultant, $order, $cover['used']);
+                Payment::create(['order_id' => $order->id, 'provider' => 'tasca', 'method' => 'tasca', 'amount' => (string) $cover['amount'],
+                    'status' => $tascaCoversAll ? 'pending' : 'paid', 'paid_at' => $tascaCoversAll ? null : now()]);
+            }
             if ($method === 'kmoney') {
                 Payment::create(['order_id' => $order->id, 'provider' => $this->kmoney->name(), 'method' => 'kmoney', 'amount' => $kmoneyAmount]);
                 if ($kmoneyRest !== null) {
                     Payment::create(['order_id' => $order->id, 'provider' => $kmoneyRest === 'card' ? $this->payments->name() : 'bank_transfer', 'method' => $kmoneyRest, 'amount' => $order->restDue()]);
                 }
-            } else {
-                Payment::create(['order_id' => $order->id, 'provider' => $method === 'card' ? $this->payments->name() : 'bank_transfer', 'method' => $method, 'amount' => $t['total']]);
+            } elseif (! $tascaCoversAll) {
+                Payment::create(['order_id' => $order->id, 'provider' => $method === 'card' ? $this->payments->name() : 'bank_transfer', 'method' => $method, 'amount' => $order->restDue()]);
             }
 
             // Bonifico: movimento in attesa nel periodo già aperto del mese corrente (se esiste).
@@ -232,6 +278,10 @@ final class OrderService
             return $order->refresh()->load('items');
         });
 
+        // Ordine coperto interamente dalla Tasca: è già pagato (fattura, provvigioni, avvisi come per ogni pagamento).
+        if ($tascaCoversAll) {
+            return $this->markPaid($order);
+        }
         $this->notifyAdminsNewOrder($order);
 
         return $order;
@@ -337,6 +387,14 @@ final class OrderService
         $this->markPaid($order, $r->reference);
 
         return true;
+    }
+
+    /** Compensi della Tasca che l'utente (incaricato attivo) può usare adesso per acquistare; zero per gli altri. */
+    public function tascaUsableFor(User $user): BigDecimal
+    {
+        $c = Consultant::where('user_id', $user->id)->where('status', 'active')->first();
+
+        return $c === null ? Num::zero() : $this->tasca->usable($c);
     }
 
     public function kmoneyEnabled(): bool
@@ -547,8 +605,9 @@ final class OrderService
             $this->restoreStock($order);
             PvMovement::where('order_id', $order->id)->where('status', 'pending_payment')->get()->each->update(['status' => 'cancelled']);
             $order->payments()->where('status', 'pending')->update(['status' => 'failed']);
+            $this->tasca->release($order);
             $order->update(['status' => 'cancelled']);
-            OrderEvent::log($order, 'cancelled', 'Ordine annullato');
+            OrderEvent::log($order, 'cancelled', 'Ordine annullato'.(Num::of((string) $order->tasca_used)->isPositive() ? ': compensi della Tasca restituiti (€ '.$order->tasca_used.')' : ''));
         });
 
         return $order->refresh();
@@ -576,7 +635,7 @@ final class OrderService
                 throw new OrderException("L'ordine {$order->number} appartiene a un abbonamento: si gestisce dall'abbonamento.");
             }
             if ($order->payments()->where('status', 'refunded')->exists()) {
-                throw new OrderException("La quota KMoney dell'ordine {$order->number} è già stata riaccreditata al cliente: non si può riaprire. Crea un nuovo ordine.");
+                throw new OrderException("La quota KMoney o Tasca dell'ordine {$order->number} è già stata riaccreditata al cliente: non si può riaprire. Crea un nuovo ordine.");
             }
 
             $order->load('items.product', 'buyer');
@@ -632,7 +691,7 @@ final class OrderService
     public static function methodLabel(?string $method): string
     {
         return match ($method) {
-            'card' => 'carta', 'kmoney' => 'KMoney', 'transfer' => 'bonifico', default => (string) $method,
+            'card' => 'carta', 'kmoney' => 'KMoney', 'transfer' => 'bonifico', 'tasca' => 'compensi della Tasca', default => (string) $method,
         };
     }
 

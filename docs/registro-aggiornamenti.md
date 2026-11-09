@@ -1,5 +1,29 @@
 # Registro aggiornamenti
 
+## 2026-11-09 — Compensi della Tasca come metodo di pagamento (+25%)
+- Al checkout l'incaricato attivo trova, **dopo gli altri metodi**, l'interruttore **«Usa i compensi della Tasca»** (+25%): sceglie carta o bonifico per l'eventuale resto. Con 120 € di compensi paga 150 € di prodotti; se la Tasca copre tutto l'ordine la **spedizione è gratuita** e l'ordine risulta pagato subito.
+- Si usano solo i compensi **liberi**: mesi chiusi, estratto conto pubblicato con i 10 giorni di reclamo passati, nessuna contestazione, nessuna sospensione (`bonus_hold`), né prelievi già richiesti. Vale su tutti i prodotti (abbonamenti compresi) senza tetto mensile; non si combina con KMoney.
+- La scelta è **definitiva**: al riepilogo serve la spunta di consenso, registrata come evento dell'ordine (`tasca_consent`). La parte pagata con la Tasca genera commissioni e fa «cliente» sul valore di listino. La maggiorazione è sull'ordine (`orders.tasca_bonus`): è il costo per l'azienda.
+- Annullo prima del pagamento: i compensi tornano nella Tasca. Reso: tornano **senza la maggiorazione** e restano spendibili solo per acquisti (non prelevabili).
+- Abbonamenti con carta: interruttore **«Usa la Tasca nei rinnovi»** in *Abbonamenti*; se il saldo non basta si addebita la carta.
+- Admin: *Impostazioni → Metodi di pagamento* (`tasca_purchase_enabled`, `tasca_bonus_percent`); sul prodotto, interruttore **«Acquistabile con i compensi della Tasca»**; negli ordini colonna «Maggiorazione Tasca» e riga «Compensi Tasca» nel dettaglio.
+- Codice: `TascaPurchase`, `OrderService::place(... useTasca)`, `RefundService` (metodo `tasca`), `WalletService::purchaseOnlyCredit`, `SubscriptionService::setUseTasca`. Test: `tests/Feature/Wallet/TascaPurchaseTest.php`.
+- Fiscalità (compensazione, IVA, Kadeo/Inhoreca, ritenuta): da confermare con la commercialista; per ora gestita nel modo più semplice.
+- Migrazione `2026_11_21_100000_tasca_purchases`. Sul sito live esegui **prima del deploy**, in phpMyAdmin → scheda SQL:
+  ```sql
+  ALTER TABLE orders
+    ADD COLUMN tasca_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    ADD COLUMN tasca_used DECIMAL(12,2) NOT NULL DEFAULT 0,
+    ADD COLUMN tasca_bonus DECIMAL(12,2) NOT NULL DEFAULT 0;
+  ALTER TABLE products ADD COLUMN tasca_enabled TINYINT(1) NOT NULL DEFAULT 1;
+  ALTER TABLE subscriptions ADD COLUMN use_tasca TINYINT(1) NOT NULL DEFAULT 0;
+  ALTER TABLE wallet_transactions ADD COLUMN order_id BIGINT UNSIGNED NULL, ADD INDEX wallet_transactions_order_id_index (order_id);
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_21_100000_tasca_purchases', MAX(batch) + 1 FROM migrations;
+  ```
+- Se le colonne mancano, checkout e ordini danno errore: eseguire l'SQL prima del deploy.
+
 ## 2026-11-09 — «Candidati»: richiesta di ingresso con approvazione
 - Con la registrazione solo su invito, chi non ha un invito può **candidarsi** da `/candidati` (pulsante «Candidati» al posto di «Registrati» nel menu, in `/accedi` e nell'avviso «Registrazione solo su invito»). Campi, su due colonne per non scorrere: nome e cognome, email e telefono, città, **interesse** (due pulsanti: Cliente oppure Incaricato alla vendita, obbligatorio), consenso privacy obbligatorio. Antirobot con campo nascosto e limite di 5 invii al minuto; una sola candidatura aperta per email (la risposta alla persona è sempre «Candidatura ricevuta»). Nessun account viene creato.
 - Admin: *Rete → Candidature* (permessi `network.view` / `network.manage`; il numero in nav indica le candidature da valutare). **Approva**: scegli lo sponsor (facoltativo; senza, vale l'incaricato «casa» se impostato, altrimenti nessuno) e un messaggio facoltativo; la persona riceve l'email con il **link personale** `/registrazione?candidatura=…` (monouso, valido 30 giorni). **Rifiuta**: email cortese con il motivo, se scritto. **Rimanda email**: rinvia l'esito (per le approvate proroga il link di 30 giorni). Con «Invio email attivo» spento l'esito resta nel pannello (colonna *Email*) e si rimanda dopo.

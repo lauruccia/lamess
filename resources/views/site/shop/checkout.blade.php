@@ -92,6 +92,27 @@
     @if($methods['card'])<label class="opt-card"><input type="radio" name="payment_method" value="card" @checked($pay === 'card')><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
    </fieldset>
+   @if(! empty($tasca))
+   @php($useTasca = old('use_tasca', '0') === '1')
+   <div class="tasca-box card" data-tasca-box @if($pay === 'kmoney') hidden @endif>
+    <input type="hidden" name="use_tasca" value="0">
+    <label class="chk"><input type="checkbox" name="use_tasca" value="1" data-tasca-check @checked($useTasca)><span><b>{{ __('Usa i compensi della Tasca') }}</b>@if($tascaBonus > 0) <em class="oc-tag oc-tag-accent">+{{ $tascaBonus }}%</em>@endif<br>
+     <small class="muted">{{ __('Compensi utilizzabili: € :u (mesi chiusi, senza trattenute).', ['u' => \App\Support\Money::eur($tasca['usable'])]) }}
+     <span data-sum-single @if($subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['single']['used']), 'a' => \App\Support\Money::eur($tasca['single']['amount'])]) }}@if($tasca['single']['covers_all']) {{ __('L\'ordine è pagato per intero e la spedizione è gratuita.') }}@else {{ __('Il resto lo paghi con il metodo scelto sopra.') }}@endif</span>
+     <span data-sum-sub @if(! $subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['sub']['used']), 'a' => \App\Support\Money::eur($tasca['sub']['amount'])]) }}</span>
+     {{ __('La scelta è definitiva: i compensi usati non si possono più prelevare.') }}</small></span></label>
+    <p class="muted small" data-tasca-kmoney-note hidden>{{ __('I compensi della Tasca non si possono usare insieme a KMoney.') }}</p>
+   </div>
+   <script>
+   (function () {
+    var box = document.querySelector('[data-tasca-box]'); if (!box) return;
+    var f = document.getElementById('checkout-form');
+    function sync() { var m = f.querySelector('input[name=payment_method]:checked'); var km = m && m.value === 'kmoney'; box.hidden = km; var c = box.querySelector('[data-tasca-check]'); if (km && c) { c.checked = false; } }
+    f.querySelectorAll('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+   })();
+   </script>
+   @endif
    @if($cadences !== [])
    <fieldset class="choice" data-subscribe-box>
     <legend>Come vuoi riceverla</legend>
@@ -116,6 +137,10 @@
   <div class="co-confirm">
   <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy'))><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, le <a href="/termini" target="_blank" rel="noopener">condizioni di vendita</a> e le <a href="/politiche-di-reso" target="_blank" rel="noopener">politiche di reso</a>.</span></label>
   @error('privacy')<div class="err">{{ $message }}</div>@enderror
+  @if(! empty($tascaOn))
+  <label class="chk"><input type="checkbox" name="tasca_consent" value="1" @checked(old('tasca_consent'))><span>{{ __('Confermo di usare i compensi della Tasca per questo acquisto: la scelta è definitiva e quei compensi non potranno più essere prelevati.') }}</span></label>
+  @error('tasca_consent')<div class="err">{{ $message }}</div>@enderror
+  @endif
   <button class="btn accent wide cta-lock" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-need-choice="{{ ($pay === '' || ($cadences !== [] && $sub === '')) ? 1 : 0 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Conferma ordine · <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur($pricedSub->totals()['total']) }}</span></button>
   <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === [] && $pay !== '' && ($cadences === [] || $sub !== '')) hidden @endif>Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».</p>
   <p class="secure-note">Pagamento sicuro · I tuoi dati sono protetti</p>
@@ -135,8 +160,8 @@
    @endforeach
   </div>
   @include('site.shop._code', ['uid' => 'co'])
-  <div data-sum-single @if($subOn) hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
-  <div data-sum-sub @if(! $subOn) hidden @endif>@include('site.shop._totals', ['priced' => $pricedSub, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-single @if($subOn) hidden @endif>@include('site.shop._totals', ['priced' => ! empty($tascaOn) ? $tasca['single']['priced'] : $priced, 'tascaOn' => $tascaOn ?? false, 'tascaPlan' => $tasca['single'] ?? null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+  <div data-sum-sub @if(! $subOn) hidden @endif>@include('site.shop._totals', ['priced' => ! empty($tascaOn) ? $tasca['sub']['priced'] : $pricedSub, 'tascaOn' => $tascaOn ?? false, 'tascaPlan' => $tasca['sub'] ?? null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
   <p class="muted small"><a href="/carrello">← Modifica il carrello</a></p>
  </aside>
 </div>

@@ -63,6 +63,8 @@ class ViewOrder extends ViewRecord
                 TextEntry::make('buyer.email')->label('Email')->placeholder('—'),
                 TextEntry::make('beneficiary.name')->label('Incaricato (vendita)')->placeholder('— (vendita casa)'),
                 TextEntry::make('payment_method')->label('Pagamento')->state(fn (Order $r) => OrderService::methodLabel($r->payment_method).($r->kmoney_rest_method ? ' + '.OrderService::methodLabel($r->kmoney_rest_method) : '')),
+                TextEntry::make('tasca_used')->label('Compensi Tasca')->visible(fn (Order $r) => (float) $r->tasca_used > 0)
+                    ->state(fn (Order $r) => 'Usati € '.number_format((float) $r->tasca_used, 2, ',', '.').' = € '.number_format((float) $r->tasca_amount, 2, ',', '.').' di prodotti · maggiorazione a carico azienda € '.number_format((float) $r->tasca_bonus, 2, ',', '.')),
                 TextEntry::make('order_kind')->label('Tipo ordine')->badge()
                     ->state(fn (Order $r) => $r->subscription_id ? 'Abbonamento '.($r->subscription?->intervalMonths() === 2 ? 'bimestrale' : 'mensile').' · n. '.$r->subscription_id.' · ciclo '.self::subscriptionCycle($r) : 'Ordine singolo')
                     ->color(fn (Order $r) => $r->subscription_id ? 'info' : 'gray')

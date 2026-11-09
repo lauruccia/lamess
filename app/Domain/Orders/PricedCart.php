@@ -147,6 +147,24 @@ final class PricedCart
         return false;
     }
 
+    /** Parte dei prodotti (IVA inclusa, dopo gli sconti) che si può pagare con i compensi della Tasca. */
+    public function tascaEligibleGross(): BigDecimal
+    {
+        return array_reduce($this->lines, fn (BigDecimal $c, PricedLine $l) => $l->product->tascaEnabled() ? $c->plus($l->grossLine()) : $c, Num::zero());
+    }
+
+    /** True se ogni prodotto del carrello si può pagare con la Tasca. */
+    public function allTasca(): bool
+    {
+        foreach ($this->lines as $l) {
+            if (! $l->product->tascaEnabled()) {
+                return false;
+            }
+        }
+
+        return $this->lines !== [];
+    }
+
     public function shippingGross(): BigDecimal
     {
         return PricedLine::gross($this->shippingNet, $this->shippingVatRate);

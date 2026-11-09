@@ -51,6 +51,11 @@ class OrderPaid extends Notification implements ShouldQueueAfterCommit
     public function paidText(): string
     {
         $o = $this->order;
+        if ((float) $o->tasca_used > 0 && $o->payment_method !== 'kmoney') {
+            return $o->payment_method === 'tasca'
+                ? '€ '.Money::eur($o->total).' (pagato con i compensi della Tasca)'
+                : '€ '.Money::eur($o->total).' (di cui € '.Money::eur($o->tasca_amount).' con i compensi della Tasca)';
+        }
         if ($o->payment_method !== 'kmoney') {
             return '€ '.Money::eur($o->total);
         }

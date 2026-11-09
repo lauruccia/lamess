@@ -18,7 +18,7 @@
 </div>
 
 @foreach($pending as $o)
- <div class="note"><div><strong>Ordine {{ $o->number }} in attesa di pagamento</strong>€ {{ $eur($o->total) }} · {{ $o->payment_method === 'transfer' ? 'serve il bonifico: nell\'ordine trovi IBAN e causale.' : ($o->payment_method === 'kmoney' ? 'completa il pagamento con KMoney.' : 'completa il pagamento con carta.') }}</div><a class="btn" href="/area/ordini/{{ $o->id }}">{{ $o->payment_method === 'transfer' ? 'Vedi istruzioni' : 'Paga ora' }}</a></div>
+ <div class="note"><div><strong>Ordine {{ $o->number }} in attesa di pagamento</strong>€ {{ $eur($o->restDue()) }} · {{ $o->payment_method === 'transfer' ? 'serve il bonifico: nell\'ordine trovi IBAN e causale.' : ($o->payment_method === 'kmoney' ? 'completa il pagamento con KMoney.' : 'completa il pagamento con carta.') }}</div><a class="btn" href="/area/ordini/{{ $o->id }}">{{ $o->payment_method === 'transfer' ? 'Vedi istruzioni' : 'Paga ora' }}</a></div>
 @endforeach
 
 @if($orders->isEmpty())

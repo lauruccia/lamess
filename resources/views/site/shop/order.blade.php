@@ -26,7 +26,7 @@
 
 @if($order->status === 'pending_payment')
  @if($order->payment_method === 'transfer')
-  <div class="note"><div><strong>Fai il bonifico per confermare l'ordine</strong>{{ config('lamess.bank_transfer_instructions') }}<br>Causale: <strong>{{ $order->number }}</strong> · Importo: <strong>€ {{ $eur($order->total) }}</strong>. L'ordine sarà confermato alla ricezione del pagamento.</div></div>
+  <div class="note"><div><strong>Fai il bonifico per confermare l'ordine</strong>{{ config('lamess.bank_transfer_instructions') }}<br>Causale: <strong>{{ $order->number }}</strong> · Importo: <strong>€ {{ $eur($order->restDue()) }}</strong>. L'ordine sarà confermato alla ricezione del pagamento.</div></div>
  @elseif($order->payment_method === 'kmoney')
   @php($kmPaid = $order->payments->contains(fn ($p) => $p->method === 'kmoney' && $p->status === 'paid'))
   @if(! $kmPaid && ($kmoneyConfirming ?? false))
@@ -58,11 +58,11 @@
   @endif
  @else
   <div class="note"><div><strong>Pagamento non completato</strong>Per confermare l'ordine paga con carta: ci vuole un minuto.</div>
-   <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Paga con carta · € {{ $eur($order->total) }}</button></form></div>
+   <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Paga con carta · € {{ $eur($order->restDue()) }}</button></form></div>
  @endif
 @endif
 
-@if($order->status === 'pending_payment' && $order->payment_method === 'transfer')
+@if($order->status === 'pending_payment' && ($order->payment_method === 'transfer' || ((float) $order->tasca_used > 0 && $order->payment_method !== 'kmoney')))
  <form method="post" action="/area/ordini/{{ $order->id }}/annulla" onsubmit="return confirm('Annullare questo ordine?')" style="margin:0 0 18px">@csrf<button class="btn ghost">Annulla ordine</button></form>
 @endif
 
@@ -110,7 +110,8 @@
    <header><h2>Pagamento e consegna</h2></header>
    <div class="panel-body">
     <dl class="dl">
-     <dt>Pagamento</dt><dd>@if($order->payment_method === 'kmoney')KMoney {{ $eur($order->kmoney_amount) }} KY @if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
+     <dt>Pagamento</dt><dd>@if($order->payment_method === 'kmoney')KMoney {{ $eur($order->kmoney_amount) }} KY @if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @elseif($order->payment_method === 'tasca')Compensi della Tasca @else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
+     @if((float) $order->tasca_used > 0)<dt>Compensi della Tasca</dt><dd>Usati € {{ $eur($order->tasca_used) }} = € {{ $eur($order->tasca_amount) }} di prodotti@if((float) $order->tasca_bonus > 0) (maggiorazione € {{ $eur($order->tasca_bonus) }})@endif @if($order->payment_method !== 'tasca' && (float) $order->restDue() > 0)· resto € {{ $eur($order->restDue()) }}@endif</dd>@endif
      @if($order->subscription_id)<dt>Tipo</dt><dd>Abbonamento {{ $order->subscription?->intervalMonths() === 2 ? 'bimestrale' : 'mensile' }}</dd>@endif
      @if($order->paid_at)<dt>Pagato il</dt><dd>{{ \App\Support\Ui::date($order->paid_at) }}</dd>@endif
      @if($order->shipped_at)<dt>Spedito il</dt><dd>{{ \App\Support\Ui::date($order->shipped_at) }}</dd>@endif

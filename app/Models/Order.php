@@ -22,15 +22,15 @@ class Order extends Model
     {
         return [
             'subtotal_net' => 'decimal:2', 'shipping_net' => 'decimal:2', 'shipping_vat_rate' => 'decimal:2', 'vat_total' => 'decimal:2', 'total' => 'decimal:2', 'kmoney_amount' => 'decimal:2',
-            'pv_total' => 'decimal:2', 'cv_total' => 'decimal:2', 'paid_at' => 'immutable_datetime',
+            'tasca_amount' => 'decimal:2', 'tasca_used' => 'decimal:2', 'tasca_bonus' => 'decimal:2', 'pv_total' => 'decimal:2', 'cv_total' => 'decimal:2', 'paid_at' => 'immutable_datetime',
             'shipped_at' => 'immutable_datetime', 'processing_at' => 'immutable_datetime', 'delivered_at' => 'immutable_datetime', 'billing' => 'array', 'discount_net' => 'decimal:2', 'shipping_discount_net' => 'decimal:2', 'discounts' => 'array',
         ];
     }
 
-    /** Importo ancora da pagare con carta/bonifico: il totale meno la quota già addebitata in KMoney. */
+    /** Importo ancora da pagare con carta/bonifico: il totale meno la quota già addebitata in KMoney o coperta dalla Tasca. */
     public function restDue(): string
     {
-        $rest = BigDecimal::of((string) $this->total)->minus((string) ($this->kmoney_amount ?? 0));
+        $rest = BigDecimal::of((string) $this->total)->minus((string) ($this->kmoney_amount ?? 0))->minus((string) ($this->tasca_amount ?? 0));
 
         return (string) $rest->toScale(2, RoundingMode::HalfUp);
     }

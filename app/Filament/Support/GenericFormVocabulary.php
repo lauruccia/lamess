@@ -150,7 +150,7 @@ final class GenericFormVocabulary
             'pending_payment' => 'In attesa di pagamento', 'paid' => 'Pagato', 'processing' => 'In preparazione', 'shipped' => 'Spedito', 'delivered' => 'Consegnato',
             'cancelled' => 'Annullato', 'partially_refunded' => 'Reso parziale', 'refunded' => 'Reso',
         ],
-        'orders.payment_method' => ['card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney'],
+        'orders.payment_method' => ['card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney', 'tasca' => 'Compensi Tasca'],
         'orders.kmoney_rest_method' => ['card' => 'Carta', 'transfer' => 'Bonifico'],
         'orders.buyer_type' => ['customer' => 'Cliente', 'consultant' => 'Incaricato'],
         'settlements.status' => ['open' => 'Aperta', 'credited' => 'Accreditata sul portafoglio', 'paid' => 'Pagata'],

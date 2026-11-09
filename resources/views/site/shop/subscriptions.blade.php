@@ -81,6 +81,9 @@
      @if(($canUpdateCard ?? false) && in_array($s->status, ['active', 'paused'], true))
       <form method="post" action="/area/abbonamenti/{{ $s->id }}/carta">@csrf<button class="btn ghost" title="Inserisci una nuova carta sulla pagina sicura di Stripe: nessun addebito">Cambia carta</button></form>
      @endif
+     @if(($canTasca ?? false) && $s->payment_method === 'card' && in_array($s->status, ['active', 'paused'], true))
+      <form method="post" action="/area/abbonamenti/{{ $s->id }}/{{ $s->use_tasca ? 'tasca-no' : 'tasca-si' }}" @unless($s->use_tasca) onsubmit="return confirm('Dai prossimi rinnovi useremo i compensi della Tasca (definitivi, non prelevabili) e, se non bastano, la carta. Confermi?')" @endunless>@csrf<button class="btn ghost">{{ $s->use_tasca ? __('Non usare più la Tasca nei rinnovi') : __('Usa la Tasca nei rinnovi') }}</button></form>
+     @endif
      <form method="post" action="/area/abbonamenti/{{ $s->id }}/annulla" class="sub-cancel" onsubmit="return confirm('Vuoi davvero annullare questo abbonamento? L\'operazione non si può annullare.')">@csrf<button class="btn-link-danger">Annulla abbonamento</button></form>
     </div>
     <details class="sub-addr"><summary>Cambia indirizzo di spedizione</summary>

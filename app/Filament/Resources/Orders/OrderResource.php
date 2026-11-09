@@ -153,8 +153,9 @@ class OrderResource extends Resource
                     'pending_payment' => 'warning', 'paid', 'processing', 'shipped', 'delivered' => 'success', 'cancelled' => 'gray', default => 'danger',
                 }),
             TextColumn::make('payment_method')->label('Pagamento')->formatStateUsing(fn (string $state) => match ($state) {
-                'card' => 'Carta', 'kmoney' => 'KMoney', default => 'Bonifico'
+                'card' => 'Carta', 'kmoney' => 'KMoney', 'tasca' => 'Tasca', default => 'Bonifico'
             }),
+            TextColumn::make('tasca_bonus')->label('Maggiorazione Tasca')->money('EUR')->placeholder('—')->formatStateUsing(fn ($state) => (float) $state > 0 ? '€ '.number_format((float) $state, 2, ',', '.') : '—')->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('discount_net')->label('Sconto')->state(fn (Order $r) => $r->discounts ? collect($r->discounts)->map(fn ($d) => $d['code'] ?: $d['name'])->implode(', ') : null)->placeholder('—')->toggleable(),
             TextColumn::make('total')->label('Totale €')->numeric(2),
             TextColumn::make('pv_total')->label('PV')->numeric(2)->visible(fn (): bool => LegacyPlan::visible()),
@@ -168,7 +169,7 @@ class OrderResource extends Resource
                     ->whereIn('orders.subscription_id', fn ($q) => $q->select('id')->from('subscriptions')->whereIn('status', ['active', 'paused'])))),
             SelectFilter::make('status')->label('Stato')->options(self::STATUS),
             TernaryFilter::make('subscription_id')->label('Abbonamento')->nullable()->placeholder('Tutti')->trueLabel('Solo abbonamenti')->falseLabel('Solo ordini singoli'),
-            SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico']),
+            SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico', 'tasca' => 'Compensi Tasca']),
         ])->recordUrl(fn (Order $record) => static::getUrl('view', ['record' => $record]))
             ->toolbarActions([
                 BulkAction::make('labels')->authorize('orders.manage')->label('Stampa etichette (foglio A4)')->icon('heroicon-o-printer')->deselectRecordsAfterCompletion()

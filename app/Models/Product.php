@@ -79,6 +79,12 @@ class Product extends Model
         return in_array($own, self::KMONEY_PERCENTS, true) ? $own : 0;
     }
 
+    /** Il prodotto si può pagare con i compensi della Tasca; le varianti ereditano dal prodotto principale. */
+    public function tascaEnabled(): bool
+    {
+        return $this->parent_id !== null ? (bool) ($this->parent?->tasca_enabled ?? true) : (bool) ($this->tasca_enabled ?? true);
+    }
+
     public function hasVariants(): bool
     {
         return $this->parent_id === null && ($this->relationLoaded('variants') ? $this->variants->isNotEmpty() : $this->variants()->exists());

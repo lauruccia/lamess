@@ -83,7 +83,7 @@ final class AccountingExport
             ? (trim((string) ($buyer['company_name'] ?? '')) ?: trim((string) ($buyer['name'] ?? '')))
             : (trim((string) ($buyer['first_name'] ?? '').' '.(string) ($buyer['last_name'] ?? '')) ?: trim((string) ($buyer['name'] ?? '')));
         $method = match ($doc->order?->payment_method) {
-            'card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney', default => (string) ($doc->order?->payment_method ?? ''),
+            'card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney', 'tasca' => 'Compensi Tasca', default => (string) ($doc->order?->payment_method ?? ''),
         };
         $out = [];
         foreach ($totals['by_rate'] as $rate => $x) {

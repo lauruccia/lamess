@@ -465,6 +465,8 @@ class ProductResource extends Resource
                         Select::make('kmoney_percent')->label('% pagabile in KMoney')->default(100)->native(false)->selectablePlaceholder(false)
                             ->options([0 => 'Non accettato (solo carta/bonifico)', 25 => '25% in KMoney', 50 => '50% in KMoney', 75 => '75% in KMoney', 100 => '100% in KMoney'])
                             ->helperText('Quota del prezzo che il cliente può pagare col saldo KMoney. Le varianti usano la % del prodotto principale.'),
+                        Toggle::make('tasca_enabled')->label('Acquistabile con i compensi della Tasca')->default(true)
+                            ->helperText('Acceso = gli incaricati possono pagarlo con i compensi (con la maggiorazione). Le varianti seguono il prodotto principale.'),
                     ]),
                     Section::make('Spedizione')->icon('heroicon-o-truck')->schema([
                         TextInput::make('shipping_gross')->label('Spedizione del prodotto (IVA incl.)')->prefix('€')->numeric()->minValue(0)->live(onBlur: true)->dehydrated(false)

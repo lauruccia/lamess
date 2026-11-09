@@ -15,6 +15,9 @@
  <div class="kpi k-ok"><small>Disponibile per il prelievo</small><strong>€ {{ $eur($s['available']) }}</strong><span>@if((float) $s['reserved'] != 0)€ {{ $eur($s['reserved']) }} già richiesti @else Pronto da richiedere @endif</span></div>
  <div class="kpi {{ (float) $s['blocked'] != 0 ? 'k-warn' : '' }}"><small>Bloccato</small><strong>€ {{ $eur($s['blocked']) }}</strong><span>{{ (float) $s['blocked'] != 0 ? 'Vedi l\'avviso sopra' : 'Nessun blocco' }}</span></div>
 </div>
+@if(($tascaOn ?? false) && (float) $tascaUsable > 0)
+ <div class="note note-info"><div><strong>Usa i compensi nel negozio: +{{ $tascaBonus }}%</strong>Hai € {{ $eur($tascaUsable) }} utilizzabili (mesi chiusi, senza trattenute): al checkout valgono € {{ $eur((float) $tascaUsable * (1 + $tascaBonus / 100)) }} di prodotti. La scelta è definitiva e quei compensi non si prelevano più.</div><a class="btn" href="/negozio">Vai al negozio</a></div>
+@endif
 <div class="split">
  <div class="stack">
   <section class="panel">

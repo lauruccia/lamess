@@ -182,7 +182,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/checkout/nazione', [ShopController::class, 'checkoutCountry'])->middleware('throttle:60,1');
     Route::post('/carrello/per-altri', [ShopController::class, 'addForOther']);
     Route::get('/abbonamenti', [ShopController::class, 'subscriptions']);
-    Route::post('/abbonamenti/{subscription}/{action}', [ShopController::class, 'subscriptionAction'])->whereIn('action', ['pausa', 'riprendi', 'annulla', 'salta'])->middleware('throttle:20,1');
+    Route::post('/abbonamenti/{subscription}/{action}', [ShopController::class, 'subscriptionAction'])->whereIn('action', ['pausa', 'riprendi', 'annulla', 'salta', 'tasca-si', 'tasca-no'])->middleware('throttle:20,1');
     Route::post('/abbonamenti/{subscription}/carta', [ShopController::class, 'subscriptionCard'])->middleware('throttle:10,1');
     Route::post('/abbonamenti/{subscription}/indirizzo', [ShopController::class, 'subscriptionAddress'])->middleware('throttle:20,1');
     Route::get('/ordini', [ShopController::class, 'orders']);

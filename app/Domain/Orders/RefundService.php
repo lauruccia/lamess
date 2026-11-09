@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Orders;
 
 use App\Domain\Engine\Support\Num;
+use App\Domain\Wallet\TascaPurchase;
 use App\Models\CreditNote;
 use App\Models\Order;
 use App\Models\OrderEvent;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Auth;
  */
 final class RefundService
 {
-    private const ORDER = ['card' => 0, 'transfer' => 1, 'kmoney' => 2];
+    private const ORDER = ['card' => 0, 'transfer' => 1, 'kmoney' => 2, 'tasca' => 3];
 
     /** Inizio del motivo dei rimborsi registrati dal webhook perché eseguiti fuori dal portale (dashboard Stripe, KMoney…). */
     public const EXTERNAL = 'Rimborso eseguito fuori dal portale';
@@ -36,7 +37,7 @@ final class RefundService
         return Refund::where('order_id', $order->id)->whereNull('credit_note_id')->where('status', Refund::DONE)->where('reason', 'like', self::EXTERNAL.'%')->update(['credit_note_id' => $note->id]);
     }
 
-    public function __construct(private readonly PaymentProvider $cards, private readonly KMoneyProvider $kmoney) {}
+    public function __construct(private readonly PaymentProvider $cards, private readonly KMoneyProvider $kmoney, private readonly TascaPurchase $tasca) {}
 
     /** @return list<Refund> uno per metodo di pagamento coinvolto */
     public function payBack(Order $order, CreditNote $note, ?string $reason = null): array
@@ -96,6 +97,15 @@ final class RefundService
         $payment = $refund->payment;
         $amount = (string) $refund->amount;
         $key = "lamess-refund-{$refund->id}";
+
+        // Quota pagata con i compensi: torna nella Tasca (senza maggiorazione), come credito utilizzabile solo per acquisti.
+        if ($refund->method === 'tasca') {
+            $credit = $this->tasca->refund($order, $amount);
+            $refund->update(['status' => Refund::DONE, 'provider_ref' => 'tasca', 'error' => null, 'refunded_at' => now()]);
+            OrderEvent::log($order, 'refund_done', 'Rimborso di € '.self::eur($amount).' (compensi della Tasca): restituiti € '.self::eur((string) $credit).' nella Tasca, utilizzabili solo per acquisti');
+
+            return;
+        }
 
         $result = match ($refund->method) {
             'card' => $this->cards instanceof RefundsCardPayments && $payment

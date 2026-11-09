@@ -119,7 +119,7 @@ final class SalesDashboard
     public static function paymentLabel(?string $method): string
     {
         return match ($method) {
-            'card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney', null, '' => 'Non indicato', default => ucfirst($method),
+            'card' => 'Carta', 'transfer' => 'Bonifico', 'kmoney' => 'KMoney', 'tasca' => 'Compensi Tasca', null, '' => 'Non indicato', default => ucfirst($method),
         };
     }
 

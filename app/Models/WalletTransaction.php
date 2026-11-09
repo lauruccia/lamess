@@ -16,6 +16,7 @@ class WalletTransaction extends Model
     public const TYPES = [
         'commission_credit' => 'Provvigioni accreditate', 'clawback' => 'Recupero (storni)', 'withdrawal' => 'Prelievo', 'transfer_fee' => 'Commissione bonifico',
         'withholding_tax' => 'Ritenuta d\'acconto', 'inps' => 'Contributo INPS (quota incaricato)', 'structure_bonus' => 'Bonus di Struttura', 'manual_adjustment' => 'Rettifica manuale', 'heir_liquidation' => 'Liquidazione agli eredi',
+        'purchase_debit' => 'Acquisto pagato con i compensi', 'purchase_release' => 'Ordine annullato: compensi restituiti', 'purchase_refund' => 'Reso: compensi restituiti (solo per acquisti)',
     ];
 
     protected function casts(): array

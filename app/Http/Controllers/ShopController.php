@@ -20,11 +20,13 @@ use App\Domain\Orders\ReturnRequestService;
 use App\Domain\Orders\StripeCheckoutProvider;
 use App\Domain\Orders\StripeWebhook;
 use App\Domain\Subscriptions\SubscriptionService;
+use App\Domain\Wallet\TascaPurchase;
 use App\Models\BundleRule;
 use App\Models\CreditNote;
 use App\Models\Discount;
 use App\Models\KMoneyLink;
 use App\Models\Order;
+use App\Models\OrderEvent;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Profile;
@@ -162,6 +164,36 @@ class ShopController extends Controller
         }
 
         return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, $this->country($r), $shippingWaived);
+    }
+
+    /**
+     * Quanto si può pagare con i compensi della Tasca per il carrello attuale (null se la Tasca non è disponibile per l'utente).
+     *
+     * @return array{usable: \Brick\Math\BigDecimal, single: array<string,mixed>, sub: array<string,mixed>}|null
+     */
+    private function tascaQuote(Request $r): ?array
+    {
+        if (! TascaPurchase::enabled()) {
+            return null;
+        }
+        $usable = app(OrderService::class)->tascaUsableFor($r->user());
+        // I compensi bloccati in un ordine rimasto in attesa si liberano appena si conferma: contano già adesso.
+        $stale = PendingCart::pending($r);
+        if ($stale !== null && $stale->status === 'pending_payment' && (float) $stale->tasca_used > 0) {
+            $usable = $usable->plus(\App\Domain\Engine\Support\Num::of((string) $stale->tasca_used));
+        }
+        if (! $usable->isPositive()) {
+            return null;
+        }
+        $tasca = app(TascaPurchase::class);
+        $standard = $this->priced($r);
+        $waived = $this->priced($r, null, true);
+        $single = $tasca->plan($usable, $standard, $waived);
+        if (! $single['amount']->isPositive()) {
+            return null;
+        }
+
+        return ['usable' => $usable, 'single' => $single, 'sub' => $tasca->plan($usable, $waived)];
     }
 
     private function cartCount(Request $r): int
@@ -599,6 +631,7 @@ class ShopController extends Controller
             $r->session()->now('_old_input', $draft);
         }
         $addresses = $book->list($u);
+        $tasca = $this->tascaQuote($r);
         $hidden = [];
         $review = [];
         if ($step === 4) {
@@ -609,10 +642,10 @@ class ShopController extends Controller
                     $hidden[$k] = (string) $v;
                 }
             }
-            $review = $this->review($u, $saved, $draft, $addresses);
+            $review = $this->review($u, $saved, $draft, $addresses, $tasca);
         }
 
-        return view('site.shop.checkout', ['step' => $step, 'hidden' => $hidden, 'review' => $review, 'billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $addresses, 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => $cadences]);
+        return view('site.shop.checkout', ['step' => $step, 'hidden' => $hidden, 'review' => $review, 'billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $addresses, 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => $cadences, 'tasca' => $tasca, 'tascaOn' => $tasca !== null && ($draft['use_tasca'] ?? '0') === '1' && ($draft['payment_method'] ?? '') !== 'kmoney', 'tascaBonus' => TascaPurchase::bonusPercent()]);
     }
 
     /**
@@ -622,7 +655,7 @@ class ShopController extends Controller
      * @param  iterable<mixed>  $addresses
      * @return array<string,string>
      */
-    private function review(User $u, ?Profile $saved, array $draft, iterable $addresses): array
+    private function review(User $u, ?Profile $saved, array $draft, iterable $addresses, ?array $tasca = null): array
     {
         $name = $saved?->type === 'company' ? (string) $saved->company_name : trim($saved?->first_name.' '.$saved?->last_name);
         $ship = (string) ($draft['ship_to'] ?? 'billing');
@@ -642,7 +675,13 @@ class ShopController extends Controller
             'monthly' => 'Abbonamento mensile', 'bimonthly' => 'Abbonamento bimestrale', default => 'Ordine singolo',
         };
 
-        return ['Fatturazione' => $name.' — '.$saved?->address.', '.$saved?->zip.' '.$saved?->city, 'Spedizione' => $shipText, 'Pagamento' => $pay, 'Consegna' => $cad === [] ? 'Ordine singolo' : $delivery];
+        $rows = ['Fatturazione' => $name.' — '.$saved?->address.', '.$saved?->zip.' '.$saved?->city, 'Spedizione' => $shipText, 'Pagamento' => $pay, 'Consegna' => $cad === [] ? 'Ordine singolo' : $delivery];
+        if ($tasca !== null && ($draft['use_tasca'] ?? '0') === '1' && ($draft['payment_method'] ?? '') !== 'kmoney') {
+            $plan = ($draft['subscribe'] ?? 'none') === 'none' ? $tasca['single'] : $tasca['sub'];
+            $rows['Compensi della Tasca'] = '€ '.Money::eur($plan['used']).' dalla Tasca = € '.Money::eur($plan['amount']).' di prodotti'.($plan['covers_all'] ? ' (ordine pagato per intero)' : '; il resto con '.mb_strtolower($pay));
+        }
+
+        return $rows;
     }
 
     /** «Avanti» dai passi 1-3: il passo si salva nel modulo messo da parte, si controlla e si passa al successivo. */
@@ -693,6 +732,14 @@ class ShopController extends Controller
             }
             if ($err !== []) {
                 return redirect(self::STEPS[3][0])->withErrors($err);
+            }
+            if ($r->input('use_tasca') === '1' && $r->input('payment_method') !== 'kmoney' && $this->tascaQuote($r) === null) {
+                $r->session()->put(self::DRAFT, array_merge($this->draft($r), ['use_tasca' => '0']));
+
+                return redirect(self::STEPS[3][0])->withErrors(['order' => 'Al momento non ci sono compensi della Tasca utilizzabili per questo carrello.']);
+            }
+            if ($r->input('payment_method') === 'kmoney') {
+                $r->session()->put(self::DRAFT, array_merge($this->draft($r), ['use_tasca' => '0']));
             }
             if ($r->input('payment_method') === 'kmoney' && $this->kmoneyNotLinked($r)) {
                 return redirect(self::STEPS[3][0])->withErrors(['order' => 'Per pagare con KMoney collega il tuo conto.'])
@@ -813,7 +860,7 @@ class ShopController extends Controller
             'tax_code' => [Rule::requiredIf(fn () => ($r->input('country') ?: 'IT') === 'IT')], 'phone' => 'required',
             'sdi_code' => 'nullable', 'pec' => 'nullable|email',
             'address' => 'required', 'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country' => 'nullable|string|size:2',
-            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'privacy' => 'accepted', 'subscribe' => [Subscription::offeredCadences() === [] ? 'nullable' : 'required', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
+            'payment_method' => 'required|in:card,transfer,kmoney', 'kmoney_rest' => 'nullable|in:card,transfer', 'use_tasca' => 'nullable|in:0,1', 'privacy' => 'accepted', 'subscribe' => [Subscription::offeredCadences() === [] ? 'nullable' : 'required', Rule::in(['none', ...array_keys(Subscription::offeredCadences())])],
         ], SiteController::MESSAGES, SiteController::ATTRIBUTES + ['tax_code' => 'codice fiscale', 'phone' => 'telefono', 'address' => 'indirizzo di fatturazione', 'city' => 'città', 'zip' => 'CAP', 'payment_method' => 'metodo di pagamento', 'subscribe' => 'modalità di consegna']);
         // I dati di fatturazione si salvano prima («Salva i dati»): l'ordine usa quelli salvati e l'indirizzo di fatturazione non si cambia da qui.
         $saved = $r->user()->profile;
@@ -835,6 +882,13 @@ class ShopController extends Controller
             return back()->withInput()
                 ->withErrors(['order' => 'Per pagare con KMoney collega il tuo conto.'])
                 ->with('kmoney_unlinked', ['connect' => url('/area/kmoney/collega'), 'register' => $this->kmoneyRegisterUrl()]);
+        }
+        $useTasca = ($d['use_tasca'] ?? '0') === '1';
+        if ($useTasca && $d['payment_method'] === 'kmoney') {
+            return back()->withInput()->withErrors(['order' => 'I compensi della Tasca si usano con carta o bonifico, non insieme a KMoney.']);
+        }
+        if ($useTasca && ! $r->boolean('tasca_consent')) {
+            return back()->withInput()->withErrors(['tasca_consent' => 'Per usare i compensi della Tasca conferma che la scelta è definitiva.']);
         }
         if ($subscribe !== 'none' && ! in_array($d['payment_method'], ['card', 'kmoney'], true)) {
             return back()->withInput()->withErrors(['order' => 'L\'abbonamento si paga con carta o con KMoney: scegli uno dei due.']);
@@ -883,7 +937,7 @@ class ShopController extends Controller
 
         if ($subscribe !== 'none') {
             try {
-                $sub = $subs->subscribe($r->user(), $this->cart($r), $country, $d, 12, $this->others($r), null, $d['payment_method'], $subscribe === 'bimonthly' ? 2 : 1);
+                $sub = $subs->subscribe($r->user(), $this->cart($r), $country, $d, 12, $this->others($r), null, $d['payment_method'], $subscribe === 'bimonthly' ? 2 : 1, $useTasca);
             } catch (OrderException $e) {
                 return back()->withInput()->withErrors(['order' => $e->getMessage()]);
             }
@@ -907,9 +961,18 @@ class ShopController extends Controller
             return redirect('/area/abbonamenti')->with('status', 'Abbonamento creato: attendiamo la tua conferma su KMoney per il primo addebito (ti abbiamo inviato l\'email col pulsante).');
         }
         try {
-            $order = $orders->place($r->user(), $this->cart($r), $country, $d['payment_method'], $d, forOthers: $this->others($r), discountCodes: $this->codes($r), kmoneyRest: $d['kmoney_rest'] ?? null);
+            $order = $orders->place($r->user(), $this->cart($r), $country, $d['payment_method'], $d, forOthers: $this->others($r), discountCodes: $this->codes($r), kmoneyRest: $d['kmoney_rest'] ?? null, useTasca: $useTasca);
         } catch (OrderException $e) {
             return back()->withInput()->withErrors(['order' => $e->getMessage()]);
+        }
+        if ((float) $order->tasca_used > 0) {
+            OrderEvent::log($order, 'tasca_consent', 'Consenso registrato: compensi della Tasca usati per acquisto (€ '.$order->tasca_used.'), scelta irreversibile');
+        }
+        // Ordine pagato per intero con i compensi: nessun altro pagamento da fare.
+        if ($order->payment_method === 'tasca') {
+            PendingCart::clear($r);
+
+            return redirect("/area/ordini/{$order->id}")->with('status', 'Ordine pagato con i compensi della Tasca. Grazie!');
         }
         // Bonifico: l'ordine è registrato e il carrello si svuota. Carta o KMoney: il carrello resta finché l'ordine non risulta pagato.
         if ($d['payment_method'] === 'transfer') {
@@ -945,7 +1008,7 @@ class ShopController extends Controller
     {
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.subscriptions', ['addresses' => $book->list($r->user()), 'maxAddresses' => $book->max(), 'subs' => Subscription::where('user_id', $r->user()->id)->latest('id')->get(), 'products' => Product::pluck('name', 'id'), 'canUpdateCard' => app(PaymentProvider::class) instanceof StripeCheckoutProvider]);
+        return view('site.shop.subscriptions', ['addresses' => $book->list($r->user()), 'maxAddresses' => $book->max(), 'subs' => Subscription::where('user_id', $r->user()->id)->latest('id')->get(), 'products' => Product::pluck('name', 'id'), 'canUpdateCard' => app(PaymentProvider::class) instanceof StripeCheckoutProvider, 'canTasca' => TascaPurchase::enabled() && \App\Models\Consultant::where('user_id', $r->user()->id)->where('status', 'active')->exists()]);
     }
 
     public function subscriptionAction(Request $r, Subscription $subscription, string $action, SubscriptionService $subs)
@@ -957,13 +1020,15 @@ class ShopController extends Controller
                 'riprendi' => $subs->resume($subscription),
                 'annulla' => $subs->cancel($subscription),
                 'salta' => $subs->skipNext($subscription),
+                'tasca-si' => $subs->setUseTasca($subscription, true),
+                'tasca-no' => $subs->setUseTasca($subscription, false),
                 default => abort(404),
             };
         } catch (OrderException $e) {
             return redirect('/area/abbonamenti')->withErrors(['order' => $e->getMessage()]);
         }
 
-        return redirect('/area/abbonamenti')->with('status', ['pausa' => 'Abbonamento in pausa.', 'riprendi' => 'Abbonamento ripreso.', 'annulla' => 'Abbonamento annullato.', 'salta' => 'Fatto: il prossimo addebito è stato spostato al mese successivo.'][$action]);
+        return redirect('/area/abbonamenti')->with('status', ['pausa' => 'Abbonamento in pausa.', 'riprendi' => 'Abbonamento ripreso.', 'annulla' => 'Abbonamento annullato.', 'salta' => 'Fatto: il prossimo addebito è stato spostato al mese successivo.', 'tasca-si' => 'Dai prossimi rinnovi useremo i compensi della Tasca; se non bastano, il resto va sulla carta.', 'tasca-no' => 'I prossimi rinnovi si pagano solo con la carta.'][$action]);
     }
 
     /** Cambio carta: il cliente inserisce la nuova carta sulla pagina sicura di Stripe (nessun addebito). */
@@ -1050,7 +1115,7 @@ class ShopController extends Controller
     public function cancelOwn(Request $r, Order $order, OrderService $orders)
     {
         $order = $this->own($r, $order);
-        abort_unless($order->status === 'pending_payment' && $order->payment_method === 'transfer', 404);
+        abort_unless($order->status === 'pending_payment' && ($order->payment_method === 'transfer' || ((float) $order->tasca_used > 0 && $order->payment_method !== 'kmoney')), 404);
         try {
             $orders->cancel($order);
         } catch (OrderException $e) {

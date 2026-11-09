@@ -53,7 +53,7 @@ final class SubscriptionService
      * @param  array<string,mixed>  $billing
      * @param  array<int,array<int,int>>  $forOthers  destinatari dell'ordine multiplo
      */
-    public function subscribe(User $user, array $lines, string $country, array $billing, int $commitmentMonths = 0, array $forOthers = [], ?DateTimeImmutable $now = null, string $method = 'card', int $intervalMonths = 1): Subscription
+    public function subscribe(User $user, array $lines, string $country, array $billing, int $commitmentMonths = 0, array $forOthers = [], ?DateTimeImmutable $now = null, string $method = 'card', int $intervalMonths = 1, bool $useTasca = false): Subscription
     {
         $now ??= CarbonImmutable::now();
         if (! in_array($intervalMonths, [1, 2], true)) {
@@ -67,6 +67,9 @@ final class SubscriptionService
         }
         if ($method === Subscription::METHOD_KMONEY && ! $this->orders->kmoneyEnabled()) {
             throw new OrderException('Il pagamento con KMoney non è disponibile al momento: scegli la carta.');
+        }
+        if ($useTasca && $method !== Subscription::METHOD_CARD) {
+            throw new OrderException('I compensi della Tasca si usano con l\'abbonamento pagato con carta: il resto si addebita sulla carta.');
         }
         // Un abbonamento rimasto «in attesa» (pagina di Stripe abbandonata) non blocca una nuova sottoscrizione.
         foreach (Subscription::where('user_id', $user->id)->where('status', Subscription::PENDING)->get() as $stale) {
@@ -82,7 +85,7 @@ final class SubscriptionService
         $free = true;
         $sub = Subscription::create([
             'user_id' => $user->id, 'status' => Subscription::ACTIVE, 'lines' => $lines, 'for_others' => $forOthers ?: null, 'country_code' => $country,
-            'billing' => $billing, 'payment_method' => $method, 'interval_months' => $intervalMonths, 'commitment_months' => $commitmentMonths, 'free_shipping' => $free, 'started_at' => $now, 'next_run_at' => $now,
+            'billing' => $billing, 'payment_method' => $method, 'interval_months' => $intervalMonths, 'commitment_months' => $commitmentMonths, 'free_shipping' => $free, 'started_at' => $now, 'next_run_at' => $now, 'use_tasca' => $useTasca,
         ]);
         AuditLog::record('subscription.created', "Abbonamento creato per {$user->email}", $sub, ['impegno_mesi' => $commitmentMonths, 'ogni_mesi' => $intervalMonths, 'spedizione_gratuita' => $free, 'metodo' => $method]);
 
@@ -90,10 +93,14 @@ final class SubscriptionService
         // L'abbonamento resta «in attesa» finché il webhook non conferma (vedi activateAfterCheckout).
         if ($method === Subscription::METHOD_CARD && $this->orders->usesRedirectCheckout()) {
             try {
-                $this->orders->place($user, $lines, $country, 'card', $billing, $now, 'Primo ordine da abbonamento #'.$sub->id, $forOthers, $sub);
+                $first = $this->orders->place($user, $lines, $country, 'card', $billing, $now, 'Primo ordine da abbonamento #'.$sub->id, $forOthers, $sub, [], null, $useTasca);
             } catch (Throwable $e) {
                 $sub->delete();
                 throw $e;
+            }
+            // Primo ordine coperto tutto dai compensi della Tasca: già pagato, l'abbonamento parte subito (la carta per i mesi dopo si può aggiungere da «Abbonamenti»).
+            if (in_array($first->status, Order::PAID_STATES, true)) {
+                return $this->activateAfterCheckout($sub, null, null, $now);
             }
             $sub->update(['status' => Subscription::PENDING, 'next_run_at' => null]);
 
@@ -138,6 +145,18 @@ final class SubscriptionService
             'next_run_at' => CarbonImmutable::instance($sub->started_at)->addMonthsNoOverflow((1 + $sub->skip_months) * $sub->intervalMonths()),
         ]);
         AuditLog::record('subscription.activated', "Abbonamento #{$sub->id} attivo: primo ordine pagato", $sub, ['carta_salvata' => $stripePaymentMethodId !== null]);
+
+        return $sub->refresh();
+    }
+
+    /** Il cliente accende o spegne l'uso della Tasca per i prossimi rinnovi (solo abbonamenti con carta). */
+    public function setUseTasca(Subscription $sub, bool $on): Subscription
+    {
+        if ($on && $sub->payment_method !== Subscription::METHOD_CARD) {
+            throw new OrderException('I compensi della Tasca si usano con l\'abbonamento pagato con carta.');
+        }
+        $sub->update(['use_tasca' => $on]);
+        AuditLog::record('subscription.tasca', 'Abbonamento #'.$sub->id.': compensi della Tasca '.($on ? 'accesi' : 'spenti').' per i rinnovi', $sub);
 
         return $sub->refresh();
     }
@@ -260,7 +279,7 @@ final class SubscriptionService
             try {
                 // Un ordine rimasto a metà (quota KMoney già addebitata, resto in carta non riuscito) si riprende, non si rifà.
                 $order = $sub->orders()->where('status', 'pending_payment')->latest('id')->first()
-                    ?? $this->orders->place($sub->user, $sub->lines, $sub->country_code, $sub->payment_method, $sub->billing, $now, 'Ordine da abbonamento #'.$sub->id, $sub->for_others ?? [], $sub, [], $kmoney ? 'card' : null);
+                    ?? $this->orders->place($sub->user, $sub->lines, $sub->country_code, $sub->payment_method, $sub->billing, $now, 'Ordine da abbonamento #'.$sub->id, $sub->for_others ?? [], $sub, [], $kmoney ? 'card' : null, ! $kmoney && (bool) $sub->use_tasca);
                 if ($kmoney) {
                     // KMoney deve conoscere l'abbonamento prima dell'addebito: è così che il ciclo si lega all'abbonamento e il cliente può bloccarlo.
                     $this->syncKMoney($sub);
@@ -286,7 +305,7 @@ final class SubscriptionService
                 // che chiude solo gli ordini ancora in sospeso (se fosse annullato il cliente pagherebbe senza che il portale lo sappia).
                 $waiting = $e instanceof ConfirmationRequired;
                 // Si annulla solo un ordine senza incassi: se la quota KMoney è già stata addebitata resta in attesa del resto.
-                if (! $waiting && $order instanceof Order && $order->refresh()->status === 'pending_payment' && ! $order->payments()->where('status', 'paid')->exists()) {
+                if (! $waiting && $order instanceof Order && $order->refresh()->status === 'pending_payment' && ! $order->payments()->where('status', 'paid')->where('method', '!=', 'tasca')->exists()) {
                     OrderEvent::log($order, 'charge_failed', 'Addebito dell\'abbonamento non riuscito: '.$e->getMessage(), true);
                     $this->orders->cancel($order);
                 }

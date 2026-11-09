@@ -31,11 +31,11 @@ class ApplicationController extends Controller
         $data = $request->validate([
             'first_name' => 'required|string|max:100', 'last_name' => 'required|string|max:100',
             'email' => 'required|email:rfc|max:190', 'phone' => 'required|string|max:40',
-            'city' => 'required|string|max:100', 'province' => ['required', 'string', 'regex:/^[A-Za-z]{2}$/'],
+            'city' => 'required|string|max:100',
             'interest' => 'required|in:'.implode(',', array_keys(MembershipApplication::INTERESTS)),
-            'message' => 'nullable|string|max:2000', 'privacy' => 'accepted',
-        ], self::MESSAGES + ['province.regex' => 'Scrivi la sigla della provincia (due lettere, per esempio RM).'], [
-            'first_name' => 'nome', 'last_name' => 'cognome', 'phone' => 'telefono', 'city' => 'città', 'province' => 'provincia', 'interest' => 'interesse',
+            'privacy' => 'accepted',
+        ], self::MESSAGES, [
+            'first_name' => 'nome', 'last_name' => 'cognome', 'phone' => 'telefono', 'city' => 'città', 'interest' => 'interesse',
         ]);
         // una sola candidatura aperta per email: la risposta è la stessa, senza dire se esisteva già
         if (! $applications->hasOpen($data['email'])) {

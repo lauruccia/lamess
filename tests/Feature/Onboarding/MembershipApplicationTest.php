@@ -32,7 +32,7 @@ final class MembershipApplicationTest extends TestCase
     {
         return $over + [
             'first_name' => 'Luca', 'last_name' => 'Verdi', 'email' => 'Luca@Example.test', 'phone' => '3331234567', 'city' => 'Roma',
-            'province' => 'rm', 'interest' => 'consultant', 'message' => 'Mi piace il progetto', 'privacy' => '1',
+            'interest' => 'consultant', 'privacy' => '1',
         ];
     }
 
@@ -58,14 +58,13 @@ final class MembershipApplicationTest extends TestCase
         $a = MembershipApplication::firstOrFail();
         $this->assertSame('pending', $a->status);
         $this->assertSame('luca@example.test', $a->email);
-        $this->assertSame('RM', $a->province);
         $this->assertSame('consultant', $a->interest);
         $this->assertNull(User::where('email', 'luca@example.test')->first());
     }
 
     public function test_required_fields_privacy_and_interest(): void
     {
-        $this->post('/candidati', ['first_name' => 'Luca'])->assertSessionHasErrors(['last_name', 'email', 'phone', 'city', 'province', 'interest', 'privacy']);
+        $this->post('/candidati', ['first_name' => 'Luca'])->assertSessionHasErrors(['last_name', 'email', 'phone', 'city', 'interest', 'privacy']);
         $this->post('/candidati', $this->formData(['privacy' => null]))->assertSessionHasErrors('privacy');
         $this->post('/candidati', $this->formData(['interest' => 'altro']))->assertSessionHasErrors('interest');
         $this->assertSame(0, MembershipApplication::count());

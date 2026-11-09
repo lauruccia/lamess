@@ -22,15 +22,15 @@ final class ApplicationService
 {
     public const LINK_DAYS = 30;
 
-    /** @param  array<string,mixed>  $data  first_name, last_name, email, phone, city, province, interest, message */
+    /** @param  array<string,mixed>  $data  first_name, last_name, email, phone, city, interest */
     public function submit(array $data, ?string $ip = null): MembershipApplication
     {
         $email = mb_strtolower(trim((string) $data['email']));
 
         return MembershipApplication::create([
             'first_name' => trim((string) $data['first_name']), 'last_name' => trim((string) $data['last_name']), 'email' => $email,
-            'phone' => trim((string) $data['phone']), 'city' => trim((string) $data['city']), 'province' => mb_strtoupper(trim((string) $data['province'])),
-            'interest' => $data['interest'], 'message' => filled($data['message'] ?? null) ? trim((string) $data['message']) : null,
+            'phone' => trim((string) $data['phone']), 'city' => trim((string) $data['city']),
+            'interest' => $data['interest'],
             'privacy_at' => now(), 'status' => 'pending', 'ip' => $ip,
         ]);
     }

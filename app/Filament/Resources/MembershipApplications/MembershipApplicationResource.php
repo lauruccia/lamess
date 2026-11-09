@@ -93,10 +93,9 @@ class MembershipApplicationResource extends Resource
                 TextColumn::make('last_name')->label('Persona')->state(fn (MembershipApplication $a) => $a->fullName())->description(fn (MembershipApplication $a) => $a->email)
                     ->searchable(['first_name', 'last_name', 'email', 'phone']),
                 TextColumn::make('phone')->label('Telefono')->toggleable(),
-                TextColumn::make('city')->label('Città')->state(fn (MembershipApplication $a) => "{$a->city} ({$a->province})")->toggleable(),
+                TextColumn::make('city')->label('Città')->toggleable(),
                 TextColumn::make('interest')->label('Interesse')->badge()->formatStateUsing(fn (string $state) => MembershipApplication::INTERESTS[$state] ?? $state)
                     ->color(fn (string $state) => $state === 'consultant' ? 'warning' : 'gray'),
-                TextColumn::make('message')->label('Presentazione')->limit(60)->placeholder('—')->tooltip(fn (MembershipApplication $a) => $a->message)->toggleable(),
                 TextColumn::make('status')->label('Stato')->badge()->formatStateUsing(fn (string $state) => MembershipApplication::STATUS_LABELS[$state] ?? $state)
                     ->color(fn (string $state) => ['pending' => 'warning', 'approved' => 'info', 'registered' => 'success', 'rejected' => 'danger'][$state] ?? 'gray'),
                 TextColumn::make('sponsor.name')->label('Sponsor')->placeholder('—')->description(fn (MembershipApplication $a) => $a->sponsor?->code)->toggleable(),

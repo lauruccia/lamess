@@ -1,7 +1,7 @@
 # Registro aggiornamenti
 
 ## 2026-11-09 — «Candidati»: richiesta di ingresso con approvazione
-- Con la registrazione solo su invito, chi non ha un invito può **candidarsi** da `/candidati` (pulsante «Candidati» al posto di «Registrati» nel menu, in `/accedi` e nell'avviso «Registrazione solo su invito»). Campi: nome, cognome, email, telefono, città, provincia, **interesse** (cliente oppure incaricato alla vendita, obbligatorio), presentazione libera, consenso privacy obbligatorio. Antirobot con campo nascosto e limite di 5 invii al minuto; una sola candidatura aperta per email (la risposta alla persona è sempre «Candidatura ricevuta»). Nessun account viene creato.
+- Con la registrazione solo su invito, chi non ha un invito può **candidarsi** da `/candidati` (pulsante «Candidati» al posto di «Registrati» nel menu, in `/accedi` e nell'avviso «Registrazione solo su invito»). Campi, su due colonne per non scorrere: nome e cognome, email e telefono, città, **interesse** (due pulsanti: Cliente oppure Incaricato alla vendita, obbligatorio), consenso privacy obbligatorio. Antirobot con campo nascosto e limite di 5 invii al minuto; una sola candidatura aperta per email (la risposta alla persona è sempre «Candidatura ricevuta»). Nessun account viene creato.
 - Admin: *Rete → Candidature* (permessi `network.view` / `network.manage`; il numero in nav indica le candidature da valutare). **Approva**: scegli lo sponsor (facoltativo; senza, vale l'incaricato «casa» se impostato, altrimenti nessuno) e un messaggio facoltativo; la persona riceve l'email con il **link personale** `/registrazione?candidatura=…` (monouso, valido 30 giorni). **Rifiuta**: email cortese con il motivo, se scritto. **Rimanda email**: rinvia l'esito (per le approvate proroga il link di 30 giorni). Con «Invio email attivo» spento l'esito resta nel pannello (colonna *Email*) e si rimanda dopo.
 - Dal link il modulo di registrazione si apre con nome, cognome ed email già compilati (l'email non è modificabile: il link vale per quella persona); a registrazione fatta la candidatura passa a *Registrato* e il link smette di funzionare. Chi ha scelto «incaricato alla vendita» lo vede in elenco ed è avvisato nell'email che potrà candidarsi come incaricato dalla sua area. Audit: `application.approve`, `application.reject`.
 - Codice: `ApplicationService`, `ApplicationController`, `RegistrationGate::application`, `MembershipApplication`, notifiche `MembershipApplicationApproved/Rejected`, risorsa `MembershipApplicationResource`. Test: `MembershipApplicationTest`.
@@ -14,7 +14,7 @@
     email VARCHAR(190) NOT NULL,
     phone VARCHAR(40) NOT NULL,
     city VARCHAR(100) NOT NULL,
-    province VARCHAR(4) NOT NULL,
+    province VARCHAR(4) NULL,
     interest VARCHAR(20) NOT NULL,
     message TEXT NULL,
     privacy_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

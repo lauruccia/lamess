@@ -18,7 +18,7 @@ return new class extends Migration
             $t->string('email', 190)->index();
             $t->string('phone', 40);
             $t->string('city', 100);
-            $t->string('province', 4);
+            $t->string('province', 4)->nullable();
             $t->string('interest', 20); // customer | consultant
             $t->text('message')->nullable();
             $t->timestamp('privacy_at');

@@ -215,6 +215,11 @@ Sono quelle lette da `config/lamess.php`, `config/site.php` e `config/services.p
 | `LAMESS_PERSONAL_PAGES` | `true` | pagine personali pubbliche degli incaricati (`/i/nome`); pannello: Impostazioni → Rete | sì | sì |
 | `LAMESS_PERSONAL_PAGES_APPROVAL` | `true` | ogni modifica alla pagina personale va approvata dal Consorzio prima di andare online; pannello: Impostazioni → Rete | sì | sì |
 | `LAMESS_PERSONAL_PAGES_STAFF_ONLY` | `false` | fase di prova: le pagine personali le vede e le modifica solo chi ha accesso al back-office e nessuna è pubblica; pannello: Impostazioni → Rete | sì | sì |
+| `LAMESS_PERSONAL_PAGES_ACTIVATION` | `true` | la pagina personale funziona solo se attivata dal Consorzio (su richiesta, a pagamento o gratis); spento: tutti gli incaricati attivi la usano; pannello: Impostazioni → Rete | sì | sì |
+| `LAMESS_PERSONAL_PAGES_PRICE` | `150.00` | costo dell'attivazione in € (un anno); pannello: Impostazioni → Rete | sì | sì |
+| `LAMESS_PERSONAL_PAGES_PAY_URL` | `https://kmoney.it` | link del prodotto «Pagina Lamèss» su kmoney.it (visibile solo ai registrati) | sì | sì |
+| `LAMESS_PERSONAL_PAGES_MONTHS` | `12` | mesi di validità di ogni attivazione o rinnovo | sì | sì |
+| `LAMESS_PERSONAL_PAGES_REMINDER_DAYS` | `30` | giorni prima della scadenza per promemoria e pulsante di rinnovo | sì | sì |
 | `LAMESS_DEFAULT_CONSULTANT_CODE` | vuoto | codice dell'incaricato «casa» per i clienti senza referral (OPEN-20) | — | — |
 | `LAMESS_REQUIRE_FIRST_BOX` | `false` | la richiesta di diventare incaricato richiede il primo ordine pagato | — | — |
 | `LAMESS_CODE_PREFIX` | `LM` | prefisso del codice incaricato (poi 5 cifre) | — | — |

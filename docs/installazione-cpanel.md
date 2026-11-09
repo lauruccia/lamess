@@ -114,7 +114,7 @@ Dopo un aggiornamento con terminale: `php artisan migrate --force` e `php artisa
 - ogni minuto il «battito» che il riquadro «Operazioni automatiche» legge;
 - 00:10 versioni del piano programmate che entrano in vigore; 00:20 sanzioni a tempo; 00:30 successioni;
 - 02:15 backup del database; 02:45 ricalcolo notturno (stima del mese aperto);
-- 03:10 pulizia delle statistiche di visita; 03:30 canoni annuali; 04:00 abbonamenti; 05:00 preparazione dei pagamenti dei mesi chiusi; 06:00 estratti conto (accettazione tacita); 08:00 promemoria documenti KYC; 08:15 riepilogo giornaliero degli abbonamenti (se c'è la casella);
+- 03:10 pulizia delle statistiche di visita; 03:30 canoni annuali; 04:00 abbonamenti; 05:00 preparazione dei pagamenti dei mesi chiusi; 06:00 estratti conto (accettazione tacita); 08:00 promemoria documenti KYC; 08:20 promemoria di scadenza delle pagine personali; 08:15 riepilogo giornaliero degli abbonamenti (se c'è la casella);
 - il 1° del mese alle 08:30 l'invio delle fatture in coda (solo con `LAMESS_SDI_SEND_MODE=batch`);
 - ogni minuto, se `QUEUE_CONNECTION` non è `sync`, il lavoratore delle code;
 - ogni ora: fatture (invio/ritentativi), chiusura mensile automatica (agisce solo quando il mese è finito e secondo l'impostazione «Chiusura automatica del mese») e Bonus di Struttura (solo se attivi in Impostazioni).

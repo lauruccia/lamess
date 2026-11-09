@@ -162,6 +162,7 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::get('/referral/qr.svg', [ContentController::class, 'referralQr']);
     Route::post('/referral/inviti', [ContentController::class, 'inviteStore'])->middleware('throttle:20,1');
     Route::post('/referral/inviti/{invite}/ricorda', [ContentController::class, 'inviteRemind'])->middleware('throttle:20,1');
+    Route::post('/pagina/richiesta', [PersonalPageController::class, 'requestActivation'])->middleware('throttle:10,1');
     Route::get('/wallet', [WalletController::class, 'wallet']);
     Route::post('/wallet/prelievo', [WalletController::class, 'withdraw'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::post('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'addDocument'])->middleware('impersonation.safe')->middleware('throttle:10,1');

@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Domain\Pages;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Engine\Support\Num;
 use App\Domain\Features\Feature;
 use App\Models\Consultant;
 use App\Models\ConsultantPage;
 use App\Models\User;
+use App\Notifications\PersonalPageActivation;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -85,10 +88,148 @@ final class PersonalPageService
         return trim((string) ($profile?->fullName() ?: $c->name));
     }
 
+    // ------------------------------------------------------------ attivazione (su richiesta, a pagamento, annuale)
+
+    public function activationRequired(): bool
+    {
+        return (bool) config('lamess.personal_pages.activation_required');
+    }
+
+    /** Costo dell'attivazione, in euro con due decimali (stringa: mai float per gli importi). */
+    public function price(): string
+    {
+        return (string) Num::money((string) config('lamess.personal_pages.price', '0'));
+    }
+
+    public function reminderDays(): int
+    {
+        return max(1, (int) config('lamess.personal_pages.reminder_days', 30));
+    }
+
+    /** La pagina può essere usata (modificata, messa online)? Senza obbligo di attivazione, sempre sì. */
+    public function isActivated(ConsultantPage $p): bool
+    {
+        if (! $this->activationRequired()) {
+            return true;
+        }
+
+        return $p->activation === 'active' && ($p->activation_expires_at === null || $p->activation_expires_at->isFuture());
+    }
+
+    public function activationRequested(ConsultantPage $p): bool
+    {
+        return $p->activation_requested_at !== null;
+    }
+
+    /** Giorni alla scadenza (0 = scade oggi); null se attiva senza scadenza o non attiva. */
+    public function daysLeft(ConsultantPage $p): ?int
+    {
+        if ($p->activation !== 'active' || $p->activation_expires_at === null || ! $p->activation_expires_at->isFuture()) {
+            return null;
+        }
+
+        return (int) floor(now()->diffInDays($p->activation_expires_at, false));
+    }
+
+    /** Attiva ma vicina alla scadenza: l'incaricato può già chiedere il rinnovo. */
+    public function renewalDue(ConsultantPage $p): bool
+    {
+        $left = $this->daysLeft($p);
+
+        return $left !== null && $left <= $this->reminderDays();
+    }
+
+    /** Stato per l'elenco del Consorzio e per l'incaricato: none | requested | active | expiring | expired. */
+    public function activationState(ConsultantPage $p): string
+    {
+        $expired = $p->activation === 'active' && $p->activation_expires_at !== null && ! $p->activation_expires_at->isFuture();
+        if ($p->activation === 'active' && ! $expired) {
+            return $this->renewalDue($p) ? ($this->activationRequested($p) ? 'requested' : 'expiring') : 'active';
+        }
+
+        return $this->activationRequested($p) ? 'requested' : ($expired ? 'expired' : 'none');
+    }
+
+    /** L'incaricato chiede l'attivazione (o il rinnovo) dopo aver pagato su kmoney.it. */
+    public function requestActivation(ConsultantPage $p, ?string $kmoneyRef = null): ConsultantPage
+    {
+        if (! $this->activationRequired()) {
+            throw new PageException('La pagina è già disponibile: non serve attivarla.');
+        }
+        if ($this->isActivated($p) && ! $this->renewalDue($p)) {
+            throw new PageException('La pagina è già attiva.');
+        }
+        if ($this->activationRequested($p)) {
+            throw new PageException('La richiesta è già stata inviata: il Consorzio la sta controllando.');
+        }
+        $renewal = $p->activation === 'active';
+        $p->forceFill(['activation_requested_at' => now(), 'activation_note' => filled($kmoneyRef) ? 'Pagato da: '.trim((string) $kmoneyRef) : $p->activation_note])->save();
+        AuditLog::record('page.activation_requested', "Pagina personale di {$p->consultant->code}: ".($renewal ? 'richiesto il rinnovo' : 'richiesta l\'attivazione'), $p);
+
+        return $p;
+    }
+
+    /** Il Consorzio scarta la richiesta (per esempio il pagamento non risulta). */
+    public function cancelRequest(ConsultantPage $p, string $note = ''): ConsultantPage
+    {
+        if (! $this->activationRequested($p)) {
+            throw new PageException('Non ci sono richieste da annullare.');
+        }
+        $p->forceFill(['activation_requested_at' => null, 'activation_note' => trim($note) ?: $p->activation_note])->save();
+        AuditLog::record('page.activation_declined', "Pagina personale di {$p->consultant->code}: richiesta di attivazione non accolta", $p, [], trim($note) ?: null);
+
+        return $p;
+    }
+
+    /**
+     * Attiva o rinnova la pagina. `paid`: pagamento ricevuto su kmoney.it (riferimento in $note); `free`: la regala il Consorzio.
+     * Un rinnovo ancora in corso somma i mesi alla scadenza attuale; con $noExpiry (solo gratis) la pagina non scade.
+     */
+    public function activate(ConsultantPage $p, string $source, ?string $note = null, bool $noExpiry = false): ConsultantPage
+    {
+        if (! in_array($source, ['paid', 'free'], true)) {
+            throw new PageException('Tipo di attivazione non valido.');
+        }
+        if ($noExpiry && $source !== 'free') {
+            throw new PageException('Solo un\'attivazione gratuita può non avere scadenza.');
+        }
+        $base = $p->activation === 'active' && $p->activation_expires_at !== null && $p->activation_expires_at->isFuture() ? Carbon::instance($p->activation_expires_at) : now();
+        $expires = $noExpiry ? null : $base->copy()->addMonthsNoOverflow(max(1, (int) config('lamess.personal_pages.validity_months', 12)));
+        $p->forceFill([
+            'activation' => 'active', 'activation_source' => $source, 'activation_requested_at' => null, 'activated_at' => now(),
+            'activation_expires_at' => $expires, 'activation_reminded_at' => null, 'activation_note' => filled($note) ? trim((string) $note) : null,
+        ])->save();
+        AuditLog::record('page.activated', "Pagina personale di {$p->consultant->code}: ".($source === 'free' ? 'attivata gratuitamente' : 'attivata dopo il pagamento').($expires ? ' fino al '.$expires->timezone('Europe/Rome')->format('d/m/Y') : ' senza scadenza'), $p, [], filled($note) ? trim((string) $note) : null);
+        $p->consultant->user?->notify(new PersonalPageActivation($p->refresh(), 'activated'));
+
+        return $p;
+    }
+
+    /** Promemoria di scadenza agli incaricati: uno solo per ogni periodo di attivazione. */
+    public function sendExpiryReminders(): int
+    {
+        if (! $this->activationRequired()) {
+            return 0;
+        }
+        $sent = 0;
+        $pages = ConsultantPage::with('consultant.user')->where('activation', 'active')->whereNull('activation_reminded_at')
+            ->whereNotNull('activation_expires_at')->where('activation_expires_at', '>', now())->where('activation_expires_at', '<=', now()->addDays($this->reminderDays()))->get();
+        foreach ($pages as $p) {
+            if ($p->consultant === null || ! $this->eligible($p->consultant) || $p->consultant->user === null) {
+                continue;
+            }
+            $p->consultant->user->notify(new PersonalPageActivation($p, 'expiring'));
+            $p->forceFill(['activation_reminded_at' => now()])->save();
+            $sent++;
+        }
+
+        return $sent;
+    }
+
     /** Visibile al pubblico adesso? */
     public function isPublic(ConsultantPage $p): bool
     {
-        if (! $this->enabled() || $this->staffOnly() || ! $p->enabled || $p->blocked || $p->approved_at === null) {
+        if (! $this->enabled() || $this->staffOnly() || ! $p->enabled || $p->blocked || $p->approved_at === null || ! $this->isActivated($p)) {
             return false;
         }
         $c = $p->consultant;

@@ -10,8 +10,10 @@ use App\Domain\Pages\PersonalPageService;
 use App\Filament\Resources\ConsultantPages\Pages\ListConsultantPages;
 use App\Models\ConsultantPage;
 use App\Models\User;
+use App\Notifications\PersonalPageActivation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -29,7 +31,7 @@ final class PersonalPageTest extends TestCase
         parent::setUp();
         Storage::fake('local');
         $this->plan();
-        config(['lamess.personal_pages.enabled' => true, 'lamess.personal_pages.approval' => true]);
+        config(['lamess.personal_pages.enabled' => true, 'lamess.personal_pages.approval' => true, 'lamess.personal_pages.activation_required' => false]);
     }
 
     private function consultantUser(string $code = 'A'): User
@@ -309,5 +311,120 @@ final class PersonalPageTest extends TestCase
         $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
         Livewire::test(ListConsultantPages::class)->removeTableFilter('review')->callTableAction('shareLink', $page)->assertHasNoTableActionErrors();
         $this->assertDatabaseHas('audit_logs', ['action' => 'page.preview_link']);
+    }
+
+    // ------------------------------------------------------------ attivazione su richiesta (150 €, annuale)
+
+    public function test_without_activation_the_area_shows_the_payment_instructions_and_blocks_editing(): void
+    {
+        config(['lamess.personal_pages.activation_required' => true, 'lamess.personal_pages.pay_url' => 'https://kmoney.it/prodotto/pagina-lamess']);
+        $u = $this->consultantUser();
+        $this->actingAs($u)->get('/area/pagina')->assertOk()->assertSee('150,00 €')->assertSee('Pagina Lamèss')->assertSee('kmoney.it/prodotto/pagina-lamess', false)
+            ->assertSee('Ho pagato, richiedi l\'attivazione', false)->assertDontSee('Metti online la pagina');
+        $this->actingAs($u)->post('/area/pagina', $this->form())->assertForbidden();
+        $this->actingAs($u)->post('/area/pagina/online', ['online' => 1])->assertForbidden();
+        $this->actingAs($u)->get('/area/pagina/anteprima')->assertForbidden();
+    }
+
+    public function test_request_then_payment_confirmation_activates_for_twelve_months_and_notifies(): void
+    {
+        Notification::fake();
+        config(['lamess.personal_pages.activation_required' => true]);
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina/richiesta', ['kmoney_ref' => 'maria@example.test'])->assertRedirect();
+        $page = ConsultantPage::firstOrFail();
+        $this->assertNotNull($page->activation_requested_at);
+        $this->assertStringContainsString('maria@example.test', (string) $page->activation_note);
+        $this->actingAs($u)->post('/area/pagina/richiesta')->assertSessionHasErrors('activation');   // una sola richiesta alla volta
+        $this->actingAs($u)->get('/area/pagina')->assertSee('Abbiamo ricevuto la tua richiesta');
+
+        $svc = app(PersonalPageService::class);
+        $svc->activate($page, 'paid', 'KMoney ref 123');
+        $page->refresh();
+        $this->assertSame('active', $page->activation);
+        $this->assertSame('paid', $page->activation_source);
+        $this->assertNull($page->activation_requested_at);
+        $this->assertTrue($page->activation_expires_at->between(now()->addMonths(12)->subMinute(), now()->addMonths(12)->addMinute()));
+        Notification::assertSentTo($u, PersonalPageActivation::class);
+        $this->actingAs($u)->get('/area/pagina')->assertOk()->assertSee('Metti online la pagina');
+        $this->actingAs($u)->post('/area/pagina', $this->form())->assertRedirect();
+    }
+
+    public function test_expired_activation_switches_the_public_page_off_and_renewal_extends_from_the_old_expiry(): void
+    {
+        Notification::fake();
+        config(['lamess.personal_pages.activation_required' => true, 'lamess.personal_pages.approval' => false]);
+        $u = $this->consultantUser();
+        $svc = app(PersonalPageService::class);
+        $page = $svc->forConsultant($u->consultant);
+        $svc->activate($page, 'paid');
+        $this->actingAs($u)->post('/area/pagina', $this->form())->assertRedirect();
+        $this->actingAs($u)->post('/area/pagina/online', ['online' => 1])->assertRedirect();
+        auth()->logout();
+        $this->get('/i/maria-rossi')->assertOk();
+
+        $page->refresh()->forceFill(['activation_expires_at' => now()->subDay()])->save();
+        $this->get('/i/maria-rossi')->assertNotFound();
+        $this->assertSame('expired', $svc->activationState($page->refresh()));
+        $this->actingAs($u)->get('/area/pagina')->assertSee('La tua pagina è scaduta')->assertSee('Rinnova la tua pagina');
+
+        // rinnovo prima della scadenza: i mesi si sommano alla scadenza attuale
+        $page->forceFill(['activation_expires_at' => now()->addDays(10)])->save();
+        $this->assertSame('expiring', $svc->activationState($page->refresh()));
+        $old = $page->activation_expires_at;
+        $svc->requestActivation($page);
+        $svc->activate($page->refresh(), 'paid');
+        $this->assertTrue($page->refresh()->activation_expires_at->between($old->addMonths(12)->subMinute(), $old->addMonths(12)->addMinute()));
+    }
+
+    public function test_free_activation_without_expiry_and_only_the_owner_sees_the_action(): void
+    {
+        config(['lamess.personal_pages.activation_required' => true]);
+        $u = $this->consultantUser();
+        $page = app(PersonalPageService::class)->forConsultant($u->consultant);
+        app(PersonalPageService::class)->activate($page, 'free', null, true);
+        $page->refresh();
+        $this->assertSame('free', $page->activation_source);
+        $this->assertNull($page->activation_expires_at);
+        $this->assertTrue(app(PersonalPageService::class)->isActivated($page));
+        $this->expectException(PageException::class);
+        app(PersonalPageService::class)->activate($page, 'paid', null, true);   // senza scadenza solo se gratis
+    }
+
+    public function test_list_actions_confirm_payment_and_free_activation_is_owner_only(): void
+    {
+        Notification::fake();
+        config(['lamess.personal_pages.activation_required' => true]);
+        $u = $this->consultantUser();
+        $page = app(PersonalPageService::class)->forConsultant($u->consultant);
+        $page->forceFill(['activation_requested_at' => now()])->save();
+
+        Roles::sync();
+        $staff = User::factory()->create();
+        $staff->givePermissionTo('compliance.view', 'compliance.manage');
+        $this->actingAs($staff);
+        Livewire::test(ListConsultantPages::class)->removeTableFilter('review')->assertTableActionHidden('freeActivate', $page)->assertTableActionHidden('confirmPayment', $page);
+
+        $owner = User::factory()->role(Roles::SUPER_ADMIN)->create();
+        $this->actingAs($owner);
+        Livewire::test(ListConsultantPages::class)->removeTableFilter('review')->callTableAction('confirmPayment', $page, ['note' => 'ref 1'])->assertHasNoTableActionErrors();
+        $this->assertSame('paid', $page->refresh()->activation_source);
+        Livewire::test(ListConsultantPages::class)->removeTableFilter('review')->callTableAction('freeActivate', $page, ['no_expiry' => true])->assertHasNoTableActionErrors();
+        $this->assertSame('free', $page->refresh()->activation_source);
+        $this->assertNull($page->activation_expires_at);
+    }
+
+    public function test_expiry_reminder_is_sent_once(): void
+    {
+        Notification::fake();
+        config(['lamess.personal_pages.activation_required' => true]);
+        $u = $this->consultantUser();
+        $svc = app(PersonalPageService::class);
+        $page = $svc->forConsultant($u->consultant);
+        $svc->activate($page, 'paid');
+        $page->refresh()->forceFill(['activation_expires_at' => now()->addDays(20)])->save();
+        $this->assertSame(1, $svc->sendExpiryReminders());
+        $this->assertSame(0, $svc->sendExpiryReminders());
+        Notification::assertSentToTimes($u, PersonalPageActivation::class, 2);   // attivazione + promemoria
     }
 }

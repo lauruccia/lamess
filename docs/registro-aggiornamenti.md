@@ -1,5 +1,31 @@
 # Registro aggiornamenti
 
+## 2026-11-09 — Pagine personali: attivazione su richiesta, a pagamento (150 €), annuale
+- La pagina personale **non è più per tutti**: l'incaricato la **richiede** da *Area → La mia pagina*, dove trova le istruzioni: registrarsi su kmoney.it, acquistare il prodotto **«Pagina Lamèss»** (**150,00 €**; il link del prodotto, visibile solo ai registrati, lo inserisce la titolare nelle impostazioni; i KMoney vanno al conto di KNM, non di Kadeo Group), indicare con quale nome o email ha pagato e premere il pulsante «Ho pagato, richiedi l'attivazione». Finché non è attivata non può scrivere, vedere l'anteprima né mettere online (e `/i/nome` non si apre).
+- **Attivazione manuale** (per ora): dopo il pagamento la **titolare** controlla l'acquisto su KMoney e in *Assistenza → Pagine personali* usa **Conferma pagamento e attiva** (solo lei la vede); chi ha accesso al back-office può **Non accogliere la richiesta** con un motivo. All'attivazione l'incaricato riceve una email. Il pagamento automatico (addebito KMoney dal portale) è predisposto come passo successivo: basterà chiamare `PersonalPageService::activate($page, 'paid', $riferimento)`.
+- **Durata**: un anno (impostabile). Un rinnovo fatto prima della scadenza somma i mesi alla data attuale. Negli ultimi 30 giorni (impostabile) l'incaricato vede l'avviso con il pulsante «Ho pagato, richiedi il rinnovo» e riceve una email di promemoria (`lamess:pagine-scadenze`, ogni giorno alle 08:20). Scaduta, la pagina smette di essere pubblica; testi e foto restano salvati.
+- **Gratis**: la titolare può regalare l'attivazione, con o senza scadenza, dall'azione **Attiva gratis** sulla riga e dal pulsante **Attiva gratis per un incaricato** (anche per chi non ha ancora aperto la pagina). Le altre figure del back-office non vedono queste azioni. Le pagine già esistenti risultano attivate dal Consorzio, senza scadenza.
+- **Impostazioni** (*Impostazioni di sistema → Rete*): attivazione su richiesta (interruttore: spento, tutti gli incaricati attivi usano la pagina come prima), costo (150.00), link del prodotto su kmoney.it, mesi di validità (12), giorni di preavviso (30). Env: `LAMESS_PERSONAL_PAGES_ACTIVATION`, `_PRICE`, `_PAY_URL`, `_MONTHS`, `_REMINDER_DAYS`.
+- Elenco admin: nuove colonne *Attivazione* e *Scade il*, filtro per attivazione (richieste, attive, in scadenza, scadute, non attivate); il numero in menu conta revisioni **e** richieste. L'elenco non parte più filtrato sulle sole pagine da approvare.
+- Codice: `PersonalPageService` (`isActivated`, `requestActivation`, `activate`, `cancelRequest`, `sendExpiryReminders`), notifica `PersonalPageActivation`, comando `LamessPagineScadenze`, vista `site/area/page-activation.blade.php`. Test: `tests/Feature/Pages/PersonalPageTest.php` (21).
+- Migrazione `2026_11_17_100000_consultant_pages_activation`. Sul sito live esegui **prima del deploy**, in phpMyAdmin → scheda SQL (le pagine già create risultano attivate dal Consorzio, senza scadenza):
+  ```sql
+  ALTER TABLE consultant_pages
+    ADD COLUMN activation VARCHAR(12) NOT NULL DEFAULT 'none' AFTER blocked_note,
+    ADD COLUMN activation_source VARCHAR(8) NULL AFTER activation,
+    ADD COLUMN activation_requested_at TIMESTAMP NULL DEFAULT NULL AFTER activation_source,
+    ADD COLUMN activated_at TIMESTAMP NULL DEFAULT NULL AFTER activation_requested_at,
+    ADD COLUMN activation_expires_at TIMESTAMP NULL DEFAULT NULL AFTER activated_at,
+    ADD COLUMN activation_reminded_at TIMESTAMP NULL DEFAULT NULL AFTER activation_expires_at,
+    ADD COLUMN activation_note TEXT NULL AFTER activation_reminded_at;
+
+  UPDATE consultant_pages SET activation = 'active', activation_source = 'free', activated_at = NOW();
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_17_100000_consultant_pages_activation', MAX(batch) + 1 FROM migrations;
+  ```
+- Se le colonne mancano, «La mia pagina» e l'elenco *Pagine personali* danno errore: eseguire l'SQL prima del deploy.
+
 ## 2026-11-09 — Compensi della Tasca come metodo di pagamento (+25%)
 - Al checkout l'incaricato attivo trova, **dopo gli altri metodi**, l'interruttore **«Usa i compensi della Tasca»** (+25%): sceglie carta o bonifico per l'eventuale resto. Con 120 € di compensi paga 150 € di prodotti; usando la Tasca la **spedizione è gratuita** (anche se paghi solo una parte con i compensi); se la Tasca copre tutto l'ordine questo risulta pagato subito.
 - Si usano solo i compensi **liberi**: mesi chiusi, estratto conto pubblicato con i 10 giorni di reclamo passati, nessuna contestazione, nessuna sospensione (`bonus_hold`), né prelievi già richiesti. Vale su tutti i prodotti (abbonamenti compresi) senza tetto mensile; non si combina con KMoney.

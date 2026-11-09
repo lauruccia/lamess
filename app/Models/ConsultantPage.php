@@ -14,7 +14,7 @@ class ConsultantPage extends Model
 
     protected function casts(): array
     {
-        return ['media' => 'array', 'proposal' => 'array', 'enabled' => 'boolean', 'blocked' => 'boolean', 'approved_at' => 'immutable_datetime', 'decided_at' => 'immutable_datetime'];
+        return ['media' => 'array', 'proposal' => 'array', 'enabled' => 'boolean', 'blocked' => 'boolean', 'approved_at' => 'immutable_datetime', 'decided_at' => 'immutable_datetime', 'activation_requested_at' => 'immutable_datetime', 'activated_at' => 'immutable_datetime', 'activation_expires_at' => 'immutable_datetime', 'activation_reminded_at' => 'immutable_datetime'];
     }
 
     public function consultant(): BelongsTo

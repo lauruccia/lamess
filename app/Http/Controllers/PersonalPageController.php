@@ -78,21 +78,34 @@ class PersonalPageController extends Controller
         return $c;
     }
 
+    /** Come mine(), ma la pagina deve anche essere attivata: serve a chi modifica, vede l'anteprima o la mette online. */
+    private function activeMine(Request $request, PersonalPageService $svc): Consultant
+    {
+        $c = $this->mine($request, $svc);
+        abort_unless($svc->isActivated($svc->forConsultant($c)), 403, 'La pagina non è attiva: chiedi l\'attivazione dall\'area riservata.');
+
+        return $c;
+    }
+
     public function edit(Request $request, PersonalPageService $svc)
     {
         $c = $this->mine($request, $svc);
         $page = $svc->forConsultant($c);
+        if (! $svc->isActivated($page)) {
+            return view('site.area.page-activation', ['page' => $page, 'svc' => $svc, 'c' => $c]);
+        }
 
         return view('site.area.page', [
             'page' => $page, 'd' => $svc->content($page, true), 'svc' => $svc, 'c' => $c,
             'public' => $svc->isPublic($page), 'approval' => $svc->approvalRequired(),
             'url' => url('/i/'.$page->slug), 'defaultName' => $svc->defaultName($c),
+            'activation' => ['state' => $svc->activationState($page), 'left' => $svc->daysLeft($page), 'expires' => $page->activation_expires_at, 'price' => $svc->price(), 'payUrl' => (string) config('lamess.personal_pages.pay_url'), 'required' => $svc->activationRequired()],
         ]);
     }
 
     public function preview(Request $request, PersonalPageService $svc)
     {
-        $c = $this->mine($request, $svc);
+        $c = $this->activeMine($request, $svc);
 
         return $this->render($svc->forConsultant($c), $svc, true);
     }
@@ -115,7 +128,7 @@ class PersonalPageController extends Controller
 
     public function save(Request $request, PersonalPageService $svc): RedirectResponse
     {
-        $c = $this->mine($request, $svc);
+        $c = $this->activeMine($request, $svc);
         $page = $svc->forConsultant($c);
         $media = [];
         $rules = [
@@ -155,7 +168,7 @@ class PersonalPageController extends Controller
 
     public function online(Request $request, PersonalPageService $svc): RedirectResponse
     {
-        $c = $this->mine($request, $svc);
+        $c = $this->activeMine($request, $svc);
         $page = $svc->forConsultant($c);
         $online = $request->boolean('online');
         try {
@@ -166,5 +179,19 @@ class PersonalPageController extends Controller
         $page->refresh();
 
         return back()->with('status', ! $online ? 'La pagina non è più visibile al pubblico.' : ($svc->isPublic($page) ? 'La pagina è online.' : 'Richiesta registrata: la pagina andrà online appena il Consorzio approva i contenuti.'));
+    }
+
+    /** L'incaricato chiede l'attivazione (o il rinnovo) della pagina dopo aver pagato su kmoney.it. */
+    public function requestActivation(Request $request, PersonalPageService $svc): RedirectResponse
+    {
+        $c = $this->mine($request, $svc);
+        $data = $request->validate(['kmoney_ref' => 'nullable|string|max:120']);
+        try {
+            $svc->requestActivation($svc->forConsultant($c), $data['kmoney_ref'] ?? null);
+        } catch (PageException $e) {
+            return back()->withErrors(['activation' => $e->getMessage()]);
+        }
+
+        return back()->with('status', 'Richiesta inviata: appena il Consorzio verifica il pagamento la pagina viene attivata e ricevi una email.');
     }
 }

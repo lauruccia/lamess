@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ConsultantPages;
 
+use App\Domain\Access\Roles;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Pages\PageException;
 use App\Domain\Pages\PersonalPageService;
@@ -73,9 +74,15 @@ class ConsultantPageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $n = ConsultantPage::where('review', 'pending')->count();
+        $n = ConsultantPage::where('review', 'pending')->orWhereNotNull('activation_requested_at')->count();
 
         return $n > 0 ? (string) $n : null;
+    }
+
+    /** Solo la titolare (super_admin) può regalare l'attivazione. */
+    private static function isOwner(): bool
+    {
+        return auth()->user()?->hasRole(Roles::SUPER_ADMIN) === true;
     }
 
     private static function guard(callable $fn, string $ok): void
@@ -100,13 +107,34 @@ class ConsultantPageResource extends Resource
                 TextColumn::make('review')->label('Revisione')->badge()
                     ->formatStateUsing(fn (string $state) => ['none' => 'Nessuna modifica', 'pending' => 'Da approvare', 'rejected' => 'Respinta'][$state] ?? $state)
                     ->color(fn (string $state) => ['pending' => 'warning', 'rejected' => 'danger'][$state] ?? 'gray'),
+                TextColumn::make('activation')->label('Attivazione')->badge()
+                    ->state(fn (ConsultantPage $p) => $svc()->activationState($p))
+                    ->formatStateUsing(fn (string $state, ConsultantPage $p) => match ($state) {
+                        'none' => 'Non attivata', 'requested' => 'Richiesta da verificare', 'expiring' => 'In scadenza', 'expired' => 'Scaduta',
+                        default => $p->activation_source === 'free' ? 'Attiva (gratis)' : 'Attiva (pagata)',
+                    })
+                    ->color(fn (string $state) => ['requested' => 'warning', 'expiring' => 'warning', 'expired' => 'danger', 'active' => 'success'][$state] ?? 'gray'),
+                TextColumn::make('activation_expires_at')->label('Scade il')->date('d/m/Y')->timezone('Europe/Rome')->placeholder('—')->sortable()->toggleable(),
                 IconColumn::make('online')->label('Online')->boolean()->state(fn (ConsultantPage $p) => $svc()->isPublic($p)),
                 IconColumn::make('blocked')->label('Nascosta')->boolean()->trueColor('danger')->falseColor('gray'),
                 TextColumn::make('bio')->label('Presentazione')->limit(70)->placeholder('—')->toggleable()->tooltip(fn (ConsultantPage $p) => $p->proposal['bio'] ?? $p->bio),
                 TextColumn::make('views')->label('Visite')->numeric()->alignEnd()->sortable(),
                 TextColumn::make('updated_at')->label('Aggiornata')->dateTime('d/m/Y H:i')->timezone('Europe/Rome')->sortable(),
             ])->filters([
-                SelectFilter::make('review')->label('Revisione')->options(['pending' => 'Da approvare', 'rejected' => 'Respinta', 'none' => 'Nessuna modifica'])->default('pending'),
+                SelectFilter::make('review')->label('Revisione')->options(['pending' => 'Da approvare', 'rejected' => 'Respinta', 'none' => 'Nessuna modifica']),
+                SelectFilter::make('attivazione')->label('Attivazione')->options(['requested' => 'Richieste da verificare', 'active' => 'Attive', 'expiring' => 'In scadenza', 'expired' => 'Scadute', 'none' => 'Non attivate'])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $days = max(1, (int) config('lamess.personal_pages.reminder_days', 30));
+
+                        return match ($data['value'] ?? null) {
+                            'requested' => $query->whereNotNull('activation_requested_at'),
+                            'active' => $query->where('activation', 'active')->where(fn (Builder $q) => $q->whereNull('activation_expires_at')->orWhere('activation_expires_at', '>', now())),
+                            'expiring' => $query->where('activation', 'active')->where('activation_expires_at', '>', now())->where('activation_expires_at', '<=', now()->addDays($days)),
+                            'expired' => $query->where('activation', 'active')->where('activation_expires_at', '<=', now()),
+                            'none' => $query->where('activation', 'none'),
+                            default => $query,
+                        };
+                    }),
                 SelectFilter::make('stato')->label('Stato')->options(['online' => 'Online', 'blocked' => 'Nascoste'])
                     ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? null) {
                         'online' => $query->where('enabled', true)->where('blocked', false)->whereNotNull('approved_at'),
@@ -124,6 +152,28 @@ class ConsultantPageResource extends Resource
                         $livewire->js('navigator.clipboard?.writeText('.json_encode($url).')');
                         Notification::make()->title('Link copiato: vale 7 giorni')->body($url)->success()->persistent()->send();
                     }),
+                Action::make('confirmPayment')->label('Conferma pagamento e attiva')->iconButton()->tooltip('Il pagamento su kmoney.it è arrivato: attiva o rinnova la pagina (solo la titolare)')->icon('heroicon-o-banknotes')->color('success')
+                    ->visible(fn (ConsultantPage $p) => self::isOwner() && $svc()->activationRequired() && ($svc()->activationRequested($p) || $svc()->activationState($p) !== 'active'))
+                    ->modalDescription(fn (ConsultantPage $p) => 'Verifica su KMoney l\'acquisto del prodotto «Pagina Lamèss» ('.number_format((float) $svc()->price(), 2, ',', '.').' €) di '.$p->consultant?->name.' ('.$p->consultant?->code.').'.($p->activation_note ? ' '.$p->activation_note.'.' : ''))
+                    ->schema([Textarea::make('note')->label('Riferimento del pagamento (facoltativo)')->rows(2)])
+                    ->action(fn (ConsultantPage $p, array $data) => self::guard(function () use ($svc, $p, $data): void {
+                        abort_unless(self::isOwner(), 403);
+                        $svc()->activate($p, 'paid', $data['note'] ?? null);
+                    }, 'Pagina attivata')),
+                Action::make('freeActivate')->label('Attiva gratis')->iconButton()->tooltip('Regala l\'attivazione (solo la titolare)')->icon('heroicon-o-gift')->color('success')
+                    ->visible(fn () => self::isOwner())
+                    ->schema([
+                        Toggle::make('no_expiry')->label('Senza scadenza')->helperText('Spento: valida per i mesi previsti, poi va rinnovata.'),
+                        Textarea::make('note')->label('Motivo (facoltativo)')->rows(2),
+                    ])
+                    ->action(fn (ConsultantPage $p, array $data) => self::guard(function () use ($svc, $p, $data): void {
+                        abort_unless(self::isOwner(), 403);
+                        $svc()->activate($p, 'free', $data['note'] ?? null, (bool) ($data['no_expiry'] ?? false));
+                    }, 'Pagina attivata gratuitamente')),
+                Action::make('declineRequest')->label('Non accogliere la richiesta')->iconButton()->tooltip('Il pagamento non risulta: scarta la richiesta')->icon('heroicon-o-no-symbol')->color('danger')->authorize('compliance.manage')
+                    ->visible(fn (ConsultantPage $p) => $svc()->activationRequested($p))
+                    ->schema([Textarea::make('note')->label('Motivo (facoltativo)')->rows(2)])
+                    ->action(fn (ConsultantPage $p, array $data) => self::guard(fn () => $svc()->cancelRequest($p, (string) ($data['note'] ?? '')), 'Richiesta scartata')),
                 Action::make('approve')->label('Approva')->iconButton()->tooltip('Approva le modifiche')->icon('heroicon-o-check')->color('success')->authorize('compliance.manage')
                     ->visible(fn (ConsultantPage $p) => is_array($p->proposal))
                     ->modalDescription(fn (ConsultantPage $p) => 'Presentazione proposta: '.($p->proposal['bio'] ?? '—'))

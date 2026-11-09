@@ -154,7 +154,7 @@ class ConsultantPageResource extends Resource
                     }),
                 Action::make('confirmPayment')->label('Conferma pagamento e attiva')->iconButton()->tooltip('Il pagamento su kmoney.it è arrivato: attiva o rinnova la pagina (solo la titolare)')->icon('heroicon-o-banknotes')->color('success')
                     ->visible(fn (ConsultantPage $p) => self::isOwner() && $svc()->activationRequired() && ($svc()->activationRequested($p) || $svc()->activationState($p) !== 'active'))
-                    ->modalDescription(fn (ConsultantPage $p) => 'Verifica su KMoney l\'acquisto del prodotto «Pagina Lamèss» ('.number_format((float) $svc()->price(), 2, ',', '.').' €) di '.$p->consultant?->name.' ('.$p->consultant?->code.').'.($p->activation_note ? ' '.$p->activation_note.'.' : ''))
+                    ->modalDescription(fn (ConsultantPage $p) => 'Verifica su KMoney l\'acquisto del prodotto «Pagina Incaricato Lamèss» ('.number_format((float) $svc()->price(), 2, ',', '.').' €) di '.$p->consultant?->name.' ('.$p->consultant?->code.').'.($p->activation_note ? ' '.$p->activation_note.'.' : ''))
                     ->schema([Textarea::make('note')->label('Riferimento del pagamento (facoltativo)')->rows(2)])
                     ->action(fn (ConsultantPage $p, array $data) => self::guard(function () use ($svc, $p, $data): void {
                         abort_unless(self::isOwner(), 403);

@@ -44,7 +44,7 @@ class PersonalPageActivation extends Notification implements ShouldQueueAfterCom
 
         return (new MailMessage)->subject('La tua pagina personale sta per scadere')
             ->line('L\'attivazione della tua pagina personale scade il '.$until.'. Dopo quella data la pagina non sarà più visibile.')
-            ->line('Per rinnovarla (un anno, '.number_format((float) config('lamess.personal_pages.price'), 2, ',', '.').' €) acquista di nuovo il prodotto «Pagina Lamèss» su kmoney.it e segui le istruzioni nella tua area riservata.')
+            ->line('Per rinnovarla (un anno, '.number_format((float) config('lamess.personal_pages.price'), 2, ',', '.').' €) ricarica il conto KMoney se serve e acquista di nuovo il prodotto «Pagina Incaricato Lamèss» su KMoney, poi richiedi il rinnovo dalla tua area riservata.')
             ->action('Rinnova la pagina', url('/area/pagina'));
     }
 }

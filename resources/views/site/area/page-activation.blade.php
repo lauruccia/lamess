@@ -30,8 +30,9 @@
     <p>Abbiamo ricevuto la tua richiesta. Appena il Consorzio verifica il pagamento la pagina viene attivata e ti arriva una email. Non devi fare altro.</p>
    @else
     <ol style="line-height:1.8;padding-left:20px">
-     <li>Registrati su <a href="https://kmoney.it" target="_blank" rel="noopener">kmoney.it</a> (se non hai già un conto).</li>
-     <li>Acquista il prodotto <a href="{{ $payUrl }}" target="_blank" rel="noopener"><strong>Pagina Lamèss</strong></a> ({{ $price }} €, un anno). Il prodotto è visibile solo dopo l'accesso a kmoney.it.</li>
+     <li>Se non hai un conto, registrati su KMoney: <a href="{{ config('lamess.personal_pages.register_url') }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</li>
+     <li>Ricarica il conto: <a href="{{ config('lamess.personal_pages.recharge_url') }}" target="_blank" rel="noopener">Ricarica KMoney</a>.</li>
+     <li>Acquista il prodotto <a href="{{ $payUrl }}" target="_blank" rel="noopener"><strong>Pagina Incaricato Lamèss</strong></a> ({{ $price }} €, un anno). Il prodotto è visibile solo dopo l'accesso a KMoney.</li>
      <li>Torna qui, scrivi con quale nome o email hai pagato su KMoney e premi «Ho pagato, richiedi l'attivazione».</li>
     </ol>
     <form method="post" action="/area/pagina/richiesta">@csrf

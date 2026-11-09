@@ -14,9 +14,9 @@ return [
     // pagine personali pubbliche degli incaricati (/i/{slug}); con «approval» ogni modifica passa dal Consorzio prima di andare online
     // «staff_only»: fase di prova, le pagine le vede e le modifica solo chi ha accesso al back-office (nessuna pagina è pubblica)
     'personal_pages' => ['enabled' => (bool) env('LAMESS_PERSONAL_PAGES', true), 'approval' => (bool) env('LAMESS_PERSONAL_PAGES_APPROVAL', true), 'staff_only' => (bool) env('LAMESS_PERSONAL_PAGES_STAFF_ONLY', false),
-        // Attivazione su richiesta: l'incaricato la chiede e paga (prodotto «Pagina Lamèss» su kmoney.it, incassa il conto di KNM); il Consorzio conferma o la regala. Vale `validity_months` mesi.
+        // Attivazione su richiesta: l'incaricato la chiede e paga (prodotto «Pagina Incaricato Lamèss» su kmoney.it, incassa il conto di KNM); il Consorzio conferma o la regala. Vale `validity_months` mesi.
         'activation_required' => (bool) env('LAMESS_PERSONAL_PAGES_ACTIVATION', true), 'price' => env('LAMESS_PERSONAL_PAGES_PRICE', '150.00'),
-        'pay_url' => env('LAMESS_PERSONAL_PAGES_PAY_URL', 'https://kmoney.it'),
+        'pay_url' => env('LAMESS_PERSONAL_PAGES_PAY_URL', 'https://kmoney.it/shop/169'), 'register_url' => env('LAMESS_PERSONAL_PAGES_REGISTER_URL', 'https://kmoney.it/register'), 'recharge_url' => env('LAMESS_PERSONAL_PAGES_RECHARGE_URL', 'https://kmoney.it/ricarica'),
         'validity_months' => (int) env('LAMESS_PERSONAL_PAGES_MONTHS', 12), 'reminder_days' => (int) env('LAMESS_PERSONAL_PAGES_REMINDER_DAYS', 30)],
     // massimo di inviti che un incaricato può creare in 24 ore (0 = nessun limite)
     'referral_invites_per_day' => (int) env('LAMESS_REFERRAL_INVITES_PER_DAY', 50),

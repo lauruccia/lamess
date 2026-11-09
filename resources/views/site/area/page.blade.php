@@ -23,7 +23,7 @@
 @if($activation['required'] && in_array($activation['state'], ['expiring', 'requested'], true))
  <div class="note"><div>
   @if($activation['state'] === 'requested')<strong>Rinnovo richiesto</strong>Il Consorzio sta verificando il pagamento: la pagina resta attiva fino al {{ $activation['expires']?->timezone('Europe/Rome')->format('d/m/Y') }} e poi si prolunga.
-  @else<strong>La pagina scade tra {{ $activation['left'] }} {{ $activation['left'] === 1 ? 'giorno' : 'giorni' }} ({{ $activation['expires']?->timezone('Europe/Rome')->format('d/m/Y') }})</strong>Per rinnovarla di un anno acquista di nuovo il prodotto <strong>Pagina Lamèss</strong> su <a href="{{ $activation['payUrl'] }}" target="_blank" rel="noopener">kmoney.it</a> ({{ number_format((float) $activation['price'], 2, ',', '.') }} €), poi premi il pulsante.
+  @else<strong>La pagina scade tra {{ $activation['left'] }} {{ $activation['left'] === 1 ? 'giorno' : 'giorni' }} ({{ $activation['expires']?->timezone('Europe/Rome')->format('d/m/Y') }})</strong>Per rinnovarla di un anno ricarica il conto KMoney se serve (<a href="{{ config('lamess.personal_pages.recharge_url') }}" target="_blank" rel="noopener">Ricarica KMoney</a>) e acquista di nuovo il prodotto <a href="{{ $activation['payUrl'] }}" target="_blank" rel="noopener"><strong>Pagina Incaricato Lamèss</strong></a> ({{ number_format((float) $activation['price'], 2, ',', '.') }} €), poi premi il pulsante.
    <form method="post" action="/area/pagina/richiesta" style="margin-top:8px">@csrf<input name="kmoney_ref" maxlength="120" placeholder="Nome o email del conto KMoney" style="max-width:300px;margin-right:8px"><button class="btn">Ho pagato, richiedi il rinnovo</button></form>@endif
  </div></div>
 @endif

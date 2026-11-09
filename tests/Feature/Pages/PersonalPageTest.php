@@ -319,7 +319,7 @@ final class PersonalPageTest extends TestCase
     {
         config(['lamess.personal_pages.activation_required' => true, 'lamess.personal_pages.pay_url' => 'https://kmoney.it/prodotto/pagina-lamess']);
         $u = $this->consultantUser();
-        $this->actingAs($u)->get('/area/pagina')->assertOk()->assertSee('150,00 €')->assertSee('Pagina Lamèss')->assertSee('kmoney.it/prodotto/pagina-lamess', false)
+        $this->actingAs($u)->get('/area/pagina')->assertOk()->assertSee('150,00 €')->assertSee('Pagina Incaricato Lamèss')->assertSee('kmoney.it/prodotto/pagina-lamess', false)->assertSee('https://kmoney.it/register', false)->assertSee('https://kmoney.it/ricarica', false)
             ->assertSee('Ho pagato, richiedi l\'attivazione', false)->assertDontSee('Metti online la pagina');
         $this->actingAs($u)->post('/area/pagina', $this->form())->assertForbidden();
         $this->actingAs($u)->post('/area/pagina/online', ['online' => 1])->assertForbidden();

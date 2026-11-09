@@ -1,5 +1,55 @@
 # Registro aggiornamenti
 
+## 2026-11-09 — «Candidati»: richiesta di ingresso con approvazione
+- Con la registrazione solo su invito, chi non ha un invito può **candidarsi** da `/candidati` (pulsante «Candidati» al posto di «Registrati» nel menu, in `/accedi` e nell'avviso «Registrazione solo su invito»). Campi: nome, cognome, email, telefono, città, provincia, **interesse** (cliente oppure incaricato alla vendita, obbligatorio), presentazione libera, consenso privacy obbligatorio. Antirobot con campo nascosto e limite di 5 invii al minuto; una sola candidatura aperta per email (la risposta alla persona è sempre «Candidatura ricevuta»). Nessun account viene creato.
+- Admin: *Rete → Candidature* (permessi `network.view` / `network.manage`; il numero in nav indica le candidature da valutare). **Approva**: scegli lo sponsor (facoltativo; senza, vale l'incaricato «casa» se impostato, altrimenti nessuno) e un messaggio facoltativo; la persona riceve l'email con il **link personale** `/registrazione?candidatura=…` (monouso, valido 30 giorni). **Rifiuta**: email cortese con il motivo, se scritto. **Rimanda email**: rinvia l'esito (per le approvate proroga il link di 30 giorni). Con «Invio email attivo» spento l'esito resta nel pannello (colonna *Email*) e si rimanda dopo.
+- Dal link il modulo di registrazione si apre con nome, cognome ed email già compilati (l'email non è modificabile: il link vale per quella persona); a registrazione fatta la candidatura passa a *Registrato* e il link smette di funzionare. Chi ha scelto «incaricato alla vendita» lo vede in elenco ed è avvisato nell'email che potrà candidarsi come incaricato dalla sua area. Audit: `application.approve`, `application.reject`.
+- Codice: `ApplicationService`, `ApplicationController`, `RegistrationGate::application`, `MembershipApplication`, notifiche `MembershipApplicationApproved/Rejected`, risorsa `MembershipApplicationResource`. Test: `MembershipApplicationTest`.
+- Migrazione `2026_11_19_100000_membership_applications` (tabella nuova). Sul sito live (senza terminale) esegui **prima del deploy**, in phpMyAdmin → scheda SQL sul database `lamess_portale`:
+  ```sql
+  CREATE TABLE IF NOT EXISTS membership_applications (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    phone VARCHAR(40) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    province VARCHAR(4) NOT NULL,
+    interest VARCHAR(20) NOT NULL,
+    message TEXT NULL,
+    privacy_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    sponsor_id BIGINT UNSIGNED NULL,
+    token VARCHAR(64) NULL,
+    token_expires_at TIMESTAMP NULL,
+    decision_note TEXT NULL,
+    reviewed_by BIGINT UNSIGNED NULL,
+    reviewed_at TIMESTAMP NULL,
+    email_sent_at TIMESTAMP NULL,
+    email_note VARCHAR(255) NULL,
+    registered_user_id BIGINT UNSIGNED NULL,
+    registered_at TIMESTAMP NULL,
+    ip VARCHAR(45) NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    KEY membership_applications_email_index (email),
+    KEY membership_applications_status_index (status),
+    UNIQUE KEY membership_applications_token_unique (token),
+    CONSTRAINT membership_applications_sponsor_id_foreign FOREIGN KEY (sponsor_id) REFERENCES consultants (id) ON DELETE SET NULL,
+    CONSTRAINT membership_applications_reviewed_by_foreign FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL,
+    CONSTRAINT membership_applications_registered_user_id_foreign FOREIGN KEY (registered_user_id) REFERENCES users (id) ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_19_100000_membership_applications', MAX(batch) + 1 FROM migrations;
+  ```
+- Se la tabella manca, `/candidati` dà errore all'invio: crearla prima del deploy.
+
+## 2026-11-09 — Pagine personali: «Copia link di anteprima» per chi non ha accesso
+- Nuovo pulsante **Copia link di anteprima** in *Assistenza → Pagine personali* (permesso `compliance.manage`): crea e copia un link firmato che vale **7 giorni** e mostra la pagina (con le modifiche in attesa) a chiunque lo riceva, anche senza essere collegato e anche a sito chiuso. Si apre su `/anteprima-pagina/{id}/condivisa?...`, è `noindex` e la foto è servita con un link firmato con la stessa scadenza. Scaduto o manomesso: errore 403. Ogni link creato è nel registro di audit (`page.preview_link`).
+- Chiunque abbia il link lo può girare ad altri finché è valido: va dato solo a chi deve vedere la pagina. Il resto del sito resta chiuso; il link non dà accesso ad altro.
+- Nessuna migrazione. Test: `PersonalPageTest` (2 test nuovi).
+
 ## 2026-11-09 — Registrazione solo su invito e negozio con prezzi solo dopo l'accesso
 - **Registrazione solo su invito** (*Impostazioni di sistema → Sito*, acceso di default, `LAMESS_REGISTRATION_INVITE_ONLY`). Ci si registra soltanto da un link referral `/r/CODICE`, da `?ref=CODICE` o da un invito personale; senza, `/registrazione` mostra l'avviso «Registrazione solo su invito» (stato 403, `noindex`) e il POST è rifiutato sul server. Lo sponsor è quello del link: il campo «codice del tuo incaricato» non c'è più e un `sponsor_code` mandato a mano è ignorato. Vale solo il codice referral (casuale), non il codice attività LM00123 (consecutivo, indovinabile). Link sospeso o bannato: non vale. I pulsanti «Registrati» spariscono dalle pagine pubbliche per chi non ha un invito nel browser. Chi è già registrato accede come prima; admin e super admin continuano a creare utenti dal pannello.
 - **Negozio visibile con prezzi solo dopo l'accesso** (*Impostazioni di sistema → Sito*, acceso di default, `LAMESS_SHOP_LOGIN_REQUIRED`). Chi non è collegato vede `/negozio` e le schede prodotto (restano indicizzabili da Google) ma senza prezzi, offerte, spedizione gratuita, filtro e ordinamento per prezzo, e senza dati `price` nei dati strutturati; al posto del carrello c'è «Accedi per acquistare», che dopo l'accesso riporta alla pagina di partenza (`/accedi?dopo=/percorso`, solo indirizzi interni). Il carrello (`/carrello*`) richiede il login (middleware `shop.login`, risposta 401 JSON per le chiamate del carrello a cassetto). Spariscono per i non collegati i link «Negozio» e «Carrello» da menu e piè di pagina. Gli utenti collegati vedono prezzi e acquistano come prima.

@@ -28,6 +28,7 @@
  <form method="post" action="/registrazione" class="reg card" id="reg" novalidate>
   @csrf
   <input type="hidden" name="ref" value="{{ request('ref') }}">
+  @if(!empty($application))<input type="hidden" name="candidatura" value="{{ old('candidatura', request('candidatura')) }}">@endif
 
   {{-- Passo 1: chi sei --}}
   <div data-panel="1">
@@ -39,11 +40,11 @@
    <div class="grp" data-grp="private" @if($isCompany) data-off @endif>
     <div class="pair">
      <div class="fld @error('first_name') bad @enderror">
-      <input id="f-first" name="first_name" value="{{ old('first_name') }}" placeholder=" " autocomplete="given-name" enterkeyhint="next" data-req><label for="f-first">Nome</label>
+      <input id="f-first" name="first_name" value="{{ old('first_name', $prefill['first_name'] ?? '') }}" placeholder=" " autocomplete="given-name" enterkeyhint="next" data-req><label for="f-first">Nome</label>
       @error('first_name')<p class="fe">{{ $message }}</p>@enderror
      </div>
      <div class="fld @error('last_name') bad @enderror">
-      <input id="f-last" name="last_name" value="{{ old('last_name') }}" placeholder=" " autocomplete="family-name" enterkeyhint="next" data-req><label for="f-last">Cognome</label>
+      <input id="f-last" name="last_name" value="{{ old('last_name', $prefill['last_name'] ?? '') }}" placeholder=" " autocomplete="family-name" enterkeyhint="next" data-req><label for="f-last">Cognome</label>
       @error('last_name')<p class="fe">{{ $message }}</p>@enderror
      </div>
     </div>
@@ -76,7 +77,7 @@
    </div>
 
    <div class="fld @error('email') bad @enderror">
-    <input id="f-email" name="email" type="email" value="{{ old('email') }}" placeholder=" " autocomplete="email" autocapitalize="none" inputmode="email" enterkeyhint="next" required><label for="f-email">Email</label>
+    <input id="f-email" name="email" type="email" value="{{ old('email', $prefill['email'] ?? '') }}" @if(!empty($application))readonly @endif placeholder=" " autocomplete="email" autocapitalize="none" inputmode="email" enterkeyhint="next" required><label for="f-email">Email</label>
     @error('email')<p class="fe">{{ $message }}</p>@enderror
    </div>
 

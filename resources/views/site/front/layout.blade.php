@@ -46,7 +46,7 @@
       </div>
       <div>
         <h4>Il tuo spazio</h4>
-        <ul>@auth<li><a href="/area">La mia area</a></li><li><a href="/area/ordini">I miei ordini</a></li>@else<li><a href="/accedi">Accedi</a></li>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<li><a href="/registrazione">Registrati</a></li>@endif @endauth @if(\App\Support\ShopAccess::canBuy())<li><a href="/negozio">Negozio</a></li><li><a href="/carrello">Carrello</a></li>@endif</ul>
+        <ul>@auth<li><a href="/area">La mia area</a></li><li><a href="/area/ordini">I miei ordini</a></li>@else<li><a href="/accedi">Accedi</a></li>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<li><a href="/registrazione">Registrati</a></li>@else<li><a href="/candidati">Candidati</a></li>@endif @endauth @if(\App\Support\ShopAccess::canBuy())<li><a href="/negozio">Negozio</a></li><li><a href="/carrello">Carrello</a></li>@endif</ul>
       </div>
       <div>
         <h4>Contatti</h4>

@@ -87,14 +87,22 @@ class SiteController extends Controller
 
     public function registerForm(Request $request, ReferralResolver $resolver, RegistrationGate $gate)
     {
-        // Solo su invito: senza un link referral (o un invito) valido si vede l'avviso, mai il modulo
-        $invitedBy = RegistrationGate::inviteOnly() ? $gate->sponsor($request) : null;
-        if (RegistrationGate::inviteOnly() && $invitedBy === null) {
+        // Solo su invito: senza un link referral, un invito o una candidatura approvata si vede l'avviso, mai il modulo
+        $application = $gate->application($request);
+        $invitedBy = RegistrationGate::inviteOnly() ? ($application?->sponsor ?? $gate->sponsor($request)) : null;
+        if (RegistrationGate::inviteOnly() && $invitedBy === null && $application === null) {
             return $this->registrationClosed();
         }
-        [$sponsor] = $invitedBy !== null ? [$invitedBy] : $resolver->resolve($request->query('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), null);
+        if ($application !== null) {
+            $sponsor = $application->sponsor ?? $resolver->resolve(null, null, null)[0];
+        } else {
+            [$sponsor] = $invitedBy !== null ? [$invitedBy] : $resolver->resolve($request->query('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), null);
+        }
+        $prefill = $application !== null
+            ? ['first_name' => $application->first_name, 'last_name' => $application->last_name, 'email' => $application->email, 'phone' => $application->phone]
+            : [];
 
-        return view('site.register', ['sponsor' => $sponsor]);
+        return view('site.register', ['sponsor' => $sponsor, 'application' => $application, 'prefill' => $prefill]);
     }
 
     /** Avviso «registrazione solo su invito»: stato 403 e nessuna indicizzazione. */
@@ -107,12 +115,17 @@ class SiteController extends Controller
     {
         // Controllo sul server anche all'invio del modulo: nascondere la pagina non basta
         $inviteOnly = RegistrationGate::inviteOnly();
-        if ($inviteOnly && $gate->sponsor($request, (string) $request->input('ref')) === null) {
+        $application = $gate->application($request);
+        if ($inviteOnly && $application === null && $gate->sponsor($request, (string) $request->input('ref')) === null) {
             return $this->registrationClosed();
         }
-        if ($inviteOnly) {
+        if ($inviteOnly || $application !== null) {
             // chi si registra su invito non sceglie lo sponsor a mano: vale quello del link
             $request->merge(['sponsor_code' => null]);
+        }
+        if ($application !== null) {
+            // il link della candidatura vale per la persona approvata: l'email è quella della candidatura
+            $request->merge(['email' => $application->email]);
         }
         // spazi e minuscole non contano: si salva sempre in maiuscolo, senza spazi
         if ($request->filled('tax_code')) {
@@ -129,7 +142,13 @@ class SiteController extends Controller
         if ($data['type'] === 'company' && blank($data['sdi_code'] ?? null) && blank($data['pec'] ?? null)) {
             return back()->withInput()->withErrors(['sdi_code' => 'Per le aziende serve il codice SDI o la PEC.']);
         }
-        $customer = $customers->register($data, $request->input('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), $data['sponsor_code'] ?? null, $request->cookie((string) config('lamess.referral_invite_cookie_name')));
+        if ($application !== null) {
+            // sponsor scelto dall'amministrazione (altrimenti l'incaricato «casa», se c'è): link e cookie del browser non contano
+            $customer = $customers->register($data, $application->sponsor?->referral_code, null, null, null);
+            app(\App\Domain\Customers\ApplicationService::class)->markRegistered($application, $customer->user);
+        } else {
+            $customer = $customers->register($data, $request->input('ref'), $request->cookie((string) config('lamess.referral_cookie_name')), $data['sponsor_code'] ?? null, $request->cookie((string) config('lamess.referral_invite_cookie_name')));
+        }
         Auth::login($customer->user);
         $request->session()->regenerate();
 

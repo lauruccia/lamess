@@ -61,7 +61,7 @@
     <a class="hide-sm" href="/area">La mia area</a>
     <form method="post" action="/esci">@csrf<button class="link">Esci</button></form>
    @else
-    <a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">Registrati</a>@endif
+    <a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">Registrati</a>@else<a class="cta" href="/candidati">Candidati</a>@endif
    @endauth
   </nav>
   @endif
@@ -172,7 +172,7 @@
   @if(\App\Support\ShopAccess::canBuy())<nav aria-label="Negozio"><h4>Negozio</h4><a href="/negozio">Tutti i prodotti</a><a href="/carrello">Carrello</a></nav>@endif
   <nav aria-label="Il tuo spazio"><h4>Il tuo spazio</h4>
    @auth<a href="/area">La mia area</a><a href="/area/ordini">I miei ordini</a><a href="/area/abbonamenti">Abbonamenti</a><a href="/area/assistenza">Assistenza</a>
-   @else<a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">Registrati</a>@endif @endauth
+   @else<a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">Registrati</a>@else<a href="/candidati">Candidati</a>@endif @endauth
   </nav>
   <nav aria-label="Collegamenti utili"><h4>Collegamenti utili</h4><a href="/privacy">Privacy Policy</a><a href="/politiche-di-reso">Politiche di Reso</a><a href="/termini">Termini e Condizioni</a></nav>
   <div><h4>Acquisti sicuri</h4><p>Pagamento con carta, bonifico o KMoney. I tuoi dati restano tuoi e sono protetti.</p></div>

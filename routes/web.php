@@ -80,10 +80,14 @@ Route::redirect('/terms', '/termini', 301);
 Route::get('/r/{code}', [SiteController::class, 'referral'])->name('referral');
 Route::get('/i/{slug}', [PersonalPageController::class, 'show'])->where('slug', '[A-Za-z0-9-]+')->middleware('throttle:120,1')->name('personal-page');
 Route::get('/anteprima-pagina/{page}', [PersonalPageController::class, 'adminPreview'])->whereNumber('page')->middleware(['auth', 'throttle:60,1']);
-Route::get('/media/pagine/{page}/{file}', [PersonalPageController::class, 'photo'])->whereNumber('page')->where('file', '[A-Za-z0-9._-]+');
+Route::get('/anteprima-pagina/{page}/condivisa', [PersonalPageController::class, 'sharedPreview'])->whereNumber('page')->middleware(['signed', 'throttle:60,1'])->name('personal-page.shared-preview');
+Route::get('/media/pagine/{page}/{file}', [PersonalPageController::class, 'photo'])->whereNumber('page')->where('file', '[A-Za-z0-9._-]+')->name('personal-page.photo');
 Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware('throttle:30,1');
 
 Route::middleware('guest')->group(function () {
+    Route::get('/candidati', [\App\Http\Controllers\ApplicationController::class, 'form'])->name('apply');
+    Route::post('/candidati', [\App\Http\Controllers\ApplicationController::class, 'store'])->middleware('throttle:5,1');
+    Route::get('/candidati/grazie', [\App\Http\Controllers\ApplicationController::class, 'thanks']);
     Route::get('/registrazione', [SiteController::class, 'registerForm'])->name('register');
     Route::post('/registrazione', [SiteController::class, 'register'])->middleware('throttle:10,1');
     Route::get('/accedi', [SiteController::class, 'loginForm'])->name('login');

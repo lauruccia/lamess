@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Customers;
 
 use App\Models\Consultant;
+use App\Models\MembershipApplication;
 use App\Models\ReferralInvite;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ use Illuminate\Http\Request;
  */
 final class RegistrationGate
 {
-    public function __construct(private readonly ReferralResolver $resolver) {}
+    public function __construct(private readonly ReferralResolver $resolver, private readonly ApplicationService $applications) {}
 
     public static function inviteOnly(): bool
     {
@@ -47,5 +48,13 @@ final class RegistrationGate
         $invite = ReferralInvite::where('token', $token)->whereNull('registered_user_id')->with('consultant')->first();
 
         return $invite?->consultant !== null ? $this->resolver->findByReferralCode($invite->consultant->referral_code) : null;
+    }
+
+    /** Candidatura approvata presentata con il suo link personale (?candidatura= o campo del modulo). Null se non c'è o non è più valida. */
+    public function application(Request $request): ?MembershipApplication
+    {
+        $token = $request->input('candidatura', $request->query('candidatura'));
+
+        return is_string($token) ? $this->applications->findUsable($token) : null;
     }
 }

@@ -17,7 +17,11 @@ return [
         // Attivazione su richiesta: l'incaricato la chiede e paga (prodotto «Pagina Incaricato Lamèss» su kmoney.it, incassa il conto di KNM); il Consorzio conferma o la regala. Vale `validity_months` mesi.
         'activation_required' => (bool) env('LAMESS_PERSONAL_PAGES_ACTIVATION', true), 'price' => env('LAMESS_PERSONAL_PAGES_PRICE', '150.00'),
         'pay_url' => env('LAMESS_PERSONAL_PAGES_PAY_URL', 'https://kmoney.it/shop/169'), 'register_url' => env('LAMESS_PERSONAL_PAGES_REGISTER_URL', 'https://kmoney.it/register'), 'recharge_url' => env('LAMESS_PERSONAL_PAGES_RECHARGE_URL', 'https://kmoney.it/ricarica'),
-        'validity_months' => (int) env('LAMESS_PERSONAL_PAGES_MONTHS', 12), 'reminder_days' => (int) env('LAMESS_PERSONAL_PAGES_REMINDER_DAYS', 30)],
+        'validity_months' => (int) env('LAMESS_PERSONAL_PAGES_MONTHS', 12), 'reminder_days' => (int) env('LAMESS_PERSONAL_PAGES_REMINDER_DAYS', 30),
+        // Pagamento automatico: «Paga con KMoney» crea una richiesta di pagamento sul conto di KNM (non di Kadeo Group) e KMoney avvisa il portale. Spento finché non sono inseriti token e segreto.
+        // Il token e il segreto stanno solo nel .env; il conto di KNM è un'impostazione (Impostazioni → Rete), non una costante del codice.
+        'kmoney' => ['enabled' => (bool) env('LAMESS_PERSONAL_PAGES_KMONEY', false), 'account' => env('LAMESS_PERSONAL_PAGES_KMONEY_ACCOUNT', ''),
+            'api_token' => env('KMONEY_KNM_API_TOKEN'), 'webhook_secret' => env('KMONEY_KNM_WEBHOOK_SECRET')]],
     // massimo di inviti che un incaricato può creare in 24 ore (0 = nessun limite)
     'referral_invites_per_day' => (int) env('LAMESS_REFERRAL_INVITES_PER_DAY', 50),
     // Registrazione solo su invito: ci si iscrive soltanto da un link referral (/r/CODICE), da un invito personale o con un cookie referral valido.

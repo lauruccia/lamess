@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Pages\PageException;
+use App\Domain\Pages\PersonalPagePayment;
 use App\Domain\Pages\PersonalPageService;
 use App\Filament\Resources\ConsultantPages\ConsultantPageResource;
 use App\Models\Consultant;
@@ -88,19 +89,19 @@ class PersonalPageController extends Controller
         return $c;
     }
 
-    public function edit(Request $request, PersonalPageService $svc)
+    public function edit(Request $request, PersonalPageService $svc, PersonalPagePayment $payments)
     {
         $c = $this->mine($request, $svc);
         $page = $svc->find($c) ?? ($svc->activationRequired() ? new ConsultantPage : $svc->forConsultant($c));
         if (! $svc->isActivated($page)) {
-            return view('site.area.page-activation', ['page' => $page, 'svc' => $svc, 'c' => $c]);
+            return view('site.area.page-activation', ['page' => $page, 'svc' => $svc, 'c' => $c, 'autoPay' => $payments->canPay($page)]);
         }
 
         return view('site.area.page', [
             'page' => $page, 'd' => $svc->content($page, true), 'svc' => $svc, 'c' => $c,
             'public' => $svc->isPublic($page), 'approval' => $svc->approvalRequired(),
             'url' => url('/i/'.$page->slug), 'defaultName' => $svc->defaultName($c),
-            'activation' => ['state' => $svc->activationState($page), 'left' => $svc->daysLeft($page), 'expires' => $page->activation_expires_at, 'price' => $svc->price(), 'payUrl' => (string) config('lamess.personal_pages.pay_url'), 'required' => $svc->activationRequired()],
+            'activation' => ['state' => $svc->activationState($page), 'left' => $svc->daysLeft($page), 'expires' => $page->activation_expires_at, 'price' => $svc->price(), 'payUrl' => (string) config('lamess.personal_pages.pay_url'), 'required' => $svc->activationRequired(), 'autoPay' => $payments->canPay($page)],
         ]);
     }
 
@@ -194,5 +195,42 @@ class PersonalPageController extends Controller
         }
 
         return back()->with('status', 'Richiesta inviata: appena il Consorzio verifica il pagamento la pagina viene attivata e ricevi una email.');
+    }
+    /** «Paga con KMoney»: apre la richiesta di pagamento sul conto di KNM e manda l'incaricato alla pagina di pagamento di KMoney. */
+    public function pay(Request $request, PersonalPageService $svc, PersonalPagePayment $payments)
+    {
+        $c = $this->mine($request, $svc);
+        try {
+            return redirect()->away($payments->start($c));
+        } catch (PageException $e) {
+            return back()->withErrors(['activation' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Ritorno da KMoney (dopo il pagamento o l'annullamento). L'esito vero non sta nell'indirizzo: se l'avviso non è
+     * ancora arrivato si chiede a KMoney com'è andata la richiesta.
+     */
+    public function payReturn(Request $request, PersonalPageService $svc, PersonalPagePayment $payments): RedirectResponse
+    {
+        $c = $this->mine($request, $svc);
+        $page = $svc->find($c);
+        if ($page === null) {
+            return redirect('/area/pagina');
+        }
+        if ($request->query('esito') === 'annullato') {
+            return redirect('/area/pagina')->with('status', 'Pagamento annullato: non è stato addebitato nulla. Puoi riprovare quando vuoi.');
+        }
+        $page->refresh();
+        if ($svc->isActivated($page) && ! $svc->renewalDue($page)) {
+            return redirect('/area/pagina')->with('status', 'Pagamento ricevuto: la tua pagina è attiva. Ti abbiamo inviato una email.');
+        }
+        $payments->confirmOnReturn($page);
+        $page->refresh();
+        if ($svc->isActivated($page) && ! $svc->renewalDue($page)) {
+            return redirect('/area/pagina')->with('status', 'Pagamento ricevuto: la tua pagina è attiva. Ti abbiamo inviato una email.');
+        }
+
+        return redirect('/area/pagina')->with('status', 'Stiamo aspettando la conferma da KMoney: la pagina si attiva da sola appena arriva, di solito in pochi istanti. Ricarica questa pagina tra poco.');
     }
 }

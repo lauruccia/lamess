@@ -221,6 +221,10 @@ Sono quelle lette da `config/lamess.php`, `config/site.php` e `config/services.p
 | `LAMESS_PERSONAL_PAGES_REGISTER_URL` / `_RECHARGE_URL` | `https://kmoney.it/register` / `https://kmoney.it/ricarica` | link «Apri un conto KMoney» e «Ricarica KMoney» mostrati nella procedura | — | — |
 | `LAMESS_PERSONAL_PAGES_MONTHS` | `12` | mesi di validità di ogni attivazione o rinnovo | sì | sì |
 | `LAMESS_PERSONAL_PAGES_REMINDER_DAYS` | `30` | giorni prima della scadenza per promemoria e pulsante di rinnovo | sì | sì |
+| `LAMESS_PERSONAL_PAGES_KMONEY` | `false` | pagamento automatico della pagina con KMoney («Paga con KMoney»); serve anche token e segreto sotto; pannello: Impostazioni → Rete | sì | sì |
+| `LAMESS_PERSONAL_PAGES_KMONEY_ACCOUNT` | vuoto | numero del conto KMoney di KNM che incassa (solo per il registro di audit); pannello: Impostazioni → Rete | sì | sì |
+| `KMONEY_KNM_API_TOKEN` | vuoto | token API (abilità *write*) del conto di KNM su KMoney; solo `.env`, mai nel codice | — | — |
+| `KMONEY_KNM_WEBHOOK_SECRET` | vuoto | segreto con cui KMoney firma l'avviso `payment_request.paid` verso `/webhooks/kmoney-pagine`; solo `.env` | — | — |
 | `LAMESS_DEFAULT_CONSULTANT_CODE` | vuoto | codice dell'incaricato «casa» per i clienti senza referral (OPEN-20) | — | — |
 | `LAMESS_REQUIRE_FIRST_BOX` | `false` | la richiesta di diventare incaricato richiede il primo ordine pagato | — | — |
 | `LAMESS_CODE_PREFIX` | `LM` | prefisso del codice incaricato (poi 5 cifre) | — | — |

@@ -163,6 +163,8 @@ Route::middleware('auth')->prefix('area')->group(function () {
     Route::post('/referral/inviti', [ContentController::class, 'inviteStore'])->middleware('throttle:20,1');
     Route::post('/referral/inviti/{invite}/ricorda', [ContentController::class, 'inviteRemind'])->middleware('throttle:20,1');
     Route::post('/pagina/richiesta', [PersonalPageController::class, 'requestActivation'])->middleware('throttle:10,1');
+    Route::post('/pagina/paga', [PersonalPageController::class, 'pay'])->middleware('impersonation.safe')->middleware('throttle:10,1');
+    Route::get('/pagina/pagamento', [PersonalPageController::class, 'payReturn'])->middleware('throttle:30,1');
     Route::get('/wallet', [WalletController::class, 'wallet']);
     Route::post('/wallet/prelievo', [WalletController::class, 'withdraw'])->middleware('impersonation.safe')->middleware('throttle:10,1');
     Route::post('/wallet/prelievo/{withdrawal}/documento', [WalletController::class, 'addDocument'])->middleware('impersonation.safe')->middleware('throttle:10,1');
@@ -206,6 +208,7 @@ Route::post('/webhooks/stripe', [WebhookController::class, 'stripe'])->middlewar
 
 // File riservati agli amministratori (lettere firmate, documenti KYC)
 Route::middleware(['auth'])->prefix('admin-files')->group(function () {
+Route::post('/webhooks/kmoney-pagine', App\Http\Controllers\PagePaymentWebhookController::class)->middleware('throttle:120,1');
     Route::get('/contract/{contract}', function (IvdContract $contract) {
         abort_unless(auth()->user()->can('network.manage') && $contract->pdf_path && Storage::exists($contract->pdf_path), 403);
 

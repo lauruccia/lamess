@@ -26,6 +26,14 @@
   </header>
   <div class="panel-body">
    <p style="margin-top:0">La pagina personale non è inclusa di default: si attiva su richiesta e vale <strong>{{ $months === 12 ? 'un anno' : $months.' mesi' }}</strong>, poi si rinnova. Il costo è di <strong>{{ $price }} €</strong>.</p>
+   @if($autoPay ?? false)
+    <form method="post" action="/area/pagina/paga">@csrf
+     <p style="margin-top:0">Paga con KMoney in pochi clic: ti portiamo sulla pagina di pagamento di KMoney. Se non hai ancora un conto lo apri lì, con i tuoi dati già inseriti. Appena il pagamento è confermato la pagina si attiva da sola e ti arriva una email.</p>
+     <div><button class="btn accent">Paga con KMoney — {{ $price }} €</button></div>
+    </form>
+    <details style="margin-top:18px"><summary style="cursor:pointer;font-weight:600">Preferisci la procedura a mano?</summary>
+     <div style="margin-top:10px">
+   @endif
    @if($state === 'requested')
     <p>Abbiamo ricevuto la tua richiesta. Appena il Consorzio verifica il pagamento la pagina viene attivata e ti arriva una email. Non devi fare altro.</p>
    @else
@@ -41,6 +49,10 @@
      <div><button class="btn accent">Ho pagato, richiedi l'attivazione</button></div>
     </form>
     <p class="muted" style="font-size:13.5px;margin-bottom:0">Dopo il pagamento il Consorzio attiva la pagina e ti avvisa con una email, di solito entro un giorno lavorativo. Se pensi di avere diritto all'attivazione gratuita, scrivi all'assistenza.</p>
+   @endif
+   @if($autoPay ?? false)
+     </div>
+    </details>
    @endif
   </div>
  </section>

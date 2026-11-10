@@ -1,5 +1,24 @@
 # Registro aggiornamenti
 
+## 2026-11-10 — Pagine personali: pagamento automatico con KMoney (conto di KNM)
+- **«Paga con KMoney»** in *Area → La mia pagina* (prima attivazione, scadenza passata e rinnovo nel preavviso). Il portale crea su KMoney una richiesta di pagamento da 150 KY sul conto di **KNM** (non Kadeo Group) e manda l'incaricato alla pagina di pagamento di KMoney; lì accede o apre il conto con dati già compilati. Quando KMoney conferma, la pagina si attiva da sola (email all'incaricato) e l'incaricato torna a «La mia pagina». Rinnovo annuale identico. La procedura a mano resta come ripiego («Preferisci la procedura a mano?»).
+- **Spento di default**: si accende da *Impostazioni → Rete* («Pagine personali: pagamento automatico con KMoney») solo con `KMONEY_KNM_API_TOKEN`, `KMONEY_KNM_WEBHOOK_SECRET` e `KMONEY_BASE_URL` nel `.env`. Il conto di KNM è un'impostazione («conto KMoney che incassa»), non una costante.
+- **Avviso firmato** `POST /webhooks/kmoney-pagine` (firma HMAC-SHA256 `X-KMoney-Signature`, la stessa di KMoney): idempotente (stesso avviso due volte = una attivazione), importo e valuta verificati, mai attivazione su pagamento non abbinato o con importo diverso (restano in audit: `page.payment_mismatch`, `page.payment_unmatched`). Se l'avviso tarda, il ritorno dell'incaricato chiede a KMoney com'è andata la richiesta.
+- Codice: `PersonalPagePayment`, `PagePaymentWebhookController`, rotte `/area/pagina/paga`, `/area/pagina/pagamento`, `/webhooks/kmoney-pagine`. Test: `PersonalPagePaymentTest` (13, KMoney simulato). Manuali utente, admin, sviluppatori e `parametri.md` aggiornati.
+- **Da fare su KMoney** (lato kmoney-app, vedi il suo registro): rilascio con la registrazione precompilata e il ritorno al pagamento; poi per il conto di KNM creare il token API *write* e registrare il webhook `payment_request.paid` verso `https://<sito>/webhooks/kmoney-pagine` con il segreto.
+- Migrazione `2026_11_22_100000_consultant_pages_kmoney_payment`. Sul sito live esegui **prima del deploy**, in phpMyAdmin → scheda SQL:
+  ```sql
+  ALTER TABLE consultant_pages
+    ADD COLUMN kmoney_request_uuid VARCHAR(64) NULL AFTER activation_note,
+    ADD COLUMN kmoney_paid_uuid VARCHAR(64) NULL AFTER kmoney_request_uuid;
+
+  INSERT INTO migrations (migration, batch)
+  SELECT '2026_11_22_100000_consultant_pages_kmoney_payment', MAX(batch) + 1 FROM migrations;
+  ```
+- Se le colonne mancano, «La mia pagina» dà errore: eseguire l'SQL prima del deploy.
+- Da chiarire con la commercialista: l'incasso è di KNM ma il portale fattura per il Consorzio Kadeo.
+
+
 ## 2026-11-10 — Pagine personali: nessuna bozza creata da una semplice visita, foto non più persa
 - Con l'attivazione richiesta, aprire *La mia pagina* **non crea più** la riga della pagina: nasce solo con la richiesta di attivazione o con l'attivazione del Consorzio. Spenta l'attivazione, si comporta come prima (la bozza nasce all'apertura).
 - **Foto**: «Modifica testi» del Consorzio (salvataggio diretto) partiva dal contenuto in uso e non dalla proposta in attesa: se la foto era stata caricata ma non ancora approvata, la perdeva e ne cancellava il file. Ora parte sempre dal contenuto che si vede nel modulo (proposta in attesa, altrimenti contenuto in uso). Test aggiunti in `PersonalPageTest` (22).

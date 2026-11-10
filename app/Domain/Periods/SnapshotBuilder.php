@@ -44,7 +44,7 @@ final class SnapshotBuilder
 
         $nodes = Consultant::query()
             ->where('status', '!=', 'pending')
-            ->whereRaw('coalesce(network_since, since) <= ?', [$until->setTimezone('UTC')->format('Y-m-d H:i:s')])
+            ->whereRaw('coalesce(network_since, since) <= ?', [$until->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s')])
             ->orderBy('id')
             ->get()
             ->map(static fn (Consultant $c) => new Node(

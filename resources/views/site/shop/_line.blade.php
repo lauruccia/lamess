@@ -10,15 +10,15 @@
  <a class="line-img" href="{{ $p->shopUrl() }}">@include('site.shop._thumb', ['product' => $p])</a>
  <div class="line-main">
   <a class="line-name" href="{{ $p->shopUrl() }}">{{ $p->displayName() }}</a>
-  <p class="line-price">€ {{ \App\Support\Money::eur($unitGross) }}@if($line->isDiscounted()) <s>€ {{ \App\Support\Money::eur($listGross) }}</s>@endif <span class="muted">cad. · IVA inclusa</span></p>
-  @if($max < 99 && $line->qty >= $max)<p class="line-warn">Massimo disponibile</p>@endif
+  <p class="line-price">€ {{ \App\Support\Money::eur($unitGross) }}@if($line->isDiscounted()) <s>€ {{ \App\Support\Money::eur($listGross) }}</s>@endif <span class="muted">{{ __('cad. · IVA inclusa') }}</span></p>
+  @if($max < 99 && $line->qty >= $max)<p class="line-warn">{{ __('Massimo disponibile') }}</p>@endif
   <div class="line-ctl">
    <div class="qty sm" data-qty @if($variant === 'drawer') data-line-update data-product="{{ $pid }}" @if($for) data-for="{{ $for }}" @endif @endif>
-    <button type="button" data-step="-1" aria-label="Diminuisci">−</button>
-    <input type="number" value="{{ $line->qty }}" min="0" max="{{ $max }}" inputmode="numeric" aria-label="Quantità di {{ $p->displayName() }}" @if($variant === 'cart') name="{{ $for ? 'qty_others['.$for.']['.$pid.']' : 'qty['.$pid.']' }}" @endif>
-    <button type="button" data-step="1" aria-label="Aumenta">+</button>
+    <button type="button" data-step="-1" aria-label="{{ __('Diminuisci') }}">−</button>
+    <input type="number" value="{{ $line->qty }}" min="0" max="{{ $max }}" inputmode="numeric" aria-label="{{ __('Quantità di :p', ['p' => $p->displayName()]) }}" @if($variant === 'cart') name="{{ $for ? 'qty_others['.$for.']['.$pid.']' : 'qty['.$pid.']' }}" @endif>
+    <button type="button" data-step="1" aria-label="{{ __('Aumenta') }}">+</button>
    </div>
-   <button type="button" class="linkbtn" data-remove aria-label="Rimuovi {{ $p->displayName() }}">Rimuovi</button>
+   <button type="button" class="linkbtn" data-remove aria-label="{{ __('Rimuovi :p', ['p' => $p->displayName()]) }}">{{ __('Rimuovi') }}</button>
   </div>
  </div>
  <p class="line-total">€ {{ \App\Support\Money::eur($line->grossLine()) }}</p>

@@ -30,6 +30,7 @@ use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\LanguageController;
 use App\Models\CommissionReceipt;
 use App\Models\Consultant;
 use App\Models\CreditNote;
@@ -44,6 +45,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 Route::get('/', [SiteController::class, 'home'])->name('home');
+Route::get('/lingua/{code}', [LanguageController::class, 'switch'])->where('code', '[a-z]{2}(-[a-z]{2})?')->name('language.switch');
 // pagine pubbliche del sito vetrina (layout site.front.*)
 Route::view('/il-prodotto', 'site.front.prodotto')->name('front.prodotto');
 Route::view('/perche-lamess', 'site.front.perche')->name('front.perche');

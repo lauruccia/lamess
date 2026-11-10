@@ -9,11 +9,11 @@
  <a class="pcard-img" href="{{ $product->shopUrl() }}" tabindex="-1" aria-hidden="true">
   @include('site.shop._thumb', ['product' => $product, 'alt' => $product->displayName()])
   <span class="tags">
-   @if($product->isSoldOut())<span class="tag dark">Esaurito</span>@elseif($saving)<span class="tag hot">−{{ $saving }}%</span>@endif
+   @if($product->isSoldOut())<span class="tag dark">{{ __('Esaurito') }}</span>@elseif($saving)<span class="tag hot">−{{ $saving }}%</span>@endif
    @if($product->badge)<span class="tag">{{ $product->badge }}</span>@endif
-   @if($product->is_kit)<span class="tag">Kit</span>@endif
+   @if($product->is_kit)<span class="tag">{{ __('Kit') }}</span>@endif
   </span>
-  @if(($kmPct = $product->kmoneyPercent()) > 0)<span class="tags tags-bottom"><span class="tag km" title="Puoi pagare il {{ $kmPct }}% di questo prodotto con KMoney">{{ $kmPct }}% in KMoney</span></span>@endif
+  @if(($kmPct = $product->kmoneyPercent()) > 0)<span class="tags tags-bottom"><span class="tag km" title="{{ __('Puoi pagare il :p% di questo prodotto con KMoney', ['p' => $kmPct]) }}">{{ __(':p% in KMoney', ['p' => $kmPct]) }}</span></span>@endif
  </a>
  <div class="pcard-body">
   <h3><a href="{{ $product->shopUrl() }}">{{ $product->displayName() }}</a></h3>
@@ -22,23 +22,23 @@
    <div class="pcard-price">
     @if(! $showPrices)
     @elseif($withVariants && $range)
-     <p class="price">@if($range[0] !== $range[1])<span class="muted small">da</span> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b><span class="vat-note">IVA inclusa</span></p>
+     <p class="price">@if($range[0] !== $range[1])<span class="muted small">{{ __('da') }}</span> @endif<b>€ {{ \App\Support\Money::eur($range[0]) }}</b><span class="vat-note">{{ __('IVA inclusa') }}</span></p>
     @else
-     <p class="price"><b>€ {{ \App\Support\Money::eur($product->grossPriceFor(auth()->user())) }}</b>@if($product->compareAtGross()) <s>€ {{ \App\Support\Money::eur($product->compareAtGross()) }}</s>@endif<span class="vat-note">IVA inclusa</span></p>
+     <p class="price"><b>€ {{ \App\Support\Money::eur($product->grossPriceFor(auth()->user())) }}</b>@if($product->compareAtGross()) <s>€ {{ \App\Support\Money::eur($product->compareAtGross()) }}</s>@endif<span class="vat-note">{{ __('IVA inclusa') }}</span></p>
     @endif
     @if($product->category)<span class="pcard-chip">{{ $product->category->name }}</span>@endif
    </div>
    <div class="pcard-act">
     @if($product->isSoldOut())
-     <span class="muted small">Non disponibile</span>
+     <span class="muted small">{{ __('Non disponibile') }}</span>
     @elseif(! $showPrices)
-     <a class="add" href="/accedi?dopo={{ urlencode('/negozio/'.$product->slug) }}">Accedi per acquistare</a>
+     <a class="add" href="/accedi?dopo={{ urlencode('/negozio/'.$product->slug) }}">{{ __('Accedi per acquistare') }}</a>
     @elseif($withVariants)
-     <a class="add icon" href="{{ $product->shopUrl() }}" title="Scegli le opzioni" aria-label="Scegli le opzioni di {{ $product->displayName() }}">{!! $cart !!}</a>
+     <a class="add icon" href="{{ $product->shopUrl() }}" title="{{ __('Scegli le opzioni') }}" aria-label="{{ __('Scegli le opzioni di :p', ['p' => $product->displayName()]) }}">{!! $cart !!}</a>
     @else
      <form method="post" action="/carrello/aggiungi" data-add>@csrf
       <input type="hidden" name="product_id" value="{{ $product->id }}"><input type="hidden" name="qty" value="1">
-      <button class="add icon" title="Aggiungi al carrello" aria-label="Aggiungi {{ $product->displayName() }} al carrello">{!! $cart !!}</button>
+      <button class="add icon" title="{{ __('Aggiungi al carrello') }}" aria-label="{{ __('Aggiungi :p al carrello', ['p' => $product->displayName()]) }}">{!! $cart !!}</button>
      </form>
     @endif
    </div>

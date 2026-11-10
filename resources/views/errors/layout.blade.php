@@ -3,7 +3,7 @@
 <head>
 <meta name="color-scheme" content="light">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>@yield('title') — Lamèss</title>
+<title>@yield('title') {{ __('— Lamèss') }}</title>
 <link rel="icon" href="/favicon.ico?v=2">
 <link rel="stylesheet" href="/css/lamess-tokens.css">
 <link rel="stylesheet" href="/css/lamess-site.css">
@@ -14,12 +14,12 @@
  <div class="err-box">
   <a class="brand" href="/" style="justify-content:center;margin-bottom:28px">
    <img src="/img/lamess-logo.png" width="38" height="38" alt="">
-   <b>Lamèss</b>
+   <b>{{ __('Lamèss') }}</b>
   </a>
   <div class="code">@yield('code')</div>
   <h1>@yield('heading')</h1>
   <p class="lead" style="margin:0 auto">@yield('message')</p>
-  <p><a class="btn" href="/">Torna alla pagina iniziale</a> @hasSection('extra')@yield('extra')@endif</p>
+  <p><a class="btn" href="/">{{ __('Torna alla pagina iniziale') }}</a> @hasSection('extra')@yield('extra')@endif</p>
  </div>
 </main>
 </body></html>

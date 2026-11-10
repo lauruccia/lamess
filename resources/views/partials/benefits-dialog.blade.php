@@ -19,14 +19,14 @@
       @foreach($beans as [$x, $w, $t, $d, $r, $sw, $c])<svg viewBox="0 0 24 32" style="--x: {{ $x }}%; --s: {{ $w }}px; --t: {{ $t }}s; --d: {{ $d }}s; --r: {{ $r }}deg; --sw: {{ $sw }}px; color: {{ $c }}"><use href="#bn-bean"/></svg>@endforeach
     </div>
     <header class="bn-top">
-      <p class="bn-brand" id="bn-title">Lamèss Cosmetic Coffee</p>
-      <p class="bn-sr" id="bn-sub">Cinque schede sui benefici del prodotto. Usa le frecce per scorrerle.</p>
-      <button type="button" class="bn-x" data-bn-close aria-label="Chiudi">×</button>
+      <p class="bn-brand" id="bn-title">{{ __('Lamèss Cosmetic Coffee') }}</p>
+      <p class="bn-sr" id="bn-sub">{{ __('Cinque schede sui benefici del prodotto. Usa le frecce per scorrerle.') }}</p>
+      <button type="button" class="bn-x" data-bn-close aria-label="{{ __('Chiudi') }}">×</button>
     </header>
 
     <div class="bn-stage" aria-live="off">
       @foreach($benefitSlides as $i => $s)
-      <section class="bn-slide" data-i="{{ $i }}" aria-label="Scheda {{ $i + 1 }} di {{ count($benefitSlides) }}" @if($i > 0) hidden @endif>
+      <section class="bn-slide" data-i="{{ $i }}" aria-label="{{ __('Scheda :p di :p2', ['p' => $i + 1, 'p2' => count($benefitSlides)]) }}" @if($i > 0) hidden @endif>
         <p class="bn-k">{{ $s['kicker'] }}</p>
         @if(($s['visual'] ?? null) === 'cup')
         <div class="bn-cup" aria-hidden="true">
@@ -66,18 +66,18 @@
     </div>
 
     <div class="bn-nav">
-      <button type="button" class="bn-arrow" data-bn-prev aria-label="Scheda precedente">‹</button>
-      <ol class="bn-dots" role="tablist" aria-label="Schede">
-        @foreach($benefitSlides as $i => $s)<li><button type="button" role="tab" data-go="{{ $i }}" aria-label="Scheda {{ $i + 1 }}: {{ $s['title'] }}" aria-selected="{{ $i === 0 ? 'true' : 'false' }}"><i></i></button></li>@endforeach
+      <button type="button" class="bn-arrow" data-bn-prev aria-label="{{ __('Scheda precedente') }}">‹</button>
+      <ol class="bn-dots" role="tablist" aria-label="{{ __('Schede') }}">
+        @foreach($benefitSlides as $i => $s)<li><button type="button" role="tab" data-go="{{ $i }}" aria-label="{{ __('Scheda :p: :p2', ['p' => $i + 1, 'p2' => $s['title']]) }}" aria-selected="{{ $i === 0 ? 'true' : 'false' }}"><i></i></button></li>@endforeach
       </ol>
-      <button type="button" class="bn-arrow" data-bn-next aria-label="Scheda successiva">›</button>
-      <button type="button" class="bn-pause" data-bn-pause aria-pressed="false">Pausa</button>
+      <button type="button" class="bn-arrow" data-bn-next aria-label="{{ __('Scheda successiva') }}">›</button>
+      <button type="button" class="bn-pause" data-bn-pause aria-pressed="false">{{ __('Pausa') }}</button>
     </div>
 
     <footer class="bn-foot">
-      <a class="bn-cta" href="/il-prodotto" target="_blank" rel="noopener">Tutti gli ingredienti</a>
-      <button type="button" class="bn-back" data-bn-close>Torna alla registrazione</button>
+      <a class="bn-cta" href="/il-prodotto" target="_blank" rel="noopener">{{ __('Tutti gli ingredienti') }}</a>
+      <button type="button" class="bn-back" data-bn-close>{{ __('Torna alla registrazione') }}</button>
     </footer>
-    <p class="bn-legal">Lamèss Cosmetic Coffee è un integratore alimentare e non un medicinale; non sostituisce una dieta varia ed equilibrata e uno stile di vita sano.</p>
+    <p class="bn-legal">{{ __('Lamèss Cosmetic Coffee è un integratore alimentare e non un medicinale; non sostituisce una dieta varia ed equilibrata e uno stile di vita sano.') }}</p>
   </div>
 </dialog>

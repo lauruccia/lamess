@@ -293,3 +293,10 @@ In **Vendite → Ordini**: dalla riga di un ordine pagato «Stampa etichetta»; 
 
 **Correggere l'indirizzo di consegna di un ordine**: finché l'ordine non è spedito (in attesa di pagamento, pagato, in preparazione) dalla riga o dalla pagina dell'ordine scegli **«Modifica indirizzo di consegna»**. Cambia solo dove consegnare: la fatturazione e le fatture già emesse restano come sono. Il cambio (indirizzo vecchio → nuovo) resta scritto nella Cronologia come nota interna e l'etichetta, ristampata, usa subito il dato nuovo. Il modulo non accetta indirizzi senza la via (es. solo «Piano 1») o senza numero civico; se la strada non ha numero si scrive «snc».
 
+
+## Lingue e traduzioni (solo super_admin)
+- **Lingue**: elenco delle lingue del sito (it, en, nl, fr, de, es). «Nuova lingua» crea una lingua con una riga vuota per ogni testo italiano; resta in **bozza** (la vedono solo gli utenti del back-office) finché non la **attivi**. L'italiano è la lingua predefinita e non si disattiva.
+- **Traduzioni**: tutte le frasi del sito, con filtro per lingua e stato (mancante · automatica · approvata). «Modifica» su una riga per cambiare la traduzione; si può modificare anche il **testo italiano** (la modifica vale per tutte le lingue). I segnaposto come `:p` o `:total` e i tag `<strong>` vanno lasciati intatti.
+- **Traduci le mancanti** (o «Traduci in automatico» per le righe scelte): usa il motore scelto in `.env` (`I18N_DRIVER`); le frasi tradotte così restano «automatiche» finché un traduttore non le **approva** («Segna come approvata» / «Approva le selezionate»).
+- **Scansione**: dopo una modifica alle pagine, «Cerca nuove stringhe» aggiunge le frasi che non ci sono ancora. «Esporta per il traduttore» e «Importa dal traduttore» scambiano un file CSV con il traduttore.
+- L'interruttore «Mostra le traduzioni non ancora riviste» è in *Impostazioni di sistema → Lingue*.

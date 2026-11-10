@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Domain\Access\Roles;
+use App\Domain\I18n\Locales;
 use App\Models\Scopes\HidesSuperAdmins;
 use App\Notifications\ResetPasswordIt;
 use App\Observers\UserObserver;
@@ -12,12 +13,14 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -27,10 +30,18 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes'])]
 #[ScopedBy([HidesSuperAdmins::class])]
 #[ObservedBy([UserObserver::class])]
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
+
+    /** Lingua delle email e delle notifiche (scelta dal selettore del sito); senza scelta vale quella del sito. */
+    public function preferredLocale(): ?string
+    {
+        $locale = $this->getAttribute('locale');
+
+        return is_string($locale) && $locale !== '' && Locales::isActive($locale) ? $locale : null;
+    }
 
     public function profile(): HasOne
     {
@@ -42,7 +53,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasOne(Customer::class);
     }
 
-    public function shippingAddresses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function shippingAddresses(): HasMany
     {
         return $this->hasMany(ShippingAddress::class);
     }

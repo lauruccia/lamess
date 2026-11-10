@@ -11,14 +11,14 @@
     $b = (array) ($order->billing ?? []);
     $pieces = (int) $order->items->sum('qty');
 @endphp
-<p class="crumb"><a href="/area/ordini">← Tutti gli ordini</a></p>
+<p class="crumb"><a href="/area/ordini">{{ __('← Tutti gli ordini') }}</a></p>
 <div class="pg-head">
  <div>
-  <h1>Ordine {{ $order->number }}</h1>
-  <p class="sub">Effettuato il {{ \App\Support\Ui::date($order->created_at, 'd/m/Y \a\l\l\e H:i') }} · {{ $pieces }} {{ $pieces === 1 ? 'pezzo' : 'pezzi' }} · <span class="st st-{{ $tone }}">{{ $lab }}</span></p>
+  <h1>{{ __('Ordine :p', ['p' => $order->number]) }}</h1>
+  <p class="sub">{{ __('Effettuato il :p · :pieces :p2 ·', ['p' => \App\Support\Ui::date($order->created_at, 'd/m/Y \a\l\l\e H:i'), 'pieces' => $pieces, 'p2' => $pieces === 1 ? 'pezzo' : 'pezzi']) }} <span class="st st-{{ $tone }}">{{ $lab }}</span></p>
  </div>
  @if($order->invoice)
-  <div class="pg-actions"><a class="btn accent" href="/area/ordini/{{ $order->id }}/fattura">{{ $order->invoice->type === 'receipt' ? 'Ricevuta' : 'Fattura' }} {{ $order->invoice->number }} (PDF)</a></div>
+  <div class="pg-actions"><a class="btn accent" href="/area/ordini/{{ $order->id }}/fattura">{{ __(':p :p2 (PDF)', ['p' => $order->invoice->type === 'receipt' ? 'Ricevuta' : 'Fattura', 'p2' => $order->invoice->number]) }}</a></div>
  @endif
 </div>
 
@@ -26,70 +26,70 @@
 
 @if($order->status === 'pending_payment')
  @if($order->payment_method === 'transfer')
-  <div class="note"><div><strong>Fai il bonifico per confermare l'ordine</strong>{{ config('lamess.bank_transfer_instructions') }}<br>Causale: <strong>{{ $order->number }}</strong> · Importo: <strong>€ {{ $eur($order->restDue()) }}</strong>. L'ordine sarà confermato alla ricezione del pagamento.</div></div>
+  <div class="note"><div>{!! __('<strong>Fai il bonifico per confermare l\'ordine</strong>:p<br>Causale: <strong>:p2</strong> · Importo: <strong>€ :p3</strong>. L\'ordine sarà confermato alla ricezione del pagamento.', ['p' => e(config('lamess.bank_transfer_instructions')), 'p2' => e($order->number), 'p3' => e($eur($order->restDue()))]) !!}</div></div>
  @elseif($order->payment_method === 'kmoney')
   @php($kmPaid = $order->payments->contains(fn ($p) => $p->method === 'kmoney' && $p->status === 'paid'))
   @if(! $kmPaid && ($kmoneyConfirming ?? false))
-   <div class="note" data-km-confirming><div><strong>Stiamo confermando il pagamento con KMoney</strong>Hai già confermato su KMoney: questa pagina si aggiorna da sola entro pochi istanti, non devi fare altro.</div></div>
+   <div class="note" data-km-confirming><div>{!! __('<strong>Stiamo confermando il pagamento con KMoney</strong>Hai già confermato su KMoney: questa pagina si aggiorna da sola entro pochi istanti, non devi fare altro.') !!}</div></div>
    <script>setTimeout(function () { location.reload(); }, 5000);</script>
   @elseif(! $kmPaid)
-   <div class="note"><div><strong>Conferma il pagamento con KMoney</strong>Quando confermi, addebitiamo {{ $eur($order->kmoney_amount) }} KY dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l'acquisto. Non hai ancora un conto? <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">Apri un conto KMoney</a>.</div>
-    <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Conferma e paga {{ $eur($order->kmoney_amount) }} KY</button></form></div>
+   <div class="note"><div>{!! __('<strong>Conferma il pagamento con KMoney</strong>Quando confermi, addebitiamo :p KY dal tuo saldo KMoney. Se è la prima volta ti portiamo su KMoney per collegare il conto o confermare l\'acquisto. Non hai ancora un conto?', ['p' => e($eur($order->kmoney_amount))]) !!} <a href="{{ config('lamess.kmoney.register_url') ?: 'https://kmoney.it/register' }}" target="_blank" rel="noopener">{{ __('Apri un conto KMoney') }}</a>.</div>
+    <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">{{ __('Conferma e paga :p KY', ['p' => $eur($order->kmoney_amount)]) }}</button></form></div>
   @elseif($order->kmoney_rest_method === null && (float) $order->restDue() > 0)
    @php($restMethods = app(\App\Domain\Orders\OrderService::class)->enabledMethods())
-   <div class="note"><div><strong>Quota KMoney incassata · come vuoi pagare il resto?</strong>Restano € {{ $eur($order->restDue()) }} da pagare.</div>
+   <div class="note"><div>{!! __('<strong>Quota KMoney incassata · come vuoi pagare il resto?</strong>Restano € :p da pagare.', ['p' => e($eur($order->restDue()))]) !!}</div>
     @if($restMethods['card'] || $restMethods['transfer'])
      <form method="post" action="/area/ordini/{{ $order->id }}/resto">@csrf
       <fieldset class="choice">
-       @if($restMethods['card'])<label class="opt-card"><input type="radio" name="kmoney_rest" value="card" checked><span class="dot"></span><span class="oc-text"><b>Carta di credito o debito</b><small>Pagamento immediato</small></span></label>@endif
-       @if($restMethods['transfer'])<label class="opt-card"><input type="radio" name="kmoney_rest" value="transfer" @checked(! $restMethods['card'])><span class="dot"></span><span class="oc-text"><b>Bonifico bancario</b><small>L'ordine è confermato alla ricezione del pagamento</small></span></label>@endif
+       @if($restMethods['card'])<label class="opt-card"><input type="radio" name="kmoney_rest" value="card" checked><span class="dot"></span><span class="oc-text"><b>{{ __('Carta di credito o debito') }}</b><small>{{ __('Pagamento immediato') }}</small></span></label>@endif
+       @if($restMethods['transfer'])<label class="opt-card"><input type="radio" name="kmoney_rest" value="transfer" @checked(! $restMethods['card'])><span class="dot"></span><span class="oc-text"><b>{{ __('Bonifico bancario') }}</b><small>{{ __('L\'ordine è confermato alla ricezione del pagamento') }}</small></span></label>@endif
       </fieldset>
-      <button class="btn">Continua · € {{ $eur($order->restDue()) }}</button>
+      <button class="btn">{{ __('Continua · € :p', ['p' => $eur($order->restDue())]) }}</button>
      </form>
     @else
-     <div class="note note-err"><div>Al momento non ci sono metodi attivi per pagare il resto: contatta l'assistenza.</div></div>
+     <div class="note note-err"><div>{{ __('Al momento non ci sono metodi attivi per pagare il resto: contatta l\'assistenza.') }}</div></div>
     @endif
    </div>
   @elseif($order->kmoney_rest_method === 'transfer')
-   <div class="note"><div><strong>Quota KMoney incassata · manca il bonifico</strong>{{ config('lamess.bank_transfer_instructions') }}<br>Causale: <strong>{{ $order->number }}</strong> · Importo: <strong>€ {{ $eur($order->restDue()) }}</strong>. L'ordine sarà confermato alla ricezione del pagamento.</div></div>
+   <div class="note"><div>{!! __('<strong>Quota KMoney incassata · manca il bonifico</strong>:p<br>Causale: <strong>:p2</strong> · Importo: <strong>€ :p3</strong>. L\'ordine sarà confermato alla ricezione del pagamento.', ['p' => e(config('lamess.bank_transfer_instructions')), 'p2' => e($order->number), 'p3' => e($eur($order->restDue()))]) !!}</div></div>
   @else
-   <div class="note"><div><strong>Quota KMoney incassata · manca il resto</strong>Paga i restanti € {{ $eur($order->restDue()) }} con carta per confermare l'ordine.</div>
-    <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Paga con carta · € {{ $eur($order->restDue()) }}</button></form></div>
+   <div class="note"><div>{!! __('<strong>Quota KMoney incassata · manca il resto</strong>Paga i restanti € :p con carta per confermare l\'ordine.', ['p' => e($eur($order->restDue()))]) !!}</div>
+    <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">{{ __('Paga con carta · € :p', ['p' => $eur($order->restDue())]) }}</button></form></div>
   @endif
  @else
-  <div class="note"><div><strong>Pagamento non completato</strong>Per confermare l'ordine paga con carta: ci vuole un minuto.</div>
-   <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">Paga con carta · € {{ $eur($order->restDue()) }}</button></form></div>
+  <div class="note"><div>{!! __('<strong>Pagamento non completato</strong>Per confermare l\'ordine paga con carta: ci vuole un minuto.') !!}</div>
+   <form method="post" action="/area/ordini/{{ $order->id }}/riprova">@csrf<button class="btn">{{ __('Paga con carta · € :p', ['p' => $eur($order->restDue())]) }}</button></form></div>
  @endif
 @endif
 
 @if($order->status === 'pending_payment' && ($order->payment_method === 'transfer' || ((float) $order->tasca_used > 0 && $order->payment_method !== 'kmoney')))
- <form method="post" action="/area/ordini/{{ $order->id }}/annulla" onsubmit="return confirm('Annullare questo ordine?')" style="margin:0 0 18px">@csrf<button class="btn ghost">Annulla ordine</button></form>
+ <form method="post" action="/area/ordini/{{ $order->id }}/annulla" onsubmit="return confirm('Annullare questo ordine?')" style="margin:0 0 18px">@csrf<button class="btn ghost">{{ __('Annulla ordine') }}</button></form>
 @endif
 
 @unless($closed)
  <section class="panel" style="margin-bottom:18px"><div class="panel-body">
   <ol class="track">
-   <li class="done">Ordine ricevuto</li>
-   <li class="{{ $isPaid ? 'done' : 'now' }}">Pagamento{{ $isPaid && $order->paid_at ? ' · '.\App\Support\Ui::date($order->paid_at, 'd/m') : '' }}</li>
-   <li class="{{ $isShipped ? 'done' : ($isPaid ? 'now' : '') }}">Spedizione{{ $order->status === 'processing' ? ' · in preparazione' : ($order->shipped_at ? ' · '.\App\Support\Ui::date($order->shipped_at, 'd/m') : '') }}</li>
-   <li class="{{ $order->delivered_at ? 'done' : ($isShipped ? 'now' : '') }}">Consegna{{ $order->delivered_at ? ' · '.\App\Support\Ui::date($order->delivered_at, 'd/m') : '' }}</li>
+   <li class="done">{{ __('Ordine ricevuto') }}</li>
+   <li class="{{ $isPaid ? 'done' : 'now' }}">{{ __('Pagamento:p', ['p' => $isPaid && $order->paid_at ? ' · '.\App\Support\Ui::date($order->paid_at, 'd/m') : '']) }}</li>
+   <li class="{{ $isShipped ? 'done' : ($isPaid ? 'now' : '') }}">{{ __('Spedizione:p', ['p' => $order->status === 'processing' ? ' · in preparazione' : ($order->shipped_at ? ' · '.\App\Support\Ui::date($order->shipped_at, 'd/m') : '')]) }}</li>
+   <li class="{{ $order->delivered_at ? 'done' : ($isShipped ? 'now' : '') }}">{{ __('Consegna:p', ['p' => $order->delivered_at ? ' · '.\App\Support\Ui::date($order->delivered_at, 'd/m') : '']) }}</li>
   </ol>
  </div></section>
 @else
- <div class="note note-info"><div><strong>Ordine {{ $order->status === 'refunded' ? 'reso' : 'annullato' }}</strong>Per dubbi o rimborsi scrivi all'assistenza indicando il numero d'ordine.</div><a class="btn" href="/area/assistenza">Contatta l'assistenza</a></div>
+ <div class="note note-info"><div>{!! __('<strong>Ordine :p</strong>Per dubbi o rimborsi scrivi all\'assistenza indicando il numero d\'ordine.', ['p' => e($order->status === 'refunded' ? 'reso' : 'annullato')]) !!}</div><a class="btn" href="/area/assistenza">{{ __('Contatta l\'assistenza') }}</a></div>
 @endunless
 
 <div class="split">
  <section class="panel">
-  <header><h2>Prodotti</h2></header>
+  <header><h2>{{ __('Prodotti') }}</h2></header>
   <div class="tbl-wrap"><table class="tbl cards">
-   <thead><tr><th>Prodotto</th><th class="num">Q.tà</th><th class="num">Importo (IVA inclusa)</th></tr></thead>
+   <thead><tr><th>{{ __('Prodotto') }}</th><th class="num">{{ __('Q.tà') }}</th><th class="num">{{ __('Importo (IVA inclusa)') }}</th></tr></thead>
    <tbody>
    @foreach($order->items as $i)
     <tr>
      <td data-l="Prodotto"><strong>{{ $i->name }}</strong>
-      @if($i->recipient_user_id && $i->recipient_user_id !== $order->buyer_user_id)<br><span class="muted">per {{ \App\Models\User::find($i->recipient_user_id)?->name }}</span>@endif
-      @if($i->is_gift) <span class="st st-ok">omaggio</span>@elseif($i->parent_item_id)<br><span class="muted">incluso nel kit</span>@endif</td>
+      @if($i->recipient_user_id && $i->recipient_user_id !== $order->buyer_user_id)<br><span class="muted">{{ __('per :p', ['p' => \App\Models\User::find($i->recipient_user_id)?->name]) }}</span>@endif
+      @if($i->is_gift) <span class="st st-ok">{{ __('omaggio') }}</span>@elseif($i->parent_item_id)<br><span class="muted">{{ __('incluso nel kit') }}</span>@endif</td>
      <td data-l="Q.tà" class="num">{{ $i->qty }}</td>
      <td data-l="Importo" class="num">€ {{ $eur(\App\Domain\Orders\PricedLine::gross(\App\Domain\Engine\Support\Num::of((string) $i->unit_net)->multipliedBy($i->qty), (string) $i->vat_rate)) }}</td>
     </tr>
@@ -98,38 +98,38 @@
   </table></div>
   <div class="panel-body" style="border-top:1px solid var(--hair)">
    <dl class="dl">
-    @if($order->shipping_net > 0)<dt>Spedizione</dt><dd>€ {{ $eur(\App\Domain\Orders\PricedLine::gross(\App\Domain\Engine\Support\Num::of((string) $order->shipping_net), (string) $order->shipping_vat_rate)) }}</dd>@endif
+    @if($order->shipping_net > 0)<dt>{{ __('Spedizione') }}</dt><dd>€ {{ $eur(\App\Domain\Orders\PricedLine::gross(\App\Domain\Engine\Support\Num::of((string) $order->shipping_net), (string) $order->shipping_vat_rate)) }}</dd>@endif
     @php($vatRates = $order->items->map(fn ($i) => (string) $i->vat_rate)->when($order->shipping_net > 0, fn ($c) => $c->push((string) $order->shipping_vat_rate))->map(fn ($r) => rtrim(rtrim(number_format((float) $r, 2, ',', ''), '0'), ','))->unique()->implode('% / '))
-    <dt><strong>Totale</strong> <small class="muted">IVA {{ $vatRates }}% inclusa</small></dt><dd style="font-size:18px"><strong>€ {{ $eur($order->total) }}</strong></dd>
+    <dt><strong>{{ __('Totale') }}</strong> <small class="muted">{{ __('IVA :p% inclusa', ['p' => $vatRates]) }}</small></dt><dd style="font-size:18px"><strong>€ {{ $eur($order->total) }}</strong></dd>
    </dl>
   </div>
  </section>
 
  <aside class="stack">
   <section class="panel">
-   <header><h2>Pagamento e consegna</h2></header>
+   <header><h2>{{ __('Pagamento e consegna') }}</h2></header>
    <div class="panel-body">
     <dl class="dl">
-     <dt>Pagamento</dt><dd>@if($order->payment_method === 'kmoney')KMoney {{ $eur($order->kmoney_amount) }} KY @if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @elseif($order->payment_method === 'tasca')Compensi della Tasca @else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
-     @if((float) $order->tasca_used > 0)<dt>Compensi della Tasca</dt><dd>Usati € {{ $eur($order->tasca_used) }} = € {{ $eur($order->tasca_amount) }} di prodotti@if((float) $order->tasca_bonus > 0) (maggiorazione € {{ $eur($order->tasca_bonus) }})@endif @if($order->payment_method !== 'tasca' && (float) $order->restDue() > 0)· resto € {{ $eur($order->restDue()) }}@endif</dd>@endif
-     @if($order->subscription_id)<dt>Tipo</dt><dd>Abbonamento {{ $order->subscription?->intervalMonths() === 2 ? 'bimestrale' : 'mensile' }}</dd>@endif
-     @if($order->paid_at)<dt>Pagato il</dt><dd>{{ \App\Support\Ui::date($order->paid_at) }}</dd>@endif
-     @if($order->shipped_at)<dt>Spedito il</dt><dd>{{ \App\Support\Ui::date($order->shipped_at) }}</dd>@endif
-     @if($order->carrier)<dt>Corriere</dt><dd>{{ $order->carrier }}</dd>@endif
-     @if($order->delivered_at)<dt>Consegnato il</dt><dd>{{ \App\Support\Ui::date($order->delivered_at) }}</dd>@endif
-     @if($order->tracking_code)<dt>Tracking</dt><dd><strong>{{ $order->tracking_code }}</strong></dd>@endif
-     @if(! empty($b['address']))<dt>Fatturazione</dt><dd>{{ $b['address'] }}@if(! empty($b['zip']) || ! empty($b['city']))<br>{{ trim(($b['zip'] ?? '').' '.($b['city'] ?? '')) }}@if(! empty($b['province'])) ({{ $b['province'] }})@endif @endif</dd>@endif
+     <dt>{{ __('Pagamento') }}</dt><dd>@if($order->payment_method === 'kmoney'){{ __('KMoney :p KY', ['p' => $eur($order->kmoney_amount)]) }} @if((float) $order->restDue() > 0) + {{ $order->kmoney_rest_method === 'transfer' ? 'bonifico' : 'carta' }} € {{ $eur($order->restDue()) }}@endif @elseif($order->payment_method === 'tasca'){{ __('Compensi della Tasca') }}@else{{ $order->payment_method === 'transfer' ? 'Bonifico bancario' : 'Carta' }}@endif</dd>
+     @if((float) $order->tasca_used > 0)<dt>{{ __('Compensi della Tasca') }}</dt><dd>{{ __('Usati € :u = € :a di prodotti', ['u' => $eur($order->tasca_used), 'a' => $eur($order->tasca_amount)]) }}@if((float) $order->tasca_bonus > 0) ({{ __('maggiorazione € :b', ['b' => $eur($order->tasca_bonus)]) }})@endif @if($order->payment_method !== 'tasca' && (float) $order->restDue() > 0)· {{ __('resto € :r', ['r' => $eur($order->restDue())]) }}@endif</dd>@endif
+     @if($order->subscription_id)<dt>{{ __('Tipo') }}</dt><dd>{{ __('Abbonamento :p', ['p' => $order->subscription?->intervalMonths() === 2 ? 'bimestrale' : 'mensile']) }}</dd>@endif
+     @if($order->paid_at)<dt>{{ __('Pagato il') }}</dt><dd>{{ \App\Support\Ui::date($order->paid_at) }}</dd>@endif
+     @if($order->shipped_at)<dt>{{ __('Spedito il') }}</dt><dd>{{ \App\Support\Ui::date($order->shipped_at) }}</dd>@endif
+     @if($order->carrier)<dt>{{ __('Corriere') }}</dt><dd>{{ $order->carrier }}</dd>@endif
+     @if($order->delivered_at)<dt>{{ __('Consegnato il') }}</dt><dd>{{ \App\Support\Ui::date($order->delivered_at) }}</dd>@endif
+     @if($order->tracking_code)<dt>{{ __('Tracking') }}</dt><dd><strong>{{ $order->tracking_code }}</strong></dd>@endif
+     @if(! empty($b['address']))<dt>{{ __('Fatturazione') }}</dt><dd>{{ $b['address'] }}@if(! empty($b['zip']) || ! empty($b['city']))<br>{{ trim(($b['zip'] ?? '').' '.($b['city'] ?? '')) }}@if(! empty($b['province'])) ({{ $b['province'] }})@endif @endif</dd>@endif
      @php($sp = (array) ($b['shipping'] ?? []))
-     @if(! empty($sp['address']))<dt>Spedizione a</dt><dd>@if(! empty($sp['recipient'])){{ $sp['recipient'] }}<br>@endif{{ $sp['address'] }}<br>{{ trim(($sp['zip'] ?? '').' '.($sp['city'] ?? '')) }}@if(! empty($sp['province'])) ({{ $sp['province'] }})@endif</dd>@endif
+     @if(! empty($sp['address']))<dt>{{ __('Spedizione a') }}</dt><dd>@if(! empty($sp['recipient'])){{ $sp['recipient'] }}<br>@endif{{ $sp['address'] }}<br>{{ trim(($sp['zip'] ?? '').' '.($sp['city'] ?? '')) }}@if(! empty($sp['province'])) ({{ $sp['province'] }})@endif</dd>@endif
     </dl>
    </div>
   </section>
   @if($order->invoice || $order->creditNotes->isNotEmpty())
    <section class="panel">
-    <header><h2>Documenti</h2></header>
+    <header><h2>{{ __('Documenti') }}</h2></header>
     <div class="list">
-     @if($order->invoice)<a class="item" href="/area/ordini/{{ $order->id }}/fattura"><span class="ico">@include('site.area._i', ['n' => 'doc'])</span><span class="main"><span class="t">{{ $order->invoice->type === 'receipt' ? 'Ricevuta' : 'Fattura' }} {{ $order->invoice->number }}</span><span class="m">PDF</span></span></a>@endif
-     @foreach($order->creditNotes as $n)<a class="item" href="/area/note-credito/{{ $n->id }}"><span class="ico">@include('site.area._i', ['n' => 'doc'])</span><span class="main"><span class="t">Nota di credito {{ $n->number }}</span><span class="m">PDF</span></span></a>@endforeach
+     @if($order->invoice)<a class="item" href="/area/ordini/{{ $order->id }}/fattura"><span class="ico">@include('site.area._i', ['n' => 'doc'])</span><span class="main"><span class="t">{{ $order->invoice->type === 'receipt' ? 'Ricevuta' : 'Fattura' }} {{ $order->invoice->number }}</span><span class="m">{{ __('PDF') }}</span></span></a>@endif
+     @foreach($order->creditNotes as $n)<a class="item" href="/area/note-credito/{{ $n->id }}"><span class="ico">@include('site.area._i', ['n' => 'doc'])</span><span class="main"><span class="t">{{ __('Nota di credito :p', ['p' => $n->number]) }}</span><span class="m">{{ __('PDF') }}</span></span></a>@endforeach
     </div>
    </section>
   @endif
@@ -137,7 +137,7 @@
   @php($retReqs = $order->returnRequests()->latest('id')->get())
   @if($retReqs->isNotEmpty() || $retSvc->canRequest($order))
    <section class="panel">
-    <header><h2>Reso</h2></header>
+    <header><h2>{{ __('Reso') }}</h2></header>
     <div class="panel-body">
      @foreach($retReqs as $rq)
       <p style="margin:0 0 10px"><strong>{{ $rq->statusLabel() }}</strong> · {{ \App\Support\Ui::date($rq->created_at) }}@if($rq->admin_note)<br><span class="muted">{{ $rq->admin_note }}</span>@endif</p>
@@ -145,13 +145,13 @@
      @if($retSvc->canRequest($order))
       @error('return')<p class="err">{{ $message }}</p>@enderror
       <form method="post" action="/area/ordini/{{ $order->id }}/reso" class="stack">@csrf
-       <p class="muted small" style="margin:0">Puoi chiedere il reso entro {{ \App\Domain\Orders\ReturnRequestService::windowDays() }} giorni dalla consegna.</p>
+       <p class="muted small" style="margin:0">{{ __('Puoi chiedere il reso entro :p giorni dalla consegna.', ['p' => \App\Domain\Orders\ReturnRequestService::windowDays()]) }}</p>
        @foreach($order->items->where('parent_item_id', null)->filter(fn ($i) => (float) $i->unit_net > 0 && $i->qty > $i->qty_refunded) as $it)
-        <label class="small">{{ $it->name }} — quantità da rendere (max {{ $it->qty - $it->qty_refunded }})
+        <label class="small">{{ __(':p — quantità da rendere (max :p2)', ['p' => $it->name, 'p2' => $it->qty - $it->qty_refunded]) }}
          <input type="number" name="qty[{{ $it->id }}]" min="0" max="{{ $it->qty - $it->qty_refunded }}" value="{{ old('qty.'.$it->id, 0) }}"></label>
        @endforeach
-       <label class="small">Motivo<textarea name="reason" rows="3" required>{{ old('reason') }}</textarea></label>
-       <button class="btn">Richiedi il reso</button>
+       <label class="small">{{ __('Motivo') }}<textarea name="reason" rows="3" required>{{ old('reason') }}</textarea></label>
+       <button class="btn">{{ __('Richiedi il reso') }}</button>
       </form>
      @endif
     </div>
@@ -160,7 +160,7 @@
   @php($refundRows = $order->refunds()->where('status', '!=', 'failed')->get())
   @if($refundRows->isNotEmpty())
    <section class="panel">
-    <header><h2>Rimborsi</h2></header>
+    <header><h2>{{ __('Rimborsi') }}</h2></header>
     <div class="panel-body">
      <dl class="dl">
       @foreach($refundRows as $rf)
@@ -171,7 +171,7 @@
    </section>
   @endif
   <section class="panel">
-   <div class="panel-body"><strong>Problemi con l'ordine?</strong><p class="muted" style="margin:4px 0 12px">Scrivici indicando il numero {{ $order->number }}: rispondiamo dall'area assistenza.</p><a class="btn ghost" href="/area/assistenza">Apri una richiesta</a></div>
+   <div class="panel-body"><strong>{{ __('Problemi con l\'ordine?') }}</strong><p class="muted" style="margin:4px 0 12px">{{ __('Scrivici indicando il numero :p: rispondiamo dall\'area assistenza.', ['p' => $order->number]) }}</p><a class="btn ghost" href="/area/assistenza">{{ __('Apri una richiesta') }}</a></div>
   </section>
  </aside>
 </div>

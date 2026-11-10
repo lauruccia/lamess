@@ -1,5 +1,5 @@
 @extends('site.layout')
-@section('title','Registrazione — Lamèss')
+@section('title', __('Registrazione — Lamèss'))
 @section('width','auth')
 @section('side_title','Crea il tuo account Lamèss')
 @section('side_text','Registrati gratis e acquista dal negozio. Se vuoi, potrai poi candidarti come incaricato.')
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/css/lamess-benefits.css?v={{ @filemtime(public_path('css/lamess-benefits.css')) ?: 1 }}">
 @endpush
 @section('side_extra')
-<a class="side-how" href="/il-prodotto" target="_blank" rel="noopener" data-benefits><span>Cosa c’è in una bustina?</span><b>Scoprilo in 30 secondi <i aria-hidden="true">→</i></b></a>
+<a class="side-how" href="/il-prodotto" target="_blank" rel="noopener" data-benefits><span>{{ __('Cosa c’è in una bustina?') }}</span><b>{{ __('Scoprilo in 30 secondi') }} <i aria-hidden="true">→</i></b></a>
 @endsection
 @section('content')
 @php
@@ -18,11 +18,11 @@
 <script>document.documentElement.classList.add('js')</script>
 <div class="reg-wrap" id="reg-wrap" data-step="{{ $startStep }}">
  <div class="reg-head">
-  <h1>Crea il tuo account</h1>
+  <h1>{{ __('Crea il tuo account') }}</h1>
   <span class="reg-count" aria-hidden="true"><b data-n>{{ $startStep }}</b> / 2</span>
  </div>
- <p class="muted reg-sub">La registrazione è gratuita e non obbliga ad alcun acquisto.</p>
- <a class="reg-how-m" href="/il-prodotto" target="_blank" rel="noopener" data-benefits>Scopri cosa c’è in una bustina</a>
+ <p class="muted reg-sub">{{ __('La registrazione è gratuita e non obbliga ad alcun acquisto.') }}</p>
+ <a class="reg-how-m" href="/il-prodotto" target="_blank" rel="noopener" data-benefits>{{ __('Scopri cosa c’è in una bustina') }}</a>
  <div class="reg-bar" aria-hidden="true"><i></i><i></i></div>
 
  <form method="post" action="/registrazione" class="reg card" id="reg" novalidate>
@@ -32,19 +32,19 @@
 
   {{-- Passo 1: chi sei --}}
   <div data-panel="1">
-   <div class="seg" role="radiogroup" aria-label="Tipo di cliente">
-    <label><input type="radio" name="type" value="private" @checked(! $isCompany)><span>Privato</span></label>
-    <label><input type="radio" name="type" value="company" @checked($isCompany)><span>Azienda</span></label>
+   <div class="seg" role="radiogroup" aria-label="{{ __('Tipo di cliente') }}">
+    <label><input type="radio" name="type" value="private" @checked(! $isCompany)><span>{{ __('Privato') }}</span></label>
+    <label><input type="radio" name="type" value="company" @checked($isCompany)><span>{{ __('Azienda') }}</span></label>
    </div>
 
    <div class="grp" data-grp="private" @if($isCompany) data-off @endif>
     <div class="pair">
      <div class="fld @error('first_name') bad @enderror">
-      <input id="f-first" name="first_name" value="{{ old('first_name', $prefill['first_name'] ?? '') }}" placeholder=" " autocomplete="given-name" enterkeyhint="next" data-req><label for="f-first">Nome</label>
+      <input id="f-first" name="first_name" value="{{ old('first_name', $prefill['first_name'] ?? '') }}" placeholder=" " autocomplete="given-name" enterkeyhint="next" data-req><label for="f-first">{{ __('Nome') }}</label>
       @error('first_name')<p class="fe">{{ $message }}</p>@enderror
      </div>
      <div class="fld @error('last_name') bad @enderror">
-      <input id="f-last" name="last_name" value="{{ old('last_name', $prefill['last_name'] ?? '') }}" placeholder=" " autocomplete="family-name" enterkeyhint="next" data-req><label for="f-last">Cognome</label>
+      <input id="f-last" name="last_name" value="{{ old('last_name', $prefill['last_name'] ?? '') }}" placeholder=" " autocomplete="family-name" enterkeyhint="next" data-req><label for="f-last">{{ __('Cognome') }}</label>
       @error('last_name')<p class="fe">{{ $message }}</p>@enderror
      </div>
     </div>
@@ -53,79 +53,79 @@
    <div class="grp" data-grp="company" @unless($isCompany) data-off @endunless>
     <div class="co-grid">
      <div class="fld w4 @error('company_name') bad @enderror">
-      <input id="f-company" name="company_name" value="{{ old('company_name') }}" placeholder=" " autocomplete="organization" enterkeyhint="next" data-req><label for="f-company">Ragione sociale</label>
+      <input id="f-company" name="company_name" value="{{ old('company_name') }}" placeholder=" " autocomplete="organization" enterkeyhint="next" data-req><label for="f-company">{{ __('Ragione sociale') }}</label>
       @error('company_name')<p class="fe">{{ $message }}</p>@enderror
      </div>
      <div class="fld @error('vat_number') bad @enderror">
-      <input id="f-vat" name="vat_number" value="{{ old('vat_number') }}" placeholder=" " autocomplete="off" autocapitalize="characters" enterkeyhint="next" data-req><label for="f-vat">Partita IVA</label>
+      <input id="f-vat" name="vat_number" value="{{ old('vat_number') }}" placeholder=" " autocomplete="off" autocapitalize="characters" enterkeyhint="next" data-req><label for="f-vat">{{ __('Partita IVA') }}</label>
       @error('vat_number')<p class="fe">{{ $message }}</p>@enderror
      </div>
      <div class="fld @error('sdi_code') bad @enderror">
-      <input id="f-sdi" name="sdi_code" value="{{ old('sdi_code') }}" placeholder=" " autocomplete="off" autocapitalize="characters" enterkeyhint="next"><label for="f-sdi">Codice SDI</label>
+      <input id="f-sdi" name="sdi_code" value="{{ old('sdi_code') }}" placeholder=" " autocomplete="off" autocapitalize="characters" enterkeyhint="next"><label for="f-sdi">{{ __('Codice SDI') }}</label>
       @error('sdi_code')<p class="fe">{{ $message }}</p>@enderror
      </div>
      <div class="fld w4 @error('pec') bad @enderror">
-      <input id="f-pec" name="pec" type="email" value="{{ old('pec') }}" placeholder=" " autocomplete="off" autocapitalize="none" inputmode="email" enterkeyhint="next"><label for="f-pec">PEC</label>
+      <input id="f-pec" name="pec" type="email" value="{{ old('pec') }}" placeholder=" " autocomplete="off" autocapitalize="none" inputmode="email" enterkeyhint="next"><label for="f-pec">{{ __('PEC') }}</label>
       @error('pec')<p class="fe">{{ $message }}</p>@enderror
      </div>
     </div>
    </div>
 
    <div class="fld @error('tax_code') bad @enderror">
-    <input id="f-tax" name="tax_code" value="{{ old('tax_code') }}" placeholder=" " autocomplete="off" autocapitalize="characters" maxlength="16" spellcheck="false" enterkeyhint="next"><label for="f-tax">Codice fiscale (facoltativo)</label>
+    <input id="f-tax" name="tax_code" value="{{ old('tax_code') }}" placeholder=" " autocomplete="off" autocapitalize="characters" maxlength="16" spellcheck="false" enterkeyhint="next"><label for="f-tax">{{ __('Codice fiscale (facoltativo)') }}</label>
     @error('tax_code')<p class="fe">{{ $message }}</p>@enderror
    </div>
 
    <div class="fld @error('email') bad @enderror">
-    <input id="f-email" name="email" type="email" value="{{ old('email', $prefill['email'] ?? '') }}" @if(!empty($application))readonly @endif placeholder=" " autocomplete="email" autocapitalize="none" inputmode="email" enterkeyhint="next" required><label for="f-email">Email</label>
+    <input id="f-email" name="email" type="email" value="{{ old('email', $prefill['email'] ?? '') }}" @if(!empty($application))readonly @endif placeholder=" " autocomplete="email" autocapitalize="none" inputmode="email" enterkeyhint="next" required><label for="f-email">{{ __('Email') }}</label>
     @error('email')<p class="fe">{{ $message }}</p>@enderror
    </div>
 
-   <button type="button" class="reg-next">Continua</button>
+   <button type="button" class="reg-next">{{ __('Continua') }}</button>
   </div>
 
   {{-- Passo 2: sicurezza --}}
   <div data-panel="2">
    <div class="pair-lg">
     <div class="fld has-eye @error('password') bad @enderror">
-     <input id="f-pw" name="password" type="password" placeholder=" " autocomplete="new-password" minlength="10" enterkeyhint="next" required><label for="f-pw">Password</label>
-     <button type="button" class="eye" aria-controls="f-pw f-pw2" aria-pressed="false">Mostra</button>
+     <input id="f-pw" name="password" type="password" placeholder=" " autocomplete="new-password" minlength="10" enterkeyhint="next" required><label for="f-pw">{{ __('Password') }}</label>
+     <button type="button" class="eye" aria-controls="f-pw f-pw2" aria-pressed="false">{{ __('Mostra') }}</button>
      @error('password')<p class="fe">{{ $message }}</p>@enderror
     </div>
     <div class="fld @error('password_confirmation') bad @enderror">
-     <input id="f-pw2" name="password_confirmation" type="password" placeholder=" " autocomplete="new-password" enterkeyhint="next" required><label for="f-pw2">Ripeti password</label>
+     <input id="f-pw2" name="password_confirmation" type="password" placeholder=" " autocomplete="new-password" enterkeyhint="next" required><label for="f-pw2">{{ __('Ripeti password') }}</label>
      @error('password_confirmation')<p class="fe">{{ $message }}</p>@enderror
     </div>
    </div>
-   <p class="hint" id="pw-hint" aria-live="polite">Almeno 10 caratteri.</p>
+   <p class="hint" id="pw-hint" aria-live="polite">{{ __('Almeno 10 caratteri.') }}</p>
 
    @if(!empty($application) && $application->interest === 'consultant')
-    <div class="reg-sponsor"><strong>Vuoi diventare incaricato alla vendita?</strong> Prima crea il tuo account (si parte da cliente). Poi, dalla tua area personale, apri «Diventa incaricato» e invia la domanda: è quel passaggio che ti rende incaricato.</div>
+    <div class="reg-sponsor">{!! __('<strong>Vuoi diventare incaricato alla vendita?</strong> Prima crea il tuo account (si parte da cliente). Poi, dalla tua area personale, apri «Diventa incaricato» e invia la domanda: è quel passaggio che ti rende incaricato.') !!}</div>
    @endif
    @if($sponsor)
-    <div class="reg-sponsor">Il tuo incaricato di riferimento: <strong>{{ $sponsor->name }}</strong> <span>[{{ $sponsor->code }}]</span></div>
+    <div class="reg-sponsor">{!! __('Il tuo incaricato di riferimento: <strong>:p</strong> <span>[:p2]</span>', ['p' => e($sponsor->name), 'p2' => e($sponsor->code)]) !!}</div>
    @else
     <div class="fld pin @error('sponsor_code') bad @enderror">
-     <input id="f-sponsor" name="sponsor_code" value="{{ old('sponsor_code') }}" placeholder="es. LM00123" autocomplete="off" autocapitalize="characters" enterkeyhint="done"><label for="f-sponsor">Codice del tuo incaricato (facoltativo)</label>
+     <input id="f-sponsor" name="sponsor_code" value="{{ old('sponsor_code') }}" placeholder="{{ __('es. LM00123') }}" autocomplete="off" autocapitalize="characters" enterkeyhint="done"><label for="f-sponsor">{{ __('Codice del tuo incaricato (facoltativo)') }}</label>
      @error('sponsor_code')<p class="fe">{{ $message }}</p>@enderror
     </div>
    @endif
 
    <div class="chk-wrap @error('privacy') bad @enderror">
-    <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy')) required><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, i <a href="/termini" target="_blank" rel="noopener">termini e condizioni</a> e acconsento al trattamento dei dati.</span></label>
+    <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy')) required><span>{!! __('Ho letto l\'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>, i <a href="/termini" target="_blank" rel="noopener">termini e condizioni</a> e acconsento al trattamento dei dati.') !!}</span></label>
     @error('privacy')<p class="fe">{{ $message }}</p>@enderror
    </div>
 
-   <p class="reg-free">Registrazione gratuita, nessun obbligo di acquisto.</p>
+   <p class="reg-free">{{ __('Registrazione gratuita, nessun obbligo di acquisto.') }}</p>
 
    <div class="actions">
-    <button type="button" class="reg-back">Indietro</button>
-    <button type="submit" class="reg-submit">Registrati</button>
+    <button type="button" class="reg-back">{{ __('Indietro') }}</button>
+    <button type="submit" class="reg-submit">{{ __('Registrati') }}</button>
    </div>
   </div>
  </form>
 
- <p class="muted reg-login">Hai già un account? <a href="/accedi">Accedi</a></p>
+ <p class="muted reg-login">{!! __('Hai già un account? <a href="/accedi">Accedi</a>') !!}</p>
 </div>
 
 <script>

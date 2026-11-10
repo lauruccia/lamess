@@ -1,0 +1,17 @@
+/* Selettore di lingua: pulsante tondo con bandiera e codice, elenco a tendina con i nomi nativi */
+.lang-sw{position:relative;display:inline-block}
+.lang-sw details{position:relative}
+.lang-sw summary{list-style:none;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border:1px solid rgba(127,127,127,.35);border-radius:12px;cursor:pointer;background:rgba(255,255,255,.06);color:inherit;font:500 14px/1 inherit;user-select:none}
+.lang-sw summary::-webkit-details-marker{display:none}
+.lang-sw summary::marker{content:''}
+.lang-sw details[open] summary,.lang-sw summary:hover{background:rgba(127,127,127,.14)}
+.lang-sw .lang-chev{flex:none;opacity:.7;transition:transform .15s}
+.lang-sw details[open] .lang-chev{transform:rotate(180deg)}
+.lang-sw .lang-flag{width:24px;height:16px;border-radius:3px;object-fit:cover;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.lang-sw .lang-flag-code{display:inline-flex;align-items:center;justify-content:center;background:#e6dfd8;color:#13110e;font:600 9px/1 sans-serif}
+.lang-sw ul{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:190px;margin:0;padding:6px;list-style:none;background:#fff;color:#13110e;border:1px solid rgba(19,17,14,.12);border-radius:14px;box-shadow:0 14px 34px rgba(19,17,14,.18)}
+.lang-sw li{display:block;margin:0;padding:0}
+.lang-sw ul a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;color:#13110e;text-decoration:none;font:500 15px/1.2 inherit;box-shadow:none}
+.lang-sw ul a:hover,.lang-sw ul a:focus-visible{background:#f3ece6}
+.lang-sw ul a[aria-current="true"]{background:#f8efe8;font-weight:600}
+@media (max-width:760px){.lang-sw ul{right:auto;left:0}}

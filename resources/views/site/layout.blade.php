@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
 <meta name="color-scheme" content="light">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="/css/lamess-site.css?v={{ @filemtime(public_path('css/lamess-site.css')) ?: 1 }}">
 <link rel="stylesheet" href="/css/lamess-area.css?v={{ @filemtime(public_path('css/lamess-area.css')) ?: 1 }}">
 <link rel="stylesheet" href="/css/lamess-shop.css?v={{ @filemtime(public_path('css/lamess-shop.css')) ?: 1 }}">
+<link rel="stylesheet" href="/css/lamess-lang.css?v={{ @filemtime(public_path('css/lamess-lang.css')) ?: 1 }}">
+@include('partials.i18n-head')
 @stack('styles')
 <script src="/js/lamess-shop.js?v={{ @filemtime(public_path('js/lamess-shop.js')) ?: 1 }}" defer></script>
 <script src="/js/lamess-pw.js?v={{ @filemtime(public_path('js/lamess-pw.js')) ?: 1 }}" defer></script>
@@ -26,20 +28,20 @@
 @php($cartCount = array_sum((array) session('cart', [])) + array_sum(array_map('array_sum', (array) session('cart_others', []))))
 @if(\App\Domain\Access\Impersonation::active(request()) && $me)
 <div class="impersonation-bar" role="status" style="background:#b45309;color:#fff;padding:.5rem 1rem;display:flex;gap:1rem;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.9rem">
- <span>Stai usando il portale come <b>{{ $me->name ?: $me->email }}</b> ({{ $me->email }}). Pagamenti, password, firme e dati bancari sono bloccati.</span>
- <form method="POST" action="{{ route('impersonation.stop') }}" style="margin:0">@csrf<button type="submit" style="background:#fff;color:#92400e;border:0;border-radius:6px;padding:.3rem .8rem;font-weight:600;cursor:pointer">Torna al mio account</button></form>
+ <span>{!! __('Stai usando il portale come <b>:p</b> (:p2). Pagamenti, password, firme e dati bancari sono bloccati.', ['p' => e($me->name ?: $me->email), 'p2' => e($me->email)]) !!}</span>
+ <form method="POST" action="{{ route('impersonation.stop') }}" style="margin:0">@csrf<button type="submit" style="background:#fff;color:#92400e;border:0;border-radius:6px;padding:.3rem .8rem;font-weight:600;cursor:pointer">{{ __('Torna al mio account') }}</button></form>
 </div>
 @endif
 <header class="site-header">
  <div class="bar">
   <a class="brand" href="/" aria-label="Lamèss">
    <img src="/img/lamess-logo.png" width="38" height="38" alt="">
-   <b>Lamèss</b>
+   <b>{{ __('Lamèss') }}</b>
   </a>
   @if($minimalHeader)
   <nav class="top-links">
-   <span class="muted" style="display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Pagamento sicuro</span>
-   <a href="/carrello">← Torna al carrello</a>
+   <span class="muted" style="display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>{{ __('Pagamento sicuro') }}</span>
+   <a href="/carrello">{{ __('← Torna al carrello') }}</a>
   </nav>
   @else
   <nav class="top-links">
@@ -47,21 +49,22 @@
     @yield('nav_extra')
    @else
     @guest
-     <a class="hide-lg" href="/">Home</a><a class="hide-lg" href="/il-prodotto">Prodotto</a><a class="hide-lg" href="/perche-lamess">Perché Lamèss</a><a class="hide-lg" href="/la-scienza">La scienza</a><a class="hide-lg" href="/lavora-con-noi">Lavora con noi</a><a class="hide-lg" href="/chi-siamo">Chi siamo</a><a class="hide-lg" href="/domande">Domande</a>
+     <a class="hide-lg" href="/">{{ __('Home') }}</a><a class="hide-lg" href="/il-prodotto">{{ __('Prodotto') }}</a><a class="hide-lg" href="/perche-lamess">{{ __('Perché Lamèss') }}</a><a class="hide-lg" href="/la-scienza">{{ __('La scienza') }}</a><a class="hide-lg" href="/lavora-con-noi">{{ __('Lavora con noi') }}</a><a class="hide-lg" href="/chi-siamo">{{ __('Chi siamo') }}</a><a class="hide-lg" href="/domande">{{ __('Domande') }}</a>
     @endguest
    @endif
    @if(\App\Support\ShopAccess::canBuy())
-   <a href="/negozio" class="{{ str_starts_with($nav, 'negozio') ? 'on' : '' }}">Negozio</a>
-   <a class="cart-btn" href="/carrello" data-cart-open aria-label="Carrello, {{ $cartCount }} prodotti">
+   <a href="/negozio" class="{{ str_starts_with($nav, 'negozio') ? 'on' : '' }}">{{ __('Negozio') }}</a>
+   <a class="cart-btn" href="/carrello" data-cart-open aria-label="{{ __('Carrello, :p prodotti', ['p' => $cartCount]) }}">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
     <span class="cart-count" data-cart-count @if($cartCount < 1) hidden @endif>{{ $cartCount }}</span>
    </a>
    @endif
+   @include('partials.language-switcher')
    @auth
-    <a class="hide-sm" href="/area">La mia area</a>
-    <form method="post" action="/esci">@csrf<button class="link">Esci</button></form>
+    <a class="hide-sm" href="/area">{{ __('La mia area') }}</a>
+    <form method="post" action="/esci">@csrf<button class="link">{{ __('Esci') }}</button></form>
    @else
-    <a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">Registrati</a>@else<a class="cta" href="/candidati">Candidati</a>@endif
+    <a href="/accedi">{{ __('Accedi') }}</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">{{ __('Registrati') }}</a>@else<a class="cta" href="/candidati">{{ __('Candidati') }}</a>@endif
    @endauth
   </nav>
   @endif
@@ -69,7 +72,7 @@
  @unless($minimalHeader)
  @if(request()->is('area', 'area/*', 'piano-compensi'))
  @auth
- <div class="subnav" aria-label="Area personale">
+ <div class="subnav" aria-label="{{ __('Area personale') }}">
   @php($items = array_filter([
     ['/area', 'Panoramica', fn ($p) => $p === 'area', null],
     $isConsultant ? ['/area/rete', 'Il mio ramo', fn ($p) => str_starts_with($p, 'area/rete'), 'La mia rete'] : null,
@@ -127,9 +130,9 @@
  @endunless
 </header>
 @if(! $minimalHeader && ! $isAuth && ! request()->is('i/*', 'anteprima-pagina/*', 'area*', 'admin*') && session()->has('pp_back') && ($ppBack = app(\App\Domain\Pages\PersonalPageService::class)->backLink(request())))
-<div class="pp-back" id="pp-back" role="navigation" aria-label="Torna alla pagina dell'Incaricato" hidden>
- <a href="{{ $ppBack['url'] }}">← Torna alla pagina di {{ $ppBack['name'] }}</a>
- <button type="button" id="pp-back-x" aria-label="Chiudi">×</button>
+<div class="pp-back" id="pp-back" role="navigation" aria-label="{{ __('Torna alla pagina dell\'Incaricato') }}" hidden>
+ <a href="{{ $ppBack['url'] }}">{{ __('← Torna alla pagina di :p', ['p' => $ppBack['name']]) }}</a>
+ <button type="button" id="pp-back-x" aria-label="{{ __('Chiudi') }}">×</button>
 </div>
 <script>(function(){var b=document.getElementById('pp-back');if(!b)return;try{if(sessionStorage.getItem('pp-back-off')==='1')return}catch(e){}b.hidden=false;document.getElementById('pp-back-x').addEventListener('click',function(){b.hidden=true;try{sessionStorage.setItem('pp-back-off','1')}catch(e){}})})();</script>
 @endif
@@ -139,7 +142,7 @@
  <aside class="auth-side">
   <h2>@yield('side_title', 'Il tuo spazio Lamèss')</h2>
   <p>@yield('side_text', 'Ordini, abbonamenti e, se sei incaricato, rete e compensi: tutto in un unico posto.')</p>
-  <ul><li>Registrazione gratuita, nessun obbligo di acquisto</li><li>I tuoi dati restano tuoi e sono protetti</li><li>Assistenza diretta dall'area personale</li></ul>
+  <ul><li>{{ __('Registrazione gratuita, nessun obbligo di acquisto') }}</li><li>{{ __('I tuoi dati restano tuoi e sono protetti') }}</li><li>{{ __('Assistenza diretta dall\'area personale') }}</li></ul>
   @yield('side_extra')
  </aside>
  <section class="auth-form"><div class="auth-inner">
@@ -154,31 +157,31 @@
 </main>
 <div class="drawer" id="cart-drawer" hidden>
  <div class="drawer-overlay" data-drawer-close></div>
- <aside class="drawer-panel" role="dialog" aria-modal="true" aria-label="Il tuo carrello" tabindex="-1"><div class="drawer-body" id="cart-drawer-body"></div></aside>
+ <aside class="drawer-panel" role="dialog" aria-modal="true" aria-label="{{ __('Il tuo carrello') }}" tabindex="-1"><div class="drawer-body" id="cart-drawer-body"></div></aside>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 @if($isAuth || $minimalHeader)
-<footer class="site-footer">© {{ date('Y') }} Lamèss &nbsp;·&nbsp; @if(\App\Support\ShopAccess::canBuy())<a href="/negozio">Negozio</a>@endif @auth · <a href="/area/profilo">I miei dati</a>@endauth &nbsp;·&nbsp; <a href="/privacy">Privacy</a> · <a href="/termini">Termini e Condizioni</a> · <a href="/politiche-di-reso">Politiche di Reso</a> · <a href="/piano-compensi">Il piano compensi</a> · <a href="/regolamento">Regolamento</a>
+<footer class="site-footer">{!! __('© :p Lamèss &nbsp;·&nbsp;', ['p' => e(date('Y'))]) !!} @if(\App\Support\ShopAccess::canBuy())<a href="/negozio">{{ __('Negozio') }}</a>@endif @auth · <a href="/area/profilo">{{ __('I miei dati') }}</a>@endauth &nbsp;·&nbsp; <a href="/privacy">{{ __('Privacy') }}</a> · <a href="/termini">{{ __('Termini e Condizioni') }}</a> · <a href="/politiche-di-reso">{{ __('Politiche di Reso') }}</a> · <a href="/piano-compensi">{{ __('Il piano compensi') }}</a> · <a href="/regolamento">{{ __('Regolamento') }}</a>
  @php($co = config('lamess.company'))
- <br><small>© {{ date('Y') }} {{ $co['brand_owner'] }} – Tutti i diritti riservati. {{ $co['name'] }} - {{ $co['address'] }} - P.IVA {{ $co['vat'] }} ● PEC: <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> ● Designed by <a href="https://gruppokosmos.it" target="_blank" rel="noopener">Gruppo Kosmos</a></small>
+ <br><small>{{ __('© :p :p2 – Tutti i diritti riservati. :p3 - :p4 - P.IVA :p5 ● PEC:', ['p' => date('Y'), 'p2' => $co['brand_owner'], 'p3' => $co['name'], 'p4' => $co['address'], 'p5' => $co['vat']]) }} <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> {{ __('● Designed by') }} <a href="https://gruppokosmos.it" target="_blank" rel="noopener">{{ __('Gruppo Kosmos') }}</a></small>
 </footer>
 @else
 <footer class="site-footer rich">
  <div class="foot-grid">
   <div class="foot-brand">
-   <a class="brand" href="/" aria-label="Lamèss"><img src="/img/lamess-logo.png" width="34" height="34" alt=""><b>Lamèss</b></a>
-   <p>I prodotti Lamèss, spediti a casa tua.</p>
+   <a class="brand" href="/" aria-label="Lamèss"><img src="/img/lamess-logo.png" width="34" height="34" alt=""><b>{{ __('Lamèss') }}</b></a>
+   <p>{{ __('I prodotti Lamèss, spediti a casa tua.') }}</p>
   </div>
-  @if(\App\Support\ShopAccess::canBuy())<nav aria-label="Negozio"><h4>Negozio</h4><a href="/negozio">Tutti i prodotti</a><a href="/carrello">Carrello</a></nav>@endif
-  <nav aria-label="Il tuo spazio"><h4>Il tuo spazio</h4>
-   @auth<a href="/area">La mia area</a><a href="/area/ordini">I miei ordini</a><a href="/area/abbonamenti">Abbonamenti</a><a href="/area/assistenza">Assistenza</a>
-   @else<a href="/accedi">Accedi</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">Registrati</a>@else<a href="/candidati">Candidati</a>@endif @endauth
+  @if(\App\Support\ShopAccess::canBuy())<nav aria-label="{{ __('Negozio') }}"><h4>{{ __('Negozio') }}</h4><a href="/negozio">{{ __('Tutti i prodotti') }}</a><a href="/carrello">{{ __('Carrello') }}</a></nav>@endif
+  <nav aria-label="{{ __('Il tuo spazio') }}"><h4>{{ __('Il tuo spazio') }}</h4>
+   @auth<a href="/area">{{ __('La mia area') }}</a><a href="/area/ordini">{{ __('I miei ordini') }}</a><a href="/area/abbonamenti">{{ __('Abbonamenti') }}</a><a href="/area/assistenza">{{ __('Assistenza') }}</a>
+   @else<a href="/accedi">{{ __('Accedi') }}</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">{{ __('Registrati') }}</a>@else<a href="/candidati">{{ __('Candidati') }}</a>@endif @endauth
   </nav>
-  <nav aria-label="Collegamenti utili"><h4>Collegamenti utili</h4><a href="/privacy">Privacy Policy</a><a href="/politiche-di-reso">Politiche di Reso</a><a href="/termini">Termini e Condizioni</a></nav>
-  <div><h4>Acquisti sicuri</h4><p>Pagamento con carta, bonifico o KMoney. I tuoi dati restano tuoi e sono protetti.</p></div>
+  <nav aria-label="{{ __('Collegamenti utili') }}"><h4>{{ __('Collegamenti utili') }}</h4><a href="/privacy">{{ __('Privacy Policy') }}</a><a href="/politiche-di-reso">{{ __('Politiche di Reso') }}</a><a href="/termini">{{ __('Termini e Condizioni') }}</a></nav>
+  <div><h4>{{ __('Acquisti sicuri') }}</h4><p>{{ __('Pagamento con carta, bonifico o KMoney. I tuoi dati restano tuoi e sono protetti.') }}</p></div>
  </div>
  @php($co = config('lamess.company'))
- <p class="foot-copy">© {{ date('Y') }} {{ $co['brand_owner'] }} – Tutti i diritti riservati. {{ $co['name'] }} - {{ $co['address'] }} - P.IVA {{ $co['vat'] }} ● PEC: <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> ● <a href="mailto:{{ $co['email'] }}">{{ $co['email'] }}</a> ● Designed by <a href="https://gruppokosmos.it" target="_blank" rel="noopener">Gruppo Kosmos</a></p>
+ <p class="foot-copy">{{ __('© :p :p2 – Tutti i diritti riservati. :p3 - :p4 - P.IVA :p5 ● PEC:', ['p' => date('Y'), 'p2' => $co['brand_owner'], 'p3' => $co['name'], 'p4' => $co['address'], 'p5' => $co['vat']]) }} <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> ● <a href="mailto:{{ $co['email'] }}">{{ $co['email'] }}</a> {{ __('● Designed by') }} <a href="https://gruppokosmos.it" target="_blank" rel="noopener">{{ __('Gruppo Kosmos') }}</a></p>
 </footer>
 @endif
 </body></html>

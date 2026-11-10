@@ -8,6 +8,7 @@ use App\Domain\Billing\FatturaPaBuilder;
 use App\Domain\Billing\FileInvoiceSink;
 use App\Domain\Billing\InvoiceSink;
 use App\Domain\Billing\MailInvoiceSink;
+use App\Domain\I18n\DatabaseTranslationLoader;
 use App\Domain\Onboarding\EmailSignatureProvider;
 use App\Domain\Onboarding\FakeSignatureProvider;
 use App\Domain\Onboarding\IdentityVerifier;
@@ -40,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // frasi tradotte: file lang/xx.json + modifiche del super_admin salvate nel database
+        $this->app->extend('translation.loader', fn ($loader) => new DatabaseTranslationLoader($loader));
         // Una sola istanza per richiesta: piano in vigore, periodo e qualifiche si leggono una volta, non per ogni riga dell'elenco.
         $this->app->scoped(ConsultantList::class);
 

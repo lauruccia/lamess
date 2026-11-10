@@ -183,3 +183,10 @@ Alternativa al deploy da Git: il pacchetto ZIP (`php tools/crea-pacchetto-cpanel
 2. Controlla che la fattura sia «inviata» (Vendite → Fatture, colonna dell'invio) e che l'XML si scarichi (azione XML).
 3. Controlla in Assistenza → Ticket che l'area incaricato permetta di aprire una richiesta, e che il cron mostri «Attivo».
 4. Dopo la prima chiusura di mese: estratti conto pubblicati (Compensi), ricevute e prelievi se il piano è «su richiesta».
+
+## 11. Lingue del sito (aggiunto il 9 novembre 2026)
+1. Esegui in phpMyAdmin l'SQL «Sito in 6 lingue» di `docs/registro-aggiornamenti.md` (crea `languages`, `translation_strings`, `users.locale`, inserisce le 6 lingue in bozza).
+2. Carica il codice (compresa la cartella `lang/` con i 5 file `.json`) e, se la cache è attiva, svuotala dal pannello.
+3. Accedi come super_admin → **Traduzioni** → *Cerca nuove stringhe* (porta nel database anche le frasi dei file `lang/xx.json`, in stato «automatica»). Controlla in **Lingue** che compaiano it, en, nl, fr, de, es.
+4. Le lingue restano in **bozza** (visibili solo a chi è nel back-office) finché non le attivi: falle rivedere dal traduttore e poi premi *Attiva*.
+5. `.env`: `I18N_DRIVER=fake` va bene così. Le chiavi DeepL/Google/Anthropic servono solo per tradurre in automatico le frasi nuove.

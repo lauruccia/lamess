@@ -1036,3 +1036,58 @@ INSERT IGNORE INTO model_has_permissions (permission_id, model_type, model_id)
 - Il riquadro **Compensi provvisori** della panoramica e quello della pagina «Il mio ramo» ora aprono questa pagina; il riquadro Bonus di Struttura porta alla sua sezione. Nuova voce **Dettaglio compensi** nel menu *Compensi*.
 - `CommissionExplainer::for()` ha un terzo parametro `$forConsultant`: nella vista dell'incaricato non ci sono link al back-office, nomi dei clienti altrui sugli indiretti né avvisi per l'admin. L'admin non cambia.
 - Codice: `AreaController::earnings`, viste `site/area/earnings` e `_earning-line`. Nessuna migrazione. Test aggiunti a `CommissionExplainerTest` (da eseguire sulla macchina di sviluppo).
+
+## 2026-11-09 — Sito in 6 lingue (it, en, nl, fr, de, es) con gestione dal pannello
+- **Come funziona**: il testo italiano scritto nelle viste è la chiave (`__('Testo italiano')`); le traduzioni stanno nei file `lang/xx.json` consegnati con il codice e in due tabelle (`languages`, `translation_strings`) che il super_admin modifica dal pannello e che vincono sui file. Le lingue di partenza sono in **bozza**: le vede solo chi ha accesso al back-office, finché non si attivano.
+- **Pubblico**: la lingua è un prefisso nell'indirizzo (`/en/negozio`; l'italiano resta senza prefisso), si ricorda nel cookie `lm_lang` e, per chi ha un account, in `users.locale` (anche per le email al cliente). Selettore con bandiere nel sito; tag `hreflang` per i motori di ricerca.
+- **Admin (solo super_admin)**: *Lingue* (crea una lingua nuova, attiva/disattiva, ordine, lingua predefinita) e *Traduzioni* (filtri per lingua e stato, modifica anche del testo italiano, «Traduci le mancanti» con il motore scelto in `I18N_DRIVER`, «Approva», esporta/importa CSV per il traduttore, «Cerca nuove stringhe»). Stati: mancante · automatica (da rivedere) · approvata. Impostazione di sistema «Mostra le traduzioni non ancora riviste».
+- **Cosa è tradotto in questa fase**: sito pubblico, negozio, carrello e checkout, accesso/registrazione/candidature, pagine legali (di cortesia: fa fede l'italiano), pagina «Perché Lamèss» e studi, pagine di errore. **Restano in italiano**: pannello admin, PDF fiscali e fatture SdI, lettera d'incarico firmata, area riservata dell'incaricato, notifiche e testi presi dal database (prodotti, categorie, news). Si faranno nella fase 2.
+- **Primo rilascio solo vetrina e negozio**: l'area riservata dell'incaricato (tutto `/area/...` tranne carrello, checkout, ordini e abbonamenti del cliente) e le pagine personali `/i/...` restano sempre in italiano e senza selettore di lingua; l'elenco delle parti tradotte dentro `/area` è `translated_area` in `config/i18n.php`. Il back-office è sempre in italiano.
+- **Le ~1.150 frasi sono tradotte in automatico e vanno riviste da un traduttore** (stato «automatica»): l'approvazione si fa da Admin → Traduzioni. I nomi dei prodotti, i marchi (VERISOL®, Lamèss, KMoney) e le fonti bibliografiche non si traducono.
+- **Migrazione (MySQL, da incollare in phpMyAdmin)** — crea le due tabelle, aggiunge `users.locale` e inserisce le 6 lingue (solo l'italiano attivo):
+
+```sql
+CREATE TABLE `languages` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(8) NOT NULL,
+  `name` varchar(60) NOT NULL,
+  `native_name` varchar(60) NOT NULL,
+  `flag` varchar(20) DEFAULT NULL,
+  `status` varchar(10) NOT NULL DEFAULT 'draft',
+  `is_default` tinyint(1) NOT NULL DEFAULT 0,
+  `sort` smallint unsigned NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `languages_code_unique` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `translation_strings` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `locale` varchar(8) NOT NULL,
+  `key_hash` char(32) NOT NULL,
+  `source` longtext NOT NULL,
+  `text` longtext DEFAULT NULL,
+  `status` varchar(10) NOT NULL DEFAULT 'missing',
+  `orphan` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `translation_strings_locale_key_hash_unique` (`locale`,`key_hash`),
+  KEY `translation_strings_locale_status_index` (`locale`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `users` ADD COLUMN `locale` varchar(8) NULL AFTER `email`;
+
+INSERT INTO `languages` (`code`,`name`,`native_name`,`flag`,`status`,`is_default`,`sort`,`created_at`,`updated_at`) VALUES
+('it','Italian','Italiano','it','active',1,1,NOW(),NOW()),
+('en','English','English','gb','draft',0,2,NOW(),NOW()),
+('nl','Dutch','Nederlands','nl','draft',0,3,NOW(),NOW()),
+('fr','French','Français','fr','draft',0,4,NOW(),NOW()),
+('de','German','Deutsch','de','draft',0,5,NOW(),NOW()),
+('es','Spanish','Español','es','draft',0,6,NOW(),NOW());
+
+INSERT INTO `migrations` (`migration`,`batch`) VALUES ('2026_11_20_100000_i18n_languages_and_strings', (SELECT IFNULL(MAX(b.batch),0)+1 FROM (SELECT batch FROM migrations) b));
+```
+- **Dopo la migrazione**: nel pannello, *Traduzioni → «Cerca nuove stringhe»* porta nel database le frasi dei file `lang/xx.json` (stato «automatica»); poi *Lingue → Attiva* quando il traduttore ha finito. Nel `.env` basta `I18N_DRIVER` (default `fake`: nessuna chiamata esterna); per tradurre in automatico le frasi future servono `DEEPL_API_KEY`, `GOOGLE_TRANSLATE_API_KEY` o `ANTHROPIC_API_KEY`.
+- Test: `LocaleRoutingTest` (12), `TranslationAdminTest` (16).

@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Middleware\ApplyLocale;
 use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Http\Middleware\BlockWhileImpersonating;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ShopLoginRequired;
 use App\Http\Middleware\SiteClosed;
+use App\Http\Middleware\StripLocalePrefix;
 use App\Http\Middleware\TrackVisit;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,14 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // il cookie referral contiene solo un codice pubblico: non serve cifrarlo
-        $middleware->encryptCookies(except: ['lm_ref']);
+        $middleware->encryptCookies(except: ['lm_ref', 'lm_lang']);
+        // «/en/negozio» → «/negozio» prima del routing; la lingua si sceglie poi, dopo la sessione (ApplyLocale)
+        $middleware->prepend(StripLocalePrefix::class);
         // utenti già autenticati che aprono /registrazione o /accedi vanno all'area riservata (non a «/», che rimanda a /registrazione: loop)
         $middleware->redirectUsersTo('/area');
         $middleware->append(SecurityHeaders::class);
         // dopo la sessione, così sa chi è collegato: il sito resta chiuso ai visitatori finché non si apre da Impostazioni
-        $middleware->web(append: [SiteClosed::class, BlockSuspendedAccounts::class, TrackVisit::class]);
+        $middleware->web(append: [ApplyLocale::class, SiteClosed::class, BlockSuspendedAccounts::class, TrackVisit::class]);
         // e prima del controllo di accesso: anche /area deve mostrare «Lamèss apre presto», non il rinvio al login
-        $middleware->appendToPriorityList(after: StartSession::class, append: SiteClosed::class);
+        $middleware->appendToPriorityList(after: StartSession::class, append: ApplyLocale::class);
+        $middleware->appendToPriorityList(after: ApplyLocale::class, append: SiteClosed::class);
         $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class, 'shop.login' => ShopLoginRequired::class]);
         $middleware->validateCsrfTokens(except: ['webhooks/*']); // chiamate server-to-server, autenticate dalla firma
     })

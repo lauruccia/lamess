@@ -1,5 +1,5 @@
 @extends('site.layout')
-@section('title','Candidati — Lamèss')
+@section('title', __('Candidati — Lamèss'))
 @section('width','auth')
 @section('side_title','Entra in Lamèss')
 @section('side_text','Il nostro team valuterà il tuo profilo e riceverai una risposta via email.')
@@ -16,11 +16,11 @@
 </style>
 @endpush
 @section('content')
-<h1>Candidati</h1>
-<p class="muted">Compila i campi: il nostro team valuterà il tuo profilo e riceverai una risposta via email. Se approvato, ti arriverà il link per creare il tuo account.</p>
+<h1>{{ __('Candidati') }}</h1>
+<p class="muted">{{ __('Compila i campi: il nostro team valuterà il tuo profilo e riceverai una risposta via email. Se approvato, ti arriverà il link per creare il tuo account.') }}</p>
 <form method="post" action="/candidati" class="reg card" novalidate>
  @csrf
- <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Sito web <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+ <div style="position:absolute;left:-9999px" aria-hidden="true"><label>{{ __('Sito web') }} <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
   @foreach([[['first_name','Nome','given-name','text'],['last_name','Cognome','family-name','text']],[['email','Email','email','email'],['phone','Telefono','tel','tel']],[['city','Città','address-level2','text']]] as $row)
  <div class="{{ count($row) > 1 ? 'pair' : '' }}">
   @foreach($row as [$f,$label,$ac,$type])
@@ -31,8 +31,8 @@
   @endforeach
  </div>
  @endforeach
- <div class="apply-int @error('interest') bad @enderror" role="radiogroup" aria-label="Sei interessato come">
-  <span class="apply-int-q">Sei interessato come…</span>
+ <div class="apply-int @error('interest') bad @enderror" role="radiogroup" aria-label="{{ __('Sei interessato come') }}">
+  <span class="apply-int-q">{{ __('Sei interessato come…') }}</span>
   <div class="apply-int-opts">
    @foreach(\App\Models\MembershipApplication::INTERESTS as $v => $label)
    <label><input type="radio" name="interest" value="{{ $v }}" @checked(old('interest')===$v) required><span>{{ $label }}</span></label>
@@ -40,9 +40,9 @@
   </div>
   @error('interest')<p class="fe">{{ $message }}</p>@enderror
  </div>
- <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy')) required><span>Ho letto l'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a> e acconsento al trattamento dei dati per valutare la mia candidatura.</span></label>
+ <label class="chk"><input type="checkbox" name="privacy" value="1" @checked(old('privacy')) required><span>{!! __('Ho letto l\'<a href="/privacy" target="_blank" rel="noopener">informativa sulla privacy</a> e acconsento al trattamento dei dati per valutare la mia candidatura.') !!}</span></label>
  @error('privacy')<p class="fe">{{ $message }}</p>@enderror
- <button class="btn" type="submit">Invia la candidatura</button>
+ <button class="btn" type="submit">{{ __('Invia la candidatura') }}</button>
 </form>
-<p class="muted reg-login">Hai già un account? <a href="/accedi">Accedi</a></p>
+<p class="muted reg-login">{!! __('Hai già un account? <a href="/accedi">Accedi</a>') !!}</p>
 @endsection

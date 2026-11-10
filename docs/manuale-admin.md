@@ -44,6 +44,8 @@ Permessi particolari: `network.restructure` (spostare rami, riassegnare clienti,
 
 **Funzionalità e viste**: accende e spegne schede, viste, link e pulsanti (es. la scheda «Volumi e rank», il pulsante *Mantieni qualifica*) per tutti, per un ruolo o per un singolo utente. Le regole bloccate dal super_admin l'admin non le cambia. «Ripristina» riporta al valore predefinito.
 
+Nel gruppo «Area incaricato e sito» trovi anche ogni voce del menu dell'area riservata (Il mio ramo, Ordini, Eventi, Assistenza…), il **Negozio e carrello** e la pagina **Il piano compensi**: spegnerle le toglie dal menu e dalla panoramica e l'indirizzo diretto non si apre più (si torna alla panoramica o alla home). Non cancella nulla e vale per tutti, titolare compresa. «I miei dati» non si può spegnere.
+
 **Accesso con l'email «è»** (`nome@lamèss.it`): il campo email del login accetta la «è» anche da iPhone e Safari; il portale la converte da solo nella forma tecnica del dominio (punycode, `xn--lamss-6ra.it`). Si scrive l'indirizzo come sempre, senza trucchi.
 
 **2FA**: con `ADMIN_2FA_REQUIRED=true` (predefinito) al primo accesso il pannello chiede di collegare un'app di autenticazione dalla pagina **Profilo**; si mostrano i codici di recupero (da conservare). Poi serve il codice a 6 cifre.

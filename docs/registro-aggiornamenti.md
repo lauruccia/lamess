@@ -1,5 +1,12 @@
 # Registro aggiornamenti
 
+## 2026-11-10 — Funzionalità e viste: area degli utenti e negozio si possono nascondere
+- **Nuove voci** nel gruppo «Area incaricato e sito»: ogni voce del menu dell'area (Il mio ramo, I miei clienti, Referral, Dettaglio compensi, Statini, Tasca, Ricevute, Ordini, Abbonamenti, Novità, Materiali, Eventi, Conformità, Documenti, Assistenza), il **Negozio e carrello** (`site.shop`) e la pagina **Il piano compensi** (`site.piano_compensi`). «I miei dati» è bloccata (non si spegne).
+- **Come funziona**: voce spenta = sparisce dal menu e dalla panoramica, e l'indirizzo diretto rimanda alla panoramica (o alla home per negozio e piano compensi). Il controllo è lato server (`FeatureGate`, mappa in `AreaMenu`). Spegnere non cancella dati. Valgono le regole per tutti / ruolo / utente di sempre; vale anche per la titolare (`bypass` spento), come per «Pagine personali».
+- Le pagine di sistema del back-office (Utenti, Log, Lingue, Traduzioni, Backup, Impostazioni, Ruoli) sono solo della titolare: non hanno interruttore.
+- **Correzione**: l'indirizzo `/webhooks/kmoney-pagine` (avviso di pagamento delle pagine personali) era finito per errore dentro il gruppo `admin-files` e non rispondeva; ora è accanto agli altri webhook.
+- Nessuna migrazione, nessun SQL. Test: `AreaVisibilityTest` (6).
+
 ## 2026-11-10 — Pagine personali: pagamento automatico con KMoney (conto di KNM)
 - **«Paga con KMoney»** in *Area → La mia pagina* (prima attivazione, scadenza passata e rinnovo nel preavviso). Il portale crea su KMoney una richiesta di pagamento da 150 KY sul conto di **KNM** (non Kadeo Group) e manda l'incaricato alla pagina di pagamento di KMoney; lì accede o apre il conto con dati già compilati. Quando KMoney conferma, la pagina si attiva da sola (email all'incaricato) e l'incaricato torna a «La mia pagina». Rinnovo annuale identico. La procedura a mano resta come ripiego («Preferisci la procedura a mano?»).
 - **Spento di default**: si accende da *Impostazioni → Rete* («Pagine personali: pagamento automatico con KMoney») solo con `KMONEY_KNM_API_TOKEN`, `KMONEY_KNM_WEBHOOK_SECRET` e `KMONEY_BASE_URL` nel `.env`. Il conto di KNM è un'impostazione («conto KMoney che incassa»), non una costante.

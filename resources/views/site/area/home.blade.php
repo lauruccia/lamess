@@ -108,6 +108,7 @@
    </section>
   @endif
 
+  @if(\App\Domain\Features\AreaMenu::allows('area/ordini'))
   <section class="panel">
    <header><h2>Ultimi ordini</h2><a href="/area/ordini">Tutti gli ordini →</a></header>
    @if($d['orders']['recent']->isEmpty())
@@ -127,7 +128,9 @@
     </div>
    @endif
   </section>
+  @endif
 
+  @if(\App\Domain\Features\AreaMenu::allows('area/abbonamenti'))
   <section class="panel">
    <header><h2>Abbonamenti</h2><a href="/area/abbonamenti">Gestisci →</a></header>
    @if($d['subs']['list']->isEmpty())
@@ -147,7 +150,9 @@
     </div>
    @endif
   </section>
+  @endif
 
+  @if(\App\Domain\Features\AreaMenu::allows('area/eventi'))
   <section class="panel">
    <header><h2>Prossimi eventi</h2><a href="/area/eventi">Calendario →</a></header>
    @if($d['events']->isEmpty())
@@ -168,6 +173,7 @@
     </div>
    @endif
   </section>
+  @endif
  </div>
 
  <aside class="stack">
@@ -234,6 +240,7 @@
    </div>
   </section>
 
+  @if(\App\Domain\Features\AreaMenu::allows('area/novita'))
   <section class="panel">
    <header><h2>Novità</h2><a href="/area/novita">Tutte →</a></header>
    @if($d['news']->isEmpty())
@@ -246,6 +253,7 @@
     </div>
    @endif
   </section>
+  @endif
 
   @if(! $c && $user->profile?->type === 'private')
    <section class="panel accent">

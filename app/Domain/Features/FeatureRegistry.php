@@ -36,6 +36,26 @@ final class FeatureRegistry
         $defs = [
             // ---- Area dell'incaricato: pagina personale (spenta, sparisce il link «La mia pagina» e le pagine /i/nome non si aprono)
             'area.personal_page' => ['type' => 'module', 'group' => 'Area incaricato e sito', 'label' => 'Pagine personali degli incaricati', 'help' => 'Il link «La mia pagina» nell\'area dell\'incaricato e le pagine pubbliche /i/nome. I contenuti restano.', 'bypass' => false],
+            // ---- Area dell'incaricato e del cliente: ogni voce del menu (spenta: sparisce dal menu e l'indirizzo rimanda alla panoramica)
+            'area.menu.rete' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Il mio ramo»', 'help' => 'Il ramo della rete e il dettaglio dei diretti.', 'bypass' => false],
+            'area.menu.clienti' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «I miei clienti»', 'bypass' => false],
+            'area.menu.referral' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Referral»', 'help' => 'Link, QR code e inviti.', 'bypass' => false],
+            'area.menu.compensi' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Dettaglio compensi»', 'bypass' => false],
+            'area.menu.statini' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Statini» (e statini bonus)', 'bypass' => false],
+            'area.menu.wallet' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Tasca»', 'help' => 'Resta spenta anche se i prelievi sono disattivati dalle impostazioni.', 'bypass' => false],
+            'area.menu.ricevute' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Ricevute»', 'bypass' => false],
+            'area.menu.ordini' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Ordini»', 'bypass' => false],
+            'area.menu.abbonamenti' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Abbonamenti»', 'bypass' => false],
+            'area.menu.novita' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Novità»', 'bypass' => false],
+            'area.menu.materiali' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Materiali»', 'bypass' => false],
+            'area.menu.eventi' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Eventi»', 'bypass' => false],
+            'area.menu.conformita' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Conformità»', 'bypass' => false],
+            'area.menu.onboarding' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Documenti»', 'help' => 'Contratto, documenti e IBAN dell\'incaricato.', 'bypass' => false],
+            'area.menu.assistenza' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Assistenza»', 'bypass' => false],
+            'area.menu.profilo' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «I miei dati»', 'help' => 'Dati personali, indirizzi e password: non si può spegnere.', 'lock' => 'system'],
+            // ---- Sito pubblico
+            'site.shop' => ['type' => 'module', 'group' => 'Area incaricato e sito', 'label' => 'Negozio e carrello', 'help' => 'Spento: /negozio e il carrello rimandano alla home e spariscono prezzi e pulsanti di acquisto. Ordini e dati restano.', 'bypass' => false],
+            'site.piano_compensi' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Pagina «Il piano compensi»', 'help' => 'La pagina pubblica /piano-compensi e il suo link nel menu dell\'area.', 'bypass' => false],
             // ---- Scheda incaricato: tab
             'consultant360.tab.overview' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Riepilogo e carriera»', 'help' => 'Avanzamento di carriera, cosa manca per il livello successivo, attività del mese.'],
             'consultant360.tab.profile' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Anagrafica e contratto»', 'help' => 'Dati personali, sponsor, contratto IVD, canone annuale, onboarding.'],

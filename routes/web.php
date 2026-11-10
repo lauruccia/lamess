@@ -58,11 +58,13 @@ Route::view('/contatti', 'site.front.contatti')->name('front.contatti');
 // Route::get('/come-funziona', [SiteController::class, 'howItWorks'])->name('front.come-funziona');
 Route::get('/installazione', [InstallController::class, 'show']);
 Route::post('/installazione', [InstallController::class, 'run'])->middleware('throttle:6,1');
-Route::get('/negozio', [ShopController::class, 'index']);
-Route::get('/negozio/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+');
+Route::middleware('feature:site.shop')->group(function () {
+    Route::get('/negozio', [ShopController::class, 'index']);
+    Route::get('/negozio/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+');
+});
 Route::get('/media/{path}', [ShopController::class, 'media'])->where('path', 'shop/.*');
 // carrello: con «Negozio visibile con prezzi solo dopo l'accesso» acceso serve il login (Impostazioni di sistema → Sito)
-Route::middleware('shop.login')->group(function () {
+Route::middleware(['feature:site.shop', 'shop.login'])->group(function () {
     Route::get('/carrello', [ShopController::class, 'cartView']);
     Route::get('/carrello/mini', [ShopController::class, 'mini']);
     Route::post('/carrello/aggiungi', [ShopController::class, 'add'])->middleware('throttle:60,1');
@@ -74,7 +76,7 @@ Route::middleware('shop.login')->group(function () {
 Route::get('/privacy', [LegalController::class, 'show'])->defaults('page', 'privacy');
 Route::get('/termini', [LegalController::class, 'show'])->defaults('page', 'termini');
 Route::get('/politiche-di-reso', [LegalController::class, 'show'])->defaults('page', 'politiche-di-reso');
-Route::get('/piano-compensi', [LegalController::class, 'show'])->defaults('page', 'piano-compensi');
+Route::get('/piano-compensi', [LegalController::class, 'show'])->defaults('page', 'piano-compensi')->middleware('feature:site.piano_compensi');
 Route::get('/regolamento', [LegalController::class, 'show'])->defaults('page', 'regolamento');
 Route::get('/lettera-di-incarico', [LegalController::class, 'show'])->defaults('page', 'lettera-di-incarico');
 Route::get('/liberatoria-foto', [LegalController::class, 'show'])->defaults('page', 'liberatoria-foto');
@@ -106,7 +108,7 @@ Route::post('/area/torna-admin', function (Request $request) {
 })->middleware('auth')->name('impersonation.stop');
 Route::post('/esci', [SiteController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::middleware('auth')->prefix('area')->group(function () {
+Route::middleware(['auth', 'feature'])->prefix('area')->group(function () {
     Route::get('/', [AreaController::class, 'home'])->name('area');
     Route::get('/diventa-incaricato', [AreaController::class, 'becomeForm']);
     Route::post('/diventa-incaricato', [AreaController::class, 'apply']);
@@ -206,11 +208,11 @@ Route::middleware('auth')->prefix('area')->group(function () {
 
 // Notifiche server-to-server dei provider (firmate, senza sessione né CSRF)
 Route::post('/webhooks/kmoney', [KMoneyController::class, 'webhook'])->middleware('throttle:120,1');
+Route::post('/webhooks/kmoney-pagine', App\Http\Controllers\PagePaymentWebhookController::class)->middleware('throttle:120,1');
 Route::post('/webhooks/stripe', [WebhookController::class, 'stripe'])->middleware('throttle:120,1');
 
 // File riservati agli amministratori (lettere firmate, documenti KYC)
 Route::middleware(['auth'])->prefix('admin-files')->group(function () {
-Route::post('/webhooks/kmoney-pagine', App\Http\Controllers\PagePaymentWebhookController::class)->middleware('throttle:120,1');
     Route::get('/contract/{contract}', function (IvdContract $contract) {
         abort_unless(auth()->user()->can('network.manage') && $contract->pdf_path && Storage::exists($contract->pdf_path), 403);
 

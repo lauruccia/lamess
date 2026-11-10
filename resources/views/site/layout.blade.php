@@ -94,6 +94,7 @@
     ['/area/assistenza', 'Assistenza', fn ($p) => str_starts_with($p, 'area/assistenza'), 'Account'],
     ['/area/profilo', 'I miei dati', fn ($p) => str_starts_with($p, 'area/profilo'), 'Account'],
   ]))
+  @php($items = array_filter($items, fn ($i) => \App\Domain\Features\AreaMenu::allows($i[0])))
   {{-- PHP puro: con un blocco Blade lungo i php di riga sopra ne inghiottirebbero il contenuto. --}}
   <?php
       $navGroups = [];

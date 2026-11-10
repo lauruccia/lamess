@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // e prima del controllo di accesso: anche /area deve mostrare «Lamèss apre presto», non il rinvio al login
         $middleware->appendToPriorityList(after: StartSession::class, append: ApplyLocale::class);
         $middleware->appendToPriorityList(after: ApplyLocale::class, append: SiteClosed::class);
-        $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class, 'shop.login' => ShopLoginRequired::class]);
+        $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class, 'shop.login' => ShopLoginRequired::class, 'feature' => \App\Http\Middleware\FeatureGate::class]);
         $middleware->validateCsrfTokens(except: ['webhooks/*']); // chiamate server-to-server, autenticate dalla firma
     })
     ->withExceptions(function (Exceptions $exceptions): void {

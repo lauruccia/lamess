@@ -85,7 +85,7 @@ class AuditLogResource extends Resource
                 TextEntry::make('description')->label('Descrizione')->columnSpanFull(),
                 TextEntry::make('reason')->label('Motivo')->placeholder('—')->columnSpanFull(),
                 TextEntry::make('changes')->label('Dettagli')->placeholder('—')->columnSpanFull()
-                    ->state(fn (AuditEntry $r) => $r->changes === null ? null : json_encode($r->changesArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+                    ->state(fn (AuditEntry $r) => self::formatChanges($r->changesArray()))
                     ->extraAttributes(['style' => 'white-space: pre-wrap; font-family: monospace']),
             ]),
             Section::make('Catena di hash')->collapsed()->columns(1)->schema([
@@ -93,6 +93,33 @@ class AuditLogResource extends Resource
                 TextEntry::make('hash')->label('Hash di questa riga')->fontFamily('mono')->copyable(),
             ]),
         ]);
+    }
+
+    /**
+     * Dettagli leggibili: una riga per campo, «campo: prima → dopo».
+     * Volutamente NON è JSON: una stringa JSON viene trasformata da Filament in lista e le voci annidate appaiono come «[]».
+     *
+     * @param  array<string, mixed>|null  $changes
+     */
+    private static function formatChanges(?array $changes): ?string
+    {
+        if ($changes === null || $changes === []) {
+            return null;
+        }
+        $fmt = static fn (mixed $v): string => match (true) {
+            $v === null => '—',
+            is_bool($v) => $v ? 'sì' : 'no',
+            is_scalar($v) => (string) $v,
+            default => (string) json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        };
+        $lines = [];
+        foreach ($changes as $campo => $v) {
+            $lines[] = is_array($v) && array_key_exists('prima', $v) && array_key_exists('dopo', $v)
+                ? $campo.': '.$fmt($v['prima']).' → '.$fmt($v['dopo'])
+                : $campo.': '.$fmt($v);
+        }
+
+        return implode("\n", $lines);
     }
 
     public static function table(Table $table): Table

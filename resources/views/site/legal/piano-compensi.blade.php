@@ -80,7 +80,7 @@
 <h2>{{ __('5. Bonus di Struttura') }}</h2>
 <p>{!! __('Quando un nuovo incaricato porta <strong>:p clienti personali entro :p2 giorni</strong> dall\'attivazione diventa «PearlQ» e genera un bonus per chi sta sopra di lui. Ogni incaricato della sua linea riceve l\'importo della propria qualifica meno l\'importo della qualifica più alta già presente tra il nuovo incaricato e sé stesso, così il bonus non si paga due volte.', ['p' => e($k['structure_clients'] ?? 3), 'p2' => e($k['structure_window_days'] ?? 30)]) !!}</p>
 <table class="plan-table"><thead><tr><th>{{ __('Qualifica') }}</th><th>{{ __('Bonus') }}</th></tr></thead><tbody>
-@foreach($k['structure_bonus'] ?? [] as $code => $v)<tr><td>{{ $rankName($code) }}</td><td>{{ $eur($v) }}</td></tr>@endforeach
+@foreach(collect($k['structure_bonus'] ?? [])->sort()->all() as $code => $v)<tr><td>{{ $rankName($code) }}</td><td>{{ $eur($v) }}</td></tr>@endforeach
 </tbody></table>
 <p class="small">{{ __('Il Bonus di Struttura si calcola ogni settimana e viene liquidato dopo la conferma del Consorzio.') }}</p>
 

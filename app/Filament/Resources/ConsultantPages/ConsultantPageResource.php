@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ConsultantPages;
 
 use App\Domain\Access\Roles;
+use App\Domain\Access\Superadmin;
 use App\Domain\Audit\AuditLog;
 use App\Domain\Pages\PageException;
 use App\Domain\Pages\PersonalPageService;
@@ -67,9 +68,10 @@ class ConsultantPageResource extends Resource
         return false;
     }
 
+    /** Solo il super_admin elimina (a cascata, con conferma «ELIMINA») dalle azioni di SuperadminActions. */
     public static function canDelete($record): bool
     {
-        return false;
+        return Superadmin::is();
     }
 
     public static function getNavigationBadge(): ?string

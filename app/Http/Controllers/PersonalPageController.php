@@ -82,7 +82,8 @@ class PersonalPageController extends Controller
     private function activeMine(Request $request, PersonalPageService $svc): Consultant
     {
         $c = $this->mine($request, $svc);
-        abort_unless($svc->isActivated($svc->forConsultant($c)), 403, 'La pagina non è attiva: chiedi l\'attivazione dall\'area riservata.');
+        $page = $svc->activationRequired() ? $svc->find($c) : $svc->forConsultant($c);
+        abort_unless($page !== null && $svc->isActivated($page), 403, 'La pagina non è attiva: chiedi l\'attivazione dall\'area riservata.');
 
         return $c;
     }
@@ -90,7 +91,7 @@ class PersonalPageController extends Controller
     public function edit(Request $request, PersonalPageService $svc)
     {
         $c = $this->mine($request, $svc);
-        $page = $svc->forConsultant($c);
+        $page = $svc->find($c) ?? ($svc->activationRequired() ? new ConsultantPage : $svc->forConsultant($c));
         if (! $svc->isActivated($page)) {
             return view('site.area.page-activation', ['page' => $page, 'svc' => $svc, 'c' => $c]);
         }

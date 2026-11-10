@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-11-10 — Pagine personali: nessuna bozza creata da una semplice visita, foto non più persa
+- Con l'attivazione richiesta, aprire *La mia pagina* **non crea più** la riga della pagina: nasce solo con la richiesta di attivazione o con l'attivazione del Consorzio. Spenta l'attivazione, si comporta come prima (la bozza nasce all'apertura).
+- **Foto**: «Modifica testi» del Consorzio (salvataggio diretto) partiva dal contenuto in uso e non dalla proposta in attesa: se la foto era stata caricata ma non ancora approvata, la perdeva e ne cancellava il file. Ora parte sempre dal contenuto che si vede nel modulo (proposta in attesa, altrimenti contenuto in uso). Test aggiunti in `PersonalPageTest` (22).
+- Nessuna migrazione. Per togliere una pagina creata per errore: `DELETE FROM consultant_pages WHERE slug = '…';` (la foto, se c'era, sta in `storage/app/private/pages/{id}`).
+
 ## 2026-11-09 — Pagine personali: procedura di pagamento con i link KMoney
 - La schermata di richiesta (e l'avviso di rinnovo) guida in 4 passi: **Apri un conto KMoney** (kmoney.it/register), **Ricarica KMoney** (kmoney.it/ricarica), acquisto del prodotto **«Pagina Incaricato Lamèss»** (kmoney.it/shop/169), poi il pulsante di richiesta. Il link del prodotto è il valore predefinito di *Pagine personali: link del prodotto* (modificabile in *Impostazioni → Rete*); registrazione e ricarica sono in `lamess.personal_pages.register_url` / `recharge_url` (env `LAMESS_PERSONAL_PAGES_REGISTER_URL`, `_RECHARGE_URL`). Nessuna migrazione.
 

@@ -66,6 +66,12 @@ final class PersonalPageService
         return $c->status === 'active' && ($c->user_id === null || ! User::query()->whereKey($c->user_id)->whereNotNull('suspended_at')->exists());
     }
 
+    /** La pagina dell'incaricato se esiste, senza crearla: aprire «La mia pagina» non deve far nascere nulla. */
+    public function find(Consultant $c): ?ConsultantPage
+    {
+        return ConsultantPage::where('consultant_id', $c->id)->first();
+    }
+
     /** La pagina dell'incaricato; se non esiste la crea in bozza con un indirizzo ricavato dal nome. */
     public function forConsultant(Consultant $c): ConsultantPage
     {
@@ -293,7 +299,7 @@ final class PersonalPageService
         $toReview = ! $direct && $this->approvalRequired();
 
         return DB::transaction(function () use ($p, $clean, $photo, $removePhoto, $toReview): ConsultantPage {
-            $current = $toReview ? $this->content($p, true) : $this->content($p);
+            $current = $this->content($p, true);
             $photoPath = $current['photo_path'];
             $newPhoto = null;
             if ($photo !== null) {

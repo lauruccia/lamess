@@ -321,6 +321,7 @@ final class PersonalPageTest extends TestCase
         $u = $this->consultantUser();
         $this->actingAs($u)->get('/area/pagina')->assertOk()->assertSee('150,00 €')->assertSee('Pagina Incaricato Lamèss')->assertSee('kmoney.it/prodotto/pagina-lamess', false)->assertSee('https://kmoney.it/register', false)->assertSee('https://kmoney.it/ricarica', false)
             ->assertSee('Ho pagato, richiedi l\'attivazione', false)->assertDontSee('Metti online la pagina');
+        $this->assertSame(0, ConsultantPage::count());   // aprire la pagina non crea nessuna bozza
         $this->actingAs($u)->post('/area/pagina', $this->form())->assertForbidden();
         $this->actingAs($u)->post('/area/pagina/online', ['online' => 1])->assertForbidden();
         $this->actingAs($u)->get('/area/pagina/anteprima')->assertForbidden();
@@ -426,5 +427,20 @@ final class PersonalPageTest extends TestCase
         $this->assertSame(1, $svc->sendExpiryReminders());
         $this->assertSame(0, $svc->sendExpiryReminders());
         Notification::assertSentToTimes($u, PersonalPageActivation::class, 2);   // attivazione + promemoria
+    }
+
+    public function test_consortium_correction_keeps_the_photo_that_is_waiting_for_approval(): void
+    {
+        $u = $this->consultantUser();
+        $this->actingAs($u)->post('/area/pagina', $this->form() + ['photo' => UploadedFile::fake()->image('foto.jpg', 400, 500)])->assertRedirect();
+        $page = ConsultantPage::firstOrFail();
+        $photo = $page->proposal['photo_path'];
+        $this->assertNotNull($photo);
+        $this->assertNull($page->photo_path);   // non ancora approvata
+
+        app(PersonalPageService::class)->save($page, ['display_name' => 'Maria Rossi', 'bio' => 'Testo corretto'] + $this->form(), null, false, direct: true);
+        $page->refresh();
+        $this->assertSame($photo, $page->photo_path);
+        Storage::assertExists($photo);
     }
 }

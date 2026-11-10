@@ -17,7 +17,6 @@
 </div>
 
 @foreach($errors->all() as $m)<div class="note note-err"><div>{{ $m }}</div></div>@endforeach
-@if(session('status'))<div class="note note-ok"><div>{{ session('status') }}</div></div>@endif
 @if($page->blocked)<div class="note note-err"><div><strong>Pagina nascosta dal Consorzio</strong>{{ $page->blocked_note ?: 'Contatta l\'assistenza per riattivarla.' }}</div></div>@endif
 @if($rejected)<div class="note note-err"><div><strong>Modifiche non approvate</strong>{{ $page->review_note }} Correggi i testi e salva di nuovo.</div></div>@endif
 @if($activation['required'] && in_array($activation['state'], ['expiring', 'requested'], true))

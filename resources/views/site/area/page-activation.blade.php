@@ -16,7 +16,6 @@
 </div>
 
 @foreach($errors->all() as $m)<div class="note note-err"><div>{{ $m }}</div></div>@endforeach
-@if(session('status'))<div class="note note-ok"><div>{{ session('status') }}</div></div>@endif
 @if($state === 'expired')<div class="note note-err"><div><strong>La tua pagina è scaduta</strong>Dal {{ $page->activation_expires_at?->timezone('Europe/Rome')->format('d/m/Y') }} non è più visibile. Rinnovala per riattivarla: testi e foto che avevi scritto restano salvati.</div></div>@endif
 
 <div class="split">
@@ -26,6 +25,8 @@
   </header>
   <div class="panel-body">
    <p style="margin-top:0">La pagina personale non è inclusa di default: si attiva su richiesta e vale <strong>{{ $months === 12 ? 'un anno' : $months.' mesi' }}</strong>, poi si rinnova. Il costo è di <strong>{{ $price }} €</strong>.</p>
+ <p class="muted" style="font-size:14px;line-height:1.6;margin:0 0 16px;padding-left:12px;border-left:3px solid var(--accent, #b85c38)">Un servizio offerto da <strong>KNM srl</strong>, titolare del circuito KMoney, che incassa il pagamento.<br>
+  <span style="font-size:13px">P.IVA e C.F. 13273091002 · Via Eurialo 56, 00181 Roma (RM) · REA 1435764 · PEC knm@arubapec.it</span></p>
    @if($autoPay ?? false)
     <form method="post" action="/area/pagina/paga">@csrf
      <p style="margin-top:0">Paga con KMoney in pochi clic: ti portiamo sulla pagina di pagamento di KMoney. Se non hai ancora un conto lo apri lì, con i tuoi dati già inseriti. Appena il pagamento è confermato la pagina si attiva da sola e ti arriva una email.</p>

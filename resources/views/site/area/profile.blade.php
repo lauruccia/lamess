@@ -161,7 +161,7 @@
     <a class="btn ghost" style="margin-top:12px" href="/area/assistenza">Scrivi al Consorzio</a>
    </div>
   </section>
-  @if($c?->status === 'active')
+  @if($c?->status === 'active' && \App\Domain\Features\AreaMenu::allows('area/cessione'))
    <section class="panel">
     <div class="panel-body"><strong>Cessione del codice attività</strong><p class="muted" style="margin:4px 0 12px">Vuoi passare il tuo codice a un'altra persona?</p><a class="btn ghost" href="/area/cessione">Scopri come</a></div>
    </section>

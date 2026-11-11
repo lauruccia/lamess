@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Domain\Features\Feature;
 use App\Domain\Plan\LegacyPlan;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -34,7 +35,7 @@ class LegacyPlanPage extends Page
 
     public static function canAccess(): bool
     {
-        return LegacyPlan::canToggle();
+        return LegacyPlan::canToggle() && Feature::enabled('backoffice.page.piano_precedente');
     }
 
     protected function getHeaderActions(): array

@@ -47,6 +47,9 @@ class FeaturesPage extends Page implements HasActions
 
     public string $search = '';
 
+    /** Cosa mostrare: tutte, solo le spente, solo quelle modificate rispetto al predefinito. */
+    public string $filter = 'all';
+
     public static function canAccess(): bool
     {
         return Feature::canManage(auth()->user());
@@ -82,6 +85,30 @@ class FeaturesPage extends Page implements HasActions
         return FeatureRegistry::get($key)['default'] ?? true;
     }
 
+    /** Chiavi di un gruppo che chi guarda può vedere nel pannello (stesso filtro dell'elenco). */
+    private function keysOfGroup(string $group): array
+    {
+        $out = [];
+        foreach (FeatureRegistry::all() as $key => $def) {
+            if ($def['group'] === $group && $this->visibleHere($key, $def)) {
+                $out[] = $key;
+            }
+        }
+
+        return $out;
+    }
+
+    /** @param  array<string, mixed>  $def */
+    private function visibleHere(string $key, array $def): bool
+    {
+        if (LegacyPlan::hides($key)) {
+            return false;   // voce del vecchio piano: con il piano nascosto non si elenca nemmeno qui
+        }
+
+        // le voci di menu e quelle riservate le gestisce solo il super_admin: l'admin non sa nemmeno che esistono
+        return ! (($def['super'] || $this->underMenuEntry($key)) && ! $this->isSuper());
+    }
+
     public function toggle(string $key): void
     {
         $now = $this->baseState($key);
@@ -96,6 +123,31 @@ class FeaturesPage extends Page implements HasActions
         $n > 0 && $now
             ? Notification::make()->title('Funzionalità disattivata')->body("Si disattivano anche gli elementi collegati ({$n}).")->success()->send()
             : Notification::make()->title($now ? 'Funzionalità disattivata' : 'Funzionalità attivata')->success()->send();
+    }
+
+    /**
+     * Accende o spegne in blocco tutte le funzionalità di un gruppo (quelle che chi guarda può gestire).
+     * Salta le protette, quelle bloccate dal super_admin (se chi agisce non lo è) e, accendendo, quelle spente di default.
+     */
+    public function setGroup(string $group, bool $on): void
+    {
+        $keys = $this->keysOfGroup($group);
+        if ($keys === []) {
+            return;
+        }
+        try {
+            $r = Feature::setMany($keys, $on, reason: 'pulsante di gruppo: '.$group);
+        } catch (FeatureException $e) {
+            Notification::make()->title('Non consentito')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+        $n = count($r['changed']);
+        $left = count($r['skipped']);
+        $title = $n === 0 ? 'Nessuna modifica: era già tutto così' : ($on ? "Attivate {$n} funzionalità" : "Disattivate {$n} funzionalità");
+        $note = Notification::make()->title($title)->success();
+        $left > 0 && $note->body("{$left} lasciate come sono (protette, bloccate o spente di default).");
+        $note->send();
     }
 
     public function toggleLock(string $key): void
@@ -166,21 +218,21 @@ class FeaturesPage extends Page implements HasActions
     {
         $needle = mb_strtolower(trim($this->search));
         $groups = [];
+        $counts = ['all' => 0, 'off' => 0, 'custom' => 0];
+        $stats = [];
         foreach (FeatureRegistry::all() as $key => $def) {
-            if (LegacyPlan::hides($key)) {
-                continue;   // voce del vecchio piano: con il piano nascosto non si elenca nemmeno qui
+            if (! $this->visibleHere($key, $def)) {
+                continue;
             }
             $def['label'] = LegacyPlan::scrub((string) $def['label']);
             $def['help'] = LegacyPlan::scrub((string) ($def['help'] ?? ''));
-            if (($def['super'] || $this->underMenuEntry($key)) && ! $this->isSuper()) {
-                continue;   // le voci di menu le gestisce solo il super_admin: l'admin non sa nemmeno che esistono
-            }
             if ($needle !== '' && ! str_contains(mb_strtolower($key.' '.$def['label'].' '.($def['help'] ?? '')), $needle)) {
                 continue;
             }
             $rules = Feature::rulesFor($key);
-            $groups[$def['group']][] = [
-                'key' => $key, 'def' => $def, 'on' => $this->baseState($key), 'effective' => Feature::enabled($key, $this->me()),
+            $on = $this->baseState($key);
+            $row = [
+                'key' => $key, 'def' => $def, 'on' => $on, 'effective' => Feature::enabled($key, $this->me()),
                 'system' => ($def['lock'] ?? null) === 'system', 'locked' => Feature::lockedBySuperadmin($key),
                 'exceptions' => array_values(array_filter($rules, static fn ($r) => $r['scope_type'] !== 'all')),
                 'customised' => $rules !== [],
@@ -188,9 +240,21 @@ class FeaturesPage extends Page implements HasActions
                 'depth' => $this->depth($key),
                 'type' => FeatureRegistry::typeLabel($def['type']),
             ];
+            $counts['all']++;
+            ! $on && $counts['off']++;
+            $row['customised'] && $counts['custom']++;
+            $stats[$def['group']]['total'] = ($stats[$def['group']]['total'] ?? 0) + 1;
+            $stats[$def['group']]['on'] = ($stats[$def['group']]['on'] ?? 0) + ($on ? 1 : 0);
+            if (($this->filter === 'off' && $on) || ($this->filter === 'custom' && ! $row['customised'])) {
+                continue;
+            }
+            $groups[$def['group']][] = $row;
         }
 
-        return ['groups' => $groups, 'isSuper' => $this->isSuper(), 'scopeLabel' => Feature::scopeLabel(...)];
+        return [
+            'groups' => $groups, 'isSuper' => $this->isSuper(), 'scopeLabel' => Feature::scopeLabel(...), 'counts' => $counts,
+            'groupStats' => $stats,
+        ];
     }
 
     /** True per le voci di menu e per tutto ciò che ne dipende (es. le colonne dell'elenco incaricati). */

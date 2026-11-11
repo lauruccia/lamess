@@ -6,6 +6,7 @@ namespace App\Filament\Resources\TranslationStrings;
 
 use App\Domain\Access\Superadmin;
 use App\Domain\Audit\AuditLog;
+use App\Domain\Features\Feature;
 use App\Domain\I18n\Locales;
 use App\Domain\I18n\TranslationService;
 use App\Filament\Resources\TranslationStrings\Pages\ListTranslationStrings;
@@ -57,7 +58,7 @@ class TranslationStringResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Superadmin::is();
+        return Superadmin::is() && Feature::enabled('backoffice.resource.translation_strings');
     }
 
     public static function canCreate(): bool

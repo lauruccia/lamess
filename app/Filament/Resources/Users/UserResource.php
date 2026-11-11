@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Users;
 
 use App\Domain\Access\Roles;
 use App\Domain\Access\UserAdministration;
+use App\Domain\Features\Feature;
 use App\Domain\Features\FeatureRegistry;
 use App\Filament\Concerns\ImpersonateAction;
 use App\Filament\Resources\Users\Pages\CreateUser;
@@ -54,7 +55,7 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isSuperAdmin() === true;
+        return auth()->user()?->isSuperAdmin() === true && Feature::enabled('backoffice.resource.users');
     }
 
     public static function canCreate(): bool

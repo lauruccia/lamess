@@ -164,6 +164,67 @@ final class Feature
         return $n;
     }
 
+    /**
+     * Accende o spegne in blocco più funzionalità «per tutti» (pulsanti di gruppo del pannello). Salta, senza fermarsi, ciò che
+     * non si può cambiare: chiavi protette, regole bloccate dal super_admin per chi non lo è, funzioni riservate al super_admin.
+     * Con `$enabled = true` salta anche le funzioni spente di default (es. «Mostra l'IBAN per intero»): si accendono una a una.
+     * Un solo salvataggio, una sola svuotatura della cache e una sola riga nel log di audit.
+     *
+     * @param  list<string>  $keys
+     * @return array{changed: list<string>, skipped: list<string>}
+     */
+    public static function setMany(array $keys, bool $enabled, ?string $reason = null, ?User $by = null): array
+    {
+        $by ??= Auth::user() instanceof User ? Auth::user() : null;
+        if (! self::canManage($by)) {
+            throw new FeatureException('Non hai il permesso di cambiare le funzionalità.');
+        }
+        $changed = [];
+        $skipped = [];
+        $before = [];
+        DB::transaction(function () use ($keys, $enabled, $reason, $by, &$changed, &$skipped, &$before): void {
+            foreach (array_values(array_unique($keys)) as $key) {
+                try {
+                    $def = self::guard($key, 'all', '', $by);
+                } catch (FeatureException) {
+                    $skipped[] = $key;
+
+                    continue;
+                }
+                if (($def['lock'] ?? null) === 'system' || ($enabled && ($def['default'] ?? true) === false)) {
+                    $skipped[] = $key;
+
+                    continue;
+                }
+                $previous = self::stored($key, 'all', '');
+                $current = $previous['enabled'] ?? ($def['default'] ?? true);
+                if ($current === $enabled) {
+                    continue;   // già così (o segue già il default: nessuna regola da scrivere)
+                }
+                DB::table('ui_feature_settings')->updateOrInsert(
+                    ['feature_key' => $key, 'scope_type' => 'all', 'scope_id' => ''],
+                    [
+                        'enabled' => $enabled,
+                        'locked_by_superadmin' => (bool) ($previous['locked'] ?? false),
+                        'reason' => $reason,
+                        'updated_by' => Actor::label($by),
+                        'updated_at' => now(),
+                        'created_at' => $previous === null ? now() : DB::raw('created_at'),
+                    ],
+                );
+                $before[$key] = $current;
+                $changed[] = $key;
+            }
+        });
+        self::flush();
+        if ($changed !== []) {
+            AuditLog::record('features.set_many', ($enabled ? 'Attivate ' : 'Disattivate ').count($changed).' funzionalità in blocco', ['Feature', 'many'],
+                ['funzionalita' => $changed, 'prima' => $before, 'dopo' => $enabled, 'saltate' => $skipped], $reason);
+        }
+
+        return ['changed' => $changed, 'skipped' => $skipped];
+    }
+
     /** Chi può cambiare le regole. */
     public static function canManage(?Authenticatable $user = null): bool
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Domain\Features\Feature;
 use App\Domain\System\BackupService;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -31,7 +32,7 @@ class BackupPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() === true;
+        return auth()->user()?->isSuperAdmin() === true && Feature::enabled('backoffice.page.backup');
     }
 
     protected function getHeaderActions(): array

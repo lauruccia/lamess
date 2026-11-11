@@ -8,6 +8,7 @@ use App\Domain\Billing\FatturaPaBuilder;
 use App\Domain\Billing\FileInvoiceSink;
 use App\Domain\Billing\InvoiceSink;
 use App\Domain\Billing\MailInvoiceSink;
+use App\Domain\Features\Feature;
 use App\Domain\I18n\DatabaseTranslationLoader;
 use App\Domain\Onboarding\EmailSignatureProvider;
 use App\Domain\Onboarding\FakeSignatureProvider;
@@ -29,6 +30,7 @@ use App\Support\StatusLabels;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -90,6 +92,9 @@ class AppServiceProvider extends ServiceProvider
         };
         TextColumn::configureUsing($translate);
         TextEntry::configureUsing($translate);
+
+        // @feature('chiave') … @endfeature: mostra un pezzo di pagina solo se la funzionalità è accesa in «Funzionalità e viste»
+        Blade::if('feature', fn (string $key): bool => Feature::enabled($key));
 
         // Il super_admin ha ogni permesso (spatie/permission li registra come gate).
         Gate::before(fn ($user) => $user->hasRole(Roles::SUPER_ADMIN) ? true : null);

@@ -44,6 +44,7 @@ Una pagina per chi gestisce il portale ogni giorno. I dettagli sono nel Manuale 
 - Un pagamento sbagliato non ancora pagato: **Annulla** con motivo.
 - Il Cruscotto si aggiorna al massimo ogni minuto: se un numero sembra vecchio, attendi e ricarica.
 - Fatture: **Esporta per Easyfatt (XML)** in *Vendite → Fatture* (file da importare in Easyfatt, non per lo SdI).
+- Per togliere (o rimettere) una pagina del sito, una voce dell'area o un intero gruppo: *Sistema → Funzionalità e viste*. Ogni gruppo ha **Accendi tutto** e **Spegni tutto** (con conferma); Privacy e Termini sono protette; non si cancella nulla.
 - Il piano a PR/PV si nasconde con un click (*Compensi → Visibilità piano precedente*, solo titolare): i dati restano.
 
 ## Aggiornare il sito (cPanel, senza terminale)

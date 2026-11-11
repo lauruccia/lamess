@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Features\Feature;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -36,7 +37,7 @@ class AuditVerificationPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() === true;
+        return auth()->user()?->isSuperAdmin() === true && Feature::enabled('backoffice.page.verifica_audit');
     }
 
     public function mount(): void

@@ -129,7 +129,7 @@
     <div class="reveal"><h3>{{ $p['title'] }}</h3><p>{{ $p['text'] }}</p></div>
    @endforeach
   </div>
-  <p class="more reveal"><a href="/il-prodotto">Scheda del prodotto →</a><a href="/la-scienza">La scienza, con le fonti →</a></p>
+  <p class="more reveal">@feature('site.front.prodotto')<a href="/il-prodotto">Scheda del prodotto →</a>@endfeature @feature('site.front.scienza')<a href="/la-scienza">La scienza, con le fonti →</a>@endfeature</p>
  </div>
 </section>
 
@@ -145,7 +145,7 @@
    @endforeach
   </div>
   <p class="limit reveal"><strong>Cosa non dimostra.</strong> {{ $shared['research_limit'] }}</p>
-  <p class="more dark reveal"><a href="/la-scienza">Tutti gli studi, con dosi e fonti →</a></p>
+  <p class="more dark reveal">@feature('site.front.scienza')<a href="/la-scienza">Tutti gli studi, con dosi e fonti →</a>@endfeature</p>
  </div>
 </section>
 
@@ -289,7 +289,7 @@
   <div class="cta-row center">
    @if($waJoin)<a class="btn-p gold" href="{{ $waJoin }}" target="_blank" rel="noopener">Contattami su WhatsApp</a>@endif
    @if($mailJoin)<a class="btn-p {{ $waJoin ? 'line' : 'gold' }}" href="{{ $mailJoin }}">Scrivimi una email</a>@endif
-   <a class="btn-p line" href="/lavora-con-noi">Come funziona</a>
+   @feature('site.front.lavora')<a class="btn-p line" href="/lavora-con-noi">Come funziona</a>@endfeature
   </div>
   <p class="disclaimer">{{ $shared['disclaimer'] }}</p>
  </div>

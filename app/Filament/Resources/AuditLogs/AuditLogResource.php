@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AuditLogs;
 
+use App\Domain\Features\Feature;
 use App\Filament\Resources\AuditLogs\Pages\ListAuditLogs;
 use App\Filament\Resources\AuditLogs\Pages\ViewAuditLog;
 use App\Models\AuditEntry;
@@ -44,7 +45,7 @@ class AuditLogResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isSuperAdmin() === true;
+        return auth()->user()?->isSuperAdmin() === true && Feature::enabled('backoffice.resource.audit_logs');
     }
 
     public static function canView($record): bool

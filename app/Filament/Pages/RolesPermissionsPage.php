@@ -10,6 +10,7 @@ use App\Domain\Access\PermissionCatalog;
 use App\Domain\Access\Roles;
 use App\Domain\Access\Superadmin;
 use App\Domain\Audit\AuditLog;
+use App\Domain\Features\Feature;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Support\PermissionFields;
 use App\Models\User;
@@ -55,7 +56,7 @@ class RolesPermissionsPage extends Page implements HasActions
 
     public static function canAccess(): bool
     {
-        return Superadmin::is();
+        return Superadmin::is() && Feature::enabled('backoffice.page.ruoli_permessi');
     }
 
     public function mount(): void

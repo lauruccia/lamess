@@ -1,9 +1,17 @@
 # Registro aggiornamenti
 
+## 2026-11-10 — Funzionalità e viste: ora si può accendere e spegnere tutto, anche per gruppi
+- **Nuove voci**: le sette pagine della vetrina (Il prodotto, Perché Lamèss, La scienza, Lavora con noi, Chi siamo, Domande, Contatti), le Candidature (`/candidati`), la verifica pubblica del tesserino, le pagine legali (Politiche di reso, Regolamento, Lettera di incarico, Liberatoria foto; **Privacy e Termini sono protette**), «Cessione del codice» e «Diventa Incaricato» nell'area, e le pagine di sistema (Utenti, Log di audit, Lingue, Traduzioni, Impostazioni, Ruoli e permessi, Backup, Verifica del log, Controllo messa online, Visibilità piano precedente). «Funzionalità e viste» è protetta e non si spegne.
+- **Pulsanti di gruppo**: ogni gruppo ha **Accendi tutto** e **Spegni tutto** (con conferma). Saltano le voci protette, quelle bloccate e, accendendo, quelle spente di default (es. «Mostra l'IBAN per intero»). Una sola riga nel log (`features.set_many`). Filtri «Tutte / Solo le spente / Solo le modificate» e contatore «N accese su M» per gruppo.
+- **Cosa succede spegnendo**: sparisce dal menu, dal piè di pagina e dai pulsanti che portavano alla pagina (home e pagine della vetrina comprese); l'indirizzo diretto rimanda alla home (o alla panoramica per l'area). Nessun dato cancellato.
+- Le voci di sistema valgono anche per la titolare (`bypass` spento): si riaccendono da «Funzionalità e viste». Sostituisce la nota precedente («le pagine di sistema non hanno interruttore»).
+- **Guardia per il futuro**: `SwitchEverythingTest` fallisce se una pagina o una lista del back-office viene aggiunta senza interruttore nel registro.
+- Nessuna migrazione, nessun SQL. Test: `SwitchEverythingTest` (17), `AreaVisibilityTest` aggiornato.
+
 ## 2026-11-10 — Funzionalità e viste: area degli utenti e negozio si possono nascondere
 - **Nuove voci** nel gruppo «Area incaricato e sito»: ogni voce del menu dell'area (Il mio ramo, I miei clienti, Referral, Dettaglio compensi, Statini, Tasca, Ricevute, Ordini, Abbonamenti, Novità, Materiali, Eventi, Conformità, Documenti, Assistenza), il **Negozio e carrello** (`site.shop`) e la pagina **Il piano compensi** (`site.piano_compensi`). «I miei dati» è bloccata (non si spegne).
 - **Come funziona**: voce spenta = sparisce dal menu e dalla panoramica, e l'indirizzo diretto rimanda alla panoramica (o alla home per negozio e piano compensi). Il controllo è lato server (`FeatureGate`, mappa in `AreaMenu`). Spegnere non cancella dati. Valgono le regole per tutti / ruolo / utente di sempre; vale anche per la titolare (`bypass` spento), come per «Pagine personali».
-- Le pagine di sistema del back-office (Utenti, Log, Lingue, Traduzioni, Backup, Impostazioni, Ruoli) sono solo della titolare: non hanno interruttore.
+- Le pagine di sistema del back-office (Utenti, Log, Lingue, Traduzioni, Backup, Impostazioni, Ruoli) sono solo della titolare; dal 10/11/2026 (sera) hanno anch'esse un interruttore, vedi la voce sopra.
 - **Correzione**: l'indirizzo `/webhooks/kmoney-pagine` (avviso di pagamento delle pagine personali) era finito per errore dentro il gruppo `admin-files` e non rispondeva; ora è accanto agli altri webhook.
 - Nessuna migrazione, nessun SQL. Test: `AreaVisibilityTest` (6).
 

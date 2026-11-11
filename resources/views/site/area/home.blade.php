@@ -101,7 +101,7 @@
 
 <div class="split">
  <div class="stack">
-  @if($c && $c->status === 'active')
+  @if($c && $c->status === 'active' && \App\Domain\Features\AreaMenu::allows('area/rete'))
    <section class="panel">
     <header><h2>Il mio avanzamento</h2><a href="/area/rete">Il mio ramo →</a></header>
     <div class="panel-body">@include('partials.career-progress', ['p' => $progress])</div>
@@ -255,7 +255,7 @@
   </section>
   @endif
 
-  @if(! $c && $user->profile?->type === 'private')
+  @if(! $c && $user->profile?->type === 'private' && \App\Domain\Features\AreaMenu::allows('area/diventa-incaricato'))
    <section class="panel accent">
     <header><h2>Diventa Incaricato Lamèss</h2></header>
     <div class="panel-body">

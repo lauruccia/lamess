@@ -32,5 +32,5 @@
     </div>
   </div>
 </section>
-<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>{{ __('Non trovi la risposta?') }}</h2><a class="btn solid" href="/contatti">{{ __('Scrivici') }}</a></div></section>
+@feature('site.front.contatti')<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>{{ __('Non trovi la risposta?') }}</h2><a class="btn solid" href="/contatti">{{ __('Scrivici') }}</a></div></section>@endfeature
 @endsection

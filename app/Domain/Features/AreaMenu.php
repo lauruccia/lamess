@@ -31,6 +31,9 @@ final class AreaMenu
         'onboarding' => 'area.menu.onboarding',
         'assistenza' => 'area.menu.assistenza',
         'profilo' => 'area.menu.profilo',
+        'cessione' => 'area.menu.cessione',
+        'diventa-incaricato' => 'area.menu.diventa',
+        'pagina' => 'area.personal_page',
     ];
 
     /** Chiave per un indirizzo come «/area/ordini/12» o «/piano-compensi»; null se non è una voce spegnibile. */

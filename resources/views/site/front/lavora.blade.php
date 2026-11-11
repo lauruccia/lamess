@@ -43,5 +43,5 @@
     <p class="lead" style="margin-top:40px;max-width:60ch">{{ __('Compensi e condizioni si presentano in un incontro, insieme al Regolamento Incaricati.') }}</p>
   </div>
 </section>
-<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>{{ __('Parliamone in un incontro.') }}</h2><a class="btn solid" href="/contatti">{{ __('Scrivici') }}</a></div></section>
+@feature('site.front.contatti')<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>{{ __('Parliamone in un incontro.') }}</h2><a class="btn solid" href="/contatti">{{ __('Scrivici') }}</a></div></section>@endfeature
 @endsection

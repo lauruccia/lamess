@@ -49,7 +49,7 @@
     @yield('nav_extra')
    @else
     @guest
-     <a class="hide-lg" href="/">{{ __('Home') }}</a><a class="hide-lg" href="/il-prodotto">{{ __('Prodotto') }}</a><a class="hide-lg" href="/perche-lamess">{{ __('Perché Lamèss') }}</a><a class="hide-lg" href="/la-scienza">{{ __('La scienza') }}</a><a class="hide-lg" href="/lavora-con-noi">{{ __('Lavora con noi') }}</a><a class="hide-lg" href="/chi-siamo">{{ __('Chi siamo') }}</a><a class="hide-lg" href="/domande">{{ __('Domande') }}</a>
+     <a class="hide-lg" href="/">{{ __('Home') }}</a>@feature('site.front.prodotto')<a class="hide-lg" href="/il-prodotto">{{ __('Prodotto') }}</a>@endfeature @feature('site.front.perche')<a class="hide-lg" href="/perche-lamess">{{ __('Perché Lamèss') }}</a>@endfeature @feature('site.front.scienza')<a class="hide-lg" href="/la-scienza">{{ __('La scienza') }}</a>@endfeature @feature('site.front.lavora')<a class="hide-lg" href="/lavora-con-noi">{{ __('Lavora con noi') }}</a>@endfeature @feature('site.front.chi_siamo')<a class="hide-lg" href="/chi-siamo">{{ __('Chi siamo') }}</a>@endfeature @feature('site.front.faq')<a class="hide-lg" href="/domande">{{ __('Domande') }}</a>@endfeature
     @endguest
    @endif
    @if(\App\Support\ShopAccess::canBuy())
@@ -64,7 +64,7 @@
     <a class="hide-sm" href="/area">{{ __('La mia area') }}</a>
     <form method="post" action="/esci">@csrf<button class="link">{{ __('Esci') }}</button></form>
    @else
-    <a href="/accedi">{{ __('Accedi') }}</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">{{ __('Registrati') }}</a>@else<a class="cta" href="/candidati">{{ __('Candidati') }}</a>@endif
+    <a href="/accedi">{{ __('Accedi') }}</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="cta" href="/registrazione">{{ __('Registrati') }}</a>@else @feature('site.apply')<a class="cta" href="/candidati">{{ __('Candidati') }}</a>@endfeature @endif
    @endauth
   </nav>
   @endif
@@ -162,7 +162,7 @@
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 @if($isAuth || $minimalHeader)
-<footer class="site-footer">{!! __('© :p Lamèss &nbsp;·&nbsp;', ['p' => e(date('Y'))]) !!} @if(\App\Support\ShopAccess::canBuy())<a href="/negozio">{{ __('Negozio') }}</a>@endif @auth · <a href="/area/profilo">{{ __('I miei dati') }}</a>@endauth &nbsp;·&nbsp; <a href="/privacy">{{ __('Privacy') }}</a> · <a href="/termini">{{ __('Termini e Condizioni') }}</a> · <a href="/politiche-di-reso">{{ __('Politiche di Reso') }}</a> · <a href="/piano-compensi">{{ __('Il piano compensi') }}</a> · <a href="/regolamento">{{ __('Regolamento') }}</a>
+<footer class="site-footer">{!! __('© :p Lamèss &nbsp;·&nbsp;', ['p' => e(date('Y'))]) !!} @if(\App\Support\ShopAccess::canBuy())<a href="/negozio">{{ __('Negozio') }}</a>@endif @auth · <a href="/area/profilo">{{ __('I miei dati') }}</a>@endauth &nbsp;·&nbsp; <a href="/privacy">{{ __('Privacy') }}</a> · <a href="/termini">{{ __('Termini e Condizioni') }}</a> · @feature('site.legal.politiche_reso')<a href="/politiche-di-reso">{{ __('Politiche di Reso') }}</a> · @endfeature @feature('site.piano_compensi')<a href="/piano-compensi">{{ __('Il piano compensi') }}</a> · @endfeature @feature('site.legal.regolamento')<a href="/regolamento">{{ __('Regolamento') }}</a>@endfeature
  @php($co = config('lamess.company'))
  <br><small>{{ __('© :p :p2 – Tutti i diritti riservati. :p3 - :p4 - P.IVA :p5 ● PEC:', ['p' => date('Y'), 'p2' => $co['brand_owner'], 'p3' => $co['name'], 'p4' => $co['address'], 'p5' => $co['vat']]) }} <a href="mailto:{{ $co['pec'] }}">{{ $co['pec'] }}</a> {{ __('● Designed by') }} <a href="https://gruppokosmos.it" target="_blank" rel="noopener">{{ __('Gruppo Kosmos') }}</a></small>
 </footer>
@@ -175,10 +175,10 @@
   </div>
   @if(\App\Support\ShopAccess::canBuy())<nav aria-label="{{ __('Negozio') }}"><h4>{{ __('Negozio') }}</h4><a href="/negozio">{{ __('Tutti i prodotti') }}</a><a href="/carrello">{{ __('Carrello') }}</a></nav>@endif
   <nav aria-label="{{ __('Il tuo spazio') }}"><h4>{{ __('Il tuo spazio') }}</h4>
-   @auth<a href="/area">{{ __('La mia area') }}</a><a href="/area/ordini">{{ __('I miei ordini') }}</a><a href="/area/abbonamenti">{{ __('Abbonamenti') }}</a><a href="/area/assistenza">{{ __('Assistenza') }}</a>
-   @else<a href="/accedi">{{ __('Accedi') }}</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">{{ __('Registrati') }}</a>@else<a href="/candidati">{{ __('Candidati') }}</a>@endif @endauth
+   @auth<a href="/area">{{ __('La mia area') }}</a>@feature('area.menu.ordini')<a href="/area/ordini">{{ __('I miei ordini') }}</a>@endfeature @feature('area.menu.abbonamenti')<a href="/area/abbonamenti">{{ __('Abbonamenti') }}</a>@endfeature @feature('area.menu.assistenza')<a href="/area/assistenza">{{ __('Assistenza') }}</a>@endfeature
+   @else<a href="/accedi">{{ __('Accedi') }}</a>@if(\App\Domain\Customers\RegistrationGate::linksVisible())<a href="/registrazione">{{ __('Registrati') }}</a>@else @feature('site.apply')<a href="/candidati">{{ __('Candidati') }}</a>@endfeature @endif @endauth
   </nav>
-  <nav aria-label="{{ __('Collegamenti utili') }}"><h4>{{ __('Collegamenti utili') }}</h4><a href="/privacy">{{ __('Privacy Policy') }}</a><a href="/politiche-di-reso">{{ __('Politiche di Reso') }}</a><a href="/termini">{{ __('Termini e Condizioni') }}</a></nav>
+  <nav aria-label="{{ __('Collegamenti utili') }}"><h4>{{ __('Collegamenti utili') }}</h4><a href="/privacy">{{ __('Privacy Policy') }}</a>@feature('site.legal.politiche_reso')<a href="/politiche-di-reso">{{ __('Politiche di Reso') }}</a>@endfeature<a href="/termini">{{ __('Termini e Condizioni') }}</a></nav>
   <div><h4>{{ __('Acquisti sicuri') }}</h4><p>{{ __('Pagamento con carta, bonifico o KMoney. I tuoi dati restano tuoi e sono protetti.') }}</p></div>
  </div>
  @php($co = config('lamess.company'))

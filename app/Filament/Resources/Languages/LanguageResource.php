@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Languages;
 
 use App\Domain\Access\Superadmin;
 use App\Domain\Audit\AuditLog;
+use App\Domain\Features\Feature;
 use App\Domain\I18n\Locales;
 use App\Filament\Resources\Languages\Pages\CreateLanguage;
 use App\Filament\Resources\Languages\Pages\EditLanguage;
@@ -51,7 +52,7 @@ class LanguageResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Superadmin::is();
+        return Superadmin::is() && Feature::enabled('backoffice.resource.languages');
     }
 
     public static function canCreate(): bool

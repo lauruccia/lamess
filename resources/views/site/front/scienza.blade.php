@@ -119,5 +119,5 @@
     </ol>
   </div>
 </section>
-<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>{{ __('Hai altre domande sugli ingredienti?') }}</h2><a class="btn solid" href="/domande">{{ __('Leggi le domande') }}</a></div></section>
+@feature('site.front.faq')<section class="dark band" style="padding-block:clamp(56px,7vw,90px)"><div class="wrap cta-band"><h2>{{ __('Hai altre domande sugli ingredienti?') }}</h2><a class="btn solid" href="/domande">{{ __('Leggi le domande') }}</a></div></section>@endfeature
 @endsection

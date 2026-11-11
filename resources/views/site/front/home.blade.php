@@ -14,7 +14,7 @@
    <div class="eyebrow">{{ __('Cosmetic Coffee') }}</div>
    <h1>{{ __('Stop') }} <em class="grad">{{ __('Time') }}</em></h1>
    <p class="lead">{{ __('Il caffè che trasforma un gesto quotidiano in un rituale di bellezza.') }}</p>
-   <div class="hero-cta">@if(\App\Support\ShopAccess::canBuy())<a class="hbtn gold" href="/negozio">{{ __('Scegli la tua box') }}</a>@else<a class="hbtn gold" href="/accedi">{{ __('Accedi per acquistare') }}</a>@endif<a class="hbtn line" href="/perche-lamess">{{ __('Perché Lamèss') }}</a></div>
+   <div class="hero-cta">@if(\App\Support\ShopAccess::canBuy())<a class="hbtn gold" href="/negozio">{{ __('Scegli la tua box') }}</a>@else<a class="hbtn gold" href="/accedi">{{ __('Accedi per acquistare') }}</a>@endif@feature('site.front.perche')<a class="hbtn line" href="/perche-lamess">{{ __('Perché Lamèss') }}</a>@endfeature</div>
    <p class="top-note">{{ __('Lamèss è un integratore alimentare.') }}</p>
   </div>
  </div>
@@ -33,7 +33,7 @@
       <div class="pillar"><div class="n">03</div><h3>{{ __('Dosi in etichetta') }}</h3><p>{{ __('2,5 g di VERISOL®, 190 mg di acido ialuronico, 20 mg di coenzima Q10.') }}</p></div>
       <div class="pillar"><div class="n">04</div><h3>{{ __('Zero zuccheri') }}</h3><p>{{ __('Gusto autentico, adatto a stili di vita salutari.') }}</p></div>
     </div>
-    <div class="row" style="margin-top:44px"><a class="hbtn dark" href="/perche-lamess">{{ __('Tutti i motivi') }}</a><a class="hbtn ghost" href="/il-prodotto">{{ __('Ingredienti e dosi') }}</a><a class="hbtn ghost" href="/la-scienza">{{ __('La scienza') }}</a></div>
+    <div class="row" style="margin-top:44px">@feature('site.front.perche')<a class="hbtn dark" href="/perche-lamess">{{ __('Tutti i motivi') }}</a>@endfeature @feature('site.front.prodotto')<a class="hbtn ghost" href="/il-prodotto">{{ __('Ingredienti e dosi') }}</a>@endfeature @feature('site.front.scienza')<a class="hbtn ghost" href="/la-scienza">{{ __('La scienza') }}</a>@endfeature</div>
   </div>
 </section>
 
@@ -109,7 +109,7 @@
       <h2>{{ __('Che cos’è un incaricato Lamèss?') }}</h2>
       <p>{{ __('Chi sceglie di farsi interprete della filosofia Stop Time nella propria quotidianità, con una pagina personale, un link referral e un’area riservata.') }}</p>
       <p>{{ __('Per chi ha un’attività esiste anche il Lamèss Point: un riferimento locale dove conoscere e provare il prodotto.') }}</p>
-      <a class="hbtn dark" href="/lavora-con-noi">{{ __('Scopri come lavorare con noi') }}</a>
+      @feature('site.front.lavora')<a class="hbtn dark" href="/lavora-con-noi">{{ __('Scopri come lavorare con noi') }}</a>@endfeature
     </div>
     <div class="amb-card">
       <h3>{{ __('Un progetto in continua evoluzione') }}</h3>
@@ -120,7 +120,7 @@
 
 <section class="light band">
   <div class="wrap">
-    <div class="cta-band" style="margin-bottom:34px"><h2>{{ __('Le domande più frequenti.') }}</h2><a class="hbtn ghost" href="/domande">{{ __('Tutte le domande') }}</a></div>
+    @feature('site.front.faq')<div class="cta-band" style="margin-bottom:34px"><h2>{{ __('Le domande più frequenti.') }}</h2><a class="hbtn ghost" href="/domande">{{ __('Tutte le domande') }}</a></div>@endfeature
     <div class="faq">
       <details><summary>{{ __('Lamèss è un medicinale?') }}</summary><p>{{ __('No. È un integratore alimentare. Non è destinato a prevenire, trattare o curare malattie.') }}</p></details>
       <details><summary>{{ __('Come si prepara?') }}</summary><p>{{ __('Si scioglie una bustina in acqua calda o in acqua fredda, come preferisci.') }}</p></details>
@@ -136,7 +136,7 @@
     <div class="hero-cta">@auth<a class="hbtn gold" href="/area">{{ __('La mia area') }}</a><a class="hbtn line" href="/negozio">{{ __('Vai al negozio') }}</a>@else
 @if(\App\Domain\Customers\RegistrationGate::linksVisible())<a class="hbtn gold" href="/registrazione">{{ __('Registrati') }}</a>@endif<a class="hbtn line" href="/accedi">{{ __('Accedi') }}</a>@endauth
 </div>
-    <p class="contact">{!! __('Vuoi saperne di più o parlare con il team? <a href="/contatti">Scrivici</a>.') !!}</p>
+    @feature('site.front.contatti')<p class="contact">{!! __('Vuoi saperne di più o parlare con il team? <a href="/contatti">Scrivici</a>.') !!}</p>@endfeature
   </div>
 </section>
 

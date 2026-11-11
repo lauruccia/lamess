@@ -6,14 +6,15 @@ use App\Domain\Billing\BillingException;
 use App\Domain\Billing\FatturaPaBuilder;
 use App\Domain\Billing\InvoiceService;
 use App\Domain\Onboarding\BadgeService;
+use App\Domain\Onboarding\Iban;
 use App\Domain\Onboarding\SignatureCertificate;
 use App\Domain\Orders\ShippingLabelService;
-use App\Domain\Onboarding\Iban;
 use App\Domain\Payouts\ExportService;
 use App\Domain\Payouts\PayoutException;
 use App\Domain\Payouts\ReceiptService;
 use App\Domain\Payouts\StatementService;
 use App\Domain\System\BackupService;
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\BadgeVerifyController;
 use App\Http\Controllers\BonusStatementController;
@@ -21,8 +22,10 @@ use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\KMoneyController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\LetterSignatureController;
+use App\Http\Controllers\PagePaymentWebhookController;
 use App\Http\Controllers\PersonalPageController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SiteController;
@@ -30,12 +33,12 @@ use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WebhookController;
-use App\Http\Controllers\LanguageController;
 use App\Models\CommissionReceipt;
 use App\Models\Consultant;
 use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\IvdContract;
+use App\Models\IvdLetterSignature;
 use App\Models\KycDocument;
 use App\Models\Order;
 use App\Models\Payout;
@@ -47,13 +50,13 @@ use Illuminate\Support\Facades\Storage;
 Route::get('/', [SiteController::class, 'home'])->name('home');
 Route::get('/lingua/{code}', [LanguageController::class, 'switch'])->where('code', '[a-z]{2}(-[a-z]{2})?')->name('language.switch');
 // pagine pubbliche del sito vetrina (layout site.front.*)
-Route::view('/il-prodotto', 'site.front.prodotto')->name('front.prodotto');
-Route::view('/perche-lamess', 'site.front.perche')->name('front.perche');
-Route::view('/la-scienza', 'site.front.scienza')->name('front.scienza');
-Route::view('/lavora-con-noi', 'site.front.lavora')->name('front.lavora');
-Route::view('/chi-siamo', 'site.front.chi-siamo')->name('front.chi-siamo');
-Route::view('/domande', 'site.front.faq')->name('front.faq');
-Route::view('/contatti', 'site.front.contatti')->name('front.contatti');
+Route::view('/il-prodotto', 'site.front.prodotto')->name('front.prodotto')->middleware('feature:site.front.prodotto');
+Route::view('/perche-lamess', 'site.front.perche')->name('front.perche')->middleware('feature:site.front.perche');
+Route::view('/la-scienza', 'site.front.scienza')->name('front.scienza')->middleware('feature:site.front.scienza');
+Route::view('/lavora-con-noi', 'site.front.lavora')->name('front.lavora')->middleware('feature:site.front.lavora');
+Route::view('/chi-siamo', 'site.front.chi-siamo')->name('front.chi-siamo')->middleware('feature:site.front.chi_siamo');
+Route::view('/domande', 'site.front.faq')->name('front.faq')->middleware('feature:site.front.faq');
+Route::view('/contatti', 'site.front.contatti')->name('front.contatti')->middleware('feature:site.front.contatti');
 // Pagina «Come funziona» nascosta (non pubblica): per riattivarla, togliere il commento
 // Route::get('/come-funziona', [SiteController::class, 'howItWorks'])->name('front.come-funziona');
 Route::get('/installazione', [InstallController::class, 'show']);
@@ -73,25 +76,25 @@ Route::middleware(['feature:site.shop', 'shop.login'])->group(function () {
     Route::post('/carrello/codice', [ShopController::class, 'applyCode'])->middleware('throttle:20,1');
     Route::post('/carrello/codice/rimuovi', [ShopController::class, 'removeCode']);
 });
-Route::get('/privacy', [LegalController::class, 'show'])->defaults('page', 'privacy');
-Route::get('/termini', [LegalController::class, 'show'])->defaults('page', 'termini');
-Route::get('/politiche-di-reso', [LegalController::class, 'show'])->defaults('page', 'politiche-di-reso');
+Route::get('/privacy', [LegalController::class, 'show'])->defaults('page', 'privacy')->middleware('feature:site.legal.privacy');
+Route::get('/termini', [LegalController::class, 'show'])->defaults('page', 'termini')->middleware('feature:site.legal.termini');
+Route::get('/politiche-di-reso', [LegalController::class, 'show'])->defaults('page', 'politiche-di-reso')->middleware('feature:site.legal.politiche_reso');
 Route::get('/piano-compensi', [LegalController::class, 'show'])->defaults('page', 'piano-compensi')->middleware('feature:site.piano_compensi');
-Route::get('/regolamento', [LegalController::class, 'show'])->defaults('page', 'regolamento');
-Route::get('/lettera-di-incarico', [LegalController::class, 'show'])->defaults('page', 'lettera-di-incarico');
-Route::get('/liberatoria-foto', [LegalController::class, 'show'])->defaults('page', 'liberatoria-foto');
+Route::get('/regolamento', [LegalController::class, 'show'])->defaults('page', 'regolamento')->middleware('feature:site.legal.regolamento');
+Route::get('/lettera-di-incarico', [LegalController::class, 'show'])->defaults('page', 'lettera-di-incarico')->middleware('feature:site.legal.lettera_incarico');
+Route::get('/liberatoria-foto', [LegalController::class, 'show'])->defaults('page', 'liberatoria-foto')->middleware('feature:site.legal.liberatoria_foto');
 Route::redirect('/terms', '/termini', 301);
 Route::get('/r/{code}', [SiteController::class, 'referral'])->name('referral');
 Route::get('/i/{slug}', [PersonalPageController::class, 'show'])->where('slug', '[A-Za-z0-9-]+')->middleware('throttle:120,1')->name('personal-page');
 Route::get('/anteprima-pagina/{page}', [PersonalPageController::class, 'adminPreview'])->whereNumber('page')->middleware(['auth', 'throttle:60,1']);
 Route::get('/anteprima-pagina/{page}/condivisa', [PersonalPageController::class, 'sharedPreview'])->whereNumber('page')->middleware(['signed', 'throttle:60,1'])->name('personal-page.shared-preview');
 Route::get('/media/pagine/{page}/{file}', [PersonalPageController::class, 'photo'])->whereNumber('page')->where('file', '[A-Za-z0-9._-]+')->name('personal-page.photo');
-Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware('throttle:30,1');
+Route::get('/verifica-tesserino/{code}/{signature}', [BadgeVerifyController::class, 'show'])->where(['code' => '[A-Za-z0-9-]+', 'signature' => '[a-f0-9]+'])->middleware(['feature:site.badge_verify', 'throttle:30,1']);
 
 Route::middleware('guest')->group(function () {
-    Route::get('/candidati', [\App\Http\Controllers\ApplicationController::class, 'form'])->name('apply');
-    Route::post('/candidati', [\App\Http\Controllers\ApplicationController::class, 'store'])->middleware('throttle:5,1');
-    Route::get('/candidati/grazie', [\App\Http\Controllers\ApplicationController::class, 'thanks']);
+    Route::get('/candidati', [ApplicationController::class, 'form'])->name('apply')->middleware('feature:site.apply');
+    Route::post('/candidati', [ApplicationController::class, 'store'])->middleware(['feature:site.apply', 'throttle:5,1']);
+    Route::get('/candidati/grazie', [ApplicationController::class, 'thanks'])->middleware('feature:site.apply');
     Route::get('/registrazione', [SiteController::class, 'registerForm'])->name('register');
     Route::post('/registrazione', [SiteController::class, 'register'])->middleware('throttle:10,1');
     Route::get('/accedi', [SiteController::class, 'loginForm'])->name('login');
@@ -208,7 +211,7 @@ Route::middleware(['auth', 'feature'])->prefix('area')->group(function () {
 
 // Notifiche server-to-server dei provider (firmate, senza sessione né CSRF)
 Route::post('/webhooks/kmoney', [KMoneyController::class, 'webhook'])->middleware('throttle:120,1');
-Route::post('/webhooks/kmoney-pagine', App\Http\Controllers\PagePaymentWebhookController::class)->middleware('throttle:120,1');
+Route::post('/webhooks/kmoney-pagine', PagePaymentWebhookController::class)->middleware('throttle:120,1');
 Route::post('/webhooks/stripe', [WebhookController::class, 'stripe'])->middleware('throttle:120,1');
 
 // File riservati agli amministratori (lettere firmate, documenti KYC)
@@ -218,7 +221,7 @@ Route::middleware(['auth'])->prefix('admin-files')->group(function () {
 
         return Storage::response($contract->pdf_path);
     });
-    Route::get('/letter-signature/{signature}', function (\App\Models\IvdLetterSignature $signature) {
+    Route::get('/letter-signature/{signature}', function (IvdLetterSignature $signature) {
         abort_unless(auth()->user()->can('network.manage') && $signature->pdf_path && Storage::exists($signature->pdf_path), 403);
 
         return Storage::response($signature->pdf_path);

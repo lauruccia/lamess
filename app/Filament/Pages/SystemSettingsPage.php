@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Domain\Audit\AuditLog;
+use App\Domain\Features\Feature;
 use App\Domain\Settings\SystemSettings;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -53,7 +54,7 @@ class SystemSettingsPage extends Page implements HasSchemas
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() === true;
+        return auth()->user()?->isSuperAdmin() === true && Feature::enabled('backoffice.page.impostazioni');
     }
 
     public function mount(): void

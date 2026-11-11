@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Domain\Features\Feature;
 use App\Domain\System\GoLiveCheck;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -29,7 +30,7 @@ class GoLiveCheckPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isSuperAdmin() === true;
+        return auth()->user()?->isSuperAdmin() === true && Feature::enabled('backoffice.page.controllo_messa_online');
     }
 
     /** @return array<string, mixed> */

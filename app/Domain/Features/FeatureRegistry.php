@@ -27,6 +27,10 @@ final class FeatureRegistry
 
     public const GROUP_BACKOFFICE = 'Back-office (menu e liste)';
 
+    public const GROUP_SITE = 'Sito pubblico';
+
+    public const GROUP_SYSTEM = 'Back-office: pagine di sistema';
+
     /** @return array<string, array{type: string, label: string, group: string, menu?: string, menu_label?: string, help?: string, parent?: string, default?: bool, lock?: string, super?: bool, bypass?: bool}> */
     public static function all(): array
     {
@@ -56,6 +60,26 @@ final class FeatureRegistry
             // ---- Sito pubblico
             'site.shop' => ['type' => 'module', 'group' => 'Area incaricato e sito', 'label' => 'Negozio e carrello', 'help' => 'Spento: /negozio e il carrello rimandano alla home e spariscono prezzi e pulsanti di acquisto. Ordini e dati restano.', 'bypass' => false],
             'site.piano_compensi' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Pagina «Il piano compensi»', 'help' => 'La pagina pubblica /piano-compensi e il suo link nel menu dell\'area.', 'bypass' => false],
+            'area.menu.cessione' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Cessione del codice»', 'help' => 'Il modulo per cedere il codice attività, che si apre da «I miei dati».', 'bypass' => false],
+            'area.menu.diventa' => ['type' => 'view', 'group' => 'Area incaricato e sito', 'label' => 'Area: «Diventa Incaricato»', 'help' => 'Il modulo con cui un cliente chiede di diventare Incaricato e il riquadro che lo invita a farlo. Spento, nessun cliente può più inviare la richiesta dall\'area.', 'bypass' => false],
+
+            // ---- Sito pubblico: le pagine della vetrina (spente: spariscono dal menu e dal piè di pagina, l'indirizzo rimanda alla home)
+            'site.front.prodotto' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Il prodotto»', 'help' => '/il-prodotto', 'bypass' => false],
+            'site.front.perche' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Perché Lamèss»', 'help' => '/perche-lamess', 'bypass' => false],
+            'site.front.scienza' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «La scienza»', 'help' => '/la-scienza', 'bypass' => false],
+            'site.front.lavora' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Lavora con noi»', 'help' => '/lavora-con-noi', 'bypass' => false],
+            'site.front.chi_siamo' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Chi siamo»', 'help' => '/chi-siamo', 'bypass' => false],
+            'site.front.faq' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Domande frequenti»', 'help' => '/domande', 'bypass' => false],
+            'site.front.contatti' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Contatti»', 'help' => '/contatti', 'bypass' => false],
+            'site.apply' => ['type' => 'module', 'group' => self::GROUP_SITE, 'label' => 'Candidature (modulo «Candidati»)', 'help' => 'Il modulo /candidati e il pulsante «Candidati» del sito. Le candidature già ricevute restano in Rete → Candidature.', 'bypass' => false],
+            'site.badge_verify' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Verifica pubblica del tesserino', 'help' => 'La pagina che si apre dal QR code del tesserino. Spenta, il QR code non verifica più nulla.', 'bypass' => false],
+            // ---- Sito pubblico: pagine legali (le prime due sono richieste dalla legge e dal pagamento: protette)
+            'site.legal.privacy' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Privacy»', 'help' => 'Protetta: è richiesta per legge e dalla conferma dell\'ordine.', 'lock' => 'system'],
+            'site.legal.termini' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Termini e condizioni»', 'help' => 'Protetta: è richiesta dalla conferma dell\'ordine.', 'lock' => 'system'],
+            'site.legal.politiche_reso' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Politiche di reso»', 'help' => '/politiche-di-reso', 'bypass' => false],
+            'site.legal.regolamento' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Regolamento»', 'help' => '/regolamento. È allegato alla lettera di incarico: spento, il link nella lettera rimanda alla home.', 'bypass' => false],
+            'site.legal.lettera_incarico' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Lettera di incarico» (testo pubblico)', 'help' => '/lettera-di-incarico. Non tocca la firma della lettera nell\'area dell\'Incaricato.', 'bypass' => false],
+            'site.legal.liberatoria_foto' => ['type' => 'view', 'group' => self::GROUP_SITE, 'label' => 'Pagina «Liberatoria foto»', 'help' => '/liberatoria-foto', 'bypass' => false],
             // ---- Scheda incaricato: tab
             'consultant360.tab.overview' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Riepilogo e carriera»', 'help' => 'Avanzamento di carriera, cosa manca per il livello successivo, attività del mese.'],
             'consultant360.tab.profile' => ['type' => 'tab', 'group' => $card, 'label' => 'Tab «Anagrafica e contratto»', 'help' => 'Dati personali, sponsor, contratto IVD, canone annuale, onboarding.'],
@@ -129,6 +153,25 @@ final class FeatureRegistry
         }
 
         $defs['backoffice.page.confronto_qualifiche']['legacy'] = true;
+
+        // ---- Back-office: pagine e liste di sistema, riservate al super_admin. L'admin non le vede né le può accendere;
+        // spegnerle le nasconde anche al super_admin (che le riaccende da qui: «Funzionalità e viste» non si spegne mai).
+        $system = [
+            ['backoffice.resource.users', 'Elenco «Utenti»', 'Gli utenti del portale e i loro accessi.'],
+            ['backoffice.resource.audit_logs', 'Elenco «Log di audit»', 'Il registro delle operazioni.'],
+            ['backoffice.resource.languages', 'Elenco «Lingue»', 'Le lingue del sito.'],
+            ['backoffice.resource.translation_strings', 'Elenco «Traduzioni»', 'Le frasi tradotte del sito.'],
+            ['backoffice.page.impostazioni', 'Pagina «Impostazioni di sistema»', 'Spenta, i parametri di sistema non si aprono più finché non la riaccendi da qui.'],
+            ['backoffice.page.ruoli_permessi', 'Pagina «Ruoli e permessi»', null],
+            ['backoffice.page.backup', 'Pagina «Backup»', null],
+            ['backoffice.page.verifica_audit', 'Pagina «Verifica del log»', null],
+            ['backoffice.page.controllo_messa_online', 'Pagina «Controllo messa online»', null],
+        ];
+        foreach ($system as [$key, $label, $help]) {
+            $defs[$key] = ['type' => 'view', 'group' => self::GROUP_SYSTEM, 'label' => $label, 'super' => true, 'bypass' => false] + ($help !== null ? ['help' => $help] : []);
+        }
+        $defs['backoffice.page.piano_precedente'] = ['type' => 'view', 'group' => self::GROUP_SYSTEM, 'label' => 'Pagina «Visibilità piano precedente»', 'help' => 'Il pulsante che nasconde o mostra il vecchio piano di marketing. Il super_admin la vede sempre.', 'super' => true];
+        $defs['backoffice.page.funzionalita'] = ['type' => 'view', 'group' => self::GROUP_SYSTEM, 'label' => 'Pagina «Funzionalità e viste»', 'help' => 'Questa pagina: non si può spegnere.', 'lock' => 'system'];
 
         // ---- Back-office: blocchi della pagina iniziale (Cruscotto)
         $widgets = [

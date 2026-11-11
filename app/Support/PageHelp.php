@@ -33,8 +33,8 @@ final class PageHelp
                 'nota' => 'Eseguila periodicamente e prima di una chiusura importante; un esito negativo va segnalato subito al responsabile tecnico.'],
             'backup' => ['scopo' => 'Crea e scarica una copia di sicurezza del database. Conserva le copie fuori dal server.',
                 'nota' => 'Fai un backup prima di operazioni importanti: chiusura di un periodo, import da Odoo, aggiornamenti del programma.'],
-            'funzionalita' => ['scopo' => 'Accende o spegne funzioni e viste del portale (per esempio wallet o ricevute) senza intervenire sul codice.',
-                'nota' => 'Spegnere una funzione la nasconde agli utenti ma non cancella i dati già registrati.'],
+            'funzionalita' => ['scopo' => 'Accende o spegne ogni funzione e vista del portale (pagine del sito, voci dell\'area, schede, elenchi) senza intervenire sul codice. Ogni gruppo ha Accendi tutto e Spegni tutto.',
+                'nota' => 'Spegnere una funzione la nasconde agli utenti e blocca l\'indirizzo diretto, ma non cancella i dati già registrati. Le voci con il lucchetto sono protette.'],
             'controllo-messa-online' => ['scopo' => 'Lista di controllo prima della messa online: segnala ciò che manca o è impostato in modo non sicuro (cron, dati del venditore, chiavi, backup).',
                 'nota' => 'Ogni voce non verde va risolta prima di aprire il portale agli incaricati.'],
 

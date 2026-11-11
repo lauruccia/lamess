@@ -23,7 +23,7 @@ final class AreaVisibilityTest extends TestCase
 
     public function test_every_area_menu_path_maps_to_a_registered_feature(): void
     {
-        foreach (['rete', 'clienti', 'referral', 'compensi', 'statini', 'statini-bonus', 'wallet', 'ricevute', 'ordini', 'abbonamenti', 'novita', 'materiali', 'eventi', 'conformita', 'onboarding', 'assistenza', 'profilo'] as $segment) {
+        foreach (['rete', 'clienti', 'referral', 'compensi', 'statini', 'statini-bonus', 'wallet', 'ricevute', 'ordini', 'abbonamenti', 'novita', 'materiali', 'eventi', 'conformita', 'onboarding', 'assistenza', 'profilo', 'cessione', 'diventa-incaricato', 'pagina'] as $segment) {
             $key = AreaMenu::keyFor("area/{$segment}/1");
             $this->assertNotNull($key, $segment);
             $this->assertTrue(FeatureRegistry::has($key), $key);

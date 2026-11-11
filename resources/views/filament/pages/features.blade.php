@@ -4,14 +4,32 @@
             Qui si accendono e si spengono tab, viste, link e pulsanti. <strong>Spegnere una funzionalità la nasconde e blocca anche l'indirizzo diretto</strong>;
             i dati e i calcoli non cambiano, e riaccendendola si ritrova tutto. Le voci con il lucchetto sono protette. «Eccezione» vale per un ruolo o un utente e prevale sulla regola per tutti.
         </p>
-        <div style="margin-top:.8rem">
+        <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">
             <input type="search" wire:model.live.debounce.300ms="search" placeholder="Cerca una funzionalità…" class="fi-input" style="width:100%;max-width:26rem;padding:.45rem .7rem;border:1px solid rgba(187,180,175,.7);border-radius:.5rem;background:transparent">
+            <div role="group" aria-label="Mostra" style="display:flex;gap:.35rem;flex-wrap:wrap">
+                @foreach(['all' => 'Tutte', 'off' => 'Solo le spente', 'custom' => 'Solo le modificate'] as $f => $fl)
+                    <button type="button" wire:click="$set('filter','{{ $f }}')" aria-pressed="{{ $filter === $f ? 'true' : 'false' }}"
+                        style="padding:.3rem .75rem;border-radius:999px;border:1px solid rgba(127,127,127,.5);cursor:pointer;font-size:.82rem;{{ $filter === $f ? 'background:#C2663A;color:#fff;border-color:#C2663A' : 'background:transparent' }}">{{ $fl }} ({{ $counts[$f] }})</button>
+                @endforeach
+            </div>
         </div>
+        <p style="margin:.7rem 0 0;font-size:.82rem;opacity:.75">
+            Ogni gruppo ha i pulsanti <strong>Accendi tutto</strong> e <strong>Spegni tutto</strong>: valgono per tutte le funzionalità del gruppo che puoi gestire (le protette e quelle spente di default restano come sono).
+            I metodi di pagamento e gli abbonamenti del negozio si accendono da <em>Vendite → Pagamenti e spedizioni</em>.
+        </p>
     </div>
 
     @forelse($groups as $group => $rows)
         <div class="fi-section" style="padding:0;overflow:hidden">
-            <div style="padding:.8rem 1.25rem;font-family:Marcellus,serif;font-size:1.1rem;border-bottom:1px solid rgba(187,180,175,.35)">{{ $group }}</div>
+            <div style="padding:.8rem 1.25rem;border-bottom:1px solid rgba(187,180,175,.35);display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between">
+                <div style="font-family:Marcellus,serif;font-size:1.1rem">{{ $group }}
+                    <span style="font-family:inherit;font-size:.78rem;opacity:.7;margin-left:.4rem">{{ $groupStats[$group]['on'] }} accese su {{ $groupStats[$group]['total'] }}</span>
+                </div>
+                <div style="display:flex;gap:.5rem;font-size:.82rem">
+                    <button type="button" wire:click="setGroup(@js($group), true)" wire:confirm="Accendere tutte le funzionalità del gruppo «{{ $group }}»?" style="color:#2F6F4F;font-weight:600;cursor:pointer;background:none;border:1px solid rgba(47,111,79,.5);border-radius:.4rem;padding:.2rem .6rem">Accendi tutto</button>
+                    <button type="button" wire:click="setGroup(@js($group), false)" wire:confirm="Spegnere tutte le funzionalità del gruppo «{{ $group }}»? Spariscono dal sito e gli indirizzi diretti non si aprono più. I dati restano e puoi riaccenderle quando vuoi." style="color:#B3261E;font-weight:600;cursor:pointer;background:none;border:1px solid rgba(179,38,30,.5);border-radius:.4rem;padding:.2rem .6rem">Spegni tutto</button>
+                </div>
+            </div>
             <table style="width:100%;border-collapse:collapse;font-size:.9rem">
                 @foreach($rows as $r)
                     <tr style="border-bottom:1px solid rgba(187,180,175,.25);{{ $r['effective'] ? '' : 'opacity:.78' }}" wire:key="f-{{ $r['key'] }}">

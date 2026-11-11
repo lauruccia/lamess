@@ -17,6 +17,17 @@ class LegalController extends Controller
         'liberatoria-foto' => ['title' => 'Liberatoria foto e video', 'view' => 'site.legal.liberatoria-foto'],
     ];
 
+    /** Pagina → funzionalità di «Funzionalità e viste» che la accende o la spegne. */
+    public const FEATURES = [
+        'privacy' => 'site.legal.privacy',
+        'termini' => 'site.legal.termini',
+        'politiche-di-reso' => 'site.legal.politiche_reso',
+        'piano-compensi' => 'site.piano_compensi',
+        'regolamento' => 'site.legal.regolamento',
+        'lettera-di-incarico' => 'site.legal.lettera_incarico',
+        'liberatoria-foto' => 'site.legal.liberatoria_foto',
+    ];
+
     public function show(string $page)
     {
         abort_unless(isset(self::PAGES[$page]), 404);

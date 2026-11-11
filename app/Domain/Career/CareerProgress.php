@@ -352,9 +352,11 @@ final class CareerProgress
         $extended = [];
         foreach ($cfg->extendedRates as $code => $rate) {
             if ($rate->isPositive() && $plan->hasCode($code)) {
-                $extended[] = ['rank' => $plan->rank($code)->name, 'pct' => (float) (string) $rate * 100, 'active' => $rank->sequence >= $plan->rank($code)->sequence];
+                $extended[] = ['rank' => $plan->rank($code)->name, 'pct' => (float) (string) $rate * 100, 'active' => $rank->sequence >= $plan->rank($code)->sequence, 'sequence' => $plan->rank($code)->sequence];
             }
         }
+        // Sempre in ordine di carriera (Ruby, Emerald, Diamond), comunque siano state inserite nel piano.
+        usort($extended, static fn (array $a, array $b) => $a['sequence'] <=> $b['sequence']);
 
         // Requisiti per la qualifica successiva (e scala di tutte le qualifiche).
         $requirements = $nextDef !== null ? $this->kosmosRequirements($plan, $nextDef, $d) : [];

@@ -311,3 +311,23 @@ In **Vendite → Ordini**: dalla riga di un ordine pagato «Stampa etichetta»; 
 - **Traduci le mancanti** (o «Traduci in automatico» per le righe scelte): usa il motore scelto in `.env` (`I18N_DRIVER`); le frasi tradotte così restano «automatiche» finché un traduttore non le **approva** («Segna come approvata» / «Approva le selezionate»).
 - **Scansione**: dopo una modifica alle pagine, «Cerca nuove stringhe» aggiunge le frasi che non ci sono ancora. «Esporta per il traduttore» e «Importa dal traduttore» scambiano un file CSV con il traduttore.
 - L'interruttore «Mostra le traduzioni non ancora riviste» è in *Impostazioni di sistema → Lingue*.
+
+## Quando il sito mostra una pagina di errore
+Se qualcosa va storto sul server, il sito non mostra più un generico «errore 500»: la pagina spiega **che cosa è successo**, **che cosa ne è stato dell'operazione** e **che cosa fare**. In fondo c'è sempre un **codice** (es. `LM-261112-1021-K7QD`).
+
+- **Se un cliente ti segnala un errore, fatti dare il codice.** Con quello si trova la riga esatta nel log del giorno (cPanel → File Manager → `storage/logs/laravel-AAAA-MM-GG.log`, cerca il codice).
+- **Ordini**: se l'errore capita mentre il cliente conferma l'ordine, la pagina gli dice se l'ordine è stato registrato (con numero e stato) oppure no. Così non rifà un ordine già registrato e non resta nel dubbio.
+- Quando sei collegata al back-office vedi in più il riquadro **«Per chi gestisce il sito»**, con che cosa controllare. I casi più frequenti:
+
+| La pagina dice | Che cosa vuol dire | Che cosa fare |
+|---|---|---|
+| Il sito è stato aggiornato, ma l'aggiornamento non è completo | Dopo il deploy non è stato lanciato l'SQL | phpMyAdmin: lancia l'SQL dell'ultima voce del registro aggiornamenti (il riquadro dice quale tabella o colonna manca) |
+| L'aggiornamento del sito non è completo | Un file non è arrivato | cPanel: «Update from Remote» e poi «Deploy HEAD Commit» |
+| Il database non risponde | Troppi accessi insieme o fermo dell'hosting | Di solito passa in pochi minuti; se dura, controlla i dati del database nel file `.env` |
+| Non siamo riusciti a inviare un'email | La casella di posta ha rifiutato l'invio | L'operazione (es. pagamento registrato) di norma è salvata: **controlla lo stato prima di ripeterla**; poi verifica casella e limiti di invio in cPanel |
+| Un servizio collegato non ha risposto | Stripe o KMoney lenti o fermi | Riprova dopo qualche minuto |
+| Due operazioni sugli stessi dati nello stesso momento | Due salvataggi contemporanei sullo stesso ordine/prodotto | Ripeti l'operazione: è stata annullata per intero |
+| Questo dato risulta già registrato | Doppio clic o modulo inviato due volte | Controlla: la prima volta è quasi sempre andata a buon fine |
+| Un dato inserito non è accettato | Testo troppo lungo o in formato errato | Correggi il dato; segnala il codice a chi sviluppa |
+| Lo spazio sul server è esaurito | Quota cPanel piena | Libera spazio (log vecchi in `storage/logs`, backup) |
+| Questa pagina ha un errore nostro | Errore nel programma | Manda il codice a chi sviluppa: riprovare non serve |

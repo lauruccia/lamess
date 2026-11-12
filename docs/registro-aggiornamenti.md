@@ -1,5 +1,13 @@
 # Registro aggiornamenti
 
+## 2026-11-12 — Errori del server: al posto del «500» generico una pagina che spiega che cosa è successo
+- Quando il sito incontra un errore del server non compare più «Qualcosa è andato storto. Riprova tra poco.»: la pagina dice **che problema è** (aggiornamento non completato sul database, database che non risponde, due operazioni sugli stessi dati, dato già registrato o non accettato, email non partita, Stripe/KMoney che non rispondono, spazio o permessi sul server, limiti di memoria/tempo, PDF non creato, file mancante dopo un aggiornamento, errore del codice), **che cosa ne è stato dell'operazione** e **che cosa fare**.
+- **Ordini**: se l'errore arriva alla conferma del checkout, la pagina guarda nel database e dice se l'ordine è stato registrato (numero, stato e pulsante per aprirlo: «non rifarlo») oppure no («il carrello è ancora com'era, puoi riprovare»). Sulle pagine di un ordine (pagamento, annullo, reso, fattura) mostra lo stato dell'ordine in quel momento, solo al suo proprietario. Nel back-office, sulla scheda di un ordine, dice lo stato attuale e se l'operazione è da ripetere.
+- **Codice di riferimento** (es. `LM-261112-1021-K7QD`) su ogni pagina di errore: lo stesso codice è scritto nel log del giorno (campo `rif`, con l'indirizzo della pagina), così dal codice che manda il cliente si arriva subito alla riga giusta.
+- Chi gestisce il sito vede in più il riquadro «Per chi gestisce il sito» con che cosa controllare (es. «Al database manca «shipments»: lancia l'SQL dell'ultimo aggiornamento in phpMyAdmin»). I dettagli tecnici (tipo di errore, messaggio, file e riga) li vede solo il super_admin. I clienti non vedono mai nomi di tabelle, file o messaggi tecnici.
+- Non cambia nulla per 403, 404, 419, 429 e 503 (pagine già esistenti), per gli errori di compilazione dei moduli e per le risposte JSON. Stripe e KMoney (webhook) ricevono una riga di testo con il tipo di errore e il codice, leggibile nel loro pannello.
+- File: `app/Support/Errors/ErrorExplainer.php`, `resources/views/errors/problema.blade.php`, `bootstrap/app.php`. Database: nessuna modifica. Test: `ErrorPagesTest` (28).
+
 ## 2026-11-12 — «Il mio ramo»: tolto il riquadro «Iscritti senza primo ordine»
 - Il riquadro mescolava i propri clienti e quelli degli incaricati (di cui non si vedono i nomi) e non serviva: ogni incaricato conosce già quanti clienti ha e quanti hanno ordinato. Resta l'elenco «I miei clienti» (filtro «Senza ordini») e, nella tabella degli incaricati, il filtro e l'etichetta «senza ordine».
 - Database: nessuna modifica.

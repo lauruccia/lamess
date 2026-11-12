@@ -3,16 +3,19 @@
 use App\Http\Middleware\ApplyLocale;
 use App\Http\Middleware\BlockSuspendedAccounts;
 use App\Http\Middleware\BlockWhileImpersonating;
+use App\Http\Middleware\FeatureGate;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ShopLoginRequired;
 use App\Http\Middleware\SiteClosed;
 use App\Http\Middleware\StripLocalePrefix;
 use App\Http\Middleware\TrackVisit;
+use App\Support\Errors\ErrorExplainer;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,11 +36,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // e prima del controllo di accesso: anche /area deve mostrare «Lamèss apre presto», non il rinvio al login
         $middleware->appendToPriorityList(after: StartSession::class, append: ApplyLocale::class);
         $middleware->appendToPriorityList(after: ApplyLocale::class, append: SiteClosed::class);
-        $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class, 'shop.login' => ShopLoginRequired::class, 'feature' => \App\Http\Middleware\FeatureGate::class]);
+        $middleware->alias(['impersonation.safe' => BlockWhileImpersonating::class, 'shop.login' => ShopLoginRequired::class, 'feature' => FeatureGate::class]);
         $middleware->validateCsrfTokens(except: ['webhooks/*']); // chiamate server-to-server, autenticate dalla firma
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+        // Errori del server: niente «500» generico. Ogni errore ha un codice di riferimento, scritto nel log e mostrato sulla pagina
+        // che spiega che cosa è successo e che cosa ne è stato dell'ordine (App\Support\Errors\ErrorExplainer).
+        $exceptions->context(fn (): array => app()->runningInConsole() && ! app()->runningUnitTests() ? [] : ['rif' => ErrorExplainer::reference(request()), 'url' => request()->method().' '.request()->path()]);
+        $exceptions->respond(fn (Response $response, Throwable $e, Request $request): Response => ErrorExplainer::respond($response, $e, $request));
     })->create();

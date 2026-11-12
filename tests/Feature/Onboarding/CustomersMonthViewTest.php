@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Onboarding;
 
+use App\Domain\Access\AccountSuspension;
+use App\Domain\Career\NetworkOverview;
+use App\Domain\Customers\AreaDashboard;
 use App\Domain\Engine\Plan\PlanLoader;
+use App\Domain\Network\NetworkService;
 use App\Domain\Orders\OrderService;
 use App\Models\CompPlanVersion;
+use App\Models\Consultant;
+use App\Models\Order;
 use App\Models\Profile;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\NetworkDb;
 use Tests\Support\ShopDb;
@@ -21,11 +28,12 @@ final class CustomersMonthViewTest extends TestCase
     use RefreshDatabase;
     use ShopDb;
 
-    private function setUpScenario(): array
+    /** @param  list<array{min_clients:int,pct:int}>|null  $tiers */
+    private function setUpScenario(?array $tiers = null): array
     {
         $data = json_decode((string) file_get_contents(base_path('config/lamess/'.PlanLoader::INCARICATI_FILE)), true);
         $data['policies'] = ['activity_month_rule' => 'current_or_previous', 'kosmos_rank_maintenance' => 'none', 'kosmos_client_count' => 'period_buyers'];
-        $data['kosmos'] = array_replace($data['kosmos'], ['client_rule' => 'any_order']);
+        $data['kosmos'] = array_replace($data['kosmos'], ['client_rule' => 'any_order'] + ($tiers === null ? [] : ['direct_tiers' => $tiers]));
         $plan = CompPlanVersion::createFromArray('Incaricati', $data, CompPlanVersion::ACTIVE);
         $this->openPeriod(now('Europe/Rome')->format('Y-m'), $plan);
         $this->shipping();
@@ -69,5 +77,62 @@ final class CustomersMonthViewTest extends TestCase
         $this->get("/area/clienti?mese={$next}&stato=scadono")->assertOk()->assertSee('Ordina Spesso')->assertDontSee('Resta Fermo');
         $this->get("/area/clienti?mese={$after}&stato=zero")->assertOk()->assertSee('Ordina Spesso')->assertSee('Resta Fermo')->assertSee('Scaduto');
         $this->get('/area/clienti?stato=contano')->assertOk()->assertSee('Ordina Spesso')->assertDontSee('Resta Fermo');
+    }
+
+    /** I riquadri in alto devono dire le stesse cose della Panoramica e di «Il mio ramo». */
+    public function test_the_summary_boxes_are_consistent_with_the_other_pages(): void
+    {
+        [$su, , $idle] = $this->setUpScenario();
+        $sponsor = Consultant::where('user_id', $su->id)->firstOrFail();
+        $svc = app(OrderService::class);
+        $own = $svc->place($su, [$this->product('P2', '300.00')->id => 1], 'IT', 'transfer', $this->billing());
+        $svc->markPaid($own);
+
+        // «Venduto ai clienti» non comprende gli acquisti dell'incaricato, che sono indicati a parte
+        $html = $this->actingAs($su)->get('/area/clienti')->assertOk()->assertSee('Clienti iscritti')->assertSee('Clienti personali')->getContent();
+        $clients = Money::eur(Order::where('buyer_user_id', '!=', $su->id)->sum('total'));
+        $this->assertStringContainsString('Venduto ai clienti</small><strong>€ '.$clients.'<', $html);
+        $this->assertStringContainsString('i tuoi acquisti: € '.Money::eur($own->refresh()->total), $html);
+
+        // «Il mio ramo»: l'iscritto senza ordine è tra i propri clienti e il riquadro porta a vederlo
+        $rete = $this->get('/area/rete')->assertOk()->assertSee('Iscritti senza primo ordine')->getContent();
+        $this->assertStringContainsString('href="/area/clienti?stato=senza-ordini"', $rete);
+        $this->assertStringContainsString('1 tra i tuoi clienti · 0 tra i clienti dei tuoi incaricati', $rete);
+        $this->get('/area/clienti?stato=senza-ordini')->assertOk()->assertSee('Resta Fermo')->assertDontSee('Ordina Spesso');
+
+        // «La mia rete» in Panoramica conta le stesse persone di «Il mio ramo»: gli account sospesi no
+        $this->consultant('A1', $sponsor);
+        $b = $this->consultant('B1', $sponsor);
+        $b->update(['user_id' => $idle->id]);
+        $idle->forceFill(['suspended_at' => now(), 'suspension_type' => 'suspended'])->save();
+        AccountSuspension::forgetCache();
+        app(NetworkService::class)->rebuildClosure();
+        $x = app(AreaDashboard::class)->forConsultant($sponsor->id);
+        $this->assertSame(1, $x['network']);
+        $this->assertSame(1, $x['direct']);
+        $this->assertSame(1, app(NetworkOverview::class)->for($sponsor)['total']['persons']);
+    }
+
+    public function test_the_next_tier_is_the_first_one_that_pays_more(): void
+    {
+        // due scaglioni con la stessa percentuale: con 1 cliente (20%) il prossimo è quello da 6 (25%), non quello da 3 (ancora 20%)
+        [$su] = $this->setUpScenario([['min_clients' => 0, 'pct' => 10], ['min_clients' => 1, 'pct' => 20], ['min_clients' => 3, 'pct' => 20], ['min_clients' => 6, 'pct' => 25]]);
+        $this->artisan('lamess:periodo', ['azione' => 'live', 'codice' => now('Europe/Rome')->format('Y-m')])->assertSuccessful();
+
+        $this->actingAs($su)->get('/area/clienti')->assertOk()->assertSee('Ne mancano 5 per il 25%')->assertDontSee('per il 20%');
+    }
+
+    /** Il cliente senza ordine di un incaricato sotto di me non è mio: il riquadro dice di chi è. */
+    public function test_the_waiting_box_names_the_consultant_who_owns_the_customer(): void
+    {
+        [$su] = $this->setUpScenario();
+        $sponsor = Consultant::where('user_id', $su->id)->firstOrFail();
+        $child = $this->consultant('C1', $sponsor);
+        $this->buyer($child);
+        app(NetworkService::class)->rebuildClosure();
+
+        $this->actingAs($su)->get('/area/rete')->assertOk()
+            ->assertSee('1 tra i tuoi clienti', false)
+            ->assertSee('1 tra i clienti dei tuoi incaricati (Incaricato C1: 1).', false);
     }
 }

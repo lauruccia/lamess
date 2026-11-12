@@ -1,5 +1,13 @@
 # Registro aggiornamenti
 
+## 2026-11-12 — Area incaricato: riquadri coerenti tra Panoramica, «Il mio ramo» e «I miei clienti»
+- **Prossimo scaglione** in «I miei clienti»: ora è lo stesso della Panoramica (il primo non raggiunto che paga **di più**). Con due scaglioni alla stessa percentuale non compare più «Ne mancano 2 per il 20%» a chi il 20% ce l'ha già.
+- **«La mia rete»** in Panoramica conta le stesse persone di «Il mio ramo»: gli incaricati con account sospeso o bannato non si contano più (prima 5 in Panoramica e 4 nel ramo).
+- **«Venduto ai clienti»** in «I miei clienti» somma solo gli ordini dei clienti, come il riquadro accanto; gli acquisti dell'incaricato sono indicati a parte («i tuoi acquisti: € …»).
+- **Nomi uguali per numeri uguali**: «Clienti personali» (quelli che contano per il piano, incaricato compreso se i suoi acquisti valgono) in Panoramica, «Il mio ramo» e «I miei clienti»; «Clienti iscritti» (iscritti con il link o assegnati, incaricato escluso) in «I miei clienti» e in «La mia rete».
+- **«Iscritti senza primo ordine»** in «Il mio ramo» (prima «Clienti senza primo ordine»): dice quanti sono tra i propri clienti e quanti tra i clienti dei propri incaricati, ed è cliccabile. Porta all'elenco del ramo già filtrato («Con iscritti senza primo ordine») oppure, se sono solo clienti propri, a «I miei clienti → Senza ordini». Dei clienti altrui l'incaricato continua a vedere solo il numero.
+- Il calcolo dei compensi non è stato toccato. Nessuna migrazione, nessun SQL. Test: `CustomersMonthViewTest` (4).
+
 ## 2026-11-10 — Funzionalità e viste: ora si può accendere e spegnere tutto, anche per gruppi
 - **Nuove voci**: le sette pagine della vetrina (Il prodotto, Perché Lamèss, La scienza, Lavora con noi, Chi siamo, Domande, Contatti), le Candidature (`/candidati`), la verifica pubblica del tesserino, le pagine legali (Politiche di reso, Regolamento, Lettera di incarico, Liberatoria foto; **Privacy e Termini sono protette**), «Cessione del codice» e «Diventa Incaricato» nell'area, e le pagine di sistema (Utenti, Log di audit, Lingue, Traduzioni, Impostazioni, Ruoli e permessi, Backup, Verifica del log, Controllo messa online, Visibilità piano precedente). «Funzionalità e viste» è protetta e non si spegne.
 - **Pulsanti di gruppo**: ogni gruppo ha **Accendi tutto** e **Spegni tutto** (con conferma). Saltano le voci protette, quelle bloccate e, accendendo, quelle spente di default (es. «Mostra l'IBAN per intero»). Una sola riga nel log (`features.set_many`). Filtri «Tutte / Solo le spente / Solo le modificate» e contatore «N accese su M» per gruppo.

@@ -8,6 +8,11 @@
     $k = $progress['kosmos'] ?? null;
     $colReq = collect($k['requirements'] ?? [])->firstWhere('key', 'columns');
     $target = (int) ($colReq['target'] ?? 0);
+    // iscritti che non hanno mai pagato un ordine: i propri clienti e quelli dei propri incaricati
+    $waitingMine = (int) ($my_customers['waiting'] ?? 0);
+    $waitingAll = (int) $waiting_total + $waitingMine;
+    // sotto quali incaricati stanno gli iscritti senza ordine (i nomi degli incaricati sono già visibili nell'albero)
+    $waitingBy = collect($act)->filter(fn ($a) => $a['waiting'] > 0)->sortByDesc('waiting')->take(3)->map(fn ($a) => $a['name'].': '.$a['waiting'])->implode(', ');
 @endphp
 <div class="pg-head">
  <div><h1>Il mio ramo</h1><p class="sub">La tua rete, in sola lettura. @if($period)I numeri sono quelli dell'ultimo calcolo, mese {{ $period }}.@endif</p></div>
@@ -17,10 +22,10 @@
 <div class="kpis">
  <div class="kpi"><small>Persone nel ramo</small><strong>{{ $total['persons'] }}</strong><span>{{ $direct }} {{ $direct === 1 ? 'diretta' : 'dirette' }} · {{ $depth }} {{ $depth === 1 ? 'livello' : 'livelli' }}@if($total['new30'] > 0) · {{ $total['new30'] }} {{ $total['new30'] === 1 ? 'nuova' : 'nuove' }} in 30 giorni @endif</span></div>
  @if($kosmos)
-  <div class="kpi"><small>I miei clienti</small><strong>{{ $mine ? $mine['clients'] : '—' }}</strong><span>{{ $mine ? 'Qualifica '.($mine['rank'] ?? '—') : 'Nessun calcolo ancora' }}@if($progress && ($k['known'] ?? false)) · diretto {{ $n($progress['rank']['direct_pct']) }}%@endif</span></div>
+  <div class="kpi"><small>Clienti personali</small><strong>{{ $mine ? $mine['clients'] : '—' }}</strong><span>{{ $mine ? 'Qualifica '.($mine['rank'] ?? '—') : 'Nessun calcolo ancora' }}@if($progress && ($k['known'] ?? false)) · diretto {{ $n($progress['rank']['direct_pct']) }}%@endif</span></div>
   <div class="kpi"><small>Clienti nel mio ramo</small><strong>{{ $total['clients'] }}</strong><span>Clienti personali di chi è sotto di te</span></div>
   <div class="kpi"><small>Pearl nel ramo</small><strong>{{ $total['pearl'] }}</strong><span>{{ $mine ? $mine['pearl_first'].' al tuo 1° livello' : 'Qualifica Pearl o superiore' }}</span></div>
-  <div class="kpi {{ $waiting_total > 0 ? 'k-warn' : '' }}"><small>Clienti senza primo ordine</small><strong>{{ $waiting_total + ($my_customers['waiting'] ?? 0) }}</strong><span>Iscritti nel tuo ramo che non hanno ancora comprato: sono i primi da contattare</span></div>
+  <a class="kpi {{ $waitingAll > 0 ? 'k-warn' : '' }}" href="{{ $waiting_total > 0 ? '#act-panel' : '/area/clienti?stato=senza-ordini' }}" @if($waiting_total > 0)data-act-show="waiting"@endif><small>Iscritti senza primo ordine</small><strong>{{ $waitingAll }}</strong><span>@if($waitingAll === 0)Tutti gli iscritti del tuo ramo hanno già fatto un ordine @else{{ $waitingMine }} tra i tuoi clienti · {{ $waiting_total }} tra i clienti dei tuoi incaricati@if($waitingBy !== '') ({{ $waitingBy }})@endif. @if($waiting_total > 0)Dei clienti altrui vedi solo il numero: aiuta l'incaricato a contattarli @endif @endif</span>@if($waitingAll > 0)<span style="font-weight:600;color:var(--lm-terracotta)">{{ $waiting_total > 0 ? 'Vedi sotto quale incaricato →' : 'Vedi chi sono →' }}</span>@endif</a>
   @if($earn ?? null)
    <a class="kpi" href="/area/compensi"><small>Compenso {{ $earn['period'] }}{{ $earn['closed'] ? '' : ' · provvisorio' }}</small><strong>€ {{ $eur($earn['accrued']) }}</strong><span>@if($earn['closed'])Mese chiuso: importo definitivo @else Non definitivo: sul calcolo di adesso @if($earn['calculated_at'])({{ $earn['calculated_at']->setTimezone('Europe/Rome')->format('d/m H:i') }}) @endif· sale se arrivano nuovi clienti prima della chiusura @endif</span><span style="font-weight:600;color:var(--lm-terracotta)">Vedi il dettaglio dei compensi →</span></a>
   @endif
@@ -230,6 +235,8 @@
   chips.forEach(function(c){c.addEventListener('click',function(){lv=c.dataset.lv;chips.forEach(function(x){x.classList.toggle('on',x===c);});apply();});});
   document.querySelectorAll('.srt').forEach(function(b){b.addEventListener('click',function(){
    var k=b.dataset.k; if(sortK===k){sortDir=-sortDir;}else{sortK=k;sortDir=(k==='name'||k==='level'||k==='rank')?1:-1;} sortRows();});});
+  // il riquadro «Iscritti senza primo ordine» porta all'elenco già filtrato
+  [].slice.call(document.querySelectorAll('[data-act-show]')).forEach(function(el){el.addEventListener('click',function(){sh.value=el.dataset.actShow;apply();});});
   document.getElementById('act-reset').addEventListener('click',function(){
    q.value='';rk.value='';sh.value='';lv='';chips.forEach(function(x){x.classList.toggle('on',x.dataset.lv==='');});sortK=null;sortDir=1;sortRows();apply();});
  })();

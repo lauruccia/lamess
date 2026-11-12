@@ -5,7 +5,9 @@
 @php
     $eur = fn ($v) => \App\Support\Money::eur($v);
     $buyers = $all->filter(fn ($r) => ($orders[$r->user_id]->n ?? 0) > 0)->count();
-    $spent = collect($orders)->sum(fn ($o) => (float) $o->spent);
+    // «Venduto ai clienti» conta solo i clienti (come il riquadro «Clienti iscritti»): i propri acquisti sono indicati a parte.
+    $ownSpent = (float) ($orders[$selfUserId]->spent ?? 0);
+    $spent = $all->sum(fn ($r) => (float) ($orders[$r->user_id]->spent ?? 0));
     $c = auth()->user()->consultant;
     $validCount = $tally['ordered'] + $tally['covered'] + $tally['expiring'];
     $stateInfo = [
@@ -19,7 +21,8 @@
         'own_off' => ['cl-before', 'Non conta', 'I tuoi acquisti non contano come cliente in questo piano.'],
     ];
     $kk = $progress['kosmos'] ?? null;
-    $nt = $kk ? collect($kk['tiers'])->firstWhere('reached', false) : null;
+    // prossimo scaglione = il primo non raggiunto che paga di più (come in Panoramica)
+    $nt = $kk ? collect($kk['tiers'])->firstWhere('is_next', true) : null;
 @endphp
 <div class="pg-head">
  <div><h1>I miei clienti</h1><p class="sub">Le persone iscritte con il tuo link o assegnate a te. Vedi solo i recapiti, per aiutarle con i loro ordini.</p></div>
@@ -29,12 +32,12 @@
  <section class="panel"><div class="empty"><span class="ico">@include('site.area._i', ['n' => 'users'])</span><div><strong>Nessun cliente per ora</strong><p>Quando qualcuno si registra con il tuo link referral comparirà qui. Il tuo link: <a href="{{ \App\Domain\Content\ReferralQr::url($c) }}">{{ \App\Domain\Content\ReferralQr::pretty($c) }}</a></p><a class="btn accent" href="/area/referral">Apri link e QR code</a></div></div></section>
 @else
  <div class="kpis">
-  <div class="kpi"><small>Clienti</small><strong>{{ $all->count() }}</strong><span>{{ $all->where('registered_at', '>=', now()->subDays(30))->count() }} nuovi negli ultimi 30 giorni</span></div>
+  <div class="kpi"><small>Clienti iscritti</small><strong>{{ $all->count() }}</strong><span>Iscritti con il tuo link o assegnati a te, tu escluso · {{ $all->where('registered_at', '>=', now()->subDays(30))->count() }} nuovi in 30 giorni</span></div>
   <div class="kpi k-ok"><small>Hanno ordinato</small><strong>{{ $buyers }}</strong><span>{{ $all->count() - $buyers }} non hanno ancora acquistato</span></div>
   @if($kosmos !== null)
-   <div class="kpi {{ $kk && $kk['known'] ? 'k-ok' : '' }}"><small>Clienti che contano per il piano</small><strong>{{ $kk && $kk['known'] ? $kk['clients'] : $validCount }}</strong><span>@if($nt)Ne mancano {{ $nt['missing'] }} per il {{ number_format($nt['pct'], 0, ',', '.') }}% di compenso diretto @elseif($kk && $kk['known'])Scaglione massimo raggiunto @else Cliente è {{ $kosmos->clientRule === \App\Domain\Engine\Plan\KosmosConfig::CLIENT_ANY_ORDER ? 'chi fa almeno un ordine' : 'chi fa un ordine da almeno € '.\App\Support\Money::eur($kosmos->clientMinAmount).' IVA inclusa' }} @endif</span></div>
+   <div class="kpi {{ $kk && $kk['known'] ? 'k-ok' : '' }}"><small>Clienti personali</small><strong>{{ $kk && $kk['known'] ? $kk['clients'] : $validCount }}</strong><span>Contano per il piano, tu compreso se i tuoi acquisti valgono · @if($nt)Ne mancano {{ $nt['missing'] }} per il {{ number_format($nt['pct'], 0, ',', '.') }}% di compenso diretto @elseif($kk && $kk['known'])Scaglione massimo raggiunto @else Cliente è {{ $kosmos->clientRule === \App\Domain\Engine\Plan\KosmosConfig::CLIENT_ANY_ORDER ? 'chi fa almeno un ordine' : 'chi fa un ordine da almeno € '.\App\Support\Money::eur($kosmos->clientMinAmount).' IVA inclusa' }} @endif</span></div>
   @endif
-  <div class="kpi"><small>Venduto ai clienti</small><strong>€ {{ $eur($spent) }}</strong><span>Ordini pagati, IVA inclusa</span></div>
+  <div class="kpi"><small>Venduto ai clienti</small><strong>€ {{ $eur($spent) }}</strong><span>Ordini pagati dei tuoi clienti, IVA inclusa @if($ownSpent > 0)· i tuoi acquisti: € {{ $eur($ownSpent) }}@endif</span></div>
  </div>
  <section class="panel">
   <form method="get" action="/area/clienti" class="filters" style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding:14px 16px 0">

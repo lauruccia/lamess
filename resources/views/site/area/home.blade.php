@@ -84,7 +84,7 @@
   @endif
  @endif
  @if($c)
-  <a class="kpi" href="/area/rete"><small>La mia rete</small><strong>{{ $x['network'] }}</strong><span>{{ $x['direct'] }} {{ $x['direct'] === 1 ? 'diretta' : 'dirette' }} · {{ $x['clients'] }} {{ $x['clients'] === 1 ? 'cliente' : 'clienti' }}</span></a>
+  <a class="kpi" href="/area/rete"><small>La mia rete</small><strong>{{ $x['network'] }}</strong><span>{{ $x['direct'] }} {{ $x['direct'] === 1 ? 'diretta' : 'dirette' }} · {{ $x['clients'] }} {{ $x['clients'] === 1 ? 'cliente iscritto' : 'clienti iscritti' }}</span></a>
   <a class="kpi" href="/area/statini"><small>Ultimo statino</small><strong>{{ $x['settlement'] ? '€ '.$eur($x['settlement']->accrued) : '—' }}</strong><span>{{ $x['settlement'] ? 'Mese '.$x['settlement']->period->code.' · '.($x['settlement']->status === 'paid' ? 'pagato' : 'da pagare o cumulato') : 'Compare alla prima chiusura mese' }}</span></a>
  @endif
  <a class="kpi" href="/area/ordini"><small>I miei ordini</small><strong>{{ $d['orders']['count'] }}</strong><span>{{ $lastOrder ? 'Ultimo il '.\App\Support\Ui::date($lastOrder->created_at) : 'Nessun ordine ancora' }}</span></a>

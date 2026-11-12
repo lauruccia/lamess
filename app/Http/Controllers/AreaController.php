@@ -39,7 +39,9 @@ use App\Models\ConsultantPeriodStat;
 use App\Models\Customer;
 use App\Models\IdentityVerification;
 use App\Models\IvdContract;
+use App\Models\IvdLetterSignature;
 use App\Models\KMoneyLink;
+use App\Models\Order;
 use App\Models\Period;
 use App\Models\Profile;
 use App\Models\Settlement;
@@ -73,7 +75,7 @@ class AreaController extends Controller
         return view('site.area.home', [
             'letterToSign' => $this->safely(static fn () => app(IvdLetterSigning::class)->pendingFor($user)),
             'rejectedDocs' => $live ? $this->safely(static fn () => collect(app(OnboardingService::class)->latestDocuments($live))->where('status', 'rejected')->values()) : null,
-            'user' => $user, 'contract' => $this->contract($request), 'signedLetter' => \App\Models\IvdLetterSignature::with('version')->where('user_id', $user->id)->where('status', 'signed')->whereNotNull('pdf_path')->latest('signed_at')->first(), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
+            'user' => $user, 'contract' => $this->contract($request), 'signedLetter' => IvdLetterSignature::with('version')->where('user_id', $user->id)->where('status', 'signed')->whereNotNull('pdf_path')->latest('signed_at')->first(), 'month' => $user->consultant ? $this->monthFigures($user->consultant) : null,
             // I riquadri di avanzamento e compensi non devono mai impedire di aprire la panoramica.
             'progress' => $live ? $this->safely(static fn () => app(CareerProgress::class)->forConsultant($live->id)) : null,
             'earn' => $live ? $this->safely(static fn () => app(EarningsSummary::class)->for($live->id)) : null,
@@ -230,7 +232,7 @@ class AreaController extends Controller
         $self->setAttribute('is_self', true);
         $people = collect([$self])->concat($all);
 
-        $orders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->whereIn('status', \App\Models\Order::PAID_STATES)
+        $orders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->whereIn('status', Order::PAID_STATES)
             ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
 
         // Mese scelto (ora italiana): di default quello in corso; dal passato più recente fino al prossimo, per vedere chi scade.
@@ -248,7 +250,7 @@ class AreaController extends Controller
         $monthIndex = KosmosCalculator::monthIndex($month->toDateTimeImmutable());
 
         // Le colonne degli ordini mostrano solo il mese scelto (stati e filtri restano sullo storico completo).
-        $monthOrders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->whereIn('status', \App\Models\Order::PAID_STATES)
+        $monthOrders = DB::table('orders')->whereIn('buyer_user_id', $people->pluck('user_id'))->whereIn('status', Order::PAID_STATES)
             ->where('paid_at', '>=', $month->utc()->format('Y-m-d H:i:s'))->where('paid_at', '<', $month->addMonth()->utc()->format('Y-m-d H:i:s'))
             ->selectRaw('buyer_user_id, count(*) as n, min(paid_at) as first_paid, max(paid_at) as last_paid, sum(total) as spent, max(total) as biggest')->groupBy('buyer_user_id')->get()->keyBy('buyer_user_id');
 
@@ -315,7 +317,7 @@ class AreaController extends Controller
         $rows = new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'pageName' => 'pagina', 'query' => $request->except('pagina')]);
 
         return view('site.area.customers', [
-            'rows' => $rows, 'selfRow' => $page === 1 ? $selfRow : null, 'all' => $all, 'orders' => $orders, 'monthOrders' => $monthOrders, 'kosmos' => $kosmos, 'progress' => $progress,
+            'rows' => $rows, 'selfRow' => $page === 1 ? $selfRow : null, 'selfUserId' => $meUser->id, 'all' => $all, 'orders' => $orders, 'monthOrders' => $monthOrders, 'kosmos' => $kosmos, 'progress' => $progress,
             'search' => $search, 'state' => $state, 'filters' => self::CUSTOMER_FILTERS, 'planFilters' => self::CUSTOMER_PLAN_FILTERS,
             'month' => $month->format('Y-m'), 'monthLabel' => $month->locale('it')->translatedFormat('F Y'), 'monthOptions' => $monthOptions, 'states' => $states, 'tally' => $tally,
         ]);

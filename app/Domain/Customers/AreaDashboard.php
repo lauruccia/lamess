@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Customers;
 
+use App\Domain\Access\AccountSuspension;
 use App\Domain\Content\Audience;
 use App\Domain\Content\EventService;
 use App\Models\CorporateEvent;
@@ -43,7 +44,7 @@ final class AreaDashboard
         return [
             'orders' => [
                 'count' => (clone $orders)->count(),
-                'spent' => (string) (clone $orders)->whereIn('status', \App\Models\Order::PAID_STATES)->sum('total'),
+                'spent' => (string) (clone $orders)->whereIn('status', Order::PAID_STATES)->sum('total'),
                 'pending' => (clone $orders)->where('status', 'pending_payment')->latest('id')->get(),
                 'recent' => (clone $orders)->latest('id')->limit(3)->get(),
             ],
@@ -100,7 +101,9 @@ final class AreaDashboard
      */
     public function forConsultant(int $consultantId): array
     {
-        $paths = DB::table('network_paths')->where('ancestor_id', $consultantId)->where('depth', '>', 0);
+        // come «Il mio ramo»: chi ha l'account sospeso o bannato non si conta
+        $paths = DB::table('network_paths')->where('ancestor_id', $consultantId)->where('depth', '>', 0)
+            ->whereNotIn('descendant_id', AccountSuspension::hiddenConsultantIds());
 
         return [
             'clients' => Customer::notConsultants()->where('assigned_consultant_id', $consultantId)->count(),

@@ -1,5 +1,9 @@
 # Registro aggiornamenti
 
+## 2026-11-12 — «Il mio ramo»: tolto il riquadro «Iscritti senza primo ordine»
+- Il riquadro mescolava i propri clienti e quelli degli incaricati (di cui non si vedono i nomi) e non serviva: ogni incaricato conosce già quanti clienti ha e quanti hanno ordinato. Resta l'elenco «I miei clienti» (filtro «Senza ordini») e, nella tabella degli incaricati, il filtro e l'etichetta «senza ordine».
+- Database: nessuna modifica.
+
 ## 2026-11-12 — Checkout e dati personali: la provincia scritta per esteso non blocca più il salvataggio
 - Chi scriveva «Macerata» al posto di «MC» (anche per il riempimento automatico del browser) riceveva un errore 500 al salvataggio dei dati di fatturazione: il database accetta solo la sigla. Ora «Macerata», «Macerata (MC)» o «mc» diventano **MC** nel checkout, in «I miei dati», nella candidatura e negli indirizzi di spedizione.
 - Se la provincia italiana non si riconosce compare un messaggio chiaro («Indica la provincia con la sigla di due lettere…»); per l'estero, dove la provincia è facoltativa, un nome troppo lungo viene lasciato vuoto.

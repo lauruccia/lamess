@@ -94,10 +94,8 @@ final class CustomersMonthViewTest extends TestCase
         $this->assertStringContainsString('Venduto ai clienti</small><strong>€ '.$clients.'<', $html);
         $this->assertStringContainsString('i tuoi acquisti: € '.Money::eur($own->refresh()->total), $html);
 
-        // «Il mio ramo»: l'iscritto senza ordine è tra i propri clienti e il riquadro porta a vederlo
-        $rete = $this->get('/area/rete')->assertOk()->assertSee('Iscritti senza primo ordine')->getContent();
-        $this->assertStringContainsString('href="/area/clienti?stato=senza-ordini"', $rete);
-        $this->assertStringContainsString('1 tra i tuoi clienti · 0 tra i clienti dei tuoi incaricati', $rete);
+        // «Il mio ramo» non ha più il riquadro sugli iscritti senza primo ordine; l'elenco dei clienti resta
+        $this->get('/area/rete')->assertOk()->assertDontSee('Iscritti senza primo ordine');
         $this->get('/area/clienti?stato=senza-ordini')->assertOk()->assertSee('Resta Fermo')->assertDontSee('Ordina Spesso');
 
         // «La mia rete» in Panoramica conta le stesse persone di «Il mio ramo»: gli account sospesi no
@@ -120,19 +118,5 @@ final class CustomersMonthViewTest extends TestCase
         $this->artisan('lamess:periodo', ['azione' => 'live', 'codice' => now('Europe/Rome')->format('Y-m')])->assertSuccessful();
 
         $this->actingAs($su)->get('/area/clienti')->assertOk()->assertSee('Ne mancano 5 per il 25%')->assertDontSee('per il 20%');
-    }
-
-    /** Il cliente senza ordine di un incaricato sotto di me non è mio: il riquadro dice di chi è. */
-    public function test_the_waiting_box_names_the_consultant_who_owns_the_customer(): void
-    {
-        [$su] = $this->setUpScenario();
-        $sponsor = Consultant::where('user_id', $su->id)->firstOrFail();
-        $child = $this->consultant('C1', $sponsor);
-        $this->buyer($child);
-        app(NetworkService::class)->rebuildClosure();
-
-        $this->actingAs($su)->get('/area/rete')->assertOk()
-            ->assertSee('1 tra i tuoi clienti', false)
-            ->assertSee('1 tra i clienti dei tuoi incaricati (Incaricato C1: 1).', false);
     }
 }

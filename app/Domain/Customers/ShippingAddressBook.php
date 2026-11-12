@@ -7,6 +7,7 @@ namespace App\Domain\Customers;
 use App\Domain\Orders\OrderException;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use App\Support\ItalianProvinces;
 use Illuminate\Database\Eloquent\Collection;
 
 /** Rubrica degli indirizzi di spedizione di un utente (massimo lamess.max_shipping_addresses) e scelta dell'indirizzo per un ordine o un abbonamento. */
@@ -41,7 +42,7 @@ final class ShippingAddressBook
             'user_id' => $user->id, 'is_default' => $count === 0,
             'label' => $this->clean($d['label'] ?? null, 60), 'recipient' => $this->clean($d['recipient'] ?? null, 190),
             'address' => $this->clean($d['address'], 190), 'city' => $this->clean($d['city'], 120), 'zip' => $this->clean($d['zip'], 10),
-            'province' => $this->clean($d['province'] ?? null, 3), 'country_code' => $this->country($d['country_code'] ?? null), 'phone' => $this->clean($d['phone'] ?? null, 30),
+            'province' => ItalianProvinces::normalize($d['province'] ?? null, $d['country_code'] ?? null), 'country_code' => $this->country($d['country_code'] ?? null), 'phone' => $this->clean($d['phone'] ?? null, 30),
         ]);
     }
 
@@ -58,7 +59,7 @@ final class ShippingAddressBook
         $a->update([
             'label' => $this->clean($d['label'] ?? null, 60), 'recipient' => $this->clean($d['recipient'] ?? null, 190),
             'address' => $this->clean($d['address'], 190), 'city' => $this->clean($d['city'], 120), 'zip' => $this->clean($d['zip'], 10),
-            'province' => $this->clean($d['province'] ?? null, 3), 'country_code' => $this->country($d['country_code'] ?? null), 'phone' => $this->clean($d['phone'] ?? null, 30),
+            'province' => ItalianProvinces::normalize($d['province'] ?? null, $d['country_code'] ?? null), 'country_code' => $this->country($d['country_code'] ?? null), 'phone' => $this->clean($d['phone'] ?? null, 30),
         ]);
 
         return $a->refresh();
@@ -108,6 +109,7 @@ final class ShippingAddressBook
             $this->assertDeliverable($data['address']);
 
             $data['country_code'] = $this->country($data['country_code']);
+            $data['province'] = ItalianProvinces::normalize($data['province'], $data['country_code']);
 
             return ['id' => null] + array_map(fn ($v) => $v === null || $v === '' ? null : trim((string) $v), $data);
         }

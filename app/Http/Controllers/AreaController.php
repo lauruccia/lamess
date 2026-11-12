@@ -47,6 +47,7 @@ use App\Models\Profile;
 use App\Models\Settlement;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use App\Support\ItalianProvinces;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -365,6 +366,7 @@ class AreaController extends Controller
 
     public function addAddress(Request $request, ShippingAddressBook $book): RedirectResponse
     {
+        ItalianProvinces::applyTo($request, 'province', 'country_code');
         $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'country_code' => 'nullable|string|size:2', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
         try {
             $book->add($request->user(), $d);
@@ -377,6 +379,7 @@ class AreaController extends Controller
 
     public function updateAddress(Request $request, ShippingAddress $address, ShippingAddressBook $book): RedirectResponse
     {
+        ItalianProvinces::applyTo($request, 'province', 'country_code');
         $d = $request->validate(['label' => 'nullable|string|max:60', 'recipient' => 'nullable|string|max:190', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120', 'zip' => 'required|string|max:10', 'province' => 'nullable|string|max:3', 'country_code' => 'nullable|string|size:2', 'phone' => 'nullable|string|max:30'], SiteController::MESSAGES);
         abort_unless($address->user_id === $request->user()->id, 404);
         try {
@@ -413,6 +416,7 @@ class AreaController extends Controller
 
     public function saveProfile(Request $request): RedirectResponse
     {
+        ItalianProvinces::applyTo($request, 'province', 'country_code');
         $profile = $this->ensureProfile($request->user());
         $rules = [
             'phone' => 'nullable|string|max:30', 'address' => 'required|string|max:190', 'city' => 'required|string|max:120',
@@ -537,6 +541,7 @@ class AreaController extends Controller
 
     public function apply(Request $request, IvdService $ivd, ReferralResolver $resolver): RedirectResponse
     {
+        ItalianProvinces::applyTo($request, 'province', 'country_code');
         $data = $request->validate([
             'tax_code' => 'required', 'birth_date' => 'required|date', 'birth_place' => 'required', 'address' => 'required',
             'city' => 'required', 'zip' => 'required', 'province' => 'nullable', 'country_code' => 'nullable|size:2', 'phone' => 'nullable', 'pec' => 'nullable|email', 'sponsor_code' => 'nullable', 'accept' => 'accepted',

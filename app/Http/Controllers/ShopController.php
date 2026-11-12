@@ -8,6 +8,7 @@ use App\Domain\Billing\InvoiceService;
 use App\Domain\Customers\AddressCheck;
 use App\Domain\Customers\BillingData;
 use App\Domain\Customers\ShippingAddressBook;
+use App\Domain\Engine\Support\Num;
 use App\Domain\Orders\CartPricer;
 use App\Domain\Orders\KMoneyApiProvider;
 use App\Domain\Orders\KMoneyProvider;
@@ -22,6 +23,7 @@ use App\Domain\Orders\StripeWebhook;
 use App\Domain\Subscriptions\SubscriptionService;
 use App\Domain\Wallet\TascaPurchase;
 use App\Models\BundleRule;
+use App\Models\Consultant;
 use App\Models\CreditNote;
 use App\Models\Discount;
 use App\Models\KMoneyLink;
@@ -33,8 +35,10 @@ use App\Models\Profile;
 use App\Models\ShippingAddress;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Support\ItalianProvinces;
 use App\Support\Money;
 use App\Support\ShopAccess;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -169,7 +173,7 @@ class ShopController extends Controller
     /**
      * Quanto si può pagare con i compensi della Tasca per il carrello attuale (null se la Tasca non è disponibile per l'utente).
      *
-     * @return array{usable: \Brick\Math\BigDecimal, single: array<string,mixed>, sub: array<string,mixed>}|null
+     * @return array{usable: BigDecimal, single: array<string,mixed>, sub: array<string,mixed>}|null
      */
     private function tascaQuote(Request $r): ?array
     {
@@ -180,7 +184,7 @@ class ShopController extends Controller
         // I compensi bloccati in un ordine rimasto in attesa si liberano appena si conferma: contano già adesso.
         $stale = PendingCart::pending($r);
         if ($stale !== null && $stale->status === 'pending_payment' && (float) $stale->tasca_used > 0) {
-            $usable = $usable->plus(\App\Domain\Engine\Support\Num::of((string) $stale->tasca_used));
+            $usable = $usable->plus(Num::of((string) $stale->tasca_used));
         }
         if (! $usable->isPositive()) {
             return null;
@@ -798,6 +802,7 @@ class ShopController extends Controller
      */
     public function saveBilling(Request $r)
     {
+        ItalianProvinces::applyTo($r);
         $d = $r->validate([
             'type' => 'required|in:private,company',
             'first_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')], 'last_name' => [Rule::requiredIf(fn () => $r->input('type') === 'private')],
@@ -852,6 +857,7 @@ class ShopController extends Controller
 
     public function checkout(Request $r, OrderService $orders, SubscriptionService $subs)
     {
+        ItalianProvinces::applyTo($r);
         $d = $r->validate([
             'type' => 'required|in:private,company',
             // Dati obbligatori per la fattura: senza non si crea né l'ordine né l'abbonamento.
@@ -1008,7 +1014,7 @@ class ShopController extends Controller
     {
         $book = app(ShippingAddressBook::class);
 
-        return view('site.shop.subscriptions', ['addresses' => $book->list($r->user()), 'maxAddresses' => $book->max(), 'subs' => Subscription::where('user_id', $r->user()->id)->latest('id')->get(), 'products' => Product::pluck('name', 'id'), 'canUpdateCard' => app(PaymentProvider::class) instanceof StripeCheckoutProvider, 'canTasca' => TascaPurchase::enabled() && \App\Models\Consultant::where('user_id', $r->user()->id)->where('status', 'active')->exists()]);
+        return view('site.shop.subscriptions', ['addresses' => $book->list($r->user()), 'maxAddresses' => $book->max(), 'subs' => Subscription::where('user_id', $r->user()->id)->latest('id')->get(), 'products' => Product::pluck('name', 'id'), 'canUpdateCard' => app(PaymentProvider::class) instanceof StripeCheckoutProvider, 'canTasca' => TascaPurchase::enabled() && Consultant::where('user_id', $r->user()->id)->where('status', 'active')->exists()]);
     }
 
     public function subscriptionAction(Request $r, Subscription $subscription, string $action, SubscriptionService $subs)

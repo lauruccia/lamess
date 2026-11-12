@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-11-12 — Checkout e dati personali: la provincia scritta per esteso non blocca più il salvataggio
+- Chi scriveva «Macerata» al posto di «MC» (anche per il riempimento automatico del browser) riceveva un errore 500 al salvataggio dei dati di fatturazione: il database accetta solo la sigla. Ora «Macerata», «Macerata (MC)» o «mc» diventano **MC** nel checkout, in «I miei dati», nella candidatura e negli indirizzi di spedizione.
+- Se la provincia italiana non si riconosce compare un messaggio chiaro («Indica la provincia con la sigla di due lettere…»); per l'estero, dove la provincia è facoltativa, un nome troppo lungo viene lasciato vuoto.
+- Database: nessuna modifica. Test: `ItalianProvincesTest`, `CheckoutProvinceTest`.
+
 ## 2026-11-12 — Area incaricato: riquadri coerenti tra Panoramica, «Il mio ramo» e «I miei clienti»
 - **Prossimo scaglione** in «I miei clienti»: ora è lo stesso della Panoramica (il primo non raggiunto che paga **di più**). Con due scaglioni alla stessa percentuale non compare più «Ne mancano 2 per il 20%» a chi il 20% ce l'ha già.
 - **«La mia rete»** in Panoramica conta le stesse persone di «Il mio ramo»: gli incaricati con account sospeso o bannato non si contano più (prima 5 in Panoramica e 4 nel ramo).

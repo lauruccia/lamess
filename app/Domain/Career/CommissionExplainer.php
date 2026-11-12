@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Career;
 
+use App\Domain\Engine\Plan\KosmosConfig;
 use App\Domain\Payouts\StatementService;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Consultant;
@@ -33,7 +34,7 @@ final class CommissionExplainer
      *   period: Period, run_id: ?int, closed: bool,
      *   groups: list<array{type:string,label:string,accrued:float,held:float,lines:list<array<string,mixed>>}>,
      *   missing: array{total:float, levels:list<array<string,mixed>>, other:list<array<string,mixed>>, lines:list<array<string,mixed>>},
-     *   accrued: float, held: float, excluded: float, rules: list<string>
+     *   accrued: float, held: float, excluded: float, rules: list<string>, compression: bool
      * }
      */
     public function for(Consultant $consultant, Period $period, bool $forConsultant = false): array
@@ -95,6 +96,7 @@ final class CommissionExplainer
             'excluded' => array_sum(array_column($missingRows, 'amount')),
             'missing' => $this->missing($missingRows),
             'rules' => $this->rules($kosmos),
+            'compression' => $this->compression($period),
         ];
     }
 
@@ -103,7 +105,7 @@ final class CommissionExplainer
      * @param  array<int|string, mixed>  $names
      * @return array<string, mixed>
      */
-    private function explainLine(object $l, int $beneficiaryId, array $sponsors, array $names, ?\App\Domain\Engine\Plan\KosmosConfig $kosmos): array
+    private function explainLine(object $l, int $beneficiaryId, array $sponsors, array $names, ?KosmosConfig $kosmos): array
     {
         $ex = is_string($l->explanation) ? (json_decode($l->explanation, true) ?: []) : [];
         $pct = $l->pct === null ? null : (float) $l->pct;
@@ -168,7 +170,7 @@ final class CommissionExplainer
 
             case 'clawback':
                 $title = 'Storno per reso';
-                $sentence = "Reso su un ordine di un mese già chiuso: il compenso «".(StatementService::LABELS[$ex['original_bonus'] ?? ''] ?? ($ex['original_bonus'] ?? '?'))."» del periodo ".($ex['original_period'] ?? '?').' viene ridotto di '.$this->eur(abs($amount)).'.';
+                $sentence = 'Reso su un ordine di un mese già chiuso: il compenso «'.(StatementService::LABELS[$ex['original_bonus'] ?? ''] ?? ($ex['original_bonus'] ?? '?')).'» del periodo '.($ex['original_period'] ?? '?').' viene ridotto di '.$this->eur(abs($amount)).'.';
                 if (isset($ex['formula'])) {
                     $details[] = 'Calcolo: '.$ex['formula'];
                 }
@@ -301,7 +303,9 @@ final class CommissionExplainer
                 'sentence' => "{$src} ha raggiunto il numero di clienti richiesto (PearlQ)".(isset($ex['reached_at']) ? ' il '.Carbon::parse($ex['reached_at'])->format('d/m/Y') : '').' entro la finestra. Spettano '.$this->eur((float) $b->amount).' a questa posizione della catena.',
                 'details' => $details, 'order_number' => null, 'order_url' => null, 'movement_id' => null,
                 'amount' => (float) $b->amount, 'base' => null, 'pct' => null, 'level' => null,
-                'status' => (string) $b->engine_status, 'status_label' => match ($b->engine_status) { 'accrued' => 'Maturato', 'held' => 'Trattenuto', default => 'Non spettante' }, 'warning' => false, 'missing' => null,
+                'status' => (string) $b->engine_status, 'status_label' => match ($b->engine_status) {
+                    'accrued' => 'Maturato', 'held' => 'Trattenuto', default => 'Non spettante'
+                }, 'warning' => false, 'missing' => null,
                 'state_label' => $state, 'confirmed_at' => $b->confirmed_at ? Carbon::parse($b->confirmed_at, 'UTC')->setTimezone('Europe/Rome')->format('d/m/Y') : null,
             ];
         }
@@ -344,7 +348,7 @@ final class CommissionExplainer
         }
     }
 
-    private function nextTier(?\App\Domain\Engine\Plan\KosmosConfig $k, int $clients): string
+    private function nextTier(?KosmosConfig $k, int $clients): string
     {
         if ($k === null) {
             return '';
@@ -379,7 +383,7 @@ final class CommissionExplainer
     }
 
     /** @return list<string> */
-    private function rules(?\App\Domain\Engine\Plan\KosmosConfig $k): array
+    private function rules(?KosmosConfig $k): array
     {
         if ($k === null) {
             return [];
@@ -387,19 +391,29 @@ final class CommissionExplainer
         $out = ['Base di calcolo: '.$this->pct((float) $k->vapShare->toFloat()).' dell\'importo IVA inclusa (un ordine da 150 € ha base 100 €).'];
         $t = array_map(fn (array $x) => $this->plural((int) $x['min_clients'], 'cliente', 'clienti').' → '.$this->pct((float) $x['rate']->toFloat()), $k->directTiers);
         $out[] = 'Diretti (sui clienti personali, su tutte le vendite del mese): '.implode(' · ', $t).'.';
-        $lv = array_map(fn (array $x) => "L{$x['level']} ".$this->pct((float) $x['rate']->toFloat())." (almeno ".$this->plural((int) $x['min_clients'], 'cliente', 'clienti').", {$x['min_pearl']} Pearl)", $k->indirectLevels);
+        $lv = array_map(fn (array $x) => "L{$x['level']} ".$this->pct((float) $x['rate']->toFloat()).' (almeno '.$this->plural((int) $x['min_clients'], 'cliente', 'clienti').", {$x['min_pearl']} Pearl)", $k->indirectLevels);
         $out[] = 'Indiretti: '.implode(' · ', $lv).'.';
         $out[] = 'Un cliente è chi fa un ordine'.($k->clientRule === 'min_amount' ? ' di almeno '.$this->eur((float) $k->clientMinAmount->toFloat()).' IVA inclusa' : '').'.';
 
         return $out;
     }
 
-    private function kosmos(Period $period): ?\App\Domain\Engine\Plan\KosmosConfig
+    private function kosmos(Period $period): ?KosmosConfig
     {
         try {
             return $period->planVersion?->plan()->kosmos;
         } catch (Throwable) {
             return null;
+        }
+    }
+
+    /** Vero se il piano del mese comprime la linea negli indiretti (politica K06): chi non ha i requisiti è saltato e il livello sale. */
+    private function compression(Period $period): bool
+    {
+        try {
+            return (bool) $period->planVersion?->plan()->policies->is('kosmos_compression', 'skip');
+        } catch (Throwable) {
+            return false;
         }
     }
 

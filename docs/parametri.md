@@ -148,7 +148,7 @@ Le politiche D01–D12 del piano precedente stanno nella sezione 12. Quelle del 
 | K03 | (nessuna politica) | | | la sigla K03 compare solo nelle spiegazioni delle righe del Bonus di Struttura |
 | K04 | `kosmos_own_purchase_as_client` | `on` | deciso dal cliente | `on` = l'acquisto dell'incaricato conta come cliente di sé stesso e genera compensi; `off` = gli acquisti personali non generano compensi |
 | K05 | `kosmos_rank_maintenance` — Mantenimento della qualifica | `requirements` | deciso da Laura (15/10/2026: retrocede se non rispetta almeno un requisito) | `requirements` = si paga la qualifica più alta di cui si rispettano ancora tutti i requisiti; `clients` = solo i clienti personali; `none` = nessun mantenimento |
-| K06 | `kosmos_compression` — Compressione della linea negli indiretti | `skip` | deciso da Laura (15/10/2026) | `skip` = chi non rispetta i requisiti è saltato e i livelli si contano solo tra chi li rispetta; `none` = livello genealogico |
+| K06 | `kosmos_compression` — Compressione della linea negli indiretti | **`none` nel piano in vigore dal 12/11/2026** (valore di partenza dei nuovi piani: `skip`) | deciso da Laura (12/11/2026: la compressione non esiste più; prima `skip`, 15/10/2026) | `skip` = chi non rispetta i requisiti è saltato e i livelli si contano solo tra chi li rispetta; `none` = livello genealogico |
 
 Nel Piano Incaricati valgono anche D06 (`onboarding_incomplete_indirect`) e D11 (`refund_after_close`, storno nel primo periodo aperto): vedi la sezione 11.
 

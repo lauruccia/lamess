@@ -98,7 +98,7 @@
             @php $ms = $d['missing']; @endphp
             <div class="fi-section cd-card cd-group">
                 <h3>Compensi non maturati: requisiti mancanti <span>€ {{ $eur($ms['total']) }} non maturati · {{ count($ms['lines']) }} {{ count($ms['lines']) === 1 ? 'riga' : 'righe' }}</span></h3>
-                <p class="cd-sentence cd-muted" style="margin:0 0 .8rem">Sono compensi che sarebbero spettati su ordini della sua rete ma non maturano perché non ha i requisiti del livello. Non vengono pagati a lui: con la compressione passano al primo incaricato sopra di lui che li rispetta. Se i requisiti si raggiungono prima della chiusura del mese, al ricalcolo maturano.</p>
+                <p class="cd-sentence cd-muted" style="margin:0 0 .8rem">Sono compensi che sarebbero spettati su ordini della sua rete ma non maturano perché non ha i requisiti del livello. Non vengono pagati a lui{{ ($d['compression'] ?? false) ? ': con la compressione passano al primo incaricato sopra di lui che li rispetta' : ' e non passano a nessun altro: senza compressione il livello resta non pagato' }}. Se i requisiti si raggiungono prima della chiusura del mese, al ricalcolo maturano.</p>
                 @if($ms['levels'])
                     <div style="overflow-x:auto">
                         <table class="cd-table">

@@ -83,7 +83,7 @@ class CompensiMesePage extends Page
     public function data(): array
     {
         $period = $this->period();
-        $empty = ['period' => $period, 'run' => null, 'closed' => false, 'rows' => [], 'totals' => ['accrued' => 0.0, 'held' => 0.0, 'structure' => 0.0, 'total' => 0.0, 'open' => 0.0], 'types' => []];
+        $empty = ['period' => $period, 'run' => null, 'closed' => false, 'rows' => [], 'totals' => ['accrued' => 0.0, 'held' => 0.0, 'structure' => 0.0, 'total' => 0.0, 'open' => 0.0, 'missing' => 0.0], 'types' => []];
         if ($period === null || ($run = $this->runOf($period)) === null) {
             return $empty;
         }
@@ -91,7 +91,7 @@ class CompensiMesePage extends Page
         $labels = StatementService::LABELS;
         $lines = DB::table('commission_lines')->where('run_id', $run->id)->where('bonus_type', '!=', 'structure')
             ->groupBy('beneficiary_id', 'bonus_type')
-            ->selectRaw("beneficiary_id, bonus_type, sum(case when engine_status = 'accrued' then amount else 0 end) as accrued, sum(case when engine_status = 'held' then amount else 0 end) as held")
+            ->selectRaw("beneficiary_id, bonus_type, sum(case when engine_status = 'accrued' then amount else 0 end) as accrued, sum(case when engine_status = 'held' then amount else 0 end) as held, sum(case when engine_status = 'excluded' then amount else 0 end) as missing")
             ->get();
         $by = [];
         $types = [];
@@ -99,13 +99,18 @@ class CompensiMesePage extends Page
             $by[$l->beneficiary_id]['types'][$l->bonus_type] = (float) $l->accrued;
             $by[$l->beneficiary_id]['accrued'] = ($by[$l->beneficiary_id]['accrued'] ?? 0.0) + (float) $l->accrued;
             $by[$l->beneficiary_id]['held'] = ($by[$l->beneficiary_id]['held'] ?? 0.0) + (float) $l->held;
+            $by[$l->beneficiary_id]['missing'] = ($by[$l->beneficiary_id]['missing'] ?? 0.0) + (float) $l->missing;
             $types[$l->bonus_type] = $labels[$l->bonus_type] ?? (string) $l->bonus_type;
         }
 
         $structure = DB::table('structure_bonuses')->where('period_id', $period->id)->where('status', '!=', 'cancelled')->where('engine_status', 'accrued')
             ->groupBy('beneficiary_id')->selectRaw('beneficiary_id, sum(amount) as amount')->pluck('amount', 'beneficiary_id');
 
-        $ids = array_unique(array_merge(array_keys($by), $structure->keys()->all()));
+        // Non maturato: compensi (e Bonus di Struttura) che sarebbero spettati ma non maturano per requisiti mancanti. Stesso totale della pagina «Dettaglio compensi».
+        $structureMissing = DB::table('structure_bonuses')->where('period_id', $period->id)->where('status', '!=', 'cancelled')->where('engine_status', 'excluded')
+            ->groupBy('beneficiary_id')->selectRaw('beneficiary_id, sum(amount) as amount')->pluck('amount', 'beneficiary_id');
+
+        $ids = array_unique(array_merge(array_keys($by), $structure->keys()->all(), $structureMissing->keys()->all()));
         $consultants = DB::table('consultants')->whereIn('id', $ids)->get(['id', 'code', 'name', 'iban', 'kyc_status'])->keyBy('id');
 
         $rank = DB::table('consultant_period_stats')->where('run_id', $run->id)->whereIn('consultant_id', $ids)->pluck('effective_rank', 'consultant_id');
@@ -130,7 +135,8 @@ class CompensiMesePage extends Page
             $accrued = (float) ($by[$id]['accrued'] ?? 0);
             $struct = (float) ($structure[$id] ?? 0);
             $total = $accrued + $struct;
-            if ($this->onlyNonZero && abs($total) < 0.005 && abs((float) ($by[$id]['held'] ?? 0)) < 0.005) {
+            $missing = (float) ($by[$id]['missing'] ?? 0) + (float) ($structureMissing[$id] ?? 0);
+            if ($this->onlyNonZero && abs($total) < 0.005 && abs((float) ($by[$id]['held'] ?? 0)) < 0.005 && abs($missing) < 0.005) {
                 continue;
             }
             $r = $rank[$id] ?? null;
@@ -139,7 +145,7 @@ class CompensiMesePage extends Page
                 'id' => (int) $id, 'code' => $c->code, 'name' => $c->name, 'url' => ConsultantResource::getUrl('view', ['record' => $id]),
                 'rank' => $strip($r), 'rank_from' => ($pr !== null && $r !== null && $pr !== $r) ? $strip($pr) : null,
                 'types' => $by[$id]['types'] ?? [], 'structure' => $struct, 'accrued' => $accrued, 'held' => (float) ($by[$id]['held'] ?? 0),
-                'total' => $total, 'open' => (float) ($open[$id] ?? 0),
+                'total' => $total, 'missing' => $missing, 'open' => (float) ($open[$id] ?? 0),
                 'payable' => $c->iban !== null && $c->iban !== '' && $c->kyc_status === 'verified',
                 'statement' => $period->status === Period::CLOSED ? url("/admin-files/statement/{$period->code}/{$id}") : null,
             ];
@@ -147,11 +153,12 @@ class CompensiMesePage extends Page
         usort($rows, fn (array $a, array $b): int => match ($this->sort) {
             'name' => strcasecmp($a['name'], $b['name']),
             'held' => $b['held'] <=> $a['held'],
+            'missing' => $b['missing'] <=> $a['missing'],
             default => $b['total'] <=> $a['total'],
         });
 
         $totals = ['accrued' => array_sum(array_column($rows, 'accrued')), 'held' => array_sum(array_column($rows, 'held')), 'structure' => array_sum(array_column($rows, 'structure')),
-            'total' => array_sum(array_column($rows, 'total')), 'open' => array_sum(array_column($rows, 'open'))];
+            'total' => array_sum(array_column($rows, 'total')), 'open' => array_sum(array_column($rows, 'open')), 'missing' => array_sum(array_column($rows, 'missing'))];
 
         return ['period' => $period, 'run' => $run, 'closed' => $period->status === Period::CLOSED, 'rows' => $rows, 'totals' => $totals, 'types' => $types];
     }
@@ -168,14 +175,14 @@ class CompensiMesePage extends Page
             foreach ($d['types'] as $label) {
                 $head[] = $label;
             }
-            array_push($head, 'Bonus di Struttura', 'Totale maturato', 'Trattenuto', 'Saldo non ancora pagato', 'Pagabile');
+            array_push($head, 'Bonus di Struttura', 'Totale maturato', 'Trattenuto', 'Non maturato (requisiti mancanti)', 'Saldo non ancora pagato', 'Pagabile');
             fputcsv($f, $head, ';');
             foreach ($d['rows'] as $r) {
                 $row = [$r['code'], $r['name'], $r['rank']];
                 foreach (array_keys($d['types']) as $t) {
                     $row[] = number_format((float) ($r['types'][$t] ?? 0), 2, ',', '');
                 }
-                array_push($row, number_format($r['structure'], 2, ',', ''), number_format($r['total'], 2, ',', ''), number_format($r['held'], 2, ',', ''), number_format($r['open'], 2, ',', ''), $r['payable'] ? 'sì' : 'no');
+                array_push($row, number_format($r['structure'], 2, ',', ''), number_format($r['total'], 2, ',', ''), number_format($r['held'], 2, ',', ''), number_format($r['missing'], 2, ',', ''), number_format($r['open'], 2, ',', ''), $r['payable'] ? 'sì' : 'no');
                 fputcsv($f, $row, ';');
             }
             fclose($f);

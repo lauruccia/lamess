@@ -42,10 +42,11 @@
                 <select wire:model.live="sort">
                     <option value="total">Totale maturato</option>
                     <option value="held">Trattenuto</option>
+                    <option value="missing">Non maturato</option>
                     <option value="name">Nome</option>
                 </select>
             </label>
-            <label style="flex-direction:row;align-items:center;gap:.4rem"><input type="checkbox" wire:model.live="onlyNonZero"> Solo chi ha importi</label>
+            <label style="flex-direction:row;align-items:center;gap:.4rem"><input type="checkbox" wire:model.live="onlyNonZero"> <span title="Maturati, trattenuti o non maturati per requisiti mancanti">Solo chi ha importi</span></label>
             <button type="button" wire:click="exportCsv" class="fi-btn" style="padding:.35rem .8rem;border:1px solid rgba(187,180,175,.8);border-radius:.4rem">Esporta CSV</button>
         </div>
 
@@ -63,6 +64,7 @@
                 <div class="cm-kpi"><small>Totale maturato</small><strong>€ {{ $eur($d['totals']['total']) }}</strong></div>
                 <div class="cm-kpi"><small>di cui Bonus di Struttura</small><strong>€ {{ $eur($d['totals']['structure']) }}</strong></div>
                 <div class="cm-kpi"><small>Trattenuto</small><strong>€ {{ $eur($d['totals']['held']) }}</strong></div>
+                <div class="cm-kpi" title="Compensi che sarebbero spettati ma non maturano perché mancano i requisiti del livello. Non sono dovuti."><small>Non maturato (requisiti mancanti)</small><strong>€ {{ $eur($d['totals']['missing']) }}</strong></div>
                 <div class="cm-kpi"><small>Saldo non ancora pagato</small><strong>€ {{ $eur($d['totals']['open']) }}</strong></div>
                 <div class="cm-kpi"><small>Incaricati con importi</small><strong>{{ count($d['rows']) }}</strong></div>
             </div>
@@ -76,7 +78,7 @@
                 <tr>
                     <th>Incaricato</th><th>Qualifica</th>
                     @foreach($d['types'] as $label)<th class="num">{{ $label }}</th>@endforeach
-                    <th class="num">Bonus di Struttura</th><th class="num">Totale</th><th class="num">Trattenuto</th><th class="num">Saldo da pagare</th><th>Pagabile</th><th></th>
+                    <th class="num">Bonus di Struttura</th><th class="num">Totale</th><th class="num">Trattenuto</th><th class="num" title="Compensi non maturati per requisiti mancanti: apri «Dettaglio» per vedere che cosa manca">Non maturato</th><th class="num">Saldo da pagare</th><th>Pagabile</th><th></th>
                 </tr>
             </thead>
             <tbody>
@@ -88,12 +90,13 @@
                         <td class="num {{ $r['structure'] == 0 ? 'cm-muted' : '' }}">{{ $eur($r['structure']) }}</td>
                         <td class="num"><strong>{{ $eur($r['total']) }}</strong></td>
                         <td class="num {{ $r['held'] == 0 ? 'cm-muted' : '' }}">{{ $eur($r['held']) }}</td>
+                        <td class="num {{ $r['missing'] == 0 ? 'cm-muted' : '' }}">@if($r['missing'] != 0)<a href="{{ \App\Filament\Pages\CompensoDettaglioPage::urlFor($r['id'], $p?->code) }}" title="Vedi che cosa manca">{{ $eur($r['missing']) }}</a>@else{{ $eur(0) }}@endif</td>
                         <td class="num">{{ $eur($r['open']) }}</td>
                         <td>{{ $r['payable'] ? 'Sì' : 'No (IBAN/KYC)' }}</td>
                         <td style="white-space:nowrap"><a href="{{ \App\Filament\Pages\CompensoDettaglioPage::urlFor($r['id'], $p?->code) }}">Dettaglio</a> · @if($r['statement'])<a href="{{ $r['statement'] }}" target="_blank">Statino</a>@else<a href="{{ $r['url'] }}">Scheda</a>@endif</td>
                     </tr>
                 @empty
-                    <tr><td colspan="{{ 8 + count($d['types']) }}" class="cm-muted">Nessun incaricato con importi in questo mese.</td></tr>
+                    <tr><td colspan="{{ 9 + count($d['types']) }}" class="cm-muted">Nessun incaricato con importi in questo mese.</td></tr>
                 @endforelse
             </tbody>
         </table>

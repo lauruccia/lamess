@@ -10,10 +10,13 @@ use App\Domain\Orders\OrderService;
 use App\Domain\Periods\PeriodService;
 use App\Domain\Plan\LegacyPlan;
 use App\Models\CompPlanVersion;
+use App\Models\Consultant;
+use App\Models\Order;
 use App\Models\Period;
 use App\Models\PvMovement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\ShopDb;
 use Tests\TestCase;
 
@@ -23,7 +26,7 @@ final class CommissionExplainerTest extends TestCase
     use RefreshDatabase;
     use ShopDb;
 
-    /** @return array{0:\App\Models\Consultant,1:Period,2:\App\Models\Order} */
+    /** @return array{0:Consultant,1:Period,2:Order} */
     private function setUpMonth(): array
     {
         config(['lamess.'.LegacyPlan::SETTING => true]);
@@ -97,11 +100,11 @@ final class CommissionExplainerTest extends TestCase
     }
 
     /** Come Sebastiano: salta un livello perché ha 1 cliente e ne servono 2. */
-    private function addSkippedLine(\App\Models\Consultant $c, Period $period): void
+    private function addSkippedLine(Consultant $c, Period $period): void
     {
-        $runId = (int) \Illuminate\Support\Facades\DB::table('calculation_runs')->where('period_id', $period->id)->where('status', 'completed')->max('id');
+        $runId = (int) DB::table('calculation_runs')->where('period_id', $period->id)->where('status', 'completed')->max('id');
         $movement = PvMovement::query()->firstOrFail();
-        \Illuminate\Support\Facades\DB::table('commission_lines')->insert([
+        DB::table('commission_lines')->insert([
             'run_id' => $runId, 'period_id' => $period->id, 'beneficiary_id' => $c->id, 'line_key' => 'indirect:'.$movement->id.':'.$c->id.':skip',
             'bonus_type' => 'indirect', 'base_amount' => '1000.00', 'pct' => '0.0400', 'amount' => '40.00', 'source_movement_id' => $movement->id,
             'source_consultant_id' => $c->id, 'level' => 2, 'engine_status' => 'excluded', 'reason' => 'requisiti_livello_2: clienti 1/2, Pearl 1° liv. 5/1',
@@ -140,6 +143,49 @@ final class CommissionExplainerTest extends TestCase
 
         $this->assertStringContainsString('Compensi non maturati: requisiti mancanti', $html);
         $this->assertStringContainsString('1 cliente in più', $html);
+    }
+
+    public function test_the_monthly_list_shows_who_has_only_unearned_compensations(): void
+    {
+        [$sponsor, $period] = $this->setUpMonth();
+        // Come Giovanni Rocca: nessun compenso maturato nel mese, solo righe non maturate per requisiti mancanti.
+        $only = $this->activeSponsor('LM00077');
+        $this->addSkippedLine($only, $period);
+        $admin = User::factory()->role('super_admin')->create();
+
+        $html = $this->actingAs($admin)->get('/admin/compensi-mese?mese='.$period->code.'&cerca=LM00077')->assertOk()->getContent();
+
+        $this->assertStringContainsString('compenso-dettaglio?incaricato='.$only->id, $html, 'compare anche con «Solo chi ha importi» acceso');
+        $this->assertStringContainsString('Non maturato', $html);
+        $this->assertStringContainsString('40,00', $html);
+        $this->assertStringNotContainsString('Nessun incaricato con importi', $html);
+    }
+
+    public function test_with_compression_the_missing_section_says_the_level_moves_up(): void
+    {
+        [$sponsor, $period] = $this->setUpMonth();
+        $this->addSkippedLine($sponsor, $period);
+        $admin = User::factory()->role('super_admin')->create();
+
+        $this->assertTrue(app(CommissionExplainer::class)->for($sponsor, $period)['compression']);
+        $this->actingAs($admin)->get('/admin/compenso-dettaglio?incaricato='.$sponsor->id.'&mese='.$period->code)
+            ->assertOk()->assertSee('con la compressione passano al primo incaricato');
+    }
+
+    public function test_without_compression_the_missing_section_says_the_level_stays_unpaid(): void
+    {
+        [$sponsor, $period] = $this->setUpMonth();
+        $this->addSkippedLine($sponsor, $period);
+        $admin = User::factory()->role('super_admin')->create();
+        // Compressione spenta nel piano: il livello non passa a nessuno.
+        $plan = CompPlanVersion::query()->findOrFail($period->comp_plan_version_id);
+        $data = $plan->data;
+        $data['policies']['kosmos_compression'] = 'none';
+        $plan->update(['data' => $data]);
+
+        $this->assertFalse(app(CommissionExplainer::class)->for($sponsor, $period->refresh())['compression']);
+        $this->actingAs($admin)->get('/admin/compenso-dettaglio?incaricato='.$sponsor->id.'&mese='.$period->code)
+            ->assertOk()->assertSee('non passano a nessun altro')->assertDontSee('con la compressione passano');
     }
 
     public function test_the_consultant_opens_the_own_detail_page(): void

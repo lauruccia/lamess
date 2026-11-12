@@ -5,7 +5,7 @@
 - **«La mia rete»** in Panoramica conta le stesse persone di «Il mio ramo»: gli incaricati con account sospeso o bannato non si contano più (prima 5 in Panoramica e 4 nel ramo).
 - **«Venduto ai clienti»** in «I miei clienti» somma solo gli ordini dei clienti, come il riquadro accanto; gli acquisti dell'incaricato sono indicati a parte («i tuoi acquisti: € …»).
 - **Nomi uguali per numeri uguali**: «Clienti personali» (quelli che contano per il piano, incaricato compreso se i suoi acquisti valgono) in Panoramica, «Il mio ramo» e «I miei clienti»; «Clienti iscritti» (iscritti con il link o assegnati, incaricato escluso) in «I miei clienti» e in «La mia rete».
-- **«Iscritti senza primo ordine»** in «Il mio ramo» (prima «Clienti senza primo ordine»): dice quanti sono tra i propri clienti e quanti tra i clienti dei propri incaricati, ed è cliccabile. Porta all'elenco del ramo già filtrato («Con iscritti senza primo ordine») oppure, se sono solo clienti propri, a «I miei clienti → Senza ordini». Dei clienti altrui l'incaricato continua a vedere solo il numero.
+- **«Iscritti senza primo ordine»** in «Il mio ramo» (prima «Clienti senza primo ordine»): dice quanti sono tra i propri clienti e quanti tra i clienti dei propri incaricati, con il nome degli incaricati sotto cui stanno (es. «Linda Gean: 1»), ed è cliccabile. Porta all'elenco del ramo già filtrato («Con iscritti senza primo ordine») oppure, se sono solo clienti propri, a «I miei clienti → Senza ordini». Dei clienti altrui l'incaricato continua a vedere solo il numero.
 - Il calcolo dei compensi non è stato toccato. Nessuna migrazione, nessun SQL. Test: `CustomersMonthViewTest` (4).
 
 ## 2026-11-10 — Funzionalità e viste: ora si può accendere e spegnere tutto, anche per gruppi

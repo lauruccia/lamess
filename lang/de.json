@@ -1196,5 +1196,7 @@
  "✓ Dati salvati.": "✓ Daten gespeichert.",
  "🎁 Omaggio: :p × :p2": "🎁 Geschenk: :p × :p2",
  "🎉 Hai la": "🎉 Sie haben",
- "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Die Rechnungsdaten sind die, mit denen Sie registriert sind, und lassen sich an der Kasse nicht ändern, außer dem Land. Um sie zu ändern, gehen Sie zu <a href=\"/area/profilo\">Meine Daten</a>: Die Lieferadresse können Sie unten wählen, falls sie abweicht."
+ "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Die Rechnungsdaten sind die, mit denen Sie registriert sind, und lassen sich an der Kasse nicht ändern, außer dem Land. Um sie zu ändern, gehen Sie zu <a href=\"/area/profilo\">Meine Daten</a>: Die Lieferadresse können Sie unten wählen, falls sie abweicht.",
+ "Come paghi il resto": "Wie bezahlst du den Rest",
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "Den Rest bezahlst du mit der unten gewählten Methode."
 }

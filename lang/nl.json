@@ -1196,5 +1196,7 @@
  "✓ Dati salvati.": "✓ Gegevens opgeslagen.",
  "🎁 Omaggio: :p × :p2": "🎁 Cadeautje: :p × :p2",
  "🎉 Hai la": "🎉 Je hebt",
- "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 De factuurgegevens zijn die waarmee je je hebt geregistreerd en kunnen vanuit de kassa niet worden gewijzigd, behalve het land. Ga naar <a href=\"/area/profilo\">Mijn gegevens</a> om ze te wijzigen: het verzendadres kun je hieronder kiezen als het anders is."
+ "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 De factuurgegevens zijn die waarmee je je hebt geregistreerd en kunnen vanuit de kassa niet worden gewijzigd, behalve het land. Ga naar <a href=\"/area/profilo\">Mijn gegevens</a> om ze te wijzigen: het verzendadres kun je hieronder kiezen als het anders is.",
+ "Come paghi il resto": "Hoe betaal je het restant",
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "Het restant betaal je met de hieronder gekozen methode."
 }

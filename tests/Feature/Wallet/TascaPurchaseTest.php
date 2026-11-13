@@ -7,12 +7,17 @@ namespace Tests\Feature\Wallet;
 use App\Domain\Orders\OrderException;
 use App\Domain\Orders\OrderService;
 use App\Domain\Wallet\TascaPurchase;
+use App\Domain\Wallet\WalletException;
 use App\Domain\Wallet\WalletService;
 use App\Models\Consultant;
 use App\Models\Order;
+use App\Models\Period;
+use App\Models\Product;
 use App\Models\Profile;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Notifications\OrderPaymentDetails;
+use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\NetworkDb;
 use Tests\Support\ShopDb;
@@ -39,7 +44,7 @@ final class TascaPurchaseTest extends TestCase
         return [$user, $c->refresh()];
     }
 
-    private function box(): \App\Models\Product
+    private function box(): Product
     {
         // 150 € IVA inclusa
         return $this->product('BOX', '122.95');
@@ -51,7 +56,7 @@ final class TascaPurchaseTest extends TestCase
         $t = app(TascaPurchase::class);
 
         $this->assertSame('120.00', (string) $t->usable($c));
-        $cover = $t->cover($t->usable($c), \Brick\Math\BigDecimal::of('150.00'), \Brick\Math\BigDecimal::of('159.00'));
+        $cover = $t->cover($t->usable($c), BigDecimal::of('150.00'), BigDecimal::of('159.00'));
         $this->assertSame('150.00', (string) $cover['amount']);
         $this->assertSame('120.00', (string) $cover['used']);
         $this->assertSame('30.00', (string) $cover['bonus']);
@@ -123,7 +128,7 @@ final class TascaPurchaseTest extends TestCase
         [$user, $c] = $this->incaricato('120.00');
         $o = app(OrderService::class)->place($user, [$this->box()->id => 1], 'IT', 'card', $this->billing(), useTasca: true);
 
-        app(TascaPurchase::class)->refund($o, \Brick\Math\BigDecimal::of('150.00'));
+        app(TascaPurchase::class)->refund($o, BigDecimal::of('150.00'));
 
         $wallet = app(WalletService::class);
         $this->assertSame('120.00', (string) $wallet->balance($c->id));
@@ -151,6 +156,20 @@ final class TascaPurchaseTest extends TestCase
         $this->assertTrue($o->events()->where('type', 'tasca_consent')->exists());
     }
 
+    public function test_tasca_choice_comes_first_and_the_other_methods_hide_when_it_covers_everything(): void
+    {
+        [$user] = $this->incaricato();
+        $box = $this->box();
+
+        $html = $this->actingAs($user)->withSession(['cart' => [$box->id => 1]])->get('/area/checkout/pagamento')->assertOk()
+            ->assertSee('data-covers-single="1"', false)->assertSee('data-pay-methods', false)->getContent();
+        $this->assertLessThan(strpos($html, 'data-pay-methods'), strpos($html, 'data-tasca-box'));
+
+        // Senza metodo scelto, con i compensi che coprono tutto, il passo si completa lo stesso (metodo di riserva).
+        $this->actingAs($user)->withSession(['cart' => [$box->id => 1]])
+            ->post('/area/checkout/passo/3', ['use_tasca' => '1', 'subscribe' => 'none'])->assertSessionHasNoErrors();
+    }
+
     public function test_customers_do_not_see_the_toggle(): void
     {
         $this->plan(['payout_mode' => 'on_request']);
@@ -165,7 +184,7 @@ final class TascaPurchaseTest extends TestCase
         [$user] = $this->incaricato('40.00');
         $o = app(OrderService::class)->place($user, [$this->box()->id => 1], 'IT', 'transfer', $this->billing(), useTasca: true);
 
-        $mail = (new \App\Notifications\OrderPaymentDetails($o))->toMail($user);
+        $mail = (new OrderPaymentDetails($o))->toMail($user);
         $this->assertStringContainsString('100,00', implode(' ', array_map('strval', $mail->introLines)));
         $this->actingAs($user)->get("/area/ordini/{$o->id}")->assertOk()->assertSee('100,00');
     }
@@ -185,9 +204,9 @@ final class TascaPurchaseTest extends TestCase
     {
         [$user, $c] = $this->incaricato();
         app(OrderService::class)->place($user, [$this->box()->id => 1], 'IT', 'card', $this->billing(), useTasca: true);
-        $period = (new \App\Models\Period)->forceFill(['closed_at' => now()->subDay()]);
+        $period = (new Period)->forceFill(['closed_at' => now()->subDay()]);
 
-        $this->expectException(\App\Domain\Wallet\WalletException::class);
+        $this->expectException(WalletException::class);
         app(WalletService::class)->assertReversible($period);
     }
 }

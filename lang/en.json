@@ -1196,5 +1196,7 @@
  "✓ Dati salvati.": "✓ Details saved.",
  "🎁 Omaggio: :p × :p2": "🎁 Free gift: :p × :p2",
  "🎉 Hai la": "🎉 You have",
- "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 The billing details are those you registered with and cannot be changed from the checkout, except the country. To change them go to <a href=\"/area/profilo\">My details</a>: you can choose the shipping address below if it is different."
+ "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 The billing details are those you registered with and cannot be changed from the checkout, except the country. To change them go to <a href=\"/area/profilo\">My details</a>: you can choose the shipping address below if it is different.",
+ "Come paghi il resto": "How do you pay the rest",
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "You pay the rest with the method you choose below."
 }

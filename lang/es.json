@@ -1196,5 +1196,7 @@
  "✓ Dati salvati.": "✓ Datos guardados.",
  "🎁 Omaggio: :p × :p2": "🎁 Obsequio: :p × :p2",
  "🎉 Hai la": "🎉 Tienes",
- "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Los datos de facturación son aquellos con los que estás registrado y no se cambian desde el pago, salvo el país. Para modificarlos ve a <a href=\"/area/profilo\">Mis datos</a>: la dirección de envío puedes elegirla abajo si es distinta."
+ "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Los datos de facturación son aquellos con los que estás registrado y no se cambian desde el pago, salvo el país. Para modificarlos ve a <a href=\"/area/profilo\">Mis datos</a>: la dirección de envío puedes elegirla abajo si es distinta.",
+ "Come paghi il resto": "Cómo pagas el resto",
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "El resto lo pagas con el método que elijas más abajo."
 }

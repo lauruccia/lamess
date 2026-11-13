@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-13 — Checkout: «Paga con i compensi della Tasca» in cima, e se copre tutto spariscono gli altri metodi
+- Nel passo **Pagamento e consegna** la scelta della Tasca è ora **la prima**, prima di carta, bonifico e KMoney, in una scheda evidenziata (con «+25%»).
+- Se spunti la Tasca: **KMoney sparisce** (non si combina con i compensi) e la domanda sotto diventa «Come paghi il resto».
+- Se i compensi **coprono tutto l'ordine singolo**, **tutti gli altri metodi di pagamento spariscono**: si va avanti e l'ordine risulta pagato con la Tasca (nel riepilogo «Pagamento: Compensi della Tasca»). Con un **abbonamento** i metodi restano, perché dal mese dopo serve la carta o KMoney per l'eventuale resto.
+- File: `resources/views/site/shop/checkout.blade.php`, `public/css/lamess-shop.css`, `app/Http/Controllers/ShopController.php`. Database: nessuna modifica. Ricarico forzato del browser (Ctrl+F5) per vedere la grafica.
+
 ## 2026-11-13 — Export Easyfatt: nel commento solo il numero d'ordine
 - Il commento dei documenti esportati per Easyfatt contiene solo il **numero d'ordine** del portale (es. «ORD-2026-00346»): tolti «Portale Lamèss:» e il numero della fattura, che Easyfatt ha già. La nota di credito aggiunge «storna la fattura …».
 - File: `app/Domain/Billing/EasyfattXmlBuilder.php`, `app/Filament/Resources/Invoices/Pages/ListInvoices.php`. Database: nessuna modifica. Test: `EasyfattXmlTest`.

@@ -67,12 +67,25 @@
   @if($step === 3)
   <section class="card co-step" data-step="3">
    <h2><span class="step">3</span> {{ __('Pagamento e consegna') }}</h2>
-   <fieldset class="choice">
-    <legend>{{ __('Come vuoi pagare') }}</legend>
+   @if(! empty($tasca))
+   @php($useTasca = old('use_tasca', '0') === '1')
+   <div class="tasca-pick" data-tasca-box data-covers-single="{{ $tasca['single']['covers_all'] ? 1 : 0 }}">
+    <input type="hidden" name="use_tasca" value="0">
+    <label class="tasca-card"><input type="checkbox" name="use_tasca" value="1" data-tasca-check @checked($useTasca)><span class="tick" aria-hidden="true"></span><span class="oc-text"><b>{{ __('Usa i compensi della Tasca') }}</b>
+     @if($priced->shippingNet->isPositive())<span class="tasca-ship" style="display:block;margin:2px 0;font-weight:600;color:var(--accent,#c4663a)">{{ __('Se usi i compensi, la spedizione (€ :s) diventa gratuita.', ['s' => \App\Support\Money::eur($priced->shippingGross())]) }}</span>@endif
+     <small>{{ __('Compensi utilizzabili: € :u (mesi chiusi, senza trattenute).', ['u' => \App\Support\Money::eur($tasca['usable'])]) }}
+     <span data-sum-single @if($subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['single']['used']), 'a' => \App\Support\Money::eur($tasca['single']['amount'])]) }}@if($tasca['single']['covers_all']) {{ __('L\'ordine è pagato per intero.') }}@else {{ __('Il resto lo paghi con il metodo che scegli qui sotto.') }}@endif</span>
+     <span data-sum-sub @if(! $subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['sub']['used']), 'a' => \App\Support\Money::eur($tasca['sub']['amount'])]) }}</span>
+     {{ __('La scelta è definitiva: i compensi usati non si possono più prelevare.') }}</small></span>@if($priced->shippingNet->isPositive())<em class="oc-tag oc-tag-accent">{{ __('Spedizione gratuita') }}</em>@endif @if($tascaBonus > 0)<em class="oc-tag oc-tag-accent">+{{ $tascaBonus }}%</em>@endif</label>
+    <p class="muted small" data-tasca-kmoney-note hidden>{{ __('I compensi della Tasca non si possono usare insieme a KMoney.') }}</p>
+   </div>
+   @endif
+   <fieldset class="choice" data-pay-methods>
+    <legend data-rest="{{ __('Come paghi il resto') }}">{{ __('Come vuoi pagare') }}</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
      {{-- % pagabile in KMoney impostata sulla pagina prodotto; con più prodotti è la quota complessiva dei prodotti nel carrello --}}
      @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
-     <label class="opt-card opt-featured"><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>{{ __('Paga con KMoney') }}</b><small>
+     <label class="opt-card opt-featured" data-pay-kmoney><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>{{ __('Paga con KMoney') }}</b><small>
       <span class="km-link">
        @unless($kmLinked)
         {{ __('Per pagare col tuo saldo devi prima collegare il conto KMoney: al ritorno trovi qui tutto com\'era.') }}
@@ -93,25 +106,31 @@
     @if($methods['transfer'])<label class="opt-card"><input type="radio" name="payment_method" value="transfer" @checked($pay === 'transfer')><span class="dot"></span><span class="oc-text"><b>{{ __('Bonifico bancario') }}</b><small>{{ __('L\'ordine è confermato alla ricezione del pagamento') }}</small></span></label>@endif
    </fieldset>
    @if(! empty($tasca))
-   @php($useTasca = old('use_tasca', '0') === '1')
-   <div class="tasca-box card" data-tasca-box @if($pay === 'kmoney') hidden @endif>
-    <input type="hidden" name="use_tasca" value="0">
-    <label class="chk"><input type="checkbox" name="use_tasca" value="1" data-tasca-check @checked($useTasca)><span><b>{{ __('Usa i compensi della Tasca') }}</b>@if($tascaBonus > 0) <em class="oc-tag oc-tag-accent">+{{ $tascaBonus }}%</em>@endif @if($priced->shippingNet->isPositive())<em class="oc-tag oc-tag-accent">{{ __('Spedizione gratuita') }}</em>@endif<br>
-     @if($priced->shippingNet->isPositive())<span class="tasca-ship" style="display:block;margin:4px 0;font-weight:600;color:var(--accent,#c4663a)">{{ __('Se usi i compensi, la spedizione (€ :s) diventa gratuita.', ['s' => \App\Support\Money::eur($priced->shippingGross())]) }}</span>@endif
-     <small class="muted">{{ __('Compensi utilizzabili: € :u (mesi chiusi, senza trattenute).', ['u' => \App\Support\Money::eur($tasca['usable'])]) }}
-     <span data-sum-single @if($subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['single']['used']), 'a' => \App\Support\Money::eur($tasca['single']['amount'])]) }}@if($tasca['single']['covers_all']){{ __('L\'ordine è pagato per intero.') }}@else{{ __('Il resto lo paghi con il metodo scelto sopra.') }}@endif</span>
-     <span data-sum-sub @if(! $subOn) hidden @endif>{{ __('Con questo ordine usi € :u e paghi € :a di prodotti.', ['u' => \App\Support\Money::eur($tasca['sub']['used']), 'a' => \App\Support\Money::eur($tasca['sub']['amount'])]) }}</span>
-     {{ __('La scelta è definitiva: i compensi usati non si possono più prelevare.') }}</small></span></label>
-    <p class="muted small" data-tasca-kmoney-note hidden>{{ __('I compensi della Tasca non si possono usare insieme a KMoney.') }}</p>
-   </div>
    <script>
    (function () {
-    var box = document.querySelector('[data-tasca-box]'); if (!box) return;
-    var f = document.getElementById('checkout-form');
-    function sync() { var m = f.querySelector('input[name=payment_method]:checked'); var km = m && m.value === 'kmoney'; box.hidden = km; var c = box.querySelector('[data-tasca-check]'); if (km && c) { c.checked = false; } var on = !!(c && c.checked); document.querySelectorAll('[data-tasca-on]').forEach(function (e) { e.hidden = !on; }); document.querySelectorAll('[data-tasca-off]').forEach(function (e) { e.hidden = on; }); }
-    f.querySelectorAll('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
-    box.querySelector('[data-tasca-check]').addEventListener('change', sync);
+    var box = document.querySelector('[data-tasca-box]'), fs = document.querySelector('[data-pay-methods]'); if (!box || !fs) return;
+    var chk = box.querySelector('[data-tasca-check]'), legend = fs.querySelector('legend'), kmCard = fs.querySelector('[data-pay-kmoney]'), note = box.querySelector('[data-tasca-kmoney-note]');
+    var full = legend.textContent, rest = legend.dataset.rest || full;
+    function radios() { return Array.prototype.slice.call(document.querySelectorAll('input[name=payment_method]')); }
+    function pick(r) { if (r && !r.checked) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); } }
+    function sync() {
+     var on = chk.checked, s = document.querySelector('input[name=subscribe]:checked');
+     var list = radios(), km = list.filter(function (r) { return r.value === 'kmoney'; })[0], other = list.filter(function (r) { return r.value !== 'kmoney'; })[0];
+     // I compensi non si combinano con KMoney: se li usi, KMoney sparisce e resta carta o bonifico.
+     if (on && km && km.checked && other) { pick(other); }
+     if (kmCard) { kmCard.style.display = (on && other) ? 'none' : ''; }
+     if (note) { note.hidden = !(on && km && other); }
+     // Se i compensi coprono tutto l'ordine (ordine singolo) gli altri metodi non servono: restano nascosti.
+     var covers = on && !!other && box.dataset.coversSingle === '1' && !(s && s.value !== 'none');
+     if (covers && !list.some(function (r) { return r.checked; })) { pick(other); }
+     fs.style.display = covers ? 'none' : '';
+     legend.textContent = on ? rest : full;
+     document.querySelectorAll('[data-tasca-on]').forEach(function (e) { e.hidden = !on; });
+     document.querySelectorAll('[data-tasca-off]').forEach(function (e) { e.hidden = on; });
+    }
+    document.addEventListener('change', function (e) { var n = e.target && e.target.name; if (n === 'use_tasca' || n === 'subscribe' || n === 'payment_method') { sync(); } });
     sync();
+    document.addEventListener('DOMContentLoaded', sync);
    })();
    </script>
    @endif

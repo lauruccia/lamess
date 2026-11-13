@@ -674,6 +674,10 @@ class ShopController extends Controller
             }
         }
         $pay = ['card' => 'Carta di credito o debito', 'transfer' => 'Bonifico bancario', 'kmoney' => 'KMoney'][$draft['payment_method'] ?? ''] ?? '—';
+        $tascaAll = $tasca !== null && ($draft['use_tasca'] ?? '0') === '1' && ($draft['payment_method'] ?? '') !== 'kmoney' && ($draft['subscribe'] ?? 'none') === 'none' && $tasca['single']['covers_all'];
+        if ($tascaAll) {
+            $pay = 'Compensi della Tasca';
+        }
         $cad = Subscription::offeredCadences();
         $delivery = match ($draft['subscribe'] ?? 'none') {
             'monthly' => 'Abbonamento mensile', 'bimonthly' => 'Abbonamento bimestrale', default => 'Ordine singolo',
@@ -728,6 +732,15 @@ class ShopController extends Controller
         if ($step === 3) {
             $cadences = Subscription::offeredCadences();
             $err = [];
+            // Se i compensi coprono tutto l'ordine singolo gli altri metodi non si mostrano: il metodo di riserva è carta o bonifico.
+            if ($r->input('use_tasca') === '1' && ! in_array($r->input('subscribe', 'none'), array_keys($cadences), true) && ($quote = $this->tascaQuote($r)) !== null && $quote['single']['covers_all']) {
+                $enabled = app(OrderService::class)->enabledMethods();
+                $fallback = collect(['card', 'transfer'])->first(fn ($m) => $enabled[$m] ?? false);
+                if ($fallback !== null && (blank($r->input('payment_method')) || $r->input('payment_method') === 'kmoney')) {
+                    $r->merge(['payment_method' => $fallback]);
+                    $this->keepDraft($r);
+                }
+            }
             if (! ($r->input('payment_method') && (app(OrderService::class)->enabledMethods()[$r->input('payment_method')] ?? false))) {
                 $err['payment_method'] = 'Scegli come vuoi pagare.';
             }

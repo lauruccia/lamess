@@ -861,3 +861,17 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 @media (max-width:640px){.co-form .row.pair-fiscal{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0 8px}.co-form .row.pair-fiscal input{font-size:15px;padding-left:9px;padding-right:9px}}
 @media (max-width:400px){.co-form .row.pair-fiscal input{font-size:14px;padding-left:8px;padding-right:8px;letter-spacing:-.01em}}
 @media (max-width:339px){.co-form .row.pair-fiscal{grid-template-columns:minmax(0,1fr)}}
+
+/* Checkout: scelta «Paga con i compensi della Tasca», messa prima dei metodi di pagamento */
+.tasca-pick{margin:18px 0 0}
+.tasca-card{position:relative;display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--white);cursor:pointer;font-weight:400;transition:border-color .15s,background .15s,box-shadow .15s}
+.tasca-card:hover{border-color:var(--lm-terracotta)}
+.tasca-card input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;cursor:pointer;box-shadow:none}
+.tasca-card .tick{flex:none;width:20px;height:20px;margin-top:2px;border-radius:6px;border:1.5px solid var(--line);background:var(--white);position:relative;transition:border-color .15s,background .15s}
+.tasca-card .tick::after{content:'';position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transition:transform .15s}
+.tasca-card:has(input:checked){border-color:var(--lm-terracotta);background:rgb(194 102 58/.06);box-shadow:0 0 0 1px var(--lm-terracotta)}
+.tasca-card input:checked~.tick{background:var(--lm-terracotta);border-color:var(--lm-terracotta)}
+.tasca-card input:checked~.tick::after{transform:rotate(45deg) scale(1)}
+.tasca-card input:focus-visible~.tick{outline:2px solid var(--lm-terracotta);outline-offset:3px}
+.tasca-pick>.muted{margin:8px 0 0}
+@media (max-width:640px){.tasca-card{padding:14px}}

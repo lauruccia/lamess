@@ -6,6 +6,7 @@ namespace Tests\Feature\Drivers;
 
 use App\Domain\Billing\EasyfattXmlBuilder;
 use App\Domain\Billing\InvoiceService;
+use App\Domain\Network\NetworkService;
 use App\Domain\Orders\OrderService;
 use App\Filament\Resources\CreditNotes\Pages\ListCreditNotes;
 use App\Filament\Resources\Invoices\Pages\ListInvoices;
@@ -191,6 +192,40 @@ final class EasyfattXmlTest extends TestCase
 
         $other = CarbonImmutable::now('Europe/Rome')->subMonths(2)->toDateString();
         $this->assertSame(0, $builder->forPeriod($other, $other)['count']);
+    }
+
+    public function test_customer_order_carries_the_sponsor_code_and_name_as_sales_agent(): void
+    {
+        $o = $this->paidOrder();
+        $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$o->invoice])['xml'])->Documents->Document;
+
+        $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->SalesAgent, 'cliente: l\'incaricato a cui è assegnato');
+    }
+
+    public function test_consultant_own_order_carries_the_consultant_above_and_the_credit_note_keeps_it(): void
+    {
+        $o = $this->paidOrder();
+        $top = $o->beneficiary;
+        $child = app(NetworkService::class)->enroll(['code' => 'LM00002', 'name' => 'Anna Bianchi', 'referral_code' => 'REFLM00002'], $top, $this->at('2026-02-01 10:00'));
+        $o->update(['buyer_type' => 'consultant', 'beneficiary_consultant_id' => $child->id]);
+        $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$o->invoice->refresh()])['xml'])->Documents->Document;
+        $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->SalesAgent, 'incaricato che compra per sé: chi sta sopra di lui, non lui');
+
+        $note = app(InvoiceService::class)->issueCreditNote($o->refresh()->load('items', 'invoice'), [$o->items->first()->id => 1], 'Reso di un articolo');
+        $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$note])['xml'])->Documents->Document;
+        $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->SalesAgent);
+    }
+
+    public function test_sales_agent_is_left_out_when_there_is_no_sponsor(): void
+    {
+        $o = $this->paidOrder();
+        $o->update(['buyer_type' => 'consultant']);
+        $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$o->invoice->refresh()])['xml'])->Documents->Document;
+        $this->assertSame(0, $doc->SalesAgent->count(), 'incaricato in cima alla rete: nessuno sponsor');
+
+        $o->update(['buyer_type' => 'customer', 'beneficiary_consultant_id' => null]);
+        $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$o->invoice->refresh()])['xml'])->Documents->Document;
+        $this->assertSame(0, $doc->SalesAgent->count(), 'cliente senza incaricato');
     }
 
     public function test_progressive_and_section_come_from_the_portal_number(): void

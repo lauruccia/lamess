@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-13 — Export Easyfatt: lo sponsor di ogni ordine nel campo Agente
+- Nel file **Esporta per Easyfatt (XML)** (*Vendite → Fatture*) ogni fattura e ogni nota di credito porta ora lo **sponsor dell'ordine** nel campo **Agente** di Easyfatt, scritto «codice nome» (es. «LM00012 Mario Rossi»).
+- Chi è lo sponsor: per un **cliente** l'incaricato a cui era assegnato al momento dell'ordine; per un **incaricato che compra per sé** l'incaricato sopra di lui (non lui stesso). Senza sponsor (cliente senza incaricato, incaricato in cima alla rete) il campo resta vuoto.
+- Vale per i file creati da ora: i documenti già importati in Easyfatt non cambiano. Per averli con lo sponsor vanno rimessi «Da esportare» e reimportati.
+- File: `app/Domain/Billing/EasyfattXmlBuilder.php`. Database: nessuna modifica. Test: `EasyfattXmlTest` (3 nuovi).
+
 ## 2026-11-12 — «Compensi del mese»: colonna «Non maturato» e incaricati con soli compensi non maturati
 - L'elenco mostra per ogni incaricato la nuova colonna **Non maturato**: i compensi (e i Bonus di Struttura) che sarebbero spettati ma non maturano perché mancano i requisiti del livello. È lo stesso totale della sezione «Compensi non maturati: requisiti mancanti» del dettaglio; l'importo è cliccabile e porta al dettaglio, dove si legge che cosa manca.
 - **«Solo chi ha importi»** ora tiene in elenco anche chi nel mese ha soltanto compensi non maturati (prima spariva e la ricerca per nome non lo trovava). Nuovo riquadro con il totale non maturato, nuovo ordinamento «Non maturato», nuova colonna nell'export CSV.

@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Domain\Billing;
 
+use App\Models\Consultant;
 use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\OrderItem;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use XMLWriter;
 
 /**
  * File «Easyfatt-Xml» (Danea Easyfatt: Utilità → Importa documenti Easyfatt-Xml) con le fatture e le note di credito del portale.
  * Non è la fattura elettronica per lo SdI (quella è FatturaPaBuilder): serve solo a registrare i documenti nel gestionale.
  * Prezzi IVA esclusa, come nel portale; i totali scritti nel file sono indicativi, Easyfatt li ricalcola dalle righe.
+ * Lo sponsor dell'ordine («LM00012 Mario Rossi») va nel campo Agente del documento (SalesAgent).
  */
 final class EasyfattXmlBuilder
 {
@@ -68,6 +71,7 @@ final class EasyfattXmlBuilder
         $docs->each(fn (Invoice|CreditNote $d) => $d->loadMissing('lines', 'order'));
         $docs->each(fn (Invoice|CreditNote $d) => $d instanceof CreditNote ? $d->loadMissing('invoice') : null);
         $skus = OrderItem::whereIn('id', $docs->flatMap(fn ($d) => $d->lines->pluck('order_item_id'))->filter()->unique()->all())->pluck('sku', 'id');
+        $sponsors = $this->sponsors($docs);
 
         $w = new XMLWriter;
         $w->openMemory();
@@ -79,7 +83,7 @@ final class EasyfattXmlBuilder
         $w->writeAttribute('CreatorUrl', (string) config('app.url'));
         $w->startElement('Documents');
         foreach ($docs as $doc) {
-            $this->document($w, $doc, $skus->all());
+            $this->document($w, $doc, $skus->all(), $doc->order !== null ? ($sponsors[$doc->order->id] ?? '') : '');
         }
         $w->endElement();
         $w->endElement();
@@ -88,8 +92,36 @@ final class EasyfattXmlBuilder
         return ['xml' => $w->outputMemory(), 'count' => $docs->count()];
     }
 
+    /**
+     * Sponsor di ogni ordine, «codice nome», per numero interno dell'ordine.
+     * Cliente: l'incaricato a cui era assegnato al momento dell'ordine. Incaricato che compra per sé: il suo sponsor (chi sta sopra di lui).
+     * Nessuno sponsor (cliente senza incaricato, incaricato in cima alla rete): l'ordine non compare nell'elenco.
+     *
+     * @param  Collection<int,Invoice|CreditNote>  $docs
+     * @return array<int,string>
+     */
+    private function sponsors(Collection $docs): array
+    {
+        $orders = $docs->map(fn (Invoice|CreditNote $d) => $d->order)->filter()->unique('id');
+        $own = Consultant::withoutGlobalScopes()->whereIn('id', $orders->pluck('beneficiary_consultant_id')->filter()->unique()->all())->get()->keyBy('id');
+        $above = Consultant::withoutGlobalScopes()->whereIn('id', $own->pluck('sponsor_id')->filter()->unique()->all())->get()->keyBy('id');
+
+        $out = [];
+        foreach ($orders as $order) {
+            $c = $own[$order->beneficiary_consultant_id] ?? null;
+            if ($c !== null && $order->buyer_type === 'consultant') {
+                $c = $above[$c->sponsor_id] ?? null;
+            }
+            if ($c !== null) {
+                $out[(int) $order->id] = trim($c->code.' '.$c->name);
+            }
+        }
+
+        return $out;
+    }
+
     /** @param array<int,string> $skus */
-    private function document(XMLWriter $w, Invoice|CreditNote $doc, array $skus): void
+    private function document(XMLWriter $w, Invoice|CreditNote $doc, array $skus, string $sponsor = ''): void
     {
         $isCredit = $doc instanceof CreditNote;
         $buyer = (array) ($isCredit ? ($doc->invoice?->buyer ?? $doc->buyer ?? []) : ($doc->buyer ?? []));
@@ -124,6 +156,7 @@ final class EasyfattXmlBuilder
             $this->put($w, 'TrackingNumber', (string) ($order->tracking_code ?? ''));
         }
         $this->put($w, 'InternalComment', self::comment($doc, $order?->number));
+        $this->put($w, 'SalesAgent', $sponsor);
         $this->put($w, 'TotalWithoutTax', (string) $doc->net);
         $this->put($w, 'VatAmount', (string) $doc->vat);
         $this->put($w, 'Total', (string) $doc->total);

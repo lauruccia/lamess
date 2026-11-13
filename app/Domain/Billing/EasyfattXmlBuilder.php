@@ -16,7 +16,7 @@ use XMLWriter;
  * File «Easyfatt-Xml» (Danea Easyfatt: Utilità → Importa documenti Easyfatt-Xml) con le fatture e le note di credito del portale.
  * Non è la fattura elettronica per lo SdI (quella è FatturaPaBuilder): serve solo a registrare i documenti nel gestionale.
  * Prezzi IVA esclusa, come nel portale; i totali scritti nel file sono indicativi, Easyfatt li ricalcola dalle righe.
- * Lo sponsor dell'ordine («LM00012 Mario Rossi») va nel campo Agente del documento (SalesAgent) e in testa al commento interno.
+ * Lo sponsor dell'ordine («LM00012 Mario Rossi») va nel primo campo libero del documento (CustomField1) e nel campo Agente (SalesAgent).
  */
 final class EasyfattXmlBuilder
 {
@@ -155,7 +155,8 @@ final class EasyfattXmlBuilder
             $this->put($w, 'Carrier', (string) ($order->carrier ?? ''));
             $this->put($w, 'TrackingNumber', (string) ($order->tracking_code ?? ''));
         }
-        $this->put($w, 'InternalComment', self::comment($doc, $order?->number, $sponsor));
+        $this->put($w, 'InternalComment', self::comment($doc, $order?->number));
+        $this->put($w, 'CustomField1', $sponsor);
         $this->put($w, 'SalesAgent', $sponsor);
         $this->put($w, 'TotalWithoutTax', (string) $doc->net);
         $this->put($w, 'VatAmount', (string) $doc->vat);
@@ -230,11 +231,9 @@ final class EasyfattXmlBuilder
         return $letters !== '' ? '/'.strtoupper($letters) : '';
     }
 
-    /** Lo sponsor sta per primo: la colonna «Commento» di Easyfatt è stretta e si filtra per codice o nome. */
-    private static function comment(Invoice|CreditNote $doc, ?string $orderNumber, string $sponsor = ''): string
+    private static function comment(Invoice|CreditNote $doc, ?string $orderNumber): string
     {
-        $parts = $sponsor !== '' ? ['Sponsor '.$sponsor] : [];
-        $parts[] = 'Portale Lamèss: '.($doc instanceof CreditNote ? 'nota di credito ' : 'fattura ').$doc->number;
+        $parts = ['Portale Lamèss: '.($doc instanceof CreditNote ? 'nota di credito ' : 'fattura ').$doc->number];
         if ($doc instanceof CreditNote && $doc->invoice !== null) {
             $parts[] = 'storna la fattura '.$doc->invoice->number;
         }

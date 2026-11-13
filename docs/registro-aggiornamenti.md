@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-13 — Export Easyfatt: lo sponsor nel campo libero al posto del commento
+- Lo sponsor dell'ordine non è più scritto nel commento: va nel **primo campo libero** del documento (tag `CustomField1`), oltre che nel campo **Agente**. Il commento torna «Portale Lamèss: fattura … - ordine …».
+- Il campo libero non richiede che lo sponsor esista in Easyfatt; il campo Agente sì (altrimenti «Agente sconosciuto»).
+- I documenti già importati vanno rimessi «Da esportare» e reimportati.
+- File: `app/Domain/Billing/EasyfattXmlBuilder.php`. Database: nessuna modifica. Test: `EasyfattXmlTest`.
+
 ## 2026-11-13 — Export Easyfatt: lo sponsor anche in testa al commento
 - Easyfatt accetta il campo Agente solo per gli agenti che ha già in tabella: per gli altri avvisa «Agente sconosciuto» e importa il documento senza agente. Per questo lo sponsor è ora scritto anche **in testa al commento** («Sponsor LM00144 Francesco Brogna - Portale Lamèss: fattura FT/2026/00268 - ordine …»): nell'elenco documenti di Easyfatt si filtra la colonna Commento per codice o nome, senza preparare nulla.
 - Il campo **Agente** resta: funziona per gli sponsor creati in Easyfatt come agenti con il nome identico a quello del file (codice compreso) e serve per filtri e statistiche per agente.

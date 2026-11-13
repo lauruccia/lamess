@@ -200,7 +200,8 @@ final class EasyfattXmlTest extends TestCase
         $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$o->invoice])['xml'])->Documents->Document;
 
         $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->SalesAgent, 'cliente: l\'incaricato a cui è assegnato');
-        $this->assertStringStartsWith('Sponsor LM00001 Sponsor LM00001 - Portale Lamèss: fattura '.$o->invoice->number, (string) $doc->InternalComment, 'sponsor in testa al commento');
+        $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->CustomField1, 'sponsor anche nel primo campo libero');
+        $this->assertStringStartsWith('Portale Lamèss: fattura '.$o->invoice->number, (string) $doc->InternalComment, 'il commento resta senza sponsor');
     }
 
     public function test_consultant_own_order_carries_the_consultant_above_and_the_credit_note_keeps_it(): void
@@ -227,7 +228,7 @@ final class EasyfattXmlTest extends TestCase
         $o->update(['buyer_type' => 'customer', 'beneficiary_consultant_id' => null]);
         $doc = $this->parse(app(EasyfattXmlBuilder::class)->build([$o->invoice->refresh()])['xml'])->Documents->Document;
         $this->assertSame(0, $doc->SalesAgent->count(), 'cliente senza incaricato');
-        $this->assertStringStartsWith('Portale Lamèss: fattura ', (string) $doc->InternalComment);
+        $this->assertSame(0, $doc->CustomField1->count());
     }
 
     public function test_progressive_and_section_come_from_the_portal_number(): void

@@ -28,7 +28,7 @@ class ListInvoices extends SuperadminListRecords
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('gray')
                 ->modalHeading('Esporta le fatture per Easyfatt')
-                ->modalDescription('Crea un file Easyfatt-Xml con le fatture e le note di credito emesse nel periodo, da importare in Easyfatt con Utilità → Importa documenti Easyfatt-Xml. Non è il file per lo SdI e non cambia nulla nel portale. Easyfatt assegna il suo numero ai documenti importati: il numero del portale resta scritto nelle note interne. I documenti esportati vengono segnati nell\'elenco, così la prossima volta non li ripeti.')
+                ->modalDescription('Crea un file Easyfatt-Xml con le fatture e le note di credito emesse nel periodo, da importare in Easyfatt con Utilità → Importa documenti Easyfatt-Xml. Non è il file per lo SdI e non cambia nulla nel portale. Easyfatt assegna il suo numero ai documenti importati: il numero d\'ordine del portale è scritto nelle note interne. I documenti esportati vengono segnati nell\'elenco, così la prossima volta non li ripeti.')
                 ->schema([
                     DatePicker::make('from')->label('Dal')->required()->default(now('Europe/Rome')->startOfMonth()->toDateString())->native(false),
                     DatePicker::make('until')->label('Al')->required()->default(now('Europe/Rome')->toDateString())->native(false)->afterOrEqual('from'),

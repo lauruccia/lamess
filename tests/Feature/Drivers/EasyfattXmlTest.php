@@ -80,8 +80,7 @@ final class EasyfattXmlTest extends TestCase
         $this->assertSame('RSSMRA80A01H501U', (string) $doc->CustomerFiscalCode);
         $this->assertSame('', (string) $doc->CustomerCountry, 'Italia: nessun paese scritto');
         $this->assertSame('false', (string) $doc->PricesIncludeVat);
-        $this->assertStringContainsString($o->invoice->number, (string) $doc->InternalComment);
-        $this->assertStringContainsString($o->number, (string) $doc->InternalComment);
+        $this->assertSame($o->number, (string) $doc->InternalComment, 'nel commento solo il numero d\'ordine');
         $this->assertSame('true', (string) $doc->Payments->Payment->Paid);
         $this->assertSame((string) $o->invoice->total, (string) $doc->Payments->Payment->Amount);
         $this->assertCount($o->invoice->lines->count(), $doc->Rows->Row, 'una riga per riga di fattura, spedizione compresa');
@@ -201,7 +200,7 @@ final class EasyfattXmlTest extends TestCase
 
         $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->SalesAgent, 'cliente: l\'incaricato a cui è assegnato');
         $this->assertSame('LM00001 Sponsor LM00001', (string) $doc->CustomField1, 'sponsor anche nel primo campo libero');
-        $this->assertStringStartsWith('Portale Lamèss: fattura '.$o->invoice->number, (string) $doc->InternalComment, 'il commento resta senza sponsor');
+        $this->assertSame($o->number, (string) $doc->InternalComment, 'il commento resta senza sponsor');
     }
 
     public function test_consultant_own_order_carries_the_consultant_above_and_the_credit_note_keeps_it(): void

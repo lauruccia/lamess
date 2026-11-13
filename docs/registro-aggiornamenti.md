@@ -1,5 +1,9 @@
 # Registro aggiornamenti
 
+## 2026-11-13 — Export Easyfatt: nel commento solo il numero d'ordine
+- Il commento dei documenti esportati per Easyfatt contiene solo il **numero d'ordine** del portale (es. «ORD-2026-00346»): tolti «Portale Lamèss:» e il numero della fattura, che Easyfatt ha già. La nota di credito aggiunge «storna la fattura …».
+- File: `app/Domain/Billing/EasyfattXmlBuilder.php`, `app/Filament/Resources/Invoices/Pages/ListInvoices.php`. Database: nessuna modifica. Test: `EasyfattXmlTest`.
+
 ## 2026-11-13 — Export Easyfatt: lo sponsor nel campo libero al posto del commento
 - Lo sponsor dell'ordine non è più scritto nel commento: va nel **primo campo libero** del documento (tag `CustomField1`), oltre che nel campo **Agente**. Il commento torna «Portale Lamèss: fattura … - ordine …».
 - Il campo libero non richiede che lo sponsor esista in Easyfatt; il campo Agente sì (altrimenti «Agente sconosciuto»).

@@ -231,14 +231,12 @@ final class EasyfattXmlBuilder
         return $letters !== '' ? '/'.strtoupper($letters) : '';
     }
 
+    /** Solo il numero d'ordine del portale; la nota di credito aggiunge la fattura che storna. */
     private static function comment(Invoice|CreditNote $doc, ?string $orderNumber): string
     {
-        $parts = ['Portale Lamèss: '.($doc instanceof CreditNote ? 'nota di credito ' : 'fattura ').$doc->number];
+        $parts = filled($orderNumber) ? [(string) $orderNumber] : [];
         if ($doc instanceof CreditNote && $doc->invoice !== null) {
             $parts[] = 'storna la fattura '.$doc->invoice->number;
-        }
-        if (filled($orderNumber)) {
-            $parts[] = 'ordine '.$orderNumber;
         }
 
         return implode(' - ', $parts);

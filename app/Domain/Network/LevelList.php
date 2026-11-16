@@ -6,6 +6,7 @@ namespace App\Domain\Network;
 
 use App\Filament\Support\ConsultantList;
 use App\Models\Order;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -74,7 +75,7 @@ final class LevelList
                 if (count($rows) < self::LIMIT) {
                     $rows[] = [
                         'id' => $id, 'parent' => $shownParent, 'level' => $level, 'code' => (string) $p->code, 'name' => (string) $p->name, 'status' => (string) $p->status,
-                        'rank' => $ranks[$id] ?? ((string) $p->status === 'terminated' ? null : $entryRank), 'directs' => count($children[$id] ?? []), 'clients' => (int) ($clients[$id] ?? 0), 'buyers' => (int) ($buyers[$id] ?? 0),
+                        'rank' => $ranks[$id] ?? ((string) $p->status === 'terminated' ? null : $entryRank), 'directs' => count(array_filter($children[$id] ?? [], static fn (int $k): bool => (string) $people[$k]->status !== 'terminated')), 'clients' => (int) ($clients[$id] ?? 0), 'buyers' => (int) ($buyers[$id] ?? 0),
                         'since' => $p->since ? substr((string) $p->since, 0, 10) : null,
                     ];
                 }
@@ -94,9 +95,9 @@ final class LevelList
      * Per ogni incaricato, quanti dei suoi clienti assegnati hanno almeno un ordine pagato nel periodo (ogni cliente conta una volta sola,
      * anche con più ordini). «Pagato» è come nel resto del portale (`Order::PAID_STATES`); la data è quella del pagamento, o della creazione se manca.
      *
-     * @return \Illuminate\Support\Collection<int, int> incaricato => clienti che hanno acquistato
+     * @return Collection<int, int> incaricato => clienti che hanno acquistato
      */
-    private function buyers(string $from, string $to): \Illuminate\Support\Collection
+    private function buyers(string $from, string $to): Collection
     {
         return DB::table('customers as c')
             ->join('orders as o', 'o.buyer_user_id', '=', 'c.user_id')

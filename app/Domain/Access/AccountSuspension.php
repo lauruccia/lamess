@@ -92,13 +92,14 @@ final class AccountSuspension
     }
 
     /**
-     * Id degli incaricati il cui account è sospeso o bannato: gli alberi li saltano.
+     * Id degli incaricati che gli alberi saltano: account sospeso o bannato, oppure incarico cessato
+     * (i cessati restano solo nella scheda «Cessati» dell'elenco incaricati).
      *
      * @return list<int>
      */
     public static function hiddenConsultantIds(): array
     {
-        return self::$hiddenConsultants ??= DB::table('consultants')->whereIn('user_id', self::suspendedUserIds())->pluck('id')->map(fn ($id) => (int) $id)->all();
+        return self::$hiddenConsultants ??= DB::table('consultants')->where(fn (QueryBuilder $w) => $w->where('status', 'terminated')->orWhereIn('user_id', self::suspendedUserIds()))->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 
     public static function forgetCache(): void

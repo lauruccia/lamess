@@ -40,8 +40,9 @@ class ConsultantLevelsPage extends Page
     #[Url(as: 'livelli')]
     public ?int $maxLevel = null;
 
+    /** not_terminated (predefinito: i cessati non si vedono) | active | terminated | all. */
     #[Url(as: 'stato')]
-    public string $status = 'all';
+    public string $status = 'not_terminated';
 
     /** Periodo per la colonna «Hanno acquistato»: month | last_month | last_3_months | year | custom. */
     #[Url(as: 'acquisti')]
@@ -104,7 +105,7 @@ class ConsultantLevelsPage extends Page
     protected function getViewData(): array
     {
         $maxLevel = $this->maxLevel !== null && $this->maxLevel >= 0 ? $this->maxLevel : null;
-        $status = in_array($this->status, ['all', 'active', 'terminated', 'not_terminated'], true) ? $this->status : 'all';
+        $status = in_array($this->status, ['all', 'active', 'terminated', 'not_terminated'], true) ? $this->status : 'not_terminated';
         $search = trim($this->rootSearch);
         $range = $this->buyRange();
 
@@ -113,6 +114,7 @@ class ConsultantLevelsPage extends Page
             'buyLabel' => $range['label'],
             'root' => $this->rootId ? Consultant::find($this->rootId, ['id', 'code', 'name']) : null,
             'suggestions' => $search === '' ? collect() : Consultant::query()
+                ->when(in_array($status, ['not_terminated', 'active'], true), fn ($q) => $q->where('status', '<>', 'terminated'))
                 ->where(fn ($w) => $w->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))
                 ->orderBy('name')->limit(8)->get(['id', 'code', 'name']),
             'limit' => LevelList::LIMIT,

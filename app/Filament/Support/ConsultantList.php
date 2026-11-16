@@ -92,7 +92,7 @@ final class ConsultantList
     {
         // i conteggi dicono quanto si vede: gli account sospesi o bannati si trovano col filtro «Account»
         $row = DB::table('consultants')->where(fn ($w) => $w->whereNull('user_id')->orWhereNotIn('user_id', AccountSuspension::suspendedUserIds()))->selectRaw(
-            "count(*) as total, sum(status = 'active') as active, sum(status = 'pending') as pending, sum(status = 'suspended') as suspended, "
+            "sum(status <> 'terminated') as total, sum(status = 'active') as active, sum(status = 'pending') as pending, sum(status = 'suspended') as suspended, "
             ."sum(status = 'terminated') as `terminated`, sum(status <> 'terminated' and onboarding_complete = 0) as onboarding, "
             ."sum(status <> 'terminated' and (kyc_status is null or kyc_status <> 'verified')) as kyc"
         )->first();

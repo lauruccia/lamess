@@ -67,7 +67,7 @@ class NetworkTreePage extends Page
         $parentOf = $all->mapWithKeys(static fn ($c) => [(int) $c->id => $c->sponsor_id === null ? null : (int) $c->sponsor_id])->all();
         foreach ($all as $c) {
             if (isset($hidden[(int) $c->id])) {
-                continue;   // account sospeso o bannato: fuori dall'albero, i suoi sotto-incaricati salgono al primo sponsor visibile
+                continue;   // account sospeso o bannato, oppure cessato: fuori dall'albero, i suoi sotto-incaricati salgono al primo sponsor visibile
             }
             $p = $prog[$c->id] ?? null;
             $nodes[] = [

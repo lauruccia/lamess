@@ -1,5 +1,12 @@
 # Registro aggiornamenti
 
+## 2026-11-16 — Incaricati cessati: fuori da elenco, albero ed elenco per livelli
+- **Elenco incaricati**: la scheda **Tutti** (e il suo conteggio) non comprende più i cessati. Si trovano nella scheda **Cessati** oppure scegliendo «Cessato» nel filtro *Stato*. Vale anche con le schede spente da *Funzionalità e viste*.
+- **Albero della rete** (admin) e **«Il mio ramo»** (area incaricato): i cessati non compaiono e non contano nei numeri di team; tolta la spunta «mostra cessati». Se un cessato avesse ancora qualcuno sotto, questi risultano collegati al primo sopra di lui in essere.
+- **Elenco per livelli**: parte da **«In essere»** (senza cessati); restano le voci «Solo cessati» e «Tutti, anche i cessati». La colonna del 1° livello non conta i cessati.
+- Nessun dato viene cancellato: scheda, statini, compensi, documenti e blocco di re-iscrizione dei cessati restano com'erano. Il calcolo dei compensi non cambia.
+- File: `app/Domain/Access/AccountSuspension.php`, `app/Domain/Network/NetworkService.php`, `app/Domain/Network/LevelList.php`, `app/Filament/Pages/ConsultantLevelsPage.php`, `app/Filament/Pages/NetworkTreePage.php`, `app/Filament/Resources/Consultants/Pages/ListConsultants.php`, `app/Filament/Support/ConsultantList.php`, viste `consultant-levels` e `network-tree`, `docs/manuale-admin.md`. Database: nessuna modifica. Test: `ConsultantListTest`, `LevelListTest`.
+
 ## 2026-11-16 — Onboarding: indicato cosa è obbligatorio e cosa è facoltativo
 - In `/area/onboarding` ogni documento e ogni campo dei dati bancari riporta accanto al nome **(obbligatorio)** o **(facoltativo)**.
 - Obbligatori: foto formato tessera, documento d'identità, IBAN e intestatario. Facoltativi: codice fiscale / tessera sanitaria, prova di intestazione IBAN e BIC/SWIFT (che diventa obbligatorio solo per un IBAN fuori area SEPA).

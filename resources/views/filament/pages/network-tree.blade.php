@@ -42,7 +42,6 @@
             <button type="button" @click="levels(3)">Livelli 1–3</button>
             <button type="button" @click="levels(6)">Livelli 1–6</button>
             <button type="button" @click="expandAll()">Espandi tutto</button>
-            <label class="lt-sub"><input type="checkbox" x-model="showTerminated" @change="draw(); fit()"> mostra cessati</label>
             <button type="button" class="pri" @click="toggleFull()" x-text="full ? '✕ Esci da schermo intero' : '⛶ Schermo intero'"></button>
         </div>
         <div class="lt-bar"><span x-html="crumb"></span><span class="lt-sub">Il colore indica la qualifica · barra in basso = avanzamento verso la qualifica successiva · clic per i dettagli · ▾/▸ apre e chiude il ramo · doppio clic apre l'albero di quel incaricato</span></div>

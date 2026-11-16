@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Network;
 
+use App\Domain\Access\AccountSuspension;
+use App\Domain\Career\NetworkOverview;
 use App\Domain\Network\LevelList;
+use App\Domain\Network\NetworkService;
 use App\Filament\Pages\ConsultantLevelsPage;
+use App\Filament\Pages\NetworkTreePage;
+use App\Filament\Support\ConsultantList;
 use App\Models\Consultant;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\NetworkDb;
 use Tests\TestCase;
@@ -78,7 +84,7 @@ final class LevelListTest extends TestCase
 
         $b = collect(app(LevelList::class)->rows()['rows'])->firstWhere('code', 'B');
         $this->assertSame(2, $b['clients']);
-        $entry = ($code = app(\App\Filament\Support\ConsultantList::class)->entryRankCode()) === null ? null : app(\App\Filament\Support\ConsultantList::class)->rankName($code);
+        $entry = ($code = app(ConsultantList::class)->entryRankCode()) === null ? null : app(ConsultantList::class)->rankName($code);
         $this->assertSame($entry, $b['rank'], 'senza calcolo ufficiale si mostra la qualifica d\'ingresso del piano (se c\'è un piano in vigore)');
 
         $this->c['C']->update(['status' => 'terminated']);
@@ -89,7 +95,7 @@ final class LevelListTest extends TestCase
     public function test_buyers_count_each_assigned_customer_once_when_they_have_a_paid_order_in_the_period(): void
     {
         $order = function (User $u, string $status, string $paidAt, string $n): void {
-            \Illuminate\Support\Facades\DB::table('orders')->insert([
+            DB::table('orders')->insert([
                 'number' => $n, 'buyer_user_id' => $u->id, 'buyer_type' => 'customer', 'status' => $status, 'country_code' => 'IT', 'payment_method' => 'card',
                 'subtotal_net' => 10, 'vat_total' => 2.2, 'total' => 12.2, 'paid_at' => $paidAt, 'billing' => '{}', 'created_at' => $paidAt, 'updated_at' => $paidAt,
             ]);
@@ -148,5 +154,31 @@ final class LevelListTest extends TestCase
         $viewer = User::factory()->role('admin')->create();
         $viewer->givePermissionTo('network.view');
         $this->actingAs($viewer)->get('/admin/elenco-livelli')->assertOk();
+    }
+
+    public function test_terminated_consultants_are_hidden_from_levels_and_trees_unless_asked(): void
+    {
+        $this->actingAs(User::factory()->role()->create());
+        $this->c['D']->update(['status' => 'terminated']);
+        AccountSuspension::forgetCache();
+
+        // elenco per livelli: spariscono, e non contano fra i diretti; si ritrovano solo chiedendoli
+        Livewire::test(ConsultantLevelsPage::class)->assertSee('Nome A')->assertDontSee('Nome D')
+            ->set('rootSearch', 'Nome D')->assertDontSee('Nome D')->set('rootSearch', '')
+            ->set('status', 'terminated')->assertSee('Nome D')->assertDontSee('Nome A');
+        $a = collect(app(LevelList::class)->rows()['rows'])->firstWhere('code', 'A');
+        $this->assertSame(1, $a['directs']);
+
+        // albero della rete (admin)
+        $codes = array_column((new NetworkTreePage)->treeData()['nodes'], 'code');
+        $this->assertContains('A', $codes);
+        $this->assertNotContains('D', $codes);
+
+        // «Il mio ramo» dell'incaricato
+        app(NetworkService::class)->rebuildClosure();
+        $mine = app(NetworkOverview::class)->for($this->c['A']);
+        $this->assertSame(['B', 'C'], $mine['nodes']->pluck('code')->sort()->values()->all());
+        $this->assertSame(1, $mine['direct']);
+        AccountSuspension::forgetCache();
     }
 }

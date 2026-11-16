@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Network;
 
+use App\Domain\Access\AccountSuspension;
 use App\Domain\Audit\AuditLog;
 use App\Models\Consultant;
 use App\Models\Period;
@@ -99,6 +100,7 @@ final class NetworkService
                 Consultant::$sponsorChangeAllowed = false;
             }
             $this->rebuildClosure();
+            AccountSuspension::forgetCache();   // il cessato esce subito dagli alberi
             AuditLog::record('consultant.terminated', "Incaricato cessato: {$c->code}", $c, ['stato' => ['prima' => $from, 'dopo' => 'terminated'], 'diretti_ricollegati_a' => $target?->code], $reason !== '' ? $reason : null);
 
             return $c->refresh();

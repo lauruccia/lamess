@@ -45,7 +45,7 @@ class ListConsultants extends SuperadminListRecords
             ->modifyQueryUsing($q ?? static fn (Builder $query): Builder => $query);
 
         return [
-            'all' => $tab('Tutti', $n['total']),
+            'all' => $tab('Tutti', $n['total'], fn (Builder $query): Builder => $this->withoutTerminated($query)),
             'active' => $tab('Attivi', $n['active'], fn (Builder $query) => $query->where('consultants.status', 'active')),
             'pending' => $tab('In attesa', $n['pending'], fn (Builder $query) => $query->where('consultants.status', 'pending')),
             'suspended' => $tab('Sospesi', $n['suspended'], fn (Builder $query) => $query->where('consultants.status', 'suspended')),
@@ -53,6 +53,26 @@ class ListConsultants extends SuperadminListRecords
             'onboarding' => $tab('Da completare', $n['onboarding'], fn (Builder $query) => $query->where('consultants.status', '<>', 'terminated')->where('consultants.onboarding_complete', false)),
             'kyc' => $tab('KYC da verificare', $n['kyc'], fn (Builder $query) => $query->where('consultants.status', '<>', 'terminated')->where(fn ($w) => $w->whereNull('consultants.kyc_status')->orWhere('consultants.kyc_status', '<>', 'verified'))),
         ];
+    }
+
+    /**
+     * I cessati non stanno nell'elenco di lavoro: si vedono solo nella scheda «Cessati» o scegliendo «Cessato» nel filtro «Stato».
+     * Vale anche quando le schede sono spente da «Funzionalità e viste».
+     */
+    protected function withoutTerminated(Builder $query): Builder
+    {
+        $picked = (array) data_get($this->tableFilters, 'status.values', []);
+
+        return in_array('terminated', $picked, true) ? $query : $query->where('consultants.status', '<>', 'terminated');
+    }
+
+    protected function modifyQueryWithActiveTab(Builder $query, bool $isResolvingRecord = false): Builder
+    {
+        if (blank($this->activeTab) || ! array_key_exists($this->activeTab, $this->getCachedTabs())) {
+            return $isResolvingRecord ? $query : $this->withoutTerminated($query);
+        }
+
+        return parent::modifyQueryWithActiveTab($query, $isResolvingRecord);
     }
 
     /** Intestazione propria: titolo, schede per stato al centro e pulsante «Nuovo incaricato» sulla stessa riga. */

@@ -144,4 +144,20 @@ final class ConsultantListTest extends TestCase
         $this->get('/admin/consultants')->assertOk()->assertDontSee('KYC da verificare')->assertDontSee('120,50');
         $this->list()->assertTableColumnHidden('open_balance')->assertTableFilterHidden('has_balance');
     }
+
+    public function test_terminated_consultants_are_only_in_their_own_tab(): void
+    {
+        $this->c->update(['status' => 'terminated', 'name' => 'Zorro Cessato']);
+
+        $this->list()->assertCanSeeTableRecords([$this->a, $this->b])->assertCanNotSeeTableRecords([$this->c]);
+        $this->list()->set('activeTab', 'terminated')->assertCanSeeTableRecords([$this->c])->assertCanNotSeeTableRecords([$this->a, $this->b]);
+        $this->list()->filterTable('status', ['terminated'])->assertCanSeeTableRecords([$this->c]);
+
+        $n = app(ConsultantList::class)->counts();
+        $this->assertSame(2, $n['total'], '«Tutti» non conta i cessati');
+        $this->assertSame(1, $n['terminated']);
+
+        Feature::set('backoffice.consultants_list.tabs', false, reason: 'test');
+        $this->list()->assertCanSeeTableRecords([$this->a, $this->b])->assertCanNotSeeTableRecords([$this->c]);
+    }
 }

@@ -55,10 +55,10 @@
             </label>
             <label>Stato
                 <select wire:model.live="status">
-                    <option value="all">Tutti</option>
-                    <option value="not_terminated">Senza i cessati</option>
+                    <option value="not_terminated">In essere</option>
                     <option value="active">Solo attivi</option>
                     <option value="terminated">Solo cessati</option>
+                    <option value="all">Tutti, anche i cessati</option>
                 </select>
             </label>
             <label>Hanno acquistato nel periodo

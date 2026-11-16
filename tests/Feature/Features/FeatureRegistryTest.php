@@ -94,8 +94,9 @@ final class FeatureRegistryTest extends TestCase
 
         $this->assertFalse(Feature::enabled('consultant360.tab.audit', $admin));
         $this->assertTrue(Feature::enabled('consultant360.tab.audit', $super));
-        $this->assertFalse(Feature::enabled('consultant360.action.move_sponsor', $admin));
-        $this->assertTrue(Feature::enabled('consultant360.action.move_sponsor', $super));
+        $this->assertFalse(Feature::enabled('consultant360.action.make_customer', $admin));
+        $this->assertTrue(Feature::enabled('consultant360.action.make_customer', $super));
+        $this->assertTrue(Feature::enabled('consultant360.action.move_sponsor', $admin), 'non più riservata: conta il permesso network.restructure');
 
         $this->expectException(FeatureException::class);
         Feature::set('consultant360.tab.audit', false, by: $super);
@@ -104,7 +105,7 @@ final class FeatureRegistryTest extends TestCase
     public function test_admin_cannot_turn_on_a_super_only_feature(): void
     {
         $this->expectException(FeatureException::class);
-        Feature::set('consultant360.action.move_sponsor', true, by: $this->admin());
+        Feature::set('consultant360.action.make_customer', true, by: $this->admin());
     }
 
     public function test_who_can_manage(): void
@@ -214,7 +215,7 @@ final class FeatureRegistryTest extends TestCase
     public function test_page_hides_super_only_rows_from_admins_and_lock_toggle_is_super_only(): void
     {
         $this->actingAs($this->admin());
-        $this->get('/admin/funzionalita')->assertOk()->assertDontSee('Tab «Audit»')->assertDontSee('Sposta / cambia sponsor');
+        $this->get('/admin/funzionalita')->assertOk()->assertDontSee('Tab «Audit»')->assertDontSee('Fai diventare cliente');
 
         Livewire::test(FeaturesPage::class)->call('toggleLock', 'consultant360.tab.network');
         $this->assertFalse(Feature::lockedBySuperadmin('consultant360.tab.network'));

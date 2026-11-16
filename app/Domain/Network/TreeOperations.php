@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  * Operazioni sull'albero (fase 3). Ognuna chiede un motivo e scrive il log di audit con valori prima/dopo.
  *
  * Spostare un ramo o cambiare sponsor è un'eccezione al Reg. 2.10.a (lo sponsor non cambia): serve un permesso apposito
- * (`network.restructure`, concesso solo dal super_admin). Lo sponsor cambia subito nell'albero; i periodi APERTI usano il nuovo albero
+ * (`network.restructure`, che il super_admin concede agli admin). Lo sponsor cambia subito nell'albero; i periodi APERTI usano il nuovo albero
  * al prossimo calcolo, i periodi CHIUSI restano com'erano. Scegliendo «ricalcola i mesi chiusi» l'elenco dei mesi interessati
  * viene registrato (la riapertura dei mesi arriva con la fase 6) e l'operazione la può fare solo il super_admin.
  */

@@ -107,8 +107,8 @@ class ViewConsultant extends ViewRecord
                 ->disabled(fn () => $this->signedContractId() === null)
                 ->url(fn () => $this->signedContractId() === null ? null : url('/admin-files/contract/'.$this->signedContractId().'/certificate'), shouldOpenInNewTab: true),
             Action::make('move')->label('Sposta / cambia sponsor')->icon('heroicon-o-arrows-right-left')->color('gray')
-                ->visible(fn () => $this->record->status !== 'terminated' && auth()->user()?->isSuperAdmin() === true && Feature::enabled('consultant360.action.move_sponsor'))
-                ->modalDescription('Solo super_admin e solo in casi estremi. Eccezione al Reg. 2.10.a: serve un motivo e finisce nel log. Lo sponsor cambia subito; i periodi aperti usano il nuovo albero al prossimo calcolo, quelli chiusi restano come sono.')
+                ->visible(fn () => $this->record->status !== 'terminated' && auth()->user()?->can('network.restructure') === true && Feature::enabled('consultant360.action.move_sponsor'))
+                ->modalDescription('Solo in casi estremi e solo con il permesso «ristrutturare la rete». Eccezione al Reg. 2.10.a: serve un motivo e finisce nel log. Lo sponsor cambia subito; i periodi aperti usano il nuovo albero al prossimo calcolo, quelli chiusi restano come sono.')
                 ->schema([
                     $sponsorSelect('new_sponsor_id', 'Nuovo sponsor'),
                     Toggle::make('with_branch')->label('Il ramo segue l’incaricato')->default(true)->live()
@@ -135,7 +135,7 @@ class ViewConsultant extends ViewRecord
                     Textarea::make('reason')->label('Motivo')->required(),
                 ])
                 ->action(function (array $data): void {
-                    abort_unless(auth()->user()?->isSuperAdmin() === true, 403);
+                    abort_unless(auth()->user()?->can('network.restructure') === true, 403);
                     try {
                         $r = app(TreeOperations::class)->moveBranch(
                             $this->record, Consultant::findOrFail($data['new_sponsor_id']), $data['reason'], (bool) $data['with_branch'],

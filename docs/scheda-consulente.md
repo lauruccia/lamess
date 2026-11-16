@@ -40,7 +40,7 @@ In alto: codice, nome, data di ingresso, codice referral, **stato** (attivo, sos
 
 Ogni salvataggio scrive nel log di audit i campi cambiati con i valori prima e dopo (l'IBAN solo mascherato).
 
-**Sposta / cambia sponsor**: solo super_admin, in casi estremi (motivo obbligatorio, finisce nel log). L'admin non lo vede, nemmeno con il permesso «ristrutturare la rete».
+**Sposta / cambia sponsor**: in casi estremi (motivo obbligatorio, finisce nel log). Lo vedono il super_admin e gli admin con il permesso «ristrutturare la rete» (`network.restructure`); «Ricalcola i mesi chiusi» resta solo del super_admin.
 
 ## L'elenco incaricati (Rete → Incaricati)
 Un clic su una riga apre la scheda. La colonna **Qualifica** mostra solo il nome della pietra; qualifica e attività del mese vengono dall'ultimo calcolo ufficiale (se manca, mostrano «—»). «Da pagare» è la somma delle liquidazioni aperte non ancora in un pagamento. Le schede per stato, la colonna «Da pagare» e (con il piano precedente visibile) le colonne PR si accendono da «Funzionalità e viste». La colonna «Qualifica mantenuta fino al» è nascosta di default.

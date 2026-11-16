@@ -105,7 +105,7 @@ final class FeatureRegistry
             'consultant360.counter.kyc' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Documenti KYC»', 'parent' => 'consultant360.section.counters'],
             'consultant360.counter.fees' => ['type' => 'link', 'group' => $card, 'label' => 'Contatore «Canoni»', 'parent' => 'consultant360.section.counters'],
             // ---- Scheda incaricato: azioni
-            'consultant360.action.move_sponsor' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Sposta / cambia sponsor»', 'help' => 'Eccezione al Reg. 2.10.a: solo il super_admin e solo in casi estremi (motivo obbligatorio, finisce nel log). L\'admin non lo vede mai.', 'super' => true],
+            'consultant360.action.move_sponsor' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Sposta / cambia sponsor»', 'help' => 'Eccezione al Reg. 2.10.a: solo in casi estremi (motivo obbligatorio, finisce nel log). Lo vedono il super_admin e gli admin con il permesso «ristrutturare la rete».'],
             'consultant360.action.reassign_clients' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Riassegna i clienti»'],
             'consultant360.action.force_rank' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Forza qualifica»'],
             'consultant360.action.hold_rank' => ['type' => 'button', 'group' => $card, 'label' => 'Pulsante «Mantieni qualifica»', 'help' => 'Piano Incaricati: mantiene la qualifica attuale di un incaricato fino a una data scelta, senza ricalcolo al ribasso.'],

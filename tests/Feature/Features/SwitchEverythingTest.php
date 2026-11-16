@@ -253,7 +253,7 @@ final class SwitchEverythingTest extends TestCase
         $this->assertFalse(Feature::enabled('consultant360.tab.network', $admin));
         $this->assertTrue(Feature::enabled('consultant360.tab.volumes', $admin), 'regola bloccata dal super_admin');
         $this->assertTrue(Feature::enabled('consultant360.tab.audit', $owner), 'protetta');
-        $this->assertTrue(Feature::enabled('consultant360.action.move_sponsor', $owner), 'riservata al super_admin: l\'admin non la tocca');
+        $this->assertTrue(Feature::enabled('consultant360.action.make_customer', $owner), 'riservata al super_admin: l\'admin non la tocca');
     }
 
     public function test_group_button_needs_the_permission(): void

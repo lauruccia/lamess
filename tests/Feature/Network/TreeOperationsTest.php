@@ -195,17 +195,21 @@ final class TreeOperationsTest extends TestCase
         $this->assertSame('A', $this->audit('consultant.terminated')['diretti_ricollegati_a']);
     }
 
-    public function test_move_action_is_super_admin_only_even_with_the_permission(): void
+    public function test_move_action_needs_the_restructure_permission(): void
     {
         $viewer = User::factory()->role(Roles::ADMIN)->create();
-        $viewer->givePermissionTo(['network.view', 'network.restructure']);
+        $viewer->givePermissionTo(['network.view']);
         $this->actingAs($viewer);
         Livewire::test(ViewConsultant::class, ['record' => $this->c['A']->getKey()])->assertActionHidden('move');
 
-        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+        // admin con il permesso «ristrutturare la rete»: vede il pulsante e sposta, ma non può chiedere il ricalcolo dei mesi chiusi
+        $viewer->givePermissionTo(['network.restructure']);
         Livewire::test(ViewConsultant::class, ['record' => $this->c['A']->getKey()])->assertActionVisible('move')
-            ->callAction('move', ['new_sponsor_id' => $this->c['X']->id, 'with_branch' => true, 'effective_from' => now()->toDateString(), 'reason' => 'Test']);
+            ->callAction('move', ['new_sponsor_id' => $this->c['X']->id, 'with_branch' => true, 'effective_from' => now()->toDateString(), 'reason' => 'Test admin']);
         $this->assertSame($this->c['X']->id, $this->c['A']->fresh()->sponsor_id);
+
+        $this->actingAs(User::factory()->role(Roles::SUPER_ADMIN)->create());
+        Livewire::test(ViewConsultant::class, ['record' => $this->c['B']->getKey()])->assertActionVisible('move');
     }
 
     public function test_customer_bulk_reassign_from_list(): void

@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-16 — Scheda incaricato: «Sposta / cambia sponsor» anche per gli admin con il permesso
+- Il pulsante **Sposta / cambia sponsor** della scheda incaricato non è più riservato al solo super_admin: lo vede e lo usa anche l'**admin che ha il permesso «Spostare rami, cambiare sponsor, riassegnare clienti, forzare qualifiche»** (`network.restructure`). Prima il permesso lo prometteva ma il pulsante restava nascosto.
+- Restano com'erano: motivo obbligatorio, registrazione nel log di audit, anteprima dell'impatto. **«Ricalcola i mesi chiusi»** resta solo del super_admin.
+- L'interruttore «Pulsante Sposta / cambia sponsor» in *Funzionalità e viste* non è più una regola riservata al super_admin: se è spento, il pulsante non compare a nessun admin.
+- File: `app/Filament/Resources/Consultants/Pages/ViewConsultant.php`, `app/Domain/Features/FeatureRegistry.php`, `docs/scheda-consulente.md`. Database: nessuna modifica. Test: `TreeOperationsTest`, `FeatureRegistryTest`, `SwitchEverythingTest`.
+
 ## 2026-11-13 — Checkout: «Paga con i compensi della Tasca» in cima, e se copre tutto spariscono gli altri metodi
 - Nel passo **Pagamento e consegna** la scelta della Tasca è ora **la prima**, prima di carta, bonifico e KMoney, in una scheda evidenziata (con «+25%»).
 - Se spunti la Tasca: **KMoney sparisce** (non si combina con i compensi) e la domanda sotto diventa «Come paghi il resto».

@@ -30,13 +30,14 @@
   @endif
   <section class="panel">
    <header><h2>Documenti</h2></header>
+   @php($requiredDocs = (array) config('lamess.kyc_required_documents'))
    <div class="list">
     @foreach($types as $key => $label)
      @php($d = $docs[$key] ?? null)
      <form method="post" action="/area/onboarding/documento" enctype="multipart/form-data" class="item" style="flex-wrap:wrap;align-items:flex-start">@csrf
       <input type="hidden" name="type" value="{{ $key }}">
       <span class="ico">@include('site.area._i', ['n' => 'doc'])</span>
-      <span class="main"><span class="t">{{ $label }}
+      <span class="main"><span class="t">{{ $label }} <small class="muted ob-req">{{ in_array($key, $requiredDocs, true) ? '(obbligatorio)' : '(facoltativo)' }}</small>
        @if($d)<span class="st st-{{ ['pending' => 'warn', 'approved' => 'ok', 'rejected' => 'err'][$d->status] ?? '' }}">{{ ['pending' => 'in verifica', 'approved' => 'approvato', 'rejected' => 'rifiutato'][$d->status] }}</span>@endif</span>
        @if($d && $d->notes)<span class="m" style="color:var(--err)">{{ $d->notes }}</span>@endif
        @if($d && $d->status === 'rejected' && ($h = config('lamess.kyc_reject_reasons')[$d->reject_reason]['hint'] ?? ''))<span class="m">{{ $h }}</span>@endif
@@ -55,9 +56,9 @@
   <form method="post" action="/area/onboarding/iban" class="panel">@csrf
    <header><h2>Dati bancari</h2></header>
    <div class="panel-body">
-    <label for="o-iban">IBAN</label><input id="o-iban" name="iban" value="{{ old('iban', $consultant->iban) }}" autocapitalize="characters" autocomplete="off">
-    <label for="o-bic">BIC/SWIFT della banca <span class="muted">(obbligatorio se l'IBAN non è di un paese SEPA)</span></label><input id="o-bic" name="bic" value="{{ old('bic', $consultant->bic) }}" autocapitalize="characters" autocomplete="off" maxlength="11" placeholder="Per esempio BCITITMM">
-    <label for="o-hold">Intestatario</label><input id="o-hold" name="iban_holder" value="{{ old('iban_holder', $consultant->iban_holder ?: $consultant->name) }}">
+    <label for="o-iban">IBAN <small class="muted ob-req">(obbligatorio)</small></label><input id="o-iban" name="iban" required value="{{ old('iban', $consultant->iban) }}" autocapitalize="characters" autocomplete="off">
+    <label for="o-bic">BIC/SWIFT della banca <small class="muted ob-req">(facoltativo; obbligatorio solo se l'IBAN non è di un paese SEPA)</small></label><input id="o-bic" name="bic" value="{{ old('bic', $consultant->bic) }}" autocapitalize="characters" autocomplete="off" maxlength="11" placeholder="Per esempio BCITITMM">
+    <label for="o-hold">Intestatario <small class="muted ob-req">(obbligatorio)</small></label><input id="o-hold" name="iban_holder" required value="{{ old('iban_holder', $consultant->iban_holder ?: $consultant->name) }}">
     @foreach($errors->all() as $e)<p class="err">{{ $e }}</p>@endforeach
     <div class="form-actions"><button>Salva</button></div>
    </div>

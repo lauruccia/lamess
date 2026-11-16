@@ -45,6 +45,21 @@ final class KycRequestTest extends TestCase
             ->assertSee('ti ha chiesto dei documenti')->assertSee('Foto più nitida, grazie');
     }
 
+    public function test_onboarding_page_marks_required_and_optional_fields(): void
+    {
+        $c = $this->consultant();
+
+        $this->actingAs($c->user)->get('/area/onboarding')->assertOk()->assertSeeInOrder([
+            'Foto formato tessera', '(obbligatorio)',
+            'identità', '(obbligatorio)',
+            'Codice fiscale / tessera sanitaria', '(facoltativo)',
+            'Prova di intestazione IBAN', '(facoltativo)',
+            'for="o-iban"', '(obbligatorio)',
+            'BIC/SWIFT della banca', '(facoltativo; obbligatorio solo se',
+            'Intestatario', '(obbligatorio)',
+        ], false);
+    }
+
     public function test_rejects_empty_or_terminated(): void
     {
         $c = $this->consultant();

@@ -1,5 +1,11 @@
 # Registro aggiornamenti
 
+## 2026-11-16 — Onboarding: indicato cosa è obbligatorio e cosa è facoltativo
+- In `/area/onboarding` ogni documento e ogni campo dei dati bancari riporta accanto al nome **(obbligatorio)** o **(facoltativo)**.
+- Obbligatori: foto formato tessera, documento d'identità, IBAN e intestatario. Facoltativi: codice fiscale / tessera sanitaria, prova di intestazione IBAN e BIC/SWIFT (che diventa obbligatorio solo per un IBAN fuori area SEPA).
+- L'indicazione dei documenti segue `kyc_required_documents` in `config/lamess.php`: cambiando l'elenco cambia anche la pagina. Le regole non sono cambiate, sono solo dichiarate.
+- File: `resources/views/site/area/onboarding.blade.php`, `public/css/lamess-area.css`. Database: nessuna modifica. Test: `KycRequestTest`. Ricarico forzato del browser (Ctrl+F5).
+
 ## 2026-11-16 — Scheda incaricato: «Sposta / cambia sponsor» anche per gli admin con il permesso
 - Il pulsante **Sposta / cambia sponsor** della scheda incaricato non è più riservato al solo super_admin: lo vede e lo usa anche l'**admin che ha il permesso «Spostare rami, cambiare sponsor, riassegnare clienti, forzare qualifiche»** (`network.restructure`). Prima il permesso lo prometteva ma il pulsante restava nascosto.
 - Restano com'erano: motivo obbligatorio, registrazione nel log di audit, anteprima dell'impatto. **«Ricalcola i mesi chiusi»** resta solo del super_admin.

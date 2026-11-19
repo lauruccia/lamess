@@ -12,6 +12,7 @@ use App\Domain\Orders\OrderService;
 use App\Domain\Subscriptions\SubscriptionService;
 use App\Models\KMoneyLink;
 use App\Models\Order;
+use App\Models\OrderEvent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -83,6 +84,10 @@ final class KMoneyController extends Controller
         // Ritorno da una conferma manuale: l'esito vero arriva dal webhook firmato, qui si rimanda all'ordine.
         // Il cliente ha già confermato su KMoney: finché non arriva l'esito la pagina dell'ordine non rimostra «Conferma e paga».
         if ($orderId) {
+            // Pagamento senza mandato: se su KMoney risulta già pagato l'ordine si chiude subito, senza aspettare l'avviso.
+            if ($done = $this->settleConfirmed($r, $kmoney, $orders, $orderId)) {
+                return $done;
+            }
             $r->session()->put('kmoney_confirming', ['id' => (int) $orderId, 'at' => time()]);
         }
 
@@ -117,6 +122,11 @@ final class KMoneyController extends Controller
             : $this->toOrder($orderId, $r)->withErrors(['order' => $msg]);
 
         if ($r->query('mandate') !== 'granted') {
+            // «Preferisco confermare ogni volta»: il conto resta collegato e ogni ordine si conferma su KMoney.
+            if (KMoneyApiProvider::confirmsEachPayment() && KMoneyLink::where('user_id', $r->user()->id)->exists()) {
+                return $this->confirmingEachTime($r, $orderId, $fromProfile);
+            }
+
             return $fail('Non hai autorizzato i pagamenti in un clic: senza, non possiamo addebitare il saldo KMoney. Puoi riprovare quando vuoi.');
         }
         $link = $kmoney instanceof KMoneyApiProvider ? $kmoney->refreshMandate($r->user()) : null;
@@ -125,6 +135,20 @@ final class KMoneyController extends Controller
         }
 
         return $this->linked($r, $orderId, $fromProfile);
+    }
+
+    /** Conto collegato senza mandato: si torna da dove si era partiti, e il pagamento si conferma di volta in volta su KMoney. */
+    private function confirmingEachTime(Request $r, mixed $orderId, bool $fromProfile)
+    {
+        $msg = 'Va bene: il conto KMoney è collegato e confermerai tu ogni pagamento su KMoney.';
+        if ($fromProfile) {
+            return redirect('/area/profilo#kmoney')->with('status', $msg);
+        }
+        if ($orderId && ($order = Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->where('status', 'pending_payment')->first())) {
+            return redirect("/area/ordini/{$order->id}")->with('status', $msg.' Premi «Paga con KMoney» per completare l\'ordine.');
+        }
+
+        return redirect('/area/checkout/pagamento')->with('status', $msg.' Completa l\'ordine: al momento di pagare ti portiamo su KMoney.');
     }
 
     /** Collegamento completo (conto + mandato): torna da dove il cliente era partito. */
@@ -169,7 +193,7 @@ final class KMoneyController extends Controller
             $order = $ref !== '' ? Order::where('number', $ref)->first() : null;
             Log::warning('KMoney: storno o contestazione comunicati', ['event' => $name, 'order' => $ref]);
             if ($order !== null) {
-                \App\Models\OrderEvent::log($order, 'kmoney_external', "KMoney ha comunicato «{$name}» per questo ordine: verifica su KMoney se i soldi sono stati restituiti al cliente; poi usa «Regolarizza rimborso» o «Reso e rimborso» per stornare fattura e compensi.", true);
+                OrderEvent::log($order, 'kmoney_external', "KMoney ha comunicato «{$name}» per questo ordine: verifica su KMoney se i soldi sono stati restituiti al cliente; poi usa «Regolarizza rimborso» o «Reso e rimborso» per stornare fattura e compensi.", true);
             }
 
             return response('ok', 200);
@@ -201,6 +225,34 @@ final class KMoneyController extends Controller
         }
 
         return response('ok', 200);
+    }
+
+    /** Al ritorno da una conferma: chiude l'ordine se KMoney lo dà per pagato; null se non risulta (decide poi il webhook). */
+    private function settleConfirmed(Request $r, KMoneyProvider $kmoney, OrderService $orders, mixed $orderId)
+    {
+        if (! $kmoney instanceof KMoneyApiProvider) {
+            return null;
+        }
+        $order = Order::where('id', $orderId)->where('buyer_user_id', $r->user()->id)->where('payment_method', 'kmoney')
+            ->where('status', 'pending_payment')->whereNull('subscription_id')->first();
+        if ($order === null || $order->payments()->where('method', 'kmoney')->where('status', 'paid')->exists()) {
+            return null;
+        }
+        $reference = $kmoney->paidReference($order);
+        if ($reference === null) {
+            return null;
+        }
+        try {
+            $orders->settleKMoney($order, $reference);
+        } catch (OrderException $e) {
+            Log::warning('KMoney: conferma ordine al ritorno non riuscita', ['order' => $order->number, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        return redirect("/area/ordini/{$order->id}")->with('status', $order->refresh()->status === 'pending_payment'
+            ? 'Quota KMoney pagata. Completa da qui il pagamento del resto.'
+            : 'Pagamento ricevuto. Grazie!');
     }
 
     private function toOrder(mixed $orderId, Request $r)

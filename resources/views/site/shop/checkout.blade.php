@@ -84,18 +84,23 @@
     <legend data-rest="{{ __('Come paghi il resto') }}">{{ __('Come vuoi pagare') }}</legend>
     @if(($kmoneyEnabled ?? false) && $priced->acceptsKMoney())
      {{-- % pagabile in KMoney impostata sulla pagina prodotto; con più prodotti è la quota complessiva dei prodotti nel carrello --}}
-     @php($kmLinked = \App\Models\KMoneyLink::where('user_id', $user->id)->whereNotNull('mandate_uuid')->exists())
+     @php($kmLink = \App\Models\KMoneyLink::where('user_id', $user->id)->first())
+     @php($kmLinked = $kmLink?->mandate_uuid !== null)
+     {{-- Conto collegato senza mandato («preferisco confermare ogni volta»): l'ordine singolo si conferma su KMoney --}}
+     @php($kmManual = $kmLink !== null && ! $kmLinked && \App\Domain\Orders\KMoneyApiProvider::confirmsEachPayment())
      <label class="opt-card opt-featured" data-pay-kmoney><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>{{ __('Paga con KMoney') }}</b><small>
       <span class="km-link">
-       @unless($kmLinked)
+       @unless($kmLinked || $kmManual)
         {{ __('Per pagare col tuo saldo devi prima collegare il conto KMoney: al ritorno trovi qui tutto com\'era.') }}
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">{{ __('Consigliato') }}</em></label>
      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>
-      <span data-sum-single @if($subOn) hidden @endif>{{ __('Con «Conferma ordine» addebitiamo :p KY dal tuo conto KMoney, in un clic. Se l\'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.', ['p' => \App\Support\Money::eur($priced->kmoneyShare())]) }}@if($priced->kmoneyRest()->isPositive()) {{ __('Poi scegli come pagare il resto, € :p, con carta o bonifico.', ['p' => \App\Support\Money::eur($priced->kmoneyRest())]) }}@endif</span>
+      <span data-sum-single @if($subOn) hidden @endif>@if($kmManual){{ __('Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.', ['p' => \App\Support\Money::eur($priced->kmoneyShare())]) }}@else{{ __('Con «Conferma ordine» addebitiamo :p KY dal tuo conto KMoney, in un clic. Se l\'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.', ['p' => \App\Support\Money::eur($priced->kmoneyShare())]) }}@endif @if($priced->kmoneyRest()->isPositive()) {{ __('Poi scegli come pagare il resto, € :p, con carta o bonifico.', ['p' => \App\Support\Money::eur($priced->kmoneyRest())]) }}@endif</span>
       <span data-sum-sub @if(! $subOn) hidden @endif>{{ __('Con «Conferma ordine» addebitiamo :p KY dal tuo conto KMoney.', ['p' => \App\Support\Money::eur($pricedSub->kmoneyShare())]) }}@if($pricedSub->kmoneyRest()->isPositive()) {{ __('Il resto, € :p, si addebita in automatico sulla carta.', ['p' => \App\Support\Money::eur($pricedSub->kmoneyRest())]) }}@endif {{ __('Lo stesso a ogni addebito.') }}</span>
      </p>
-     @if(! $kmLinked)
+     @if($kmManual)
+      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>{{ __('Per un abbonamento, o per pagare in un clic, serve l\'autorizzazione ai pagamenti su KMoney:') }} <a href="/area/kmoney/mandato">{{ __('autorizza ora') }}</a>.</p>
+     @elseif(! $kmLinked)
       <div class="warn km-connect" data-km-only data-km-connect @if($pay !== 'kmoney') hidden @endif>
        {!! __('<b>Collega il tuo conto KMoney per continuare.</b> Con «Collega KMoney» vai su KMoney e, al ritorno, ritrovi qui tutto com\'era: dati, spedizione, metodo di pagamento e abbonamento.') !!}
        <div class="km-connect-actions"><button type="submit" class="btn accent" formaction="/area/checkout/kmoney" formnovalidate>{{ __('Collega KMoney') }}</button> <a href="{{ $kmoneyRegisterUrl }}" target="_blank" rel="noopener">{{ __('Non hai un conto? Aprilo qui') }}</a></div>

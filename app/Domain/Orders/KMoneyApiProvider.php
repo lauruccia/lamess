@@ -42,6 +42,15 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
         return url('/area/kmoney/ritorno');
     }
 
+    /**
+     * Il cliente che non concede il mandato può pagare lo stesso, confermando ogni pagamento su KMoney:
+     * serve il token API del conto venditore, con cui si crea la richiesta di pagamento.
+     */
+    public static function confirmsEachPayment(): bool
+    {
+        return config('lamess.kmoney_driver') === 'api' && filled(config('lamess.kmoney.api_token'));
+    }
+
     /** @return array{url: string, state: string, verifier: string} */
     public function authorization(): array
     {
@@ -118,11 +127,15 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
         if (! $link || ! $this->freshToken($link)) {
             return new PaymentResult(false, null, 'not_linked');
         }
+        $cents = $this->kmoneyCents($order);
         $mandate = $link->mandate_uuid ?: $this->syncMandate($link);
         if (! $mandate) {
-            return new PaymentResult(false, null, 'not_linked');
+            // Senza mandato («preferisco confermare ogni volta»): l'ordine singolo si paga con una richiesta da confermare su KMoney.
+            // Un abbonamento no: gli addebiti dei mesi successivi partono da soli e non possono aspettare una conferma.
+            return $order->subscription_id === null && self::confirmsEachPayment() && $cents >= 1
+                ? $this->requestPayment($order, $cents)
+                : new PaymentResult(false, null, 'not_linked');
         }
-        $cents = BigDecimal::of((string) $order->kmoney_amount)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp)->toInt();
         if ($cents < 1) {
             return new PaymentResult(false, null, 'Nessun importo da addebitare in KMoney.');
         }
@@ -164,6 +177,97 @@ final class KMoneyApiProvider implements KMoneySubscriptionSync, PartialKMoneyRe
         Log::warning('KMoney: addebito rifiutato', ['order' => $order->number, 'status' => $res->status(), 'reason' => $res->json('reason')]);
 
         return new PaymentResult(false, null, (string) ($res->json('message') ?? 'Addebito KMoney non riuscito.'));
+    }
+
+    /**
+     * Riferimento del pagamento se il cliente ha già pagato su KMoney la richiesta di quest'ordine; null se non risulta
+     * (o se KMoney non risponde). Serve al ritorno dalla conferma, senza dipendere dall'arrivo dell'avviso (webhook).
+     */
+    public function paidReference(Order $order): ?string
+    {
+        if (! self::confirmsEachPayment()) {
+            return null;
+        }
+        try {
+            return $this->paidRequest($order, $this->kmoneyCents($order))['reference'];
+        } catch (\Throwable $e) {
+            Log::warning('KMoney: controllo del pagamento al ritorno non riuscito', ['order' => $order->number, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Pagamento senza mandato: crea (o riprende) sul conto venditore una richiesta di pagamento per l'ordine e manda
+     * il cliente a confermarla su KMoney. L'esito arriva dal webhook `payment_request.paid` e dal controllo al ritorno.
+     */
+    private function requestPayment(Order $order, int $cents): PaymentResult
+    {
+        $busy = 'KMoney non risponde: riprova tra poco. Il tuo conto non è stato addebitato.';
+        try {
+            // Prima si guarda se la richiesta di quest'ordine è già stata pagata: mai una seconda richiesta per lo stesso ordine.
+            $paid = $this->paidRequest($order, $cents);
+            if (! $paid['checked']) {
+                return new PaymentResult(false, null, $busy);
+            }
+            if ($paid['reference'] !== null) {
+                return new PaymentResult(true, $paid['reference']);
+            }
+            $res = $this->sellerApi()->post($this->url('/api/v1/payment-requests'), [
+                'amount' => $cents, 'description' => "Ordine {$order->number} · Lamèss", 'external_reference' => (string) $order->number,
+                'return_url' => self::redirectUri(), 'cancel_url' => self::redirectUri(), 'expires_in_minutes' => 60,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('KMoney: errore di rete nella richiesta di pagamento', ['order' => $order->number, 'error' => $e->getMessage()]);
+
+            return new PaymentResult(false, null, $busy);
+        }
+        $url = (string) ($res->json('data.checkout_url') ?: $res->json('data.pay_url'));
+        // Il cliente si manda solo su un indirizzo di KMoney: una risposta anomala non deve portarlo altrove.
+        if (! $res->successful() || ! $this->isKMoneyUrl($url)) {
+            Log::warning('KMoney: richiesta di pagamento non creata', ['order' => $order->number, 'status' => $res->status(), 'error' => $res->json('error')]);
+
+            return new PaymentResult(false, null, 'Non siamo riusciti ad aprire il pagamento su KMoney: riprova tra poco. Il tuo conto non è stato addebitato.');
+        }
+        OrderEvent::log($order, 'kmoney_confirmation', 'Pagamento senza mandato: il cliente conferma su KMoney la richiesta '.$res->json('data.uuid').' · importo € '.number_format($cents / 100, 2, ',', '.'), true);
+
+        return new PaymentResult(false, null, 'confirmation_required', $url);
+    }
+
+    /**
+     * Cerca fra le richieste incassate dal conto venditore quella di quest'ordine (stesso riferimento e importo).
+     *
+     * @return array{checked: bool, reference: ?string} `checked` false = KMoney non ha risposto, l'esito non è noto
+     */
+    private function paidRequest(Order $order, int $cents): array
+    {
+        $res = $this->sellerApi()->get($this->url('/api/v1/payment-requests'), ['direction' => 'incoming', 'status' => 'paid', 'per_page' => 100]);
+        if (! $res->successful()) {
+            return ['checked' => false, 'reference' => null];
+        }
+        $hit = collect($res->json('data') ?? [])->first(fn ($p) => ($p['status'] ?? null) === 'paid'
+            && (string) ($p['external_reference'] ?? '') === (string) $order->number && (int) ($p['amount'] ?? -1) === $cents);
+
+        return ['checked' => true, 'reference' => $hit === null ? null : (string) ($hit['transfer_uuid'] ?? $hit['uuid'] ?? 'kmoney')];
+    }
+
+    private function kmoneyCents(Order $order): int
+    {
+        return BigDecimal::of((string) $order->kmoney_amount)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp)->toInt();
+    }
+
+    /** Chiamate col token API del conto venditore (richieste di pagamento, rimborsi). */
+    private function sellerApi(): PendingRequest
+    {
+        return Http::withToken((string) config('lamess.kmoney.api_token'))->acceptJson()->timeout(20);
+    }
+
+    private function isKMoneyUrl(string $url): bool
+    {
+        $base = parse_url((string) config('lamess.kmoney.base_url'), PHP_URL_HOST);
+        $host = parse_url($url, PHP_URL_HOST);
+
+        return is_string($base) && is_string($host) && str_starts_with($url, 'http') && strcasecmp($base, $host) === 0;
     }
 
     /**

@@ -108,6 +108,12 @@
      <div class="form-actions">
       <form method="post" action="/area/kmoney/scollega">@csrf<button class="btn ghost">Scollega il conto</button></form>
      </div>
+    @elseif($kmoneyLink && \App\Domain\Orders\KMoneyApiProvider::confirmsEachPayment())
+     <p style="margin-top:0">Il tuo conto KMoney{{ $kmoneyLink->account_number ? ' ('.$kmoneyLink->account_number.')' : '' }} è collegato e hai scelto di confermare ogni pagamento: al checkout ti portiamo su KMoney a confermarlo. Per pagare in un clic, e per gli abbonamenti mensili, serve l'autorizzazione ai pagamenti.</p>
+     <div class="form-actions">
+      <a class="btn accent" href="/area/kmoney/mandato?da=profilo">Autorizza i pagamenti in un clic</a>
+      <form method="post" action="/area/kmoney/scollega">@csrf<button class="btn ghost">Scollega il conto</button></form>
+     </div>
     @elseif($kmoneyLink)
      <p style="margin-top:0">Il tuo conto è collegato ma manca l'autorizzazione ai pagamenti: senza, non possiamo addebitare il saldo.</p>
      <div class="form-actions">

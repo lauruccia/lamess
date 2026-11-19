@@ -85,6 +85,7 @@ Scegliendo la carta nel checkout vieni portato alla **pagina sicura di Stripe**:
 ## Pagare con KMoney
 - **1 KY = 1 €**. Con KMoney tutti gli importi sono mostrati in **KY**. Ogni prodotto indica la **percentuale pagabile in KMoney**; il resto si paga con altro metodo. Se tutto il carrello è pagabile al 100% in KMoney, anche la spedizione si paga in KMoney.
 - **Prima di pagare devi collegare il tuo conto KMoney** da *I miei dati → Conto KMoney* (`/area/profilo#kmoney`): **collega** il conto, **autorizza i pagamenti** e, se vuoi, **scollega**. L'accesso si fa sul sito di KMoney: il portale non vede né salva le tue credenziali. Se non hai un conto puoi aprirlo dal link indicato. Se il conto non è collegato il checkout ti rimanda lì.
+- **Se su KMoney scegli «No, preferisco confermare ogni volta»** il conto resta collegato e puoi pagare lo stesso gli ordini singoli: con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento e poi torni all'ordine. Per pagare in un clic, e per gli abbonamenti, serve l'autorizzazione: la dai quando vuoi da *I miei dati → Conto KMoney*.
 - Dopo «Conferma ordine» ti chiediamo di **confermare esplicitamente l'addebito** in KY dal tuo conto. **Prima si paga la quota KMoney**, poi scegli come pagare il resto (carta o bonifico).
 
 ## Abbonamento mensile o bimestrale

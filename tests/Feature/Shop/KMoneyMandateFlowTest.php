@@ -223,4 +223,177 @@ final class KMoneyMandateFlowTest extends TestCase
             ->assertSessionHasNoErrors();
         $this->assertSame(1, Order::count());
     }
+
+    // ── «Preferisco confermare ogni volta»: conto collegato senza mandato, col token del conto venditore configurato ──
+
+    private function confirmingEachTime(): array
+    {
+        config(['lamess.kmoney.api_token' => 'token-venditore']);
+
+        return $this->linkedWithoutMandate();
+    }
+
+    public function test_refusing_the_mandate_brings_the_customer_back_to_the_checkout_without_an_error(): void
+    {
+        [$user, $link] = $this->confirmingEachTime();
+        Http::fake();
+
+        $this->actingAs($user)->get('/area/kmoney/ritorno?mandate=denied')
+            ->assertRedirect('/area/checkout/pagamento')
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status');
+
+        $this->actingAs($user)->withSession(['kmoney_from' => 'profilo'])->get('/area/kmoney/ritorno?mandate=denied')
+            ->assertRedirect('/area/profilo#kmoney')
+            ->assertSessionHasNoErrors();
+
+        Http::assertNothingSent();
+        $this->assertNull($link->refresh()->mandate_uuid);
+    }
+
+    public function test_without_the_mandate_confirm_order_opens_a_payment_request_and_sends_the_customer_to_kmoney(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake([
+            'kmoney.test/api/v1/mandates' => Http::response(['mandates' => []]),
+            'kmoney.test/api/v1/userinfo' => Http::response(['account' => ['number' => 'KYP0000000001']]),
+            'kmoney.test/api/v1/payment-requests?*' => Http::response(['data' => []]),
+            'kmoney.test/api/v1/payment-requests' => Http::response(['data' => ['uuid' => 'PR-1', 'pay_url' => 'https://kmoney.test/pay/pr-1']], 201),
+        ]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm())
+            ->assertRedirect('https://kmoney.test/pay/pr-1')->assertSessionHas('kmoney_order');
+
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+        $this->assertSame('pending_payment', $order->status);
+        Http::assertSent(fn ($req) => $req->method() === 'POST' && $req->url() === 'https://kmoney.test/api/v1/payment-requests'
+            && $req->hasHeader('Authorization', 'Bearer token-venditore')
+            && $req['external_reference'] === (string) $order->number
+            && $req['amount'] === (int) round((float) $order->kmoney_amount * 100)
+            && $req['return_url'] === url('/area/kmoney/ritorno'));
+    }
+
+    public function test_without_the_mandate_a_subscription_still_asks_for_the_authorization(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake();
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm(['subscribe' => 'monthly']))
+            ->assertSessionHasErrors('order')->assertSessionHas('kmoney_unlinked');
+
+        $this->assertSame(0, Order::count());
+        $this->assertSame(0, Subscription::count());
+        Http::assertNothingSent();
+    }
+
+    /** KMoney finto per il pagamento senza mandato: `$paid` è l'elenco delle richieste incassate, `$opened` conta quelle aperte. */
+    private function fakeKMoneyRequests(array &$paid, int &$opened): void
+    {
+        Http::fake([
+            'kmoney.test/api/v1/mandates' => Http::response(['mandates' => []]),
+            'kmoney.test/api/v1/userinfo' => Http::response(['account' => ['number' => 'KYP0000000001']]),
+            'kmoney.test/api/v1/payment-requests?*' => function () use (&$paid) {
+                return Http::response(['data' => $paid]);
+            },
+            'kmoney.test/api/v1/payment-requests' => function () use (&$opened) {
+                $opened++;
+
+                return Http::response(['data' => ['uuid' => 'PR-1', 'pay_url' => 'https://kmoney.test/pay/pr-1']], 201);
+            },
+        ]);
+    }
+
+    private function paidRow(Order $order, string $transfer = 'T-9'): array
+    {
+        return ['status' => 'paid', 'external_reference' => (string) $order->number, 'amount' => (int) round((float) $order->kmoney_amount * 100), 'transfer_uuid' => $transfer];
+    }
+
+    public function test_coming_back_after_paying_on_kmoney_closes_the_order_without_waiting_for_the_webhook(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        $paid = [];
+        $opened = 0;
+        $this->fakeKMoneyRequests($paid, $opened);
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm());
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+
+        // Tornato senza aver pagato (la richiesta incassata è di un altro ordine): l'ordine resta in attesa.
+        $paid = [['status' => 'paid', 'external_reference' => 'ALTRO', 'amount' => 1, 'transfer_uuid' => 'T-X']];
+        $this->withSession(['kmoney_order' => $order->id])->get('/area/kmoney/ritorno')->assertRedirect("/area/ordini/{$order->id}");
+        $this->assertSame('pending_payment', $order->refresh()->status);
+
+        $paid = [$this->paidRow($order)];
+        $this->withSession(['kmoney_order' => $order->id])->get('/area/kmoney/ritorno')
+            ->assertRedirect("/area/ordini/{$order->id}")->assertSessionHas('status', 'Pagamento ricevuto. Grazie!');
+        $this->assertContains($order->refresh()->status, Order::PAID_STATES);
+    }
+
+    public function test_an_order_already_paid_on_kmoney_never_gets_a_second_payment_request(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        $paid = [];
+        $opened = 0;
+        $this->fakeKMoneyRequests($paid, $opened);
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm());
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+        $this->assertSame(1, $opened);
+
+        $paid = [$this->paidRow($order)];
+        $this->post("/area/ordini/{$order->id}/riprova");
+
+        $this->assertSame(1, $opened, 'nessuna seconda richiesta di pagamento per un ordine già pagato');
+        $this->assertContains($order->refresh()->status, Order::PAID_STATES);
+    }
+
+    public function test_when_kmoney_does_not_answer_no_payment_request_is_opened_and_the_order_waits(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake([
+            'kmoney.test/api/v1/mandates' => Http::response(['mandates' => []]),
+            'kmoney.test/api/v1/userinfo' => Http::response(['account' => ['number' => 'KYP0000000001']]),
+            'kmoney.test/api/v1/payment-requests?*' => Http::response([], 500),
+            'kmoney.test/api/v1/payment-requests' => fn () => $this->fail('senza sapere se è già pagato non si apre una richiesta'),
+        ]);
+
+        $res = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm());
+
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+        $res->assertRedirect("/area/ordini/{$order->id}")->assertSessionHasErrors('order');
+        $this->assertSame('pending_payment', $order->status);
+    }
+
+    public function test_the_customer_is_never_sent_to_an_address_that_is_not_kmoney(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+        Http::fake([
+            'kmoney.test/api/v1/mandates' => Http::response(['mandates' => []]),
+            'kmoney.test/api/v1/userinfo' => Http::response(['account' => ['number' => 'KYP0000000001']]),
+            'kmoney.test/api/v1/payment-requests?*' => Http::response(['data' => []]),
+            'kmoney.test/api/v1/payment-requests' => Http::response(['data' => ['uuid' => 'PR-1', 'pay_url' => 'https://altrove.test/pay/pr-1']], 201),
+        ]);
+
+        $res = $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->post('/area/checkout', $this->checkoutForm());
+
+        $order = Order::where('payment_method', 'kmoney')->firstOrFail();
+        $res->assertRedirect("/area/ordini/{$order->id}")->assertSessionHasErrors('order');
+    }
+
+    public function test_checkout_and_profile_tell_the_customer_that_each_payment_is_confirmed_on_kmoney(): void
+    {
+        [$user] = $this->confirmingEachTime();
+        $p = $this->product('A', '100.00', ['kmoney_percent' => 100]);
+
+        $this->actingAs($user)->withSession(['cart' => [$p->id => 1]])->get('/area/checkout/pagamento')
+            ->assertOk()
+            ->assertSee('ti portiamo su KMoney a confermare il pagamento')
+            ->assertDontSee('Collega il tuo conto KMoney per continuare');
+
+        $this->get('/area/profilo')->assertOk()->assertSee('hai scelto di confermare ogni pagamento');
+    }
 }

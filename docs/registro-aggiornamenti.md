@@ -1,5 +1,14 @@
 # Registro aggiornamenti
 
+## 2026-11-19 — KMoney: chi sceglie «preferisco confermare ogni volta» ora può pagare
+- **Il problema**: nella pagina del mandato su KMoney il cliente poteva rispondere «No, preferisco confermare ogni volta», ma al ritorno il portale accettava solo chi aveva concesso il mandato. Il checkout rispondeva «collega il tuo conto», il collegamento riportava alla stessa pagina di KMoney e il cliente non riusciva ad andare avanti.
+- **Adesso**: chi ha il conto collegato **senza mandato** paga lo stesso l'**ordine singolo**. Con «Conferma ordine» il portale apre una richiesta di pagamento sul conto venditore e porta il cliente su KMoney a confermarla; al ritorno l'ordine risulta pagato (il portale lo verifica subito su KMoney, senza aspettare l'avviso, e l'avviso `payment_request.paid` resta valido).
+- Dopo il «No» il cliente torna al **passo Pagamento del checkout** (o all'ordine, o al profilo se era partito da lì) con un messaggio di conferma, non più a «I miei ordini» con un errore.
+- **Abbonamenti**: continuano a richiedere il mandato, perché gli addebiti dei mesi successivi partono da soli. Checkout e profilo lo dicono e offrono «autorizza ora».
+- Mai due pagamenti per lo stesso ordine: prima di aprire una richiesta il portale controlla se quella dell'ordine è già stata pagata; se KMoney non risponde non ne apre una nuova.
+- **Serve `KMONEY_API_TOKEN`** nel `.env` (token API del conto venditore con abilità di scrittura, lo stesso dei rimborsi). Senza, tutto resta com'era: per pagare con KMoney serve il mandato.
+- File: `app/Domain/Orders/KMoneyApiProvider.php`, `app/Http/Controllers/KMoneyController.php`, `app/Http/Controllers/ShopController.php`, viste `site/shop/checkout` e `site/area/profile`, `docs/manuale-utente.md`, `docs/manuale-sviluppatori.md`. Database: nessuna modifica. Test: `KMoneyMandateFlowTest`.
+
 ## 2026-11-16 — Incaricati cessati: fuori da elenco, albero ed elenco per livelli
 - **Elenco incaricati**: la scheda **Tutti** (e il suo conteggio) non comprende più i cessati. Si trovano nella scheda **Cessati** oppure scegliendo «Cessato» nel filtro *Stato*. Vale anche con le schede spente da *Funzionalità e viste*.
 - **Albero della rete** (admin) e **«Il mio ramo»** (area incaricato): i cessati non compaiono e non contano nei numeri di team; tolta la spunta «mostra cessati». Se un cessato avesse ancora qualcuno sotto, questi risultano collegati al primo sopra di lui in essere.

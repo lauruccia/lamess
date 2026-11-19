@@ -758,7 +758,7 @@ class ShopController extends Controller
             if ($r->input('payment_method') === 'kmoney') {
                 $r->session()->put(self::DRAFT, array_merge($this->draft($r), ['use_tasca' => '0']));
             }
-            if ($r->input('payment_method') === 'kmoney' && $this->kmoneyNotLinked($r)) {
+            if ($r->input('payment_method') === 'kmoney' && $this->kmoneyNotLinked($r, ($r->input('subscribe') ?: 'none') !== 'none')) {
                 return redirect(self::STEPS[3][0])->withErrors(['order' => 'Per pagare con KMoney collega il tuo conto.'])
                     ->with('kmoney_unlinked', ['connect' => url('/area/kmoney/collega'), 'register' => $this->kmoneyRegisterUrl()]);
             }
@@ -856,11 +856,22 @@ class ShopController extends Controller
         return redirect('/area/kmoney/collega');
     }
 
-    /** Con il driver reale: il cliente non ha ancora collegato il conto KMoney (o non ha concesso il mandato di pagamento). */
-    private function kmoneyNotLinked(Request $r): bool
+    /**
+     * Con il driver reale: il cliente non ha ancora collegato il conto KMoney, o gli manca il mandato di pagamento dove serve.
+     * Il mandato serve sempre per un abbonamento; per l'ordine singolo basta il conto collegato, se il portale può
+     * far confermare il pagamento su KMoney (chi ha scelto «preferisco confermare ogni volta»).
+     */
+    private function kmoneyNotLinked(Request $r, bool $subscription = true): bool
     {
-        return app(KMoneyProvider::class) instanceof KMoneyApiProvider
-            && ! KMoneyLink::where('user_id', $r->user()->id)->whereNotNull('mandate_uuid')->exists();
+        if (! app(KMoneyProvider::class) instanceof KMoneyApiProvider) {
+            return false;
+        }
+        $link = KMoneyLink::where('user_id', $r->user()->id)->first();
+        if ($link === null) {
+            return true;
+        }
+
+        return $link->mandate_uuid === null && ($subscription || ! KMoneyApiProvider::confirmsEachPayment());
     }
 
     private function kmoneyRegisterUrl(): string
@@ -897,7 +908,7 @@ class ShopController extends Controller
             return back()->withInput()->withErrors(['order' => 'Il pagamento con KMoney non è disponibile al momento: scegli un altro metodo.']);
         }
         // KMoney senza conto collegato (con mandato): l'ordine non si crea e non resta in sospeso; il cliente riceve l'avviso con i link per collegare o aprire il conto.
-        if ($d['payment_method'] === 'kmoney' && $this->kmoneyNotLinked($r)) {
+        if ($d['payment_method'] === 'kmoney' && $this->kmoneyNotLinked($r, $subscribe !== 'none')) {
             return back()->withInput()
                 ->withErrors(['order' => 'Per pagare con KMoney collega il tuo conto.'])
                 ->with('kmoney_unlinked', ['connect' => url('/area/kmoney/collega'), 'register' => $this->kmoneyRegisterUrl()]);

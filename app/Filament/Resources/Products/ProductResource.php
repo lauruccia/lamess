@@ -469,10 +469,13 @@ class ProductResource extends Resource
                             ->helperText('Acceso = gli incaricati possono pagarlo con i compensi (con la maggiorazione). Le varianti seguono il prodotto principale.'),
                     ]),
                     Section::make('Spedizione')->icon('heroicon-o-truck')->schema([
+                        Toggle::make('free_shipping_it')->label('Spedizione gratuita in Italia')->default(true)
+                            ->helperText('Spento = si paga la tariffa di Vendite → Spedizioni. Con KMoney al 100% e negli abbonamenti è gratis comunque.'),
+                        Toggle::make('free_shipping_abroad')->label('Spedizione gratuita all\'estero')->default(true),
                         TextInput::make('shipping_gross')->label('Spedizione del prodotto (IVA incl.)')->prefix('€')->numeric()->minValue(0)->live(onBlur: true)->dehydrated(false)
                             ->afterStateHydrated(fn (TextInput $c, ?Model $record) => $c->state($record?->shipping_net !== null ? self::grossFromNet($record->shipping_net, config('lamess.default_vat_rate')) : null))
                             ->afterStateUpdated(fn (Set $set, $state) => $set('shipping_net', filled($state) ? self::netFromGross($state, config('lamess.default_vat_rate')) : null))
-                            ->helperText('Vuoto: vale la tariffa generale (Vendite → Spedizioni). 0: spedizione gratuita. Con più prodotti nel carrello si paga la voce più alta.'),
+                            ->helperText('Facoltativo, per un costo particolare di questo prodotto. Vuoto: valgono gli interruttori sopra. Con più prodotti nel carrello si paga la voce più alta.'),
                         Hidden::make('shipping_net')->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null),
                         TextInput::make('weight_g')->label('Peso (g)')->numeric()->integer()->minValue(0)->nullable()->suffix('g')->helperText('Serve per le tariffe di spedizione a fascia di peso.'),
                     ]),

@@ -875,3 +875,4 @@ button.add.icon:hover,a.add.icon:hover{background:#d27a4d;color:var(--lm-ink);tr
 .tasca-card input:focus-visible~.tick{outline:2px solid var(--lm-terracotta);outline-offset:3px}
 .tasca-pick>.muted{margin:8px 0 0}
 @media (max-width:640px){.tasca-card{padding:14px}}
+.km-ship-free{display:block;color:#1d6b43;font-weight:600}

@@ -132,7 +132,7 @@ final class OrderService
                 $entries[(string) $i] = ['product' => $it['product'], 'qty' => $it['qty']];
             }
         }
-        $priced = $this->pricer->price($entries, $buyer, $discountCodes, $now, $country, $subscription !== null && $subscription->free_shipping);
+        $priced = $this->pricer->price($entries, $buyer, $discountCodes, $now, $country, $subscription !== null && $subscription->free_shipping, $method === 'kmoney');
         foreach (array_map(fn ($c) => strtoupper(trim((string) $c)), $discountCodes) as $code) {
             if (isset($priced->messages[$code]) && ! str_starts_with($priced->messages[$code], 'Non applicato:')) {
                 throw new OrderException("Codice {$code}: ".$priced->messages[$code]);

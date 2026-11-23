@@ -150,7 +150,7 @@ class ShopController extends Controller
         return max(0, min($qty, $max));
     }
 
-    private function priced(Request $r, ?Collection $products = null, bool $shippingWaived = false): PricedCart
+    private function priced(Request $r, ?Collection $products = null, bool $shippingWaived = false, bool $kmoneyPay = false): PricedCart
     {
         $products ??= $this->sellableProducts($r);
         $entries = [];
@@ -167,7 +167,7 @@ class ShopController extends Controller
             }
         }
 
-        return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, $this->country($r), $shippingWaived);
+        return app(CartPricer::class)->price($entries, $r->user(), $this->codes($r), null, $this->country($r), $shippingWaived, $kmoneyPay);
     }
 
     /**
@@ -649,7 +649,7 @@ class ShopController extends Controller
             $review = $this->review($u, $saved, $draft, $addresses, $tasca);
         }
 
-        return view('site.shop.checkout', ['step' => $step, 'hidden' => $hidden, 'review' => $review, 'billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $addresses, 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => $cadences, 'tasca' => $tasca, 'tascaOn' => $tasca !== null && ($draft['use_tasca'] ?? '0') === '1' && ($draft['payment_method'] ?? '') !== 'kmoney', 'tascaBonus' => TascaPurchase::bonusPercent()]);
+        return view('site.shop.checkout', ['step' => $step, 'hidden' => $hidden, 'review' => $review, 'billingMissing' => BillingData::missing($saved), 'addressLocked' => BillingData::addressLocked($saved), 'kmoneyNeedsLink' => $this->kmoneyNotLinked($r), 'addresses' => $addresses, 'maxAddresses' => $book->max(), 'profile' => $profile, 'user' => $u, 'priced' => $this->priced($r), 'pricedSub' => $this->priced($r, null, true), 'pricedKm' => $this->priced($r, null, false, true), 'codes' => $this->codes($r), 'count' => $this->cartCount($r), 'kmoneyEnabled' => app(OrderService::class)->kmoneyEnabled(), 'kmoneyConnectable' => app(KMoneyProvider::class) instanceof KMoneyApiProvider, 'kmoneyRegisterUrl' => $this->kmoneyRegisterUrl(), 'methods' => app(OrderService::class)->enabledMethods(), 'pendingOrder' => PendingCart::pending($r), 'country' => $this->country($r), 'countries' => $this->openCountries(), 'cadences' => $cadences, 'tasca' => $tasca, 'tascaOn' => $tasca !== null && ($draft['use_tasca'] ?? '0') === '1' && ($draft['payment_method'] ?? '') !== 'kmoney', 'tascaBonus' => TascaPurchase::bonusPercent()]);
     }
 
     /**

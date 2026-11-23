@@ -55,6 +55,38 @@ final class ShippingZonesTest extends TestCase
         $this->assertSame('16.39', $this->ship([['product' => $plain, 'qty' => 1], ['product' => $bulky, 'qty' => 2]]));
     }
 
+    public function test_free_shipping_flags_follow_italy_and_abroad(): void
+    {
+        ShippingRate::create(['country_code' => 'IT', 'amount_net' => '7.38']);
+        ShippingRate::create(['country_code' => 'FR', 'amount_net' => '10.66']);
+        $one = $this->product('B1', '10.00');
+        $five = $this->product('B5', '10.00', ['free_shipping_it' => true, 'free_shipping_abroad' => true]);
+        $two = $this->product('B2', '10.00', ['free_shipping_it' => true, 'free_shipping_abroad' => false]);
+
+        $this->assertSame('7.38', $this->ship([['product' => $one, 'qty' => 1]]));
+        $this->assertSame('0.00', $this->ship([['product' => $five, 'qty' => 1]]));
+        $this->assertSame('0.00', $this->ship([['product' => $two, 'qty' => 1]]));
+        $this->assertSame('10.66', $this->ship([['product' => $two, 'qty' => 1]], 'FR'));
+        $this->assertSame('0.00', $this->ship([['product' => $five, 'qty' => 1]], 'FR'));
+        // carrello misto: si paga la voce più alta
+        $this->assertSame('7.38', $this->ship([['product' => $five, 'qty' => 1], ['product' => $one, 'qty' => 1]]));
+    }
+
+    public function test_kmoney_makes_shipping_free_in_italy_only_when_everything_is_kmoney(): void
+    {
+        ShippingRate::create(['country_code' => 'IT', 'amount_net' => '7.38']);
+        ShippingRate::create(['country_code' => 'FR', 'amount_net' => '10.66']);
+        $full = $this->product('K1', '10.00', ['kmoney_percent' => 100]);
+        $half = $this->product('K2', '10.00', ['kmoney_percent' => 50]);
+        $price = fn (array $e, string $c = 'IT', bool $km = true) => (string) app(CartPricer::class)->price($e, null, [], null, $c, false, $km)->shippingNet;
+
+        $this->assertSame('0', $price([['product' => $full, 'qty' => 1]]));
+        $this->assertSame('7.38', $price([['product' => $full, 'qty' => 1]], 'IT', false));
+        $this->assertSame('7.38', $price([['product' => $half, 'qty' => 1]]));
+        $this->assertSame('7.38', $price([['product' => $full, 'qty' => 1], ['product' => $half, 'qty' => 1]]));
+        $this->assertSame('10.66', $price([['product' => $full, 'qty' => 1]], 'FR'));
+    }
+
     public function test_admin_sets_general_shipping_vat_included(): void
     {
         $this->actingAs(\App\Models\User::factory()->role('admin_finance')->create());

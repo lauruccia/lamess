@@ -8,6 +8,8 @@
 @php($pay = old('payment_method', '')) {{-- nessun metodo preselezionato: ogni cliente sceglie --}}
 @php($sub = old('subscribe', '')) {{-- nessuna scelta preselezionata --}}
 @php($subOn = in_array($sub, array_keys($cadences), true))
+{{-- Con KMoney al 100% in Italia la spedizione è gratuita: due versioni del riepilogo, scelte dal metodo di pagamento --}}
+@php($kmFree = ($kmoneyEnabled ?? false) && $priced->acceptsKMoney() && $pricedKm->shippingNet->isLessThan($priced->shippingNet))
 @php($cfRequired = (($billingMissing === [] ? ($profile?->country_code ?: 'IT') : $country) === 'IT'))
 <header class="page-head"><h1>{{ __('Checkout') }}</h1>@include('site.shop._steps', ['current' => 2])</header>
 @if(session('kmoney_unlinked'))
@@ -89,13 +91,14 @@
      {{-- Conto collegato senza mandato («preferisco confermare ogni volta»): l'ordine singolo si conferma su KMoney --}}
      @php($kmManual = $kmLink !== null && ! $kmLinked && \App\Domain\Orders\KMoneyApiProvider::confirmsEachPayment())
      <label class="opt-card opt-featured" data-pay-kmoney><input type="radio" name="payment_method" value="kmoney" @checked($pay === 'kmoney')><span class="dot"></span><span class="oc-text"><b>{{ __('Paga con KMoney') }}</b><small>
+      @if($kmFree)<span class="km-ship-free">{{ __('Spedizione gratuita pagando con KMoney.') }}</span>@endif
       <span class="km-link">
        @unless($kmLinked || $kmManual)
         {{ __('Per pagare col tuo saldo devi prima collegare il conto KMoney: al ritorno trovi qui tutto com\'era.') }}
        @endunless
       </span></small></span><em class="oc-tag oc-tag-accent">{{ __('Consigliato') }}</em></label>
      <p class="km-flow muted small" data-km-only @if($pay !== 'kmoney') hidden @endif>
-      <span data-sum-single @if($subOn) hidden @endif>@if($kmManual){{ __('Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.', ['p' => \App\Support\Money::eur($priced->kmoneyShare())]) }}@else{{ __('Con «Conferma ordine» addebitiamo :p KY dal tuo conto KMoney, in un clic. Se l\'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.', ['p' => \App\Support\Money::eur($priced->kmoneyShare())]) }}@endif @if($priced->kmoneyRest()->isPositive()) {{ __('Poi scegli come pagare il resto, € :p, con carta o bonifico.', ['p' => \App\Support\Money::eur($priced->kmoneyRest())]) }}@endif</span>
+      <span data-sum-single @if($subOn) hidden @endif>@if($kmManual){{ __('Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.', ['p' => \App\Support\Money::eur($pricedKm->kmoneyShare())]) }}@else{{ __('Con «Conferma ordine» addebitiamo :p KY dal tuo conto KMoney, in un clic. Se l\'importo supera il tetto che hai autorizzato, KMoney ti chiede una sola conferma.', ['p' => \App\Support\Money::eur($pricedKm->kmoneyShare())]) }}@endif @if($pricedKm->kmoneyRest()->isPositive()) {{ __('Poi scegli come pagare il resto, € :p, con carta o bonifico.', ['p' => \App\Support\Money::eur($pricedKm->kmoneyRest())]) }}@endif</span>
       <span data-sum-sub @if(! $subOn) hidden @endif>{{ __('Con «Conferma ordine» addebitiamo :p KY dal tuo conto KMoney.', ['p' => \App\Support\Money::eur($pricedSub->kmoneyShare())]) }}@if($pricedSub->kmoneyRest()->isPositive()) {{ __('Il resto, € :p, si addebita in automatico sulla carta.', ['p' => \App\Support\Money::eur($pricedSub->kmoneyRest())]) }}@endif {{ __('Lo stesso a ogni addebito.') }}</span>
      </p>
      @if($kmManual)
@@ -167,7 +170,7 @@
   <label class="chk"><input type="checkbox" name="tasca_consent" value="1" @checked(old('tasca_consent'))><span>{{ __('Confermo di usare i compensi della Tasca per questo acquisto: la scelta è definitiva e quei compensi non potranno più essere prelevati.') }}</span></label>
   @error('tasca_consent')<div class="err">{{ $message }}</div>@enderror
   @endif
-  <button class="btn accent wide cta-lock" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-need-choice="{{ ($pay === '' || ($cadences !== [] && $sub === '')) ? 1 : 0 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> {{ __('Conferma ordine ·') }} <span data-sum-single @if($subOn) hidden @endif>€ {{ \App\Support\Money::eur(! empty($tascaOn) ? \App\Domain\Engine\Support\Num::of($tasca['single']['priced']->totals()['total'])->minus($tasca['single']['amount']) : $priced->totals()['total']) }}</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur(! empty($tascaOn) ? \App\Domain\Engine\Support\Num::of($tasca['sub']['priced']->totals()['total'])->minus($tasca['sub']['amount']) : $pricedSub->totals()['total']) }}</span></button>
+  <button class="btn accent wide cta-lock" id="confirm-order" data-billing-missing="{{ $billingMissing === [] ? 0 : 1 }}" data-need-choice="{{ ($pay === '' || ($cadences !== [] && $sub === '')) ? 1 : 0 }}" data-km-needs-link="{{ ($kmoneyEnabled ?? false) && $kmoneyNeedsLink ? 1 : 0 }}" @disabled($billingMissing !== [] || $pay === '' || ($cadences !== [] && $sub === ''))><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> {{ __('Conferma ordine ·') }} <span data-sum-single @if($subOn) hidden @endif>@if($kmFree)<span data-km-free-off @if($pay === 'kmoney') hidden @endif>€ {{ \App\Support\Money::eur($priced->totals()['total']) }}</span><span data-km-free-on @if($pay !== 'kmoney') hidden @endif>€ {{ \App\Support\Money::eur($pricedKm->totals()['total']) }}</span>@else€ {{ \App\Support\Money::eur(! empty($tascaOn) ? \App\Domain\Engine\Support\Num::of($tasca['single']['priced']->totals()['total'])->minus($tasca['single']['amount']) : $priced->totals()['total']) }}@endif</span><span data-sum-sub @if(! $subOn) hidden @endif>€ {{ \App\Support\Money::eur(! empty($tascaOn) ? \App\Domain\Engine\Support\Num::of($tasca['sub']['priced']->totals()['total'])->minus($tasca['sub']['amount']) : $pricedSub->totals()['total']) }}</span></button>
   <p class="muted small confirm-hint" data-confirm-hint @if($billingMissing === [] && $pay !== '' && ($cadences === [] || $sub !== '')) hidden @endif>{{ __('Salva i dati di fatturazione (pulsante «Salva i dati») per attivare «Conferma ordine».') }}</p>
   <p class="secure-note">{{ __('Pagamento sicuro · I tuoi dati sono protetti') }}</p>
   </div>
@@ -187,7 +190,14 @@
   </div>
   @include('site.shop._code', ['uid' => 'co'])
   <div data-sum-single @if($subOn) hidden @endif>
-   <div data-tasca-off @if(! empty($tascaOn)) hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'tascaOn' => false, 'tascaPlan' => null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])</div>
+   <div data-tasca-off @if(! empty($tascaOn)) hidden @endif>
+    @if($kmFree)
+     <div data-km-free-off @if($pay === 'kmoney') hidden @endif>@include('site.shop._totals', ['priced' => $priced, 'tascaOn' => false, 'tascaPlan' => null, 'showKmoney' => true, 'kmoneyPicked' => false])</div>
+     <div data-km-free-on @if($pay !== 'kmoney') hidden @endif>@include('site.shop._totals', ['priced' => $pricedKm, 'tascaOn' => false, 'tascaPlan' => null, 'showKmoney' => true, 'kmoneyPicked' => true])</div>
+    @else
+     @include('site.shop._totals', ['priced' => $priced, 'tascaOn' => false, 'tascaPlan' => null, 'showKmoney' => ($kmoneyEnabled ?? false) && $priced->acceptsKMoney(), 'kmoneyPicked' => $pay === 'kmoney'])
+    @endif
+   </div>
    @if(! empty($tasca))<div data-tasca-on @if(empty($tascaOn)) hidden @endif>@include('site.shop._totals', ['priced' => $tasca['single']['priced'], 'tascaOn' => true, 'tascaPlan' => $tasca['single'], 'showKmoney' => false, 'kmoneyPicked' => false])</div>@endif
   </div>
   <div data-sum-sub @if(! $subOn) hidden @endif>

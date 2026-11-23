@@ -39,7 +39,7 @@ final class CartPricer
      * @param  array<string,array{product: Product, qty: int}>  $entries  chiave riga => prodotto e quantità (omaggi esclusi)
      * @param  list<string>  $codes  codici inseriti dal cliente
      */
-    public function price(array $entries, ?User $user, array $codes = [], ?DateTimeInterface $now = null, string $country = 'IT', bool $shippingWaived = false): PricedCart
+    public function price(array $entries, ?User $user, array $codes = [], ?DateTimeInterface $now = null, string $country = 'IT', bool $shippingWaived = false, bool $kmoneyPay = false): PricedCart
     {
         $now ??= CarbonImmutable::now();
         $codes = array_values(array_unique(array_map(fn ($c) => strtoupper(preg_replace('/\s+/', '', (string) $c)), array_filter($codes, fn ($c) => filled($c)))));
@@ -62,10 +62,15 @@ final class CartPricer
         $shipListNet = null;
         foreach ($entries as $e) {
             $own = $e['product']->shipping_net ?? $e['product']->parent?->shipping_net;
-            $line = $own !== null ? Num::money($own) : $generalNet;
+            // Costo proprio del prodotto (se impostato); altrimenti gratis se il prodotto è «gratis» per Italia/estero; altrimenti tariffa generale.
+            $line = $own !== null ? Num::money($own) : ($e['product']->freeShippingTo($country) ? Num::zero() : $generalNet);
             $shipListNet = $shipListNet === null || $line->isGreaterThan($shipListNet) ? $line : $shipListNet;
         }
         $shipListNet ??= $generalNet;
+        // KMoney: in Italia, se tutto il carrello si paga al 100% in KMoney la spedizione è gratuita.
+        $kmoneyFree = $kmoneyPay && strtoupper($country) === 'IT' && $entries !== []
+            && collect($entries)->every(fn (array $e) => $e['product']->kmoneyPercent() >= 100);
+        $shippingWaived = $shippingWaived || $kmoneyFree;
         $shipNet = $shippingWaived ? Num::zero() : $shipListNet;
 
         [$candidates, $messages] = $this->candidates($state, $user, $codes, $now, $shipNet);

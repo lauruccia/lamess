@@ -161,6 +161,14 @@
     sync();
   }
 
+  // Checkout: pagando con KMoney in Italia la spedizione è gratuita: totali e riepilogo seguono il metodo scelto
+  function kmoneyFreeShip() {
+    var on = $$('[data-km-free-on]'), off = $$('[data-km-free-off]'); if (!on.length && !off.length) return;
+    function sync() { var pm = $('input[name=payment_method]:checked'), km = !!(pm && pm.value === 'kmoney'); on.forEach(function (e) { e.hidden = !km; }); off.forEach(function (e) { e.hidden = km; }); }
+    $$('input[name=payment_method]').forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  }
+
   // Checkout: con KMoney compare la scelta del metodo per il resto
   function kmoneyRest() {
     var box = $('[data-km-rest]'); if (!box) return;
@@ -249,7 +257,7 @@
     $$('[data-js-hide]').forEach(function (b) { b.style.display = 'none'; });
     var sel = $('#type'); if (sel) { sel.addEventListener('change', company); company(); }
     subscription();
-    kmoneyRest(); kmoneyAmounts();
+    kmoneyRest(); kmoneyAmounts(); kmoneyFreeShip();
     confirmGate();
     formErrors();
   });

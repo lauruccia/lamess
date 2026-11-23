@@ -24,7 +24,7 @@ class Product extends Model
     {
         return [
             'net_price' => 'decimal:8', 'founder_net_price' => 'decimal:8', 'vat_rate' => 'decimal:2', 'pv' => 'decimal:2', 'cv' => 'decimal:2',
-            'commissionable_pct' => 'decimal:2', 'shipping_commissionable' => 'boolean',
+            'commissionable_pct' => 'decimal:2', 'shipping_commissionable' => 'boolean', 'free_shipping_it' => 'boolean', 'free_shipping_abroad' => 'boolean',
             'promo_rank_double_cv' => 'boolean', 'is_kit' => 'boolean', 'active' => 'boolean', 'countries' => 'array',
             'compare_at_net' => 'decimal:8', 'images' => 'array', 'featured' => 'boolean', 'allow_backorder' => 'boolean', 'stock_qty' => 'integer',
             'options' => 'array', 'variant_options' => 'array',
@@ -72,6 +72,14 @@ class Product extends Model
     public const KMONEY_PERCENTS = [0, 25, 50, 75, 100];
 
     /** Quota (%) del prezzo pagabile in KMoney; le varianti ereditano quella del prodotto principale. */
+    /** Spedizione gratuita per il paese di consegna: «Italia» o «estero» (le varianti seguono il prodotto principale). */
+    public function freeShippingTo(string $country): bool
+    {
+        $p = $this->parent_id !== null && $this->parent ? $this->parent : $this;
+
+        return (bool) (strtoupper($country) === 'IT' ? $p->free_shipping_it : $p->free_shipping_abroad);
+    }
+
     public function kmoneyPercent(): int
     {
         $own = $this->parent_id !== null ? (int) ($this->parent?->kmoney_percent ?? 100) : (int) ($this->kmoney_percent ?? 100);

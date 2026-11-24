@@ -33,6 +33,19 @@ final class ShippingGrossPriceTest extends TestCase
         $this->assertSame('10.6557377', $rate->amount_net);
     }
 
+    public function test_mixed_vat_rates_do_not_lose_a_cent(): void
+    {
+        // Prodotto 300,00 € IVA 10% + spedizione 13,00 € IVA 22%: 313,00, non 312,99.
+        ShippingRate::create(['country_code' => 'IT', 'amount_net' => '10.65573770', 'vat_rate' => '22.00']);
+        $p = $this->product('B', '272.72727273', ['vat_rate' => '10.00']);
+
+        $priced = app(CartPricer::class)->price([['product' => $p, 'qty' => 1]], null);
+
+        $this->assertSame('300.00', (string) $priced->itemsGross());
+        $this->assertSame('13.00', (string) $priced->shippingGross());
+        $this->assertSame('313.00', $priced->totals()['total']);
+    }
+
     public function test_gross_13_stays_13_in_cart_order_invoice_and_refund(): void
     {
         Notification::fake();

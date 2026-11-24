@@ -36,13 +36,16 @@ final class InvoiceService
         $vat = Num::zero();
         $by = [];
         foreach ($groups as $rate => $base) {
+            // Come nel riepilogo della fattura elettronica: imponibile e imposta di ogni aliquota si arrotondano a 2 decimali,
+            // il totale è la loro somma. Così con aliquote miste (es. 10% e 22%) il totale non perde il centesimo.
+            $n = Num::money($base);
             $v = Num::money($base->multipliedBy($rate)->dividedBy(100, 6, RoundingMode::HalfUp));
-            $by[$rate] = ['net' => (string) Num::money($base), 'vat' => (string) $v];
-            $net = $net->plus($base);
+            $by[$rate] = ['net' => (string) $n, 'vat' => (string) $v];
+            $net = $net->plus($n);
             $vat = $vat->plus($v);
         }
 
-        return ['net' => (string) Num::money($net), 'vat' => (string) Num::money($vat), 'total' => (string) Num::money($net->plus($vat)), 'by_rate' => $by];
+        return ['net' => (string) $net, 'vat' => (string) $vat, 'total' => (string) Num::money($net->plus($vat)), 'by_rate' => $by];
     }
 
     private static function lineVat(string $net, string $rate): string

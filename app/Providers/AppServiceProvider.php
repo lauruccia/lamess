@@ -29,6 +29,7 @@ use App\Listeners\AuditSecurityEvents;
 use App\Support\StatusLabels;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -92,6 +93,9 @@ class AppServiceProvider extends ServiceProvider
         };
         TextColumn::configureUsing($translate);
         TextEntry::configureUsing($translate);
+
+        // Ricerca negli elenchi all'uscita dal campo (o con Invio) e non a ogni pausa nella digitazione: su hosting condiviso le richieste a raffica si accodavano
+        Table::configureUsing(fn (Table $table) => $table->searchOnBlur());
 
         // @feature('chiave') … @endfeature: mostra un pezzo di pagina solo se la funzionalità è accesa in «Funzionalità e viste»
         Blade::if('feature', fn (string $key): bool => Feature::enabled($key));

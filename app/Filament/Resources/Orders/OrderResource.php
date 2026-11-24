@@ -166,7 +166,7 @@ class OrderResource extends Resource
             // Restano visibili gli ordini annullati degli abbonamenti disdetti o mai partiti (pagina di Stripe abbandonata).
             Filter::make('hide_failed_cycles')->label('Nascondi i tentativi di addebito non riusciti degli abbonamenti')->toggle()->default(true)
                 ->query(fn ($query) => $query->whereNot(fn ($w) => $w->where('orders.status', 'cancelled')->whereNotNull('orders.subscription_id')
-                    ->whereIn('orders.subscription_id', fn ($q) => $q->select('id')->from('subscriptions')->whereIn('status', ['active', 'paused'])))),
+                    ->whereExists(fn ($q) => $q->selectRaw('1')->from('subscriptions as s_live')->whereColumn('s_live.id', 'orders.subscription_id')->whereIn('s_live.status', ['active', 'paused'])))),
             SelectFilter::make('status')->label('Stato')->options(self::STATUS),
             TernaryFilter::make('subscription_id')->label('Abbonamento')->nullable()->placeholder('Tutti')->trueLabel('Solo abbonamenti')->falseLabel('Solo ordini singoli'),
             SelectFilter::make('payment_method')->label('Pagamento')->options(['card' => 'Carta', 'kmoney' => 'KMoney', 'transfer' => 'Bonifico', 'tasca' => 'Compensi Tasca']),

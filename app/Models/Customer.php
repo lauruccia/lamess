@@ -25,8 +25,9 @@ class Customer extends Model
      */
     public function scopeNotConsultants(Builder $query): Builder
     {
-        return $query->whereNotIn('customers.user_id', Consultant::withoutGlobalScopes()
-            ->where('status', '!=', 'terminated')->whereNotNull('user_id')->select('user_id'));
+        // NOT EXISTS correlato (user_id è univoco su consultants): niente NOT IN con sottoquery da rivalutare
+        return $query->whereNotExists(fn ($e) => $e->from('consultants as c_not')->selectRaw('1')
+            ->whereColumn('c_not.user_id', 'customers.user_id')->where('c_not.status', '!=', 'terminated'));
     }
 
     public function user(): BelongsTo

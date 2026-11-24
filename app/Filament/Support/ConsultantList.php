@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Support;
 
-use App\Domain\Access\AccountSuspension;
 use App\Models\CalculationRun;
 use App\Models\CompPlanVersion;
 use App\Models\Period;
@@ -91,7 +90,7 @@ final class ConsultantList
     public function counts(): array
     {
         // i conteggi dicono quanto si vede: gli account sospesi o bannati si trovano col filtro «Account»
-        $row = DB::table('consultants')->where(fn ($w) => $w->whereNull('user_id')->orWhereNotIn('user_id', AccountSuspension::suspendedUserIds()))->selectRaw(
+        $row = DB::table('consultants')->whereNotExists(fn ($e) => $e->from('users as u_acc')->selectRaw('1')->whereColumn('u_acc.id', 'consultants.user_id')->whereNotNull('u_acc.suspended_at'))->selectRaw(
             "sum(status <> 'terminated') as total, sum(status = 'active') as active, sum(status = 'pending') as pending, sum(status = 'suspended') as suspended, "
             ."sum(status = 'terminated') as `terminated`, sum(status <> 'terminated' and onboarding_complete = 0) as onboarding, "
             ."sum(status <> 'terminated' and (kyc_status is null or kyc_status <> 'verified')) as kyc"

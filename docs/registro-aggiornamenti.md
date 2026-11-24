@@ -1,5 +1,10 @@
 # Registro aggiornamenti
 
+## 2026-11-24 — Elenco clienti (FAN): ricerca e caricamento più veloci
+- **Il problema**: ogni pagina dell'elenco faceva una query in più per ogni riga (10 su 25) solo per decidere se mostrare «Promuovi a incaricato», e la ricerca partiva a ogni tasto premuto.
+- **Adesso**: quel dato arriva nella stessa query dell'elenco (da 15 a 5 query a pagina) e la ricerca parte quando si preme Invio o si esce dal campo, come nell'elenco Incaricati. Il comportamento dell'azione «Promuovi» non cambia.
+- File: `app/Filament/Resources/Customers/CustomerResource.php`. Database: nessuna modifica. Test: `PointsAndCustomersAdminTest`.
+
 ## 2026-11-19 — KMoney: chi sceglie «preferisco confermare ogni volta» ora può pagare
 - **Il problema**: nella pagina del mandato su KMoney il cliente poteva rispondere «No, preferisco confermare ogni volta», ma al ritorno il portale accettava solo chi aveva concesso il mandato. Il checkout rispondeva «collega il tuo conto», il collegamento riportava alla stessa pagina di KMoney e il cliente non riusciva ad andare avanti.
 - **Adesso**: chi ha il conto collegato **senza mandato** paga lo stesso l'**ordine singolo**. Con «Conferma ordine» il portale apre una richiesta di pagamento sul conto venditore e porta il cliente su KMoney a confermarla; al ritorno l'ordine risulta pagato (il portale lo verifica subito su KMoney, senza aspettare l'avviso, e l'avviso `payment_request.paid` resta valido).

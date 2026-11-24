@@ -114,7 +114,12 @@ class CustomerResource extends Resource
         $paid = Order::PAID_STATES;
 
         return $table->defaultSort('id', 'desc')
+            ->searchOnBlur()
+            ->searchPlaceholder('Cerca nome, email, telefono, incaricato…')
+            ->paginationPageOptions([25, 50, 100])->defaultPaginationPageOption(25)
             ->modifyQueryUsing(fn ($query) => $query->notConsultants()->with(['user.profile', 'consultant'])
+                ->select('customers.*')
+                ->selectRaw('exists (select 1 from consultants c_live where c_live.user_id = customers.user_id and c_live.status <> ?) as has_live_consultant', ['terminated'])
                 ->withCount(['orders as paid_orders_count' => fn ($q) => $q->whereIn('status', $paid), 'subscriptions as active_subscriptions_count' => fn ($q) => $q->where('status', 'active')])
                 ->withSum(['orders as spent_total' => fn ($q) => $q->whereIn('status', $paid)], 'total')
                 ->withMax(['orders as last_purchase_at' => fn ($q) => $q->whereIn('status', $paid)], 'paid_at'))
@@ -148,7 +153,7 @@ class CustomerResource extends Resource
                     ->visible(fn (Customer $record): bool => ! Superadmin::is() && static::canEdit($record))
                     ->url(fn (Customer $record): string => static::getUrl('edit', ['record' => $record])),
                 Action::make('promote')->label('Promuovi a incaricato')->iconButton()->tooltip('Promuovi a incaricato')->icon('heroicon-o-arrow-up-circle')->authorize('network.manage')
-                    ->visible(fn (Customer $record) => $record->user?->profile?->type !== 'company' && ! Consultant::where('user_id', $record->user_id)->where('status', '!=', 'terminated')->exists())
+                    ->visible(fn (Customer $record) => $record->user?->profile?->type !== 'company' && ! (bool) $record->getAttribute('has_live_consultant'))
                     ->modalDescription('Il cliente entra subito nell\'albero come incaricato attivo, con codice e link referral nuovi. Lettera d\'incarico e KYC si completano dopo.')
                     ->schema(self::promoteForm())->action(fn (Customer $record, array $data) => self::promote($record, $data)),
                 ImpersonateAction::forRow(fn (Customer $r) => $r->user, true),

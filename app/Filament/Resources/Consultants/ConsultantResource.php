@@ -240,6 +240,7 @@ class ConsultantResource extends Resource
             ->defaultSort('consultants.id', 'desc')
             ->paginationPageOptions([25, 50, 100])->defaultPaginationPageOption(25)
             ->persistSortInSession()
+            ->searchOnBlur()
             ->searchPlaceholder('Cerca nome, codice, email…')
             ->filtersLayout(FiltersLayout::Dropdown)->filtersFormWidth(Width::ThreeExtraLarge)->filtersFormMaxHeight('26rem')->filtersFormColumns(2)->deferFilters(false)
             ->columns([
@@ -250,7 +251,7 @@ class ConsultantResource extends Resource
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn ($w) => $w
                         ->where('consultants.name', 'like', "%{$search}%")->orWhere('consultants.referral_code', 'like', "%{$search}%")
                         ->orWhere('consultants.person_key', 'like', "%{$search}%")
-                        ->orWhereIn('consultants.user_id', User::query()->where('email', 'like', "%{$search}%")->select('id'))))
+                        ->orWhereExists(fn ($e) => $e->from('users as u_search')->selectRaw('1')->whereColumn('u_search.id', 'consultants.user_id')->where('u_search.email', 'like', "%{$search}%"))))
                     ->sortable(),
                 TextColumn::make('status')->label('Stato')->badge()->sortable()
                     ->formatStateUsing(fn (string $state) => StatusLabels::label($state))

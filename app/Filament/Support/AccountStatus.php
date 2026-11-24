@@ -122,13 +122,19 @@ final class AccountStatus
             ->default('visible')
             ->query(function (Builder $query, array $data) use ($userColumn): Builder {
                 $mode = $data['value'] ?? 'visible';
-                $blocked = AccountSuspension::suspendedUserIds();
+                // EXISTS correlato sull'id utente (indice primario) al posto di IN/NOT IN con sottoquery: non rilegge la tabella utenti per ogni riga
+                $blocked = static fn (?string $type = null) => static function ($e) use ($userColumn, $type): void {
+                    $e->from('users as u_acc')->selectRaw('1')->whereColumn('u_acc.id', $userColumn)->whereNotNull('u_acc.suspended_at');
+                    if ($type !== null) {
+                        $e->where('u_acc.suspension_type', $type);
+                    }
+                };
 
                 return match ($mode) {
-                    'suspended' => $query->whereIn($userColumn, $blocked->clone()->where('suspension_type', 'suspended')),
-                    'banned' => $query->whereIn($userColumn, $blocked->clone()->where('suspension_type', 'banned')),
-                    'blocked' => $query->whereIn($userColumn, $blocked),
-                    default => $query->where(fn ($w) => $w->whereNull($userColumn)->orWhereNotIn($userColumn, $blocked)),
+                    'suspended' => $query->whereExists($blocked('suspended')),
+                    'banned' => $query->whereExists($blocked('banned')),
+                    'blocked' => $query->whereExists($blocked()),
+                    default => $query->whereNotExists($blocked()),
                 };
             });
     }

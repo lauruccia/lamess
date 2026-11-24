@@ -7,6 +7,7 @@ namespace App\Filament\Resources\ShippingRates;
 use App\Filament\Concerns\GatedByPermission;
 use App\Filament\Resources\ShippingRates\Pages\CreateShippingRate;
 use App\Filament\Resources\ShippingRates\Pages\EditShippingRate;
+use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\ShippingRates\Pages\ListShippingRates;
 use App\Filament\Support\FormSection;
 use App\Models\ShippingRate;
@@ -60,12 +61,12 @@ class ShippingRateResource extends Resource
             ]),
             FormSection::make('Costo', 'Si inserisce IVA inclusa: l\'importo IVA esclusa si calcola da solo.', [
                 TextInput::make('amount_gross')->label('Costo di spedizione (IVA inclusa)')->prefix('€')->numeric()->required()->minValue(0)->dehydrated(false)->live(onBlur: true)
-                    ->afterStateHydrated(fn (TextInput $c, $record) => $c->state($record ? number_format((float) $record->amount_net * (1 + (float) $record->vat_rate / 100), 2, '.', '') : null))
-                    ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', round((float) $state / (1 + (float) ($get('vat_rate') ?: 22) / 100), 2)))
+                    ->afterStateHydrated(fn (TextInput $c, $record) => $c->state($record ? ProductResource::grossFromNet($record->amount_net, $record->vat_rate) : null))
+                    ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', ProductResource::netFromGross($state, $get('vat_rate') ?: 22)))
                     ->helperText('È la tariffa generale: si può cambiare per singolo prodotto dalla sua scheda.'),
                 Hidden::make('amount_net')->required(),
                 TextInput::make('vat_rate')->label('IVA (%)')->numeric()->required()->default(22)->live(onBlur: true)
-                    ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', round((float) $get('amount_gross') / (1 + (float) ($state ?: 22) / 100), 2))),
+                    ->afterStateUpdated(fn (Get $get, Set $set, $state) => $set('amount_net', ProductResource::netFromGross($get('amount_gross'), $state ?: 22))),
             ]),
             FormSection::make('Fascia di peso', 'La tariffa vale per i carrelli in questa fascia.', [
                 TextInput::make('min_weight_g')->label('Peso minimo (g)')->numeric()->integer()->minValue(0)->default(0)->required(),
@@ -83,7 +84,7 @@ class ShippingRateResource extends Resource
             TextColumn::make('min_weight_g')->label('Da (g)'),
             TextColumn::make('max_weight_g')->label('A (g)')->placeholder('∞'),
             TextColumn::make('amount_net')->label('Netto €')->numeric(2),
-            TextColumn::make('amount_gross')->label('IVA incl. €')->state(fn ($record) => number_format((float) $record->amount_net * (1 + (float) $record->vat_rate / 100), 2, ',', '.')),
+            TextColumn::make('amount_gross')->label('IVA incl. €')->state(fn ($record) => number_format((float) ProductResource::grossFromNet($record->amount_net, $record->vat_rate), 2, ',', '.')),
             TextColumn::make('vat_rate')->label('IVA %'),
             IconColumn::make('active')->label('Attiva')->boolean(),
         ]);

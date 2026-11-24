@@ -64,7 +64,7 @@ final class InstallerTest extends TestCase
         $this->assertTrue(User::withoutGlobalScopes()->where('email', 'l@example.test')->first()->isSuperAdmin());
         $this->assertFileExists(InstallController::lockPath());
         $this->assertTrue(AuditLog::verify()->ok);
-        $this->assertSame('7.38', ShippingRate::where('country_code', 'IT')->firstOrFail()->amount_net, 'spedizione predefinita 9,00 € IVA inclusa');
+        $this->assertSame('7.37704918', ShippingRate::where('country_code', 'IT')->firstOrFail()->amount_net, 'spedizione predefinita 9,00 € IVA inclusa');
         $this->get('/installazione')->assertNotFound();
     }
 }

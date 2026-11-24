@@ -63,7 +63,7 @@ final class InvoiceService
             $inv = Invoice::create([
                 'order_id' => $order->id, 'number' => DocumentNumbers::next((string) config('lamess.invoice_prefix'), (int) $now->format('Y')),
                 'year' => (int) $now->format('Y'), 'type' => $type, 'issued_at' => $now, 'buyer' => $billing,
-                'net' => $order->subtotal_net + $order->shipping_net, 'vat' => $order->vat_total, 'total' => $order->total,
+                'net' => (string) Num::money(Num::of((string) $order->subtotal_net)->plus((string) $order->shipping_net)), 'vat' => $order->vat_total, 'total' => $order->total,
             ]);
             $rows = [];
             foreach ($order->items as $it) {
@@ -77,10 +77,11 @@ final class InvoiceService
             }
             if (Num::of($order->shipping_net)->isPositive()) {
                 $rate = (string) $order->shipping_vat_rate;
+                // Il netto della spedizione resta esatto (8 decimali): l'IVA si calcola su quello, così il totale è il prezzo IVA inclusa deciso (es. 13,00).
                 $vat = self::lineVat((string) $order->shipping_net, $rate);
                 $inv->lines()->create([
                     'description' => 'Spese di spedizione', 'qty' => 1, 'unit_net' => $order->shipping_net, 'vat_rate' => $rate,
-                    'net' => $order->shipping_net, 'vat' => $vat, 'total' => (string) Num::money(Num::of($order->shipping_net)->plus($vat)),
+                    'net' => (string) Num::money(Num::of((string) $order->shipping_net)), 'vat' => $vat, 'total' => (string) Num::money(Num::of((string) $order->shipping_net)->plus($vat)),
                 ]);
             }
 
@@ -116,13 +117,13 @@ final class InvoiceService
             }
             $shipNet = '0.00';
             if ($refundShipping) {
-                $shipNet = (string) Num::money(Num::of($order->shipping_net)->minus($order->shipping_refunded_net));
+                $shipNet = (string) Num::netExact(Num::of((string) $order->shipping_net)->minus((string) $order->shipping_refunded_net));
                 if (Num::of($shipNet)->isPositive()) {
                     $rate = (string) $order->shipping_vat_rate;
                     $vat = self::lineVat($shipNet, $rate);
                     $lines[] = [
                         'order_item_id' => null, 'description' => 'Spese di spedizione', 'qty' => 1, 'unit_net' => $shipNet, 'vat_rate' => $rate,
-                        'net' => $shipNet, 'vat' => $vat, 'total' => (string) Num::money(Num::of($shipNet)->plus($vat)),
+                        'net' => (string) Num::money($shipNet), 'vat' => $vat, 'total' => (string) Num::money(Num::of($shipNet)->plus($vat)),
                     ];
                     $rows[] = ['net' => $shipNet, 'rate' => $rate];
                 }

@@ -57,7 +57,7 @@ final class InstallController extends Controller
             Roles::sync();
             (new PrelaunchPlanSeeder)->run();
             // Spedizione ordine singolo in Italia: 9,00 € IVA inclusa (7,38 netti + 22%). Modificabile in «Tariffe di spedizione».
-            ShippingRate::firstOrCreate(['country_code' => 'IT'], ['amount_net' => '7.38', 'vat_rate' => '22.00', 'active' => true]);
+            ShippingRate::firstOrCreate(['country_code' => 'IT'], ['amount_net' => '7.37704918', 'vat_rate' => '22.00', 'active' => true]);
             $user = (new SuperAdminCreator)->create($data['name'], $data['email'], $data['password'], false, 'installazione guidata');
             AuditLog::record('system.installed', 'Installazione guidata completata', null, ['php' => PHP_VERSION]);
             @file_put_contents(self::lockPath(), now()->toIso8601String());

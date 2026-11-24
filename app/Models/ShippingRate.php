@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\NetAmount;
 use Illuminate\Database\Eloquent\Model;
 
 class ShippingRate extends Model
@@ -12,7 +13,7 @@ class ShippingRate extends Model
 
     protected function casts(): array
     {
-        return ['amount_net' => 'decimal:2', 'vat_rate' => 'decimal:2', 'active' => 'boolean'];
+        return ['amount_net' => NetAmount::class, 'vat_rate' => 'decimal:2', 'active' => 'boolean'];
     }
 
     /** La tariffa che vale per paese e peso (g): prima il paese, altrimenti «*» (resto del mondo); la fascia più stretta vince. */

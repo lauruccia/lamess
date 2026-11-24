@@ -239,12 +239,12 @@ final class OrderService
             }
             // Spedizione (RF-046, OPEN-18): non genera PV. Gratuita sugli ordini ripetitivi (RF-A03) o per sconto.
             $t = $priced->totals();
-            $shipNet = (string) Num::money($priced->shippingNet);
+            $shipNet = (string) Num::netExact($priced->shippingNet);
             $order->update([
                 'number' => sprintf('%s-%d-%05d', config('lamess.order_prefix'), (int) $now->format('Y'), $order->id),
                 'subtotal_net' => Num::money(Num::of($t['net'])->minus($shipNet)), 'shipping_net' => $shipNet, 'shipping_vat_rate' => $priced->shippingVatRate,
                 'shipping_waived' => $priced->shippingWaivedBySubscription, 'discount_net' => Num::money($priced->itemsDiscountNet()),
-                'shipping_discount_net' => $priced->shippingWaivedBySubscription ? 0 : Num::money($priced->shippingDiscountNet()),
+                'shipping_discount_net' => $priced->shippingWaivedBySubscription ? 0 : Num::netExact($priced->shippingDiscountNet()),
                 'discounts' => $priced->applied === [] ? null : $priced->appliedSnapshot(),
                 'vat_total' => $t['vat'], 'total' => $t['total'], 'pv_total' => $pvTotal, 'cv_total' => $cvTotal,
                 'kmoney_amount' => $kmoneyAmount, 'kmoney_rest_method' => $kmoneyRest,

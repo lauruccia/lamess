@@ -40,6 +40,15 @@ final class Num
         return self::of($value)->toScale(self::MONEY_SCALE, RoundingMode::HalfUp);
     }
 
+    /** Importo netto «esatto»: fino a 8 decimali ma almeno 2 (5.00 resta 5.00; 10.65573770 diventa 10.6557377). */
+    public static function netExact(BigDecimal|int|string $value): BigDecimal
+    {
+        $s = rtrim(rtrim((string) self::of($value)->toScale(8, RoundingMode::HalfUp), '0'), '.');
+        $decimals = str_contains($s, '.') ? strlen($s) - strpos($s, '.') - 1 : 0;
+
+        return BigDecimal::of($s)->toScale(max(self::MONEY_SCALE, $decimals));
+    }
+
     public static function points(BigDecimal|int|string $value): BigDecimal
     {
         return self::of($value)->toScale(self::MONEY_SCALE, RoundingMode::HalfUp);

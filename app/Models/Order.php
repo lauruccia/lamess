@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\NetAmount;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\Model;
@@ -21,9 +22,9 @@ class Order extends Model
     protected function casts(): array
     {
         return [
-            'subtotal_net' => 'decimal:2', 'shipping_net' => 'decimal:2', 'shipping_vat_rate' => 'decimal:2', 'vat_total' => 'decimal:2', 'total' => 'decimal:2', 'kmoney_amount' => 'decimal:2',
+            'subtotal_net' => 'decimal:2', 'shipping_net' => NetAmount::class, 'shipping_refunded_net' => NetAmount::class, 'shipping_vat_rate' => 'decimal:2', 'vat_total' => 'decimal:2', 'total' => 'decimal:2', 'kmoney_amount' => 'decimal:2',
             'tasca_amount' => 'decimal:2', 'tasca_used' => 'decimal:2', 'tasca_bonus' => 'decimal:2', 'pv_total' => 'decimal:2', 'cv_total' => 'decimal:2', 'paid_at' => 'immutable_datetime',
-            'shipped_at' => 'immutable_datetime', 'processing_at' => 'immutable_datetime', 'delivered_at' => 'immutable_datetime', 'billing' => 'array', 'discount_net' => 'decimal:2', 'shipping_discount_net' => 'decimal:2', 'discounts' => 'array',
+            'shipped_at' => 'immutable_datetime', 'processing_at' => 'immutable_datetime', 'delivered_at' => 'immutable_datetime', 'billing' => 'array', 'discount_net' => 'decimal:2', 'shipping_discount_net' => NetAmount::class, 'discounts' => 'array',
         ];
     }
 

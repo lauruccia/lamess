@@ -56,14 +56,14 @@ final class CartPricer
             $weight += (int) ($e['product']->weight_g ?? $e['product']->parent?->weight_g ?? 0) * (int) $e['qty'];
         }
         $ship = ShippingRate::forCountryAndWeight($country, $weight);
-        $generalNet = $ship ? Num::money($ship->amount_net) : Num::zero();
+        $generalNet = $ship ? Num::netExact($ship->amount_net) : Num::zero();
         $shipRate = $ship ? (string) $ship->vat_rate : (string) config('lamess.default_vat_rate');
         // Spedizione per prodotto: chi ha un costo suo lo usa al posto della tariffa generale; il pacco costa quanto la voce più alta.
         $shipListNet = null;
         foreach ($entries as $e) {
             $own = $e['product']->shipping_net ?? $e['product']->parent?->shipping_net;
             // Costo proprio del prodotto (se impostato); altrimenti gratis se il prodotto è «gratis» per Italia/estero; altrimenti tariffa generale.
-            $line = $own !== null ? Num::money($own) : ($e['product']->freeShippingTo($country) ? Num::zero() : $generalNet);
+            $line = $own !== null ? Num::netExact($own) : ($e['product']->freeShippingTo($country) ? Num::zero() : $generalNet);
             $shipListNet = $shipListNet === null || $line->isGreaterThan($shipListNet) ? $line : $shipListNet;
         }
         $shipListNet ??= $generalNet;

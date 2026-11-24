@@ -152,14 +152,25 @@ final class StripeTest extends TestCase
         $this->assertSame('pending_payment', $o->refresh()->status);
     }
 
-    public function test_checkout_accepts_only_cards_in_italian(): void
+    public function test_single_order_checkout_offers_card_and_ideal_in_italian(): void
     {
-        Http::fake(['api.stripe.com/v1/checkout/sessions' => Http::response(['id' => 'cs_only_card', 'url' => 'https://checkout.stripe.com/pay/cs_only_card'])]);
+        Http::fake(['api.stripe.com/v1/checkout/sessions' => Http::response(['id' => 'cs_card_ideal', 'url' => 'https://checkout.stripe.com/pay/cs_card_ideal'])]);
         $o = $this->cardOrder();
 
         $this->actingAs($o->buyer)->post("/area/ordini/{$o->id}/riprova")->assertRedirect();
 
-        Http::assertSent(fn ($r) => $r['payment_method_types'] === ['card'] && $r['locale'] === 'it');
+        Http::assertSent(fn ($r) => $r['payment_method_types'] === ['card', 'ideal'] && $r['locale'] === 'it');
+    }
+
+    public function test_subscription_checkout_stays_card_only(): void
+    {
+        Http::fake(['api.stripe.com/v1/checkout/sessions' => Http::response(['id' => 'cs_sub_card', 'url' => 'https://checkout.stripe.com/pay/cs_sub_card'])]);
+        $o = $this->cardOrder();
+        $o->subscription_id = 999; // solo in memoria: basta a far trattare l'ordine come primo ciclo di un abbonamento
+
+        (new \App\Domain\Orders\StripeCheckoutProvider('sk_test_x'))->createCheckout($o, 'https://x.test/ok', 'https://x.test/ko');
+
+        Http::assertSent(fn ($r) => $r['payment_method_types'] === ['card'] && $r['payment_intent_data']['setup_future_usage'] === 'off_session');
     }
 
     public function test_return_from_stripe_confirms_the_order_by_asking_stripe_not_the_url(): void

@@ -194,7 +194,9 @@ final class StripeCheckoutProvider implements RedirectPaymentProvider, RefundsCa
         $email = $order->buyer?->email;
         $body = [
             'mode' => 'payment',
-            'payment_method_types' => ['card'],
+            // iDEAL (clienti con banca olandese) solo per ordini singoli. Per gli abbonamenti resta la sola carta: l'addebito dei
+            // cicli successivi con iDEAL passa da SEPA e arriva con ritardo («processing»), cosa che il rinnovo non gestisce ancora.
+            'payment_method_types' => $order->subscription_id ? ['card'] : ['card', 'ideal'],
             'locale' => 'it',
             'client_reference_id' => (string) $order->id,
             'success_url' => $successUrl,

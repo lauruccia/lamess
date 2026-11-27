@@ -1,8 +1,8 @@
 @extends('site.layout')
 @section('title', __('Registrazione — Lamèss'))
 @section('width','auth')
-@section('side_title','Crea il tuo account Lamèss')
-@section('side_text','Registrati gratis e acquista dal negozio. Se vuoi, potrai poi candidarti come incaricato.')
+@section('side_title', __('Crea il tuo account Lamèss'))
+@section('side_text', __('Registrati gratis e acquista dal negozio. Se vuoi, potrai poi candidarti come incaricato.'))
 @push('styles')
 <link rel="stylesheet" href="/css/lamess-benefits.css?v={{ @filemtime(public_path('css/lamess-benefits.css')) ?: 1 }}">
 @endpush

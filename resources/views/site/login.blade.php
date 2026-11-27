@@ -1,8 +1,8 @@
 @extends('site.layout')
 @section('title', __('Accedi — Lamèss'))
 @section('width','auth')
-@section('side_title','Bentornata, bentornato')
-@section('side_text','Accedi per vedere ordini, abbonamenti e, se sei incaricato, la tua rete.')
+@section('side_title', __('Bentornata, bentornato'))
+@section('side_text', __('Accedi per vedere ordini, abbonamenti e, se sei incaricato, la tua rete.'))
 @section('content')
 <h1>{{ __('Accedi') }}</h1>
 <form method="post" action="/accedi" class="card">@csrf

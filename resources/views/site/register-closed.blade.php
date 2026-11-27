@@ -1,8 +1,8 @@
 @extends('site.layout')
 @section('title', __('Registrazione su invito — Lamèss'))
 @section('width','auth')
-@section('side_title','Lamèss, su invito')
-@section('side_text','Ci si iscrive dal link personale di un incaricato Lamèss.')
+@section('side_title', __('Lamèss, su invito'))
+@section('side_text', __('Ci si iscrive dal link personale di un incaricato Lamèss.'))
 @push('head')
 <meta name="robots" content="noindex, nofollow">
 @endpush

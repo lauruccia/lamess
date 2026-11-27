@@ -1,8 +1,8 @@
 @extends('site.layout')
 @section('title', __('Candidatura ricevuta — Lamèss'))
 @section('width','auth')
-@section('side_title','Grazie!')
-@section('side_text','Il nostro team valuterà il tuo profilo e riceverai una risposta via email.')
+@section('side_title', __('Grazie!'))
+@section('side_text', __('Il nostro team valuterà il tuo profilo e riceverai una risposta via email.'))
 @push('head')
 <meta name="robots" content="noindex, nofollow">
 @endpush

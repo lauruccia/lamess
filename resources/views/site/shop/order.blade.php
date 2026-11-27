@@ -1,5 +1,5 @@
 @extends('site.layout')
-@section('title','Ordine '.$order->number)
+@section('title', __('Ordine').' '.$order->number)
 @section('width','area')
 @section('content')
 @php

@@ -1,8 +1,8 @@
 @extends('site.layout')
 @section('title', __('Candidati — Lamèss'))
 @section('width','auth')
-@section('side_title','Entra in Lamèss')
-@section('side_text','Il nostro team valuterà il tuo profilo e riceverai una risposta via email.')
+@section('side_title', __('Entra in Lamèss'))
+@section('side_text', __('Il nostro team valuterà il tuo profilo e riceverai una risposta via email.'))
 @push('styles')
 <style>
 .apply-int{margin:2px 0 6px}.apply-int-q{display:block;font-size:14.5px;margin:0 0 7px}

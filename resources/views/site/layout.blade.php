@@ -141,8 +141,8 @@
 @if($isAuth)
 <div class="auth-wrap">
  <aside class="auth-side">
-  <h2>@yield('side_title', 'Il tuo spazio Lamèss')</h2>
-  <p>@yield('side_text', 'Ordini, abbonamenti e, se sei incaricato, rete e compensi: tutto in un unico posto.')</p>
+  <h2>@yield('side_title', __('Il tuo spazio Lamèss'))</h2>
+  <p>@yield('side_text', __('Ordini, abbonamenti e, se sei incaricato, rete e compensi: tutto in un unico posto.'))</p>
   <ul><li>{{ __('Registrazione gratuita, nessun obbligo di acquisto') }}</li><li>{{ __('I tuoi dati restano tuoi e sono protetti') }}</li><li>{{ __('Assistenza diretta dall\'area personale') }}</li></ul>
   @yield('side_extra')
  </aside>

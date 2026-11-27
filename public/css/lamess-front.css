@@ -519,8 +519,8 @@ nav .linkbtn{display:block;padding:10px 0}
 .site-header nav a,.site-header .acct-btn,.site-header .lang-sw summary{white-space:nowrap}
 .site-header nav ul>li{flex:none}
 .site-header .nav-cart{margin-left:clamp(0px,.6vw,8px);padding-left:clamp(12px,1.5vw,22px);border-left:1px solid rgb(217 178 124/.28)}
-.site-header .lang-sw summary{min-height:42px;border-radius:999px;border:1.5px solid rgba(252,246,243,.4);background:none;color:#FCF6F3;padding:0 14px}
-.site-header .lang-sw summary:hover,.site-header .lang-sw details[open] summary{background:rgba(252,246,243,.1);border-color:rgba(252,246,243,.7)}
+.site-header .lang-sw summary{min-height:36px;border:1px solid transparent;background:none;color:#FCF6F3;padding:0 8px}
+.site-header .lang-sw summary:hover,.site-header .lang-sw details[open] summary{background:rgba(252,246,243,.08);border-color:rgba(252,246,243,.25)}
 .site-header .acct-btn{padding:0 clamp(12px,1.2vw,18px)}
 @media(min-width:1281px) and (max-width:1480px){
   .site-header nav a{font-size:14px}

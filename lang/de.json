@@ -824,7 +824,7 @@
  "Prezzo": "Preis",
  "Primo caffè cosmetico brevettato": "Erster patentierter Kosmetik-Kaffee",
  "Primo ingrediente": "Erster Inhaltsstoff",
- "Principale": "Haupt",
+ "Principale": "Hauptmenü",
  "Principi generali e Regolamento": "Allgemeine Grundsätze und Ordnung",
  "Privacy": "Datenschutz",
  "Privacy Policy": "Datenschutzrichtlinie",
@@ -1198,5 +1198,9 @@
  "🎉 Hai la": "🎉 Sie haben",
  "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Die Rechnungsdaten sind die, mit denen Sie registriert sind, und lassen sich an der Kasse nicht ändern, außer dem Land. Um sie zu ändern, gehen Sie zu <a href=\"/area/profilo\">Meine Daten</a>: Die Lieferadresse können Sie unten wählen, falls sie abweicht.",
  "Come paghi il resto": "Wie bezahlst du den Rest",
- "Il resto lo paghi con il metodo che scegli qui sotto.": "Den Rest bezahlst du mit der unten gewählten Methode."
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "Den Rest bezahlst du mit der unten gewählten Methode.",
+ "Spedizione gratuita pagando con KMoney.": "Kostenloser Versand bei Zahlung mit KMoney.",
+ "Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.": "Mit „Bestellung bestätigen“ leiten wir Sie zu KMoney weiter, um die Zahlung von :p KY zu bestätigen: Das ist die Wahl, die Sie getroffen haben, Sie bestätigen also jedes Mal.",
+ "Per un abbonamento, o per pagare in un clic, serve l'autorizzazione ai pagamenti su KMoney:": "Für ein Abonnement oder um mit einem Klick zu bezahlen, ist die Zahlungsfreigabe bei KMoney erforderlich:",
+ "autorizza ora": "jetzt freigeben"
 }

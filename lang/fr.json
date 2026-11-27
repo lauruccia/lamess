@@ -824,7 +824,7 @@
  "Prezzo": "Prix",
  "Primo caffè cosmetico brevettato": "Premier café cosmétique breveté",
  "Primo ingrediente": "Premier ingrédient",
- "Principale": "Principal",
+ "Principale": "Menu principal",
  "Principi generali e Regolamento": "Principes généraux et Règlement",
  "Privacy": "Confidentialité",
  "Privacy Policy": "Politique de confidentialité",
@@ -1198,5 +1198,9 @@
  "🎉 Hai la": "🎉 Vous avez la",
  "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Les données de facturation sont celles avec lesquelles vous êtes inscrit et ne se modifient pas depuis le paiement, sauf le pays. Pour les modifier, allez dans <a href=\"/area/profilo\">Mes données</a> : l'adresse de livraison peut être choisie ci-dessous si elle est différente.",
  "Come paghi il resto": "Comment payez-vous le reste",
- "Il resto lo paghi con il metodo che scegli qui sotto.": "Vous réglez le reste avec le mode choisi ci-dessous."
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "Vous réglez le reste avec le mode choisi ci-dessous.",
+ "Spedizione gratuita pagando con KMoney.": "Livraison gratuite en payant avec KMoney.",
+ "Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.": "Avec « Confirmer la commande », nous vous redirigeons vers KMoney pour confirmer le paiement de :p KY : c’est le choix que vous avez fait, vous confirmez donc à chaque fois.",
+ "Per un abbonamento, o per pagare in un clic, serve l'autorizzazione ai pagamenti su KMoney:": "Pour un abonnement, ou pour payer en un clic, l’autorisation des paiements sur KMoney est nécessaire :",
+ "autorizza ora": "autoriser maintenant"
 }

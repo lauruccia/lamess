@@ -824,7 +824,7 @@
  "Prezzo": "Price",
  "Primo caffè cosmetico brevettato": "First patented cosmetic coffee",
  "Primo ingrediente": "First ingredient",
- "Principale": "Main",
+ "Principale": "Main menu",
  "Principi generali e Regolamento": "General principles and Regulations",
  "Privacy": "Privacy",
  "Privacy Policy": "Privacy Policy",
@@ -1198,5 +1198,9 @@
  "🎉 Hai la": "🎉 You have",
  "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 The billing details are those you registered with and cannot be changed from the checkout, except the country. To change them go to <a href=\"/area/profilo\">My details</a>: you can choose the shipping address below if it is different.",
  "Come paghi il resto": "How do you pay the rest",
- "Il resto lo paghi con il metodo che scegli qui sotto.": "You pay the rest with the method you choose below."
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "You pay the rest with the method you choose below.",
+ "Spedizione gratuita pagando con KMoney.": "Free shipping when you pay with KMoney.",
+ "Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.": "With “Confirm order” we take you to KMoney to confirm the payment of :p KY: this is the choice you made, so you confirm every time.",
+ "Per un abbonamento, o per pagare in un clic, serve l'autorizzazione ai pagamenti su KMoney:": "For a subscription, or to pay in one click, you need to authorise payments on KMoney:",
+ "autorizza ora": "authorise now"
 }

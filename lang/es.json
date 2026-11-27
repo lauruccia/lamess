@@ -824,7 +824,7 @@
  "Prezzo": "Precio",
  "Primo caffè cosmetico brevettato": "Primer café cosmético patentado",
  "Primo ingrediente": "Primer ingrediente",
- "Principale": "Principal",
+ "Principale": "Menú principal",
  "Principi generali e Regolamento": "Principios generales y Reglamento",
  "Privacy": "Privacidad",
  "Privacy Policy": "Política de privacidad",
@@ -1198,5 +1198,9 @@
  "🎉 Hai la": "🎉 Tienes",
  "🔒 I dati di fatturazione sono quelli con cui sei registrata e non si cambiano dal checkout, tranne la nazione. Per modificarli vai su <a href=\"/area/profilo\">I miei dati</a>: l'indirizzo di spedizione puoi scegliere qui sotto se è diverso.": "🔒 Los datos de facturación son aquellos con los que estás registrado y no se cambian desde el pago, salvo el país. Para modificarlos ve a <a href=\"/area/profilo\">Mis datos</a>: la dirección de envío puedes elegirla abajo si es distinta.",
  "Come paghi il resto": "Cómo pagas el resto",
- "Il resto lo paghi con il metodo che scegli qui sotto.": "El resto lo pagas con el método que elijas más abajo."
+ "Il resto lo paghi con il metodo che scegli qui sotto.": "El resto lo pagas con el método que elijas más abajo.",
+ "Spedizione gratuita pagando con KMoney.": "Envío gratuito al pagar con KMoney.",
+ "Con «Conferma ordine» ti portiamo su KMoney a confermare il pagamento di :p KY: è la scelta che hai fatto, confermare ogni volta.": "Con «Confirmar pedido» te llevamos a KMoney para confirmar el pago de :p KY: es la opción que has elegido, así que confirmas cada vez.",
+ "Per un abbonamento, o per pagare in un clic, serve l'autorizzazione ai pagamenti su KMoney:": "Para una suscripción, o para pagar con un clic, hace falta la autorización de pagos en KMoney:",
+ "autorizza ora": "autorizar ahora"
 }

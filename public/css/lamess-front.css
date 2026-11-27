@@ -267,7 +267,7 @@ nav a[aria-current="page"]{box-shadow:0 2px 0 var(--gold);color:var(--cream)}
 .proto{position:fixed;left:0;right:0;bottom:0;z-index:60;padding:6px 16px calc(6px + env(safe-area-inset-bottom,0px));font-size:12px;background:rgb(194 102 58/.96)}
 footer{padding-bottom:72px}
 .foot{grid-template-columns:1.4fr 1fr 1fr 1fr}
-@media(max-width:1120px){
+@media(max-width:1280px){
   .menu-btn{display:block}
   nav{position:absolute;left:0;right:0;top:100%;background:#13110E;border-bottom:1px solid var(--line-dark);display:none;padding:12px max(20px,env(safe-area-inset-left,0px)) 24px}
   nav.open{display:block}
@@ -436,7 +436,7 @@ sup a{text-decoration:none;color:var(--brown);font-size:.7em}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .tag{font-size:12px}
 input,select,textarea{font-size:16px}
-@media(max-width:1120px){
+@media(max-width:1280px){
   .menu-btn{min-height:44px;min-width:44px;padding:0 16px}
   nav a{min-height:44px;display:flex;align-items:center;padding:6px 0}
   nav ul{gap:0}
@@ -490,7 +490,7 @@ input,select,textarea{font-size:16px}
 .acct-menu a:hover,.acct-menu button:hover{background:rgba(252,246,243,.08)}
 .acct-menu small{font:400 12px var(--body);color:var(--taupe)}
 .acct-menu form{margin:0}
-@media(max-width:1120px){
+@media(max-width:1280px){
   .nav-cart .cart-ic{justify-content:flex-start;gap:12px;font-size:18px}
   .cart-lbl{display:inline}
   .cart-ic .cnt{position:static;margin-left:-2px}
@@ -503,10 +503,32 @@ footer{padding-bottom:0}
 .proto{display:none}
 .linkbtn{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0}
 nav .linkbtn{display:block;padding:10px 0}
-@media(max-width:1120px){nav .linkbtn{min-height:44px;font-size:18px;padding:6px 0}}
+@media(max-width:1280px){nav .linkbtn{min-height:44px;font-size:18px;padding:6px 0}}
 .mailopts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
 .pp-back{display:flex;align-items:center;justify-content:center;gap:12px;background:#FCF6F3;border-bottom:1px solid rgb(217 178 124/.45);padding:9px 16px;font-size:.92rem}
 .pp-back[hidden]{display:none}
 .pp-back a{color:#8a5a2b;font-weight:600;text-decoration:none}
 .pp-back a:hover{text-decoration:underline}
 .pp-back button{background:none;border:0;color:#8a5a2b;font-size:1.25rem;line-height:1;cursor:pointer;padding:0 4px}
+
+/* Menu in alto: una sola riga in ogni lingua, gruppo «carrello · lingua · account» staccato dalle voci di navigazione */
+.site-header .bar{flex-wrap:nowrap;gap:clamp(12px,2vw,32px)}
+.site-header .brand{flex:none}
+.site-header nav{min-width:0}
+.site-header nav ul{flex-wrap:nowrap;gap:clamp(12px,1.5vw,24px)}
+.site-header nav a,.site-header .acct-btn,.site-header .lang-sw summary{white-space:nowrap}
+.site-header nav ul>li{flex:none}
+.site-header .nav-cart{margin-left:clamp(0px,.6vw,8px);padding-left:clamp(12px,1.5vw,22px);border-left:1px solid rgb(217 178 124/.28)}
+.site-header .lang-sw summary{min-height:42px;border-radius:999px;border:1.5px solid rgba(252,246,243,.4);background:none;color:#FCF6F3;padding:0 14px}
+.site-header .lang-sw summary:hover,.site-header .lang-sw details[open] summary{background:rgba(252,246,243,.1);border-color:rgba(252,246,243,.7)}
+.site-header .acct-btn{padding:0 clamp(12px,1.2vw,18px)}
+@media(min-width:1281px) and (max-width:1480px){
+  .site-header nav a{font-size:14px}
+  .site-header .brand b{font-size:23px}
+}
+@media(max-width:1280px){
+  .site-header .nav-cart{margin-left:0;padding-left:0;border-left:0}
+  .site-header .lang-li{margin-top:10px}
+  .site-header .lang-sw summary{min-height:46px;font-size:16px}
+  .site-header nav ul>li{flex:initial}
+}
